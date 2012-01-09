@@ -1,8 +1,8 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.relevance.Relevance;
 import com.rapleaf.cascading_ext.relevance.Relevance.RelevanceFunction;
-import com.rapleaf.support.datastore.DataStore;
 
 public class BatchQueryAction extends RelevanceAction {
 

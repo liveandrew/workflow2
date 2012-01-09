@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
-import com.rapleaf.support.workflow2.WorkflowRunner;
+import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 
 public class WorkflowWebServer {
   private static final Logger LOG = Logger.getLogger(WorkflowWebServer.class);

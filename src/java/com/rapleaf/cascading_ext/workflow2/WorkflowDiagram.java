@@ -18,7 +18,8 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
-import com.rapleaf.support.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+
 
 public class WorkflowDiagram {
 

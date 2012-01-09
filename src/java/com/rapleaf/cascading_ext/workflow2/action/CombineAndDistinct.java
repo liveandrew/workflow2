@@ -11,8 +11,9 @@ import cascading.tuple.Fields;
 
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.assembly.Distinct;
-import com.rapleaf.support.datastore.DataStore;
-import com.rapleaf.support.workflow2.Action;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.Action;
+
 
 public class CombineAndDistinct extends Action {
 

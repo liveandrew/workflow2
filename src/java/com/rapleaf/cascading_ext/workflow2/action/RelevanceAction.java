@@ -7,7 +7,7 @@ import com.rapleaf.cascading_ext.relevance.PINAndOwnerRelevance;
 import com.rapleaf.cascading_ext.relevance.PINRelevance;
 import com.rapleaf.cascading_ext.relevance.Relevance;
 import com.rapleaf.cascading_ext.relevance.StringRelevance;
-import com.rapleaf.support.workflow2.Action;
+import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwner;
 

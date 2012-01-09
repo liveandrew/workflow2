@@ -2,19 +2,18 @@ package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import cascading.tuple.Fields;
 
-import com.rapleaf.cascading_ext.relevance.Relevance;
+import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
+import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.relevance.Relevance.RelevanceFunction;
-import com.rapleaf.support.datastore.BucketDataStore;
-import com.rapleaf.support.datastore.BucketDataStoreImpl;
-import com.rapleaf.support.datastore.DataStore;
-import com.rapleaf.support.workflow2.MultiStepAction;
-import com.rapleaf.support.workflow2.Step;
+import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
+import com.rapleaf.cascading_ext.workflow2.Step;
+
 
 public class ExtractAndCombineKeysAction extends MultiStepAction {
 

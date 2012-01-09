@@ -18,9 +18,9 @@ import cascading.flow.hadoop.HadoopStepStats;
 import cascading.stats.FlowStats;
 import cascading.stats.StepStats;
 
+import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.support.NestedTimer;
 import com.rapleaf.support.NestedTimer.Token;
-import com.rapleaf.support.datastore.DataStore;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);

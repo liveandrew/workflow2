@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import com.rapleaf.support.workflow2.Action;
+import com.rapleaf.cascading_ext.workflow2.Action;
+
 
 public class NoOpAction extends Action {
 
