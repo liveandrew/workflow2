@@ -1,4 +1,4 @@
-package com.rapleaf.support.workflow2.action;
+package com.rapleaf.cascading_ext.workflow2.action;
 
 import com.rapleaf.support.workflow2.Action;
 

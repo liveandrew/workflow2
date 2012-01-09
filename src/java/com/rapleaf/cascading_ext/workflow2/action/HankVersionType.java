@@ -1,8 +1,7 @@
-package com.rapleaf.support.workflow2.action;
+package com.rapleaf.cascading_ext.workflow2.action;
 
 public enum HankVersionType {
-  BASE,
-  DELTA;
+  BASE, DELTA;
 
   public static HankVersionType fromString(String s) {
     if (s.equals("BASE")) {

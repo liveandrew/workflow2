@@ -1,4 +1,4 @@
-package com.rapleaf.support.workflow2;
+package com.rapleaf.cascading_ext.workflow2;
 
 public final class NullAction extends Action {
   public NullAction(String checkpointToken) {

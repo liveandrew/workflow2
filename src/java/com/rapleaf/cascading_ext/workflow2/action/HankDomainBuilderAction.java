@@ -1,4 +1,4 @@
-package com.rapleaf.support.workflow2.action;
+package com.rapleaf.cascading_ext.workflow2.action;
 
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
@@ -22,8 +22,7 @@ public abstract class HankDomainBuilderAction extends Action {
   private final HankVersionType versionType;
   private final CoordinatorConfigurator configurator;
 
-  public HankDomainBuilderAction(
-      String checkpointToken,
+  public HankDomainBuilderAction(String checkpointToken,
       HankVersionType versionType,
       CoordinatorConfigurator configurator,
       HankDataStore output) {
@@ -35,25 +34,22 @@ public abstract class HankDomainBuilderAction extends Action {
   }
 
   public void execute() throws Exception {
-    DomainBuilderProperties domainBuilderProperties = new DomainBuilderProperties(output.getDomainName(),
-        configurator,
-        output.getPath());
+    DomainBuilderProperties domainBuilderProperties = new DomainBuilderProperties(
+      output.getDomainName(), configurator, output.getPath());
     IncrementalDomainVersionProperties domainVersionProperties;
     switch (versionType) {
       case BASE:
         domainVersionProperties = new IncrementalDomainVersionProperties.Base();
         break;
       case DELTA:
-        domainVersionProperties = new IncrementalDomainVersionProperties.Delta(domainBuilderProperties.getDomain());
+        domainVersionProperties = new IncrementalDomainVersionProperties.Delta(
+          domainBuilderProperties.getDomain());
         break;
       default:
         throw new RuntimeException("Unknown version type: " + versionType);
     }
     CascadingDomainBuilder builder = new CascadingDomainBuilder(domainBuilderProperties,
-        domainVersionProperties,
-        getPipe(),
-        getKeyFieldName(),
-        getValueFieldName());
+      domainVersionProperties, getPipe(), getKeyFieldName(), getValueFieldName());
     properties.putAll(CascadingHelper.DEFAULT_PROPERTIES);
     Flow flow = builder.build(properties, getSources());
     if (flow != null) {

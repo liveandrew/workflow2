@@ -1,4 +1,4 @@
-package com.rapleaf.support.workflow2.action;
+package com.rapleaf.cascading_ext.workflow2.action;
 
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.support.datastore.BucketDataStore;
@@ -9,13 +9,15 @@ public class PersistNewVersion extends Action {
 
   private final BucketDataStore newVersion;
   private final VersionedBucketDataStore store;
-  
-  public PersistNewVersion(String checkpointToken, BucketDataStore newVersion, VersionedBucketDataStore store) {
+
+  public PersistNewVersion(String checkpointToken,
+      BucketDataStore newVersion,
+      VersionedBucketDataStore store) {
     super(checkpointToken);
-    
+
     this.newVersion = newVersion;
     this.store = store;
-    
+
     readsFrom(newVersion);
     writesTo(store);
   }

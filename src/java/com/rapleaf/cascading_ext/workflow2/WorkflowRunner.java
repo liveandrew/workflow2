@@ -1,4 +1,4 @@
-package com.rapleaf.support.workflow2;
+package com.rapleaf.cascading_ext.workflow2;
 
 import com.rapleaf.support.workflow2.webui.WorkflowWebServer;
 import org.apache.hadoop.conf.Configuration;

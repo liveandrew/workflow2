@@ -1,4 +1,4 @@
-package com.rapleaf.support.workflow2.action;
+package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,14 +19,17 @@ public class CombineAndDistinct extends Action {
   private final Collection<DataStore> stores;
   private final DataStore output;
   private final Fields distinct;
-  
-  public CombineAndDistinct(String checkpointToken, Collection<DataStore> stores, Fields distinctFields, DataStore output) {
+
+  public CombineAndDistinct(String checkpointToken,
+      Collection<DataStore> stores,
+      Fields distinctFields,
+      DataStore output) {
     super(checkpointToken);
-    
+
     this.stores = stores;
     this.output = output;
     this.distinct = distinctFields;
-    
+
     creates(output);
   }
 
@@ -34,15 +37,15 @@ public class CombineAndDistinct extends Action {
   protected void execute() throws Exception {
 
     List<Tap> taps = new ArrayList<Tap>();
-    for(DataStore store: stores){
+    for (DataStore store : stores) {
       taps.add(store.getTap());
     }
-    
+
     Pipe pipes = new Pipe("pipes");
-    pipes = new Distinct(pipes, distinct); 
-    
-    completeWithProgress(CascadingHelper.getFlowConnector().connect(new MultiSourceTap(taps.toArray(new Tap[0])), 
-        output.getTap(), pipes));
+    pipes = new Distinct(pipes, distinct);
+
+    completeWithProgress(CascadingHelper.getFlowConnector().connect(
+      new MultiSourceTap(taps.toArray(new Tap[0])), output.getTap(), pipes));
   }
 
 }

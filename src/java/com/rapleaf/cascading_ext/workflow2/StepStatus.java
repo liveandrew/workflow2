@@ -1,4 +1,4 @@
-package com.rapleaf.support.workflow2;
+package com.rapleaf.cascading_ext.workflow2;
 
 public enum StepStatus {
   /** Haven't been started yet. Waiting for dependencies to be completed. */
