@@ -47,7 +47,7 @@ public class WorkflowWebServer {
   public void start() {
     server = new Server(port);
     final URL warUrl = getClass().getClassLoader().getResource(
-      "com/rapleaf/support/workflow2/webui");
+      "com/rapleaf/cascading_ext/workflow2/webui");
     final String warUrlString = warUrl.toExternalForm();
 
     WebAppContext webAppContext = new WebAppContext(warUrlString, "/");
