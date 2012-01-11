@@ -2,8 +2,8 @@
     pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 
-<%@page import="com.rapleaf.support.workflow2.*"%>
-<%@page import="com.rapleaf.support.workflow2.WorkflowDiagram.Vertex"%>
+<%@page import="com.rapleaf.cascading_ext.workflow2.*"%>
+<%@page import="com.rapleaf.cascading_ext.workflow2.WorkflowDiagram.Vertex"%>
 <%@page import="org.jgrapht.graph.*"%>
 <%@page import="java.util.*"%>
 <%@page import="com.rapleaf.support.DAGLayoutGenerator"%>
