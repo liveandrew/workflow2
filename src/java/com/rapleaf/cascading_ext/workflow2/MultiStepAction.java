@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,6 +51,10 @@ public class MultiStepAction extends Action {
       tokens.add(s.getCheckpointToken());
     }
     this.steps = steps;
+  }
+  
+  protected void setSubStepsFromTail(Step tail){
+    setSubStepsFromTails(Collections.singleton(tail));
   }
 
   protected void setSubStepsFromTails(Collection<Step> tails) {
