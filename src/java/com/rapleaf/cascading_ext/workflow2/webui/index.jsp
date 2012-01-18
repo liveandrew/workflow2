@@ -8,6 +8,7 @@
 <%@page import="java.util.*"%>
 <%@page import="com.rapleaf.support.DAGLayoutGenerator"%>
 <%@page import="com.rapleaf.support.DAGLayoutGenerator.DAGLayout"%>
+<%@page import="com.rapleaf.support.TimeHelper"%>
 <%@page import="org.jgrapht.traverse.TopologicalOrderIterator"%>
 <%@page import="org.jgrapht.DirectedGraph"%>
 <%@page import="java.text.DateFormat"%>
@@ -372,7 +373,7 @@ for (StepStatus status : StepStatus.values()) {
           <%= renderProgressBar(100) %>
           Started at <%= dateFormat.format(new Date(vertex.getStartTimestamp())) %>
           <br>Ended at <%= dateFormat.format(new Date(vertex.getEndTimestamp())) %>
-          <br>Took <%= Rap.shortHumanReadableElapsedTime(vertex.getStartTimestamp(), vertex.getEndTimestamp()) %>
+          <br>Took <%= TimeHelper.shortHumanReadableElapsedTime(vertex.getStartTimestamp(), vertex.getEndTimestamp()) %>
         <%
       }
       %>
