@@ -1,16 +1,20 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
+import java.util.*;
+
 public class MultiStepAction extends Action {
+
   private Collection<Step> steps;
+  private final MultiStepActionTimer timer = new MultiStepActionTimer();
+
+  private class MultiStepActionTimer extends MultiTimedEvent {
+
+    public MultiStepActionTimer() {
+      super(MultiStepAction.this.getCheckpointToken());
+    }
+  }
 
   public MultiStepAction(String checkpointToken) {
     this(checkpointToken, null, null);
@@ -49,11 +53,12 @@ public class MultiStepAction extends Action {
             + " is used more than once in " + this);
       }
       tokens.add(s.getCheckpointToken());
+      timer.addChild(s.getTimer());
     }
     this.steps = steps;
   }
-  
-  protected void setSubStepsFromTail(Step tail){
+
+  protected void setSubStepsFromTail(Step tail) {
     setSubStepsFromTails(Collections.singleton(tail));
   }
 
@@ -113,7 +118,7 @@ public class MultiStepAction extends Action {
   @Override
   protected final void createsTemporary(DataStore store) {
     throw new RuntimeException(
-      "Cannot set a datastore to temporarily create for a multistep action");
+        "Cannot set a datastore to temporarily create for a multistep action");
   }
 
   @Override
@@ -122,9 +127,10 @@ public class MultiStepAction extends Action {
   }
 
   private void verifyStepsAreSet() {
-    if (steps == null)
+    if (steps == null) {
       throw new RuntimeException(
-        "Steps in a multi-step action must be set before thay can be used!");
+          "Steps in a multi-step action must be set before thay can be used!");
+    }
   }
 
   @Override
@@ -152,5 +158,9 @@ public class MultiStepAction extends Action {
       datastores.addAll(step.getAction().getWritesToDatastores());
     }
     return datastores;
+  }
+
+  public MultiStepActionTimer getMultiStepActionTimer() {
+    return timer;
   }
 }
