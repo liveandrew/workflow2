@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.support.event_timer.EventTimer;
 import org.apache.commons.lang.StringUtils;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -530,7 +531,8 @@ public class WorkflowDiagram {
   }
 
 
-  protected static DirectedGraph<Step, DefaultEdge> flatDependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer) {
+  protected static DirectedGraph<Step, DefaultEdge> flatDependencyGraphFromTailSteps(Set<Step> tailSteps,
+                                                                                     EventTimer workflowTimer) {
     return dependencyGraphFromTailSteps(tailSteps, workflowTimer, null, null);
   }
 
