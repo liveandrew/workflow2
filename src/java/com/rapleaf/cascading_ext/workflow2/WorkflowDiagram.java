@@ -636,10 +636,14 @@ public class WorkflowDiagram {
         MultiStepAction msa = (MultiStepAction) action;
         multiSteps.add(s);
         // Use a timer list as a direct child of the workflow timer
-        workflowTimer.addChild(msa.getMultiStepActionTimer());
+        if (workflowTimer != null) {
+          workflowTimer.addChild(msa.getMultiStepActionTimer());
+        }
       } else {
         // Use the step's timer as a direct child of the workflow timer
-        workflowTimer.addChild(s.getTimer());
+        if (workflowTimer != null) {
+          workflowTimer.addChild(s.getTimer());
+        }
       }
 
       dependencyGraph.addVertex(s);
