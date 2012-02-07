@@ -249,7 +249,6 @@ public final class WorkflowRunner {
       shutdownWebServer();
       timer.stop();
       LOG.info("Timing statistics:\n" + TimedEventHelper.toTextSummary(timer));
-      LOG.info("Timing statistics (JSON):\n" + TimedEventHelper.toJSON(timer));
     }
   }
 
