@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import java.io.IOException;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Consolidator;
 
@@ -25,6 +26,11 @@ public class ConsolidateAction extends Action {
     this.bucketDS = bucketDS;
     this.maxSizeBytes = maxSizeBytes;
     this.maxWorkers = maxWorkers;
+    
+    if(bucketDS instanceof SplitBucketDataStore){
+      throw new RuntimeException("split bucket "+bucketDS.getName()+" should not be consolidated with ConsolidateAction! use ConsolidateSplitBucketAction");
+    }
+    
     readsFrom(bucketDS);
     writesTo(bucketDS);
   }
