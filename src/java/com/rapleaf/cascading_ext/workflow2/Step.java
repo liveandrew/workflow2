@@ -8,30 +8,33 @@ import com.rapleaf.support.event_timer.FixedTimedEvent;
 import java.util.*;
 
 public final class Step {
-
+  
   private String checkpointTokenPrefix = "";
+  private final String checkpointToken;
   private final Action action;
   private final Set<Step> dependencies;
   private final StepTimer timer = new StepTimer();
-
+  
   public class StepTimer extends EventTimer {
-
+    
     public StepTimer() {
       super(null);
     }
-
+    
     @Override
     public String getEventName() {
       return getSimpleCheckpointToken();
     }
   }
-
-  public Step(Action action) {
+  
+  public Step(String checkpointToken, Action action) {
+    this.checkpointToken = checkpointToken;
     this.action = action;
     dependencies = Collections.EMPTY_SET;
   }
-
-  public Step(Action action, Step previous, Step... rest) {
+  
+  public Step(String checkpointToken, Action action, Step previous, Step... rest) {
+    this.checkpointToken = checkpointToken;
     this.action = action;
     dependencies = new HashSet<Step>(Arrays.asList(rest));
     dependencies.add(previous);
@@ -39,48 +42,49 @@ public final class Step {
       throw new NullPointerException("null cannot be a dependency for a step!");
     }
   }
-
-  public Step(Action action, List<Step> steps) {
+  
+  public Step(String checkpointToken, Action action, List<Step> steps) {
+    this.checkpointToken = checkpointToken;
     this.action = action;
     dependencies = new HashSet<Step>(steps);
     if (dependencies.contains(null)) {
       throw new NullPointerException("null cannot be a dependency for a step!");
     }
   }
-
+  
   public Set<Step> getDependencies() {
     return dependencies;
   }
-
+  
   public Action getAction() {
     return action;
   }
-
+  
   public void setCheckpointTokenPrefix(String checkpointTokenPrefix) {
     this.checkpointTokenPrefix = checkpointTokenPrefix;
   }
-
+  
   public String getCheckpointTokenPrefix() {
     return checkpointTokenPrefix;
   }
-
+  
   public String getCheckpointToken() {
-    return getCheckpointTokenPrefix() + getAction().getCheckpointToken();
+    return getCheckpointTokenPrefix() + checkpointToken;
   }
-
+  
   public String getSimpleCheckpointToken() {
-    return getAction().getCheckpointToken();
+    return checkpointToken;
   }
-
+  
   @Override
   public String toString() {
-    return "Step " + checkpointTokenPrefix + " " + action + " deps=" + dependencies;
+    return "Step " + checkpointToken + " " + action + " deps=" + dependencies;
   }
 
   public StepTimer getTimer() {
     return timer;
   }
-
+  
   void run() {
     timer.start();
     try {

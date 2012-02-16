@@ -14,13 +14,13 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram.Vertex;
 
-public class TestWorkflowDiagram extends CascadingExtTestCase {
-
+public class  TestWorkflowDiagram extends CascadingExtTestCase {
+  
   public static class FakeAction extends Action {
-
-    public FakeAction(String token, DataStore[] inputs, DataStore[] outputs) throws IOException {
-      super(token);
-
+    
+    public FakeAction(DataStore[] inputs, DataStore[] outputs) throws IOException {
+      super();
+      
       for (DataStore input : inputs) {
         readsFrom(input);
       }
@@ -28,54 +28,53 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
         writesTo(output);
       }
     }
-
+    
     @Override
     public void execute() {
       try {
         Thread.sleep(1000000L);
-      } catch (InterruptedException e) {
-      }
+      } catch (InterruptedException e) {}
     }
   }
-
+  
   public static final class FakeMultistepAction extends MultiStepAction {
-    public FakeMultistepAction(String checkpointToken, Step[] steps) {
-      super(checkpointToken, Arrays.asList(steps));
+    public FakeMultistepAction(Step[] steps) {
+      super(Arrays.asList(steps));
     }
   }
-
+  
   private Map<String, Vertex> idToVertex;
   DirectedGraph<Vertex, DefaultEdge> graph;
-
+  
   public void testDiagramWithDSCyclesSimple() throws Exception {
     DataStore ds = getFakeDS("ds");
-
-    Step step = new Step(new FakeAction("step", new DataStore[] { ds }, new DataStore[] { ds }));
+    
+    Step step = new Step("step", new FakeAction(new DataStore[] {ds}, new DataStore[] {ds}));
     setupWorkflowGraphWithDSs(step);
-
+    
     verifyNumVertices(3);
     verifyVertexInGraph("step");
     verifyVertexInGraph("ds");
     verifyVertexInGraph("ds__step");
-
+    
     verifyNumEdges(2);
     verifyEdgeInGraph("ds", "step");
     verifyEdgeInGraph("step", "ds__step");
   }
-
+  
   public void testDiagramWithDSCyclesComplex() throws Exception {
     DataStore d1 = getFakeDS("d1");
     DataStore d2 = getFakeDS("d2");
     DataStore d3 = getFakeDS("d3");
-
-    Step s1 = new Step(new FakeAction("s1", new DataStore[] { d1 }, new DataStore[] { d1 }));
-    Step s2 = new Step(new FakeAction("s2", new DataStore[] { d1 }, new DataStore[] { d2 }));
-    Step s3 = new Step(new FakeAction("s3", new DataStore[] { d1 }, new DataStore[] { d1, d3 }), s1);
-    Step s4 = new Step(new FakeAction("s4", new DataStore[] { d1, d2 }, new DataStore[] { d1 }), s2);
-    Step s5 = new Step(new FakeAction("s5", new DataStore[] { d1, d3 }, new DataStore[0]), s3);
-
+    
+    Step s1 = new Step("s1", new FakeAction(new DataStore[] {d1}, new DataStore[] {d1}));
+    Step s2 = new Step("s2", new FakeAction(new DataStore[] {d1}, new DataStore[] {d2}));
+    Step s3 = new Step("s3", new FakeAction(new DataStore[] {d1}, new DataStore[] {d1, d3}), s1);
+    Step s4 = new Step("s4", new FakeAction(new DataStore[] {d1, d2}, new DataStore[] {d1}), s2);
+    Step s5 = new Step("s5", new FakeAction(new DataStore[] {d1, d3}, new DataStore[0]), s3);
+    
     setupWorkflowGraphWithDSs(s4, s5);
-
+    
     verifyNumVertices(11);
     verifyVertexInGraph("d1");
     verifyVertexInGraph("d2");
@@ -88,7 +87,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyVertexInGraph("d1__s1");
     verifyVertexInGraph("d1__s3");
     verifyVertexInGraph("d1__s4");
-
+    
     verifyNumEdges(12);
     verifyEdgeInGraph("d1", "s1");
     verifyEdgeInGraph("s1", "d1__s1");
@@ -103,12 +102,13 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("d2", "s4");
     verifyEdgeInGraph("s4", "d1__s4");
   }
-
+  
   public void testComplexNestedAllContracted() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
+    
     setupWorkflowGraph(wfd);
-
+    
     verifyNumVertices(7);
     verifyVertexInGraph("s1");
     verifyVertexInGraph("s2");
@@ -117,7 +117,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyVertexInGraph("s5");
     verifyVertexInGraph("s6");
     verifyVertexInGraph("s7");
-
+    
     verifyNumEdges(8);
     verifyEdgeInGraph("s1", "s2");
     verifyEdgeInGraph("s2", "s4");
@@ -128,13 +128,13 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s5", "s6");
     verifyEdgeInGraph("s6", "s7");
   }
-
+  
   public void testComplexNestedVertexS5Expanded() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
     wfd.expandMultistepVertex("s5");
     setupWorkflowGraph(wfd);
-
+    
     verifyNumVertices(10);
     verifyVertexInGraph("s1");
     verifyVertexInGraph("s2");
@@ -146,7 +146,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyVertexInGraph("s5__4");
     verifyVertexInGraph("s6");
     verifyVertexInGraph("s7");
-
+    
     verifyNumEdges(13);
     verifyEdgeInGraph("s1", "s2");
     verifyEdgeInGraph("s2", "s4");
@@ -162,13 +162,13 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s5__3", "s6");
     verifyEdgeInGraph("s6", "s7");
   }
-
+  
   public void testComplexNestedAllExpanded() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
     wfd.expandAllMultistepVertices();
     setupWorkflowGraph(wfd);
-
+    
     verifyNumVertices(13);
     verifyVertexInGraph("s1");
     verifyVertexInGraph("s2");
@@ -183,7 +183,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyVertexInGraph("s5__4");
     verifyVertexInGraph("s6");
     verifyVertexInGraph("s7");
-
+    
     verifyNumEdges(17);
     verifyEdgeInGraph("s1", "s2");
     verifyEdgeInGraph("s2", "s4__1");
@@ -203,12 +203,12 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s5__3", "s6");
     verifyEdgeInGraph("s6", "s7");
   }
-
+  
   public void testComplexNestedAllContractedWithDSs() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
     setupWorkflowGraphWithDSs(wfd);
-
+    
     verifyNumVertices(15);
     verifyVertexInGraph("s1");
     verifyVertexInGraph("s2");
@@ -225,7 +225,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyVertexInGraph("d6");
     verifyVertexInGraph("d7");
     verifyVertexInGraph("d1__s4");
-
+    
     verifyNumEdges(19);
     verifyEdgeInGraph("s1", "s2");
     verifyEdgeInGraph("s1", "s3");
@@ -247,13 +247,13 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s6", "d7");
     verifyEdgeInGraph("d7", "s7");
   }
-
+  
   public void testComplexNestedAllExpandedWithDSs() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
     wfd.expandAllMultistepVertices();
     setupWorkflowGraphWithDSs(wfd);
-
+    
     verifyNumVertices(26);
     verifyVertexInGraph("s1");
     verifyVertexInGraph("s2");
@@ -281,7 +281,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyVertexInGraph("id2");
     verifyVertexInGraph("id3");
     verifyVertexInGraph("id4");
-
+    
     verifyNumEdges(32);
     verifyEdgeInGraph("d7", "s7");
     verifyEdgeInGraph("d4", "s7");
@@ -316,7 +316,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s5__1__1", "d3__s5__1__1");
     verifyEdgeInGraph("d3__s5__1__1", "s5__1__2");
   }
-
+  
   private Step getComplexNestedWorkflowTail() throws Exception {
     DataStore d1 = getFakeDS("d1");
     DataStore d2 = getFakeDS("d2");
@@ -329,81 +329,80 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     DataStore id2 = getFakeDS("id2");
     DataStore id3 = getFakeDS("id3");
     DataStore id4 = getFakeDS("id4");
-
-    Step s1 = new Step(new FakeAction("s1", new DataStore[0], new DataStore[0]));
-    Step s2 = new Step(new FakeAction("s2", new DataStore[0], new DataStore[] { d1, d2 }), s1);
-    Step s3 = new Step(new FakeAction("s3", new DataStore[0], new DataStore[] { d3 }), s1);
-
-    Step s4_1 = new Step(new FakeAction("1", new DataStore[] { d1 }, new DataStore[] { d1, id1 }));
-    Step s4_2 = new Step(new FakeAction("2", new DataStore[] { d2 }, new DataStore[] { id2 }));
-    Step s4_3 = new Step(new FakeAction("3", new DataStore[] { d1, id1, id2 },
-      new DataStore[] { d4 }), s4_1, s4_2);
-    Step s4 = new Step(new FakeMultistepAction("s4", new Step[] { s4_1, s4_2, s4_3 }), s2);
-
-    Step s5_1_1 = new Step(new FakeAction("1", new DataStore[] { d2, d3 }, new DataStore[] { d3 }));
-    Step s5_1_2 = new Step(new FakeAction("2", new DataStore[] { d3 }, new DataStore[] { id3 }),
-      s5_1_1);
-    Step s5_1 = new Step(new FakeMultistepAction("1", new Step[] { s5_1_1, s5_1_2 }));
-
-    Step s5_2 = new Step(new FakeAction("2", new DataStore[] { d3 }, new DataStore[] { id4 }), s3);
-    Step s5_3 = new Step(new FakeAction("3", new DataStore[] { id4 }, new DataStore[] { d6 }), s5_2);
-    Step s5_4 = new Step(new FakeAction("4", new DataStore[] { id3, id4 }, new DataStore[] { d5 }),
-      s5_1, s5_2);
-    Step s5 = new Step(new FakeMultistepAction("s5", new Step[] { s5_1, s5_2, s5_3, s5_4 }), s2, s3);
-
-    Step s6 = new Step(new FakeAction("s6", new DataStore[] { d5, d6 }, new DataStore[] { d7 }), s5);
-    Step s7 = new Step(new FakeAction("s7", new DataStore[] { d1, d4, d7 }, new DataStore[0]), s4,
-      s6);
-
+    
+    Step s1 = new Step("s1", new FakeAction(new DataStore[0], new DataStore[0]));
+    Step s2 = new Step("s2", new FakeAction(new DataStore[0], new DataStore[] {d1, d2}), s1);
+    Step s3 = new Step("s3", new FakeAction(new DataStore[0], new DataStore[] {d3}), s1);
+    
+    Step s4_1 = new Step("1", new FakeAction(new DataStore[] {d1}, new DataStore[] {d1, id1}));
+    Step s4_2 = new Step("2", new FakeAction(new DataStore[] {d2}, new DataStore[] {id2}));
+    Step s4_3 = new Step("3", new FakeAction(new DataStore[] {d1, id1, id2},
+        new DataStore[] {d4}), s4_1, s4_2);
+    Step s4 = new Step("s4", new FakeMultistepAction(new Step[] {s4_1, s4_2, s4_3}), s2);
+    
+    Step s5_1_1 = new Step("1", new FakeAction(new DataStore[] {d2, d3}, new DataStore[] {d3}));
+    Step s5_1_2 = new Step("2", new FakeAction(new DataStore[] {d3}, new DataStore[] {id3}),
+        s5_1_1);
+    Step s5_1 = new Step("1", new FakeMultistepAction(new Step[] {s5_1_1, s5_1_2}));
+    
+    Step s5_2 = new Step("2", new FakeAction(new DataStore[] {d3}, new DataStore[] {id4}), s3);
+    Step s5_3 = new Step("3", new FakeAction(new DataStore[] {id4}, new DataStore[] {d6}), s5_2);
+    Step s5_4 = new Step("4", new FakeAction(new DataStore[] {id3, id4}, new DataStore[] {d5}),
+        s5_1, s5_2);
+    Step s5 = new Step("s5", new FakeMultistepAction(new Step[] {s5_1, s5_2, s5_3, s5_4}), s2, s3);
+    
+    Step s6 = new Step("s6", new FakeAction(new DataStore[] {d5, d6}, new DataStore[] {d7}), s5);
+    Step s7 = new Step("s7", new FakeAction(new DataStore[] {d1, d4, d7}, new DataStore[0]), s4, s6);
+    
     return s7;
   }
-
+  
   private void setupWorkflowGraph(WorkflowDiagram wfd) {
     graph = wfd.getDiagramGraph();
     populateNameToVertex(graph);
   }
-
+  
   private void setupWorkflowGraphWithDSs(Step first, Step... rest) {
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(first, rest);
     setupWorkflowGraphWithDSs(wfd);
   }
-
+  
   private void setupWorkflowGraphWithDSs(WorkflowDiagram wfd) {
     graph = wfd.getDiagramGraphWithDataStores();
     populateNameToVertex(graph);
   }
-
+  
   private WorkflowDiagram getWorkflowDiagramFromTails(Step first, Step... rest) {
     WorkflowRunner wfr = new WorkflowRunner("Test Workflow", getTestRoot() + "/test_workflow", 3,
-      12345, first, rest);
+        12345, first, rest);
     return new WorkflowDiagram(wfr);
   }
-
+  
   private static DataStore getFakeDS(String name) throws Exception {
     return new BucketDataStoreImpl(null, name, "/tmp/", name);
   }
-
+  
   private void populateNameToVertex(DirectedGraph<Vertex, DefaultEdge> graph) {
     idToVertex = new HashMap<String, Vertex>();
     for (Vertex v : graph.vertexSet()) {
       idToVertex.put(v.getId(), v);
     }
   }
-
+  
   private void verifyNumVertices(int expectedNumVertices) {
     assertEquals("Wrong number of vertices in workflow graph.", expectedNumVertices,
-      graph.vertexSet().size());
+        graph.vertexSet().size());
   }
-
+  
   private void verifyNumEdges(int expectedNumEdges) {
     assertEquals("Wrong number of edges in workflow graph.", expectedNumEdges,
-      graph.edgeSet().size());
+        graph.edgeSet().size());
   }
-
+  
   private void verifyVertexInGraph(String vname) {
     assertTrue("Vertex " + vname + " should exist in graph", idToVertex.containsKey(vname));
   }
-
+  
   private void verifyEdgeInGraph(String sourceName, String targetName) {
     boolean edgeExists = false;
     Set<DefaultEdge> outgoingEdges = graph.outgoingEdgesOf(idToVertex.get(sourceName));
@@ -414,5 +413,5 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     }
     assertTrue("Edge " + sourceName + ", " + targetName + " should exist in graph", edgeExists);
   }
-
+  
 }

@@ -13,8 +13,8 @@ import com.rapleaf.cascading_ext.relevance.Relevance;
 import com.rapleaf.cascading_ext.relevance.Relevance.RelevanceFunction;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
-public class ExtractKeysFromSplitBucketAction extends RelevanceAction{
-
+public class ExtractKeysFromSplitBucketAction extends RelevanceAction {
+  
   private final SplitBucketDataStore source;
   private final EnumSet selectedFields;
   private final BucketDataStore output;
@@ -22,14 +22,14 @@ public class ExtractKeysFromSplitBucketAction extends RelevanceAction{
   private final RelevanceFunction relevanceFunction;
   private final Relevance relevance;
   
-  public ExtractKeysFromSplitBucketAction(String checkpointToken,
+  public ExtractKeysFromSplitBucketAction(
       SplitBucketDataStore source,
       EnumSet selectedFields,
       BucketDataStore output,
       String outField,
       RelevanceFunction func,
       Class type) {
-    super(checkpointToken);
+    super();
     
     this.source = source;
     this.selectedFields = selectedFields;
@@ -41,7 +41,7 @@ public class ExtractKeysFromSplitBucketAction extends RelevanceAction{
     readsFrom(source);
     creates(output);
   }
-
+  
   @Override
   protected void execute() throws IOException {
     relevance.setParent(this).extract_keys(source.getTap(selectedFields), output.getTap(), outField, relevanceFunction);

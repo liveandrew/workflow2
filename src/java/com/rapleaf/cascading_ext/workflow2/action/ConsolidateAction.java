@@ -8,21 +8,21 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Consolidator;
 
 public class ConsolidateAction extends Action {
-
+  
   private final BucketDataStore bucketDS;
   private final long maxSizeBytes;
   private final int maxWorkers;
-
-  public ConsolidateAction(String checkpointToken, BucketDataStore bucketDS) throws IOException {
-    this(checkpointToken, bucketDS, Consolidator.CONSOLIDATION_TARGET_SIZE_BYTES,
-      Consolidator.CONSOLIDATION_WORKERS);
+  
+  public ConsolidateAction(BucketDataStore bucketDS) throws IOException {
+    this(bucketDS, Consolidator.CONSOLIDATION_TARGET_SIZE_BYTES,
+        Consolidator.CONSOLIDATION_WORKERS);
   }
-
-  public ConsolidateAction(String checkpointToken,
+  
+  public ConsolidateAction(
       BucketDataStore bucketDS,
       long maxSizeBytes,
       int maxWorkers) throws IOException {
-    super(checkpointToken);
+    super();
     this.bucketDS = bucketDS;
     this.maxSizeBytes = maxSizeBytes;
     this.maxWorkers = maxWorkers;
@@ -34,10 +34,10 @@ public class ConsolidateAction extends Action {
     readsFrom(bucketDS);
     writesTo(bucketDS);
   }
-
+  
   @Override
   protected void execute() throws IOException {
     bucketDS.getBucket().consolidate(maxSizeBytes, maxWorkers);
   }
-
+  
 }

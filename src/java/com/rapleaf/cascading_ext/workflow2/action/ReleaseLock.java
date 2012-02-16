@@ -7,12 +7,12 @@ import com.rapleaf.support.FileSystemHelper;
 
 public class ReleaseLock extends Action {
   private final String pathToLock;
-
-  public ReleaseLock(String checkpointToken, String pathToLock) {
-    super(checkpointToken);
+  
+  public ReleaseLock(String pathToLock) {
+    super();
     this.pathToLock = pathToLock;
   }
-
+  
   @Override
   protected void execute() throws Exception {
     FileSystemHelper.getFileSystem().delete(new Path(pathToLock), true);
