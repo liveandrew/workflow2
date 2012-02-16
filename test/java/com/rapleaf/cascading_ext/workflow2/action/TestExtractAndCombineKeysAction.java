@@ -60,7 +60,7 @@ public class TestExtractAndCombineKeysAction extends CascadingExtTestCase {
   
   public void testIt() throws IOException {
     
-    new WorkflowRunner("combine and distinct", getTestRoot() + "/tmp", 2, 32432, new Step("extract-combine-keys",
+    new WorkflowRunner("combine and distinct", getTestRoot() + "/tmp", 1, 32432, new Step("extract-combine-keys",
         new ExtractAndCombineKeysAction(getTestRoot(), Arrays.asList(store1,
             store2, store3), output, "pin", new PINFromInternalEquiv(), PIN.class))).run();
     
