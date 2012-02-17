@@ -15,9 +15,9 @@ public class Example {
     }
     
     private static Collection<Step> steps() {
-      Step s1 = new Step("print 1", new PrintAction("1"));
-      Step s2 = new Step("print 2", new PrintAction("2"), s1);
-      Step s3 = new Step("print 3", new PrintAction("3"), s2);
+      Step s1 = new Step(new PrintAction("1"));
+      Step s2 = new Step(new PrintAction("2"), s1);
+      Step s3 = new Step(new PrintAction("3"), s2);
       return Arrays.asList(s1, s2, s3);
     }
     
@@ -30,12 +30,12 @@ public class Example {
     
     private static Collection<Step> steps() {
       Collection<Step> steps = new ArrayList<Step>();
-      Step s = new Step("1", new PrintAction("1"));
+      Step s = new Step(new PrintAction("1"));
       steps.add(s);
-      s = new Step("2", new PrintAction("2"), s);
+      s = new Step(new PrintAction("2"), s);
       steps.add(s);
-      steps.add(new Step("3", new PrintAction("3"), s));
-      steps.add(new Step("4", new SlightlyLessComplex("4"), s));
+      steps.add(new Step(new PrintAction("3"), s));
+      steps.add(new Step(new SlightlyLessComplex("4"), s));
       return steps;
     }
   }
@@ -55,11 +55,11 @@ public class Example {
   }
   
   public static void main(String[] args) throws IOException {
-    Step s = new Step("first", new PrintAction("first"));
-    new Step("not dependent on second", new PrintAction("not dependent on second"), s);
-    s = new Step("second", new PrintAction("second"), s);
-    s = new Step("complex", new ComplexAction(), s);
-    s = new Step("last", new PrintAction("last"), s);
+    Step s = new Step(new PrintAction("first"));
+    new Step(new PrintAction("not dependent on second"), s);
+    s = new Step(new PrintAction("second"), s);
+    s = new Step(new ComplexAction(), s);
+    s = new Step(new PrintAction("last"), s);
     
     new WorkflowRunner("workflow", "/tmp/checkpoint_dir", 2, 12345, new HashSet<Step>(Arrays.asList(s))).run();
   }

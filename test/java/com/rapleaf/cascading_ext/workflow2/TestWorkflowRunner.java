@@ -7,129 +7,129 @@ import org.apache.hadoop.fs.Path;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 
 public class TestWorkflowRunner extends CascadingExtTestCase {
-  
+
   public static class FailingAction extends Action {
-    public FailingAction() {
-      super();
+    public FailingAction(String checkpointToken) {
+      super(checkpointToken);
     }
-    
+
     @Override
     public void execute() {
       throw new RuntimeException("failed on purpose");
     }
   }
-  
+
   public static class IncrementAction extends Action {
-    public IncrementAction() {
-      super();
+    public IncrementAction(String checkpointToken) {
+      super(checkpointToken);
     }
-    
+
     public static int counter = 0;
-    
+
     @Override
     public void execute() {
-      counter++ ;
+      counter++;
     }
   }
-  
+
   private final String checkpointDir = getTestRoot() + "/checkpoints";
-  
+
   public void setUp() throws Exception {
     super.setUp();
     IncrementAction.counter = 0;
   }
-  
+
   public void testSimple() throws Exception {
-    Step first = new Step("first", new IncrementAction());
-    Step second = new Step("second", new IncrementAction(), first);
+    Step first = new Step(new IncrementAction("first"));
+    Step second = new Step(new IncrementAction("second"), first);
     new WorkflowRunner("test", checkpointDir, 1, null, second).run();
-    
+
     assertEquals(2, IncrementAction.counter);
   }
-  
+
   public void testWritesCheckpoints() throws Exception {
-    Step first = new Step("first", new IncrementAction());
-    Step second = new Step("second", new FailingAction(), first);
-    
+    Step first = new Step(new IncrementAction("first"));
+    Step second = new Step(new FailingAction("second"), first);
+
     try {
       new WorkflowRunner("test", checkpointDir, 1, null, second).run();
       fail("should have failed!");
     } catch (Exception e) {
       // expected
     }
-    
+
     assertEquals(1, IncrementAction.counter);
     assertTrue(getFS().exists(new Path(checkpointDir + "/first")));
   }
-  
+
   public void testResume() throws Exception {
-    Step first = new Step("first", new IncrementAction());
-    Step second = new Step("second", new IncrementAction(), first);
-    
+    Step first = new Step(new IncrementAction("first"));
+    Step second = new Step(new IncrementAction("second"), first);
+
     getFS().createNewFile(new Path(checkpointDir + "/first"));
-    
+
     new WorkflowRunner("test", checkpointDir, 1, null, second).run();
-    
+
     assertEquals(1, IncrementAction.counter);
   }
-  
+
   public void testLoneMultiStepAction() throws Exception {
     // lone multi
-    Step s = new Step("lone", new MultiStepAction(Arrays.asList(new Step("blah",
-        new IncrementAction()))));
+    Step s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(
+      new IncrementAction("blah")))));
     new WorkflowRunner("", checkpointDir, 1, null, s).run();
     assertEquals(1, IncrementAction.counter);
   }
-  
+
   public void testMultiInTheMiddle() throws Exception {
-    Step s = new Step("first", new IncrementAction());
-    s = new Step("lone", new MultiStepAction(Arrays.asList(new Step("blah", new IncrementAction()))),
-        s);
-    s = new Step("last", new IncrementAction(), s);
+    Step s = new Step(new IncrementAction("first"));
+    s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
+      s);
+    s = new Step(new IncrementAction("last"), s);
     new WorkflowRunner("", checkpointDir, 1, null, s).run();
     assertEquals(3, IncrementAction.counter);
   }
-  
+
   public void testMultiAtTheEnd() throws Exception {
-    Step s = new Step("last", new IncrementAction());
-    s = new Step("lone", new MultiStepAction(Arrays.asList(new Step("blah", new IncrementAction()))),
-        s);
+    Step s = new Step(new IncrementAction("first"));
+    s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
+      s);
     new WorkflowRunner("", checkpointDir, 1, null, s).run();
     assertEquals(2, IncrementAction.counter);
   }
-  
+
   public void testMultiInMultiEnd() throws Exception {
-    Step s = new Step("first", new IncrementAction());
+    Step s = new Step(new IncrementAction("first"));
     // please, never do this in real code
-    s = new Step("depth 1", new MultiStepAction(Arrays.asList(new Step("depth 2", new MultiStepAction(
-        Arrays.asList(new Step("blah", new IncrementAction())))))), s);
-    s = new Step("last", new IncrementAction(), s);
+    s = new Step(new MultiStepAction("depth 1", Arrays.asList(new Step(new MultiStepAction(
+      "depth 2", Arrays.asList(new Step(new IncrementAction("blah"))))))), s);
+    s = new Step(new IncrementAction("last"), s);
     new WorkflowRunner("", checkpointDir, 1, null, s).run();
     assertEquals(3, IncrementAction.counter);
   }
-  
+
   public void testMulitInMultiMiddle() throws Exception {
-    Step b = new Step("b", new IncrementAction());
-    Step innermost = new Step("innermost", new MultiStepAction(Arrays.asList(new Step("c",
-        new IncrementAction()))), b);
-    Step d = new Step("d", new IncrementAction(), b);
-    
-    Step a = new Step("a", new IncrementAction());
-    
-    Step outer = new Step("outer", new MultiStepAction(Arrays.asList(b, innermost, d)), a);
-    
+    Step b = new Step(new IncrementAction("b"));
+    Step innermost = new Step(new MultiStepAction("innermost", Arrays.asList(new Step(
+      new IncrementAction("c")))), b);
+    Step d = new Step(new IncrementAction("d"), b);
+
+    Step a = new Step(new IncrementAction("a"));
+
+    Step outer = new Step(new MultiStepAction("outer", Arrays.asList(b, innermost, d)), a);
+
     new WorkflowRunner("", checkpointDir, 1, null, outer).run();
-    
+
     assertEquals(4, IncrementAction.counter);
   }
-  
-   public void testDuplicateCheckpoints() throws Exception {
-   try {
-   new WorkflowRunner("", checkpointDir, 1, null, new Step("a", new IncrementAction()), new Step("a",
-   new IncrementAction()));
-   fail("should have thrown an exception");
-   } catch (IllegalArgumentException e) {
-   // expected
-   }
-   }
+
+  public void testDuplicateCheckpoints() throws Exception {
+    try {
+      new WorkflowRunner("", checkpointDir, 1, null, new Step(new IncrementAction("a")), new Step(
+        new IncrementAction("a")));
+      fail("should have thrown an exception");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
 }

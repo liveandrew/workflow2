@@ -6,27 +6,34 @@ import com.rapleaf.support.event_timer.MultiTimedEvent;
 import java.util.*;
 
 public class MultiStepAction extends Action {
-  
-  private Collection<Step> steps;
 
-  
-  public MultiStepAction() {
-    this(null, null);
+  private Collection<Step> steps;
+  private final MultiStepActionTimer timer = new MultiStepActionTimer();
+
+  private class MultiStepActionTimer extends MultiTimedEvent {
+
+    public MultiStepActionTimer() {
+      super(MultiStepAction.this.getCheckpointToken());
+    }
   }
-  
-  public MultiStepAction(Collection<Step> steps) {
-    this(null, steps);
+
+  public MultiStepAction(String checkpointToken) {
+    this(checkpointToken, null, null);
   }
-  
-  public MultiStepAction(String tmpRoot) {
-    this(tmpRoot, null);
+
+  public MultiStepAction(String checkpointToken, Collection<Step> steps) {
+    this(checkpointToken, null, steps);
   }
-  
-  public MultiStepAction(String tmpRoot, Collection<Step> steps) {
-    super(tmpRoot);
+
+  public MultiStepAction(String checkpointToken, String tmpRoot) {
+    this(checkpointToken, tmpRoot, null);
+  }
+
+  public MultiStepAction(String checkpointToken, String tmpRoot, Collection<Step> steps) {
+    super(checkpointToken, tmpRoot);
     setSubSteps(steps);
   }
-  
+
   /**
    * This method will never actually get called, since MultiStepAction is just a
    * placeholder for the workflow planner to expand later.
@@ -35,26 +42,27 @@ public class MultiStepAction extends Action {
   public final void execute() {
     throw new IllegalStateException("planner error: method should never be called!");
   }
-  
+
   protected void setSubSteps(Collection<Step> steps) {
     Set<String> tokens = new HashSet<String>();
     if (steps == null) {
       return;
     }
     for (Step s : steps) {
-      if (tokens.contains(s.getCheckpointTokenPrefix() + s.getCheckpointToken())) {
-        throw new IllegalArgumentException("Substep checkpoint token " + s.getCheckpointTokenPrefix()+s.getCheckpointToken()
+      if (tokens.contains(s.getCheckpointToken())) {
+        throw new IllegalArgumentException("Substep checkpoint token " + s.getCheckpointToken()
             + " is used more than once in " + this);
       }
       tokens.add(s.getCheckpointToken());
+      timer.addChild(s.getTimer());
     }
     this.steps = steps;
   }
-  
+
   protected void setSubStepsFromTail(Step tail) {
     setSubStepsFromTails(Collections.singleton(tail));
   }
-  
+
   protected void setSubStepsFromTails(Collection<Step> tails) {
     Set<Step> steps = new HashSet<Step>(tails);
     List<Step> queue = new ArrayList<Step>(tails);
@@ -68,16 +76,16 @@ public class MultiStepAction extends Action {
           queue.add(curDep);
         }
       }
-      index++ ;
+      index++;
     }
     setSubSteps(steps);
   }
-  
+
   public Set<Step> getSubSteps() {
     verifyStepsAreSet();
     return new HashSet<Step>(steps);
   }
-  
+
   public Set<Step> getHeadSteps() {
     verifyStepsAreSet();
     Set<Step> heads = new HashSet<Step>();
@@ -88,7 +96,7 @@ public class MultiStepAction extends Action {
     }
     return heads;
   }
-  
+
   public Set<Step> getTailSteps() {
     verifyStepsAreSet();
     Set<Step> possibleTails = new HashSet<Step>(steps);
@@ -97,35 +105,35 @@ public class MultiStepAction extends Action {
     }
     return possibleTails;
   }
-  
+
   @Override
   protected final void readsFrom(DataStore store) {
     throw new RuntimeException("Cannot set a datastore to read from for a multistep action");
   }
-  
+
   @Override
   protected final void creates(DataStore store) {
     throw new RuntimeException("Cannot set a datastore to create for a multistep action");
   }
-  
+
   @Override
   protected final void createsTemporary(DataStore store) {
     throw new RuntimeException(
         "Cannot set a datastore to temporarily create for a multistep action");
   }
-  
+
   @Override
   protected final void writesTo(DataStore store) {
     throw new RuntimeException("Cannot set a datastore to write to for a multistep action");
   }
-  
+
   private void verifyStepsAreSet() {
     if (steps == null) {
       throw new RuntimeException(
           "Steps in a multi-step action must be set before thay can be used!");
     }
   }
-  
+
   @Override
   public Set<DataStore> getReadsFromDatastores() {
     Set<DataStore> datastores = new HashSet<DataStore>();
@@ -134,7 +142,7 @@ public class MultiStepAction extends Action {
     }
     return datastores;
   }
-  
+
   @Override
   public Set<DataStore> getCreatesDatastores() {
     Set<DataStore> datastores = new HashSet<DataStore>();
@@ -143,7 +151,7 @@ public class MultiStepAction extends Action {
     }
     return datastores;
   }
-  
+
   @Override
   public Set<DataStore> getWritesToDatastores() {
     Set<DataStore> datastores = new HashSet<DataStore>();
@@ -151,5 +159,9 @@ public class MultiStepAction extends Action {
       datastores.addAll(step.getAction().getWritesToDatastores());
     }
     return datastores;
+  }
+
+  public MultiStepActionTimer getMultiStepActionTimer() {
+    return timer;
   }
 }

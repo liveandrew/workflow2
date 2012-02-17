@@ -5,23 +5,24 @@ import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Bucket;
 
+
 public class PersistNewVersion extends Action {
-  
+
   private final BucketDataStore newVersion;
   private final VersionedBucketDataStore store;
-  
-  public PersistNewVersion(
+
+  public PersistNewVersion(String checkpointToken,
       BucketDataStore newVersion,
       VersionedBucketDataStore store) {
-    super();
-    
+    super(checkpointToken);
+
     this.newVersion = newVersion;
     this.store = store;
-    
+
     readsFrom(newVersion);
     writesTo(store);
   }
-  
+
   @Override
   protected void execute() throws Exception {
     Bucket newVersion = store.getBucketVersionedStore().openNewVersion();

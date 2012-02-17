@@ -12,15 +12,15 @@ import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwner;
 
 public abstract class RelevanceAction extends Action {
-  
-  public RelevanceAction() {
-    super();
+
+  public RelevanceAction(String checkpointToken) {
+    super(checkpointToken);
   }
-  
-  public RelevanceAction(String tmpDir) {
-    super(tmpDir);
+
+  public RelevanceAction(String checkpointToken, String tmpDir) {
+    super(checkpointToken, tmpDir);
   }
-  
+
   protected Relevance getRelevance(Class type) {
     if (type == byte[].class) {
       return new BytesRelevance(16); // the argument is irrelevant in this use

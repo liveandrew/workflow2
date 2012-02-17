@@ -5,7 +5,7 @@ import com.rapleaf.cascading_ext.relevance.Relevance;
 import com.rapleaf.cascading_ext.relevance.Relevance.RelevanceFunction;
 
 public class BatchQueryAction extends RelevanceAction {
-  
+
   private DataStore source;
   private DataStore output;
   private RelevanceFunction func;
@@ -13,17 +13,17 @@ public class BatchQueryAction extends RelevanceAction {
   private Relevance relevance;
   private boolean useBloom;
   private boolean exact;
-  
-  public BatchQueryAction(
+
+  public BatchQueryAction(String checkPointToken,
       Class relevanceClass,
       DataStore source,
       DataStore output,
       RelevanceFunction func,
       DataStore keys) {
-    this(relevanceClass, source, output, func, keys, true, true);
+    this(checkPointToken, relevanceClass, source, output, func, keys, true, true);
   }
-  
-  public BatchQueryAction(
+
+  public BatchQueryAction(String checkPointToken,
       Class relevanceClass,
       DataStore source,
       DataStore output,
@@ -31,7 +31,7 @@ public class BatchQueryAction extends RelevanceAction {
       DataStore keys,
       boolean useBloom,
       boolean exact) {
-    super();
+    super(checkPointToken);
     this.relevance = getRelevance(relevanceClass).setParent(this);
     this.source = source;
     this.output = output;
@@ -39,12 +39,12 @@ public class BatchQueryAction extends RelevanceAction {
     this.keys = keys;
     this.useBloom = useBloom;
     this.exact = exact;
-    
+
     readsFrom(source);
     readsFrom(keys);
     creates(output);
   }
-  
+
   @Override
   protected void execute() throws Exception {
     relevance.batch_query(source.getTap(), output.getTap(), func, keys.getPath(), useBloom, exact);
