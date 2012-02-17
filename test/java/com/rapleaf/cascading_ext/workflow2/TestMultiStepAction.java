@@ -6,18 +6,47 @@ import java.util.HashSet;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 
 public class TestMultiStepAction extends CascadingExtTestCase {
-  private final static Step a = new Step(new NullAction("a"));
-  private final static Step b = new Step(new NullAction("b"));
-  private final static Step g = new Step(new NullAction("g"));
-  private final static Step c = new Step(new NullAction("c"), a);
-  private final static Step d = new Step(new NullAction("d"), a, b);
-  private final static Step e = new Step(new NullAction("e"), b);
-  private final static Step f = new Step(new NullAction("f"), c, e);
+  private Step a;
+  private Step b;
+  private Step g;
+  private Step c ;
+  private Step d;
+  private Step e;
+  private Step f;
+  
+  private MultiStepAction msa;
 
-  private final static MultiStepAction msa = new MultiStepAction("blah", Arrays.asList(a, b, c, d,
-    e, f, g));
+  public final class NullAction2 extends Action {
+    public NullAction2(String checkpoint, String tmpRoot) {
+      super(checkpoint, tmpRoot);
+    }
 
+    @Override
+    public void execute() {}
+  }
+
+  public void setUp() throws Exception {
+    super.setUp();
+
+    msa = new MultiStepAction("msa", getTestRoot());
+
+    b = new Step(new NullAction2("b", msa.getTmpRoot()));
+    a = new Step(new NullAction2("a", msa.getTmpRoot()));
+    c = new Step(new NullAction2("c", msa.getTmpRoot()), a);
+    d = new Step(new NullAction2("d", msa.getTmpRoot()), a, b);
+    e = new Step(new NullAction2("e", msa.getTmpRoot()), b);
+    f = new Step(new NullAction2("f", msa.getTmpRoot()), c, e);
+    g = new Step(new NullAction2("g", msa.getTmpRoot()));
+
+    msa.setSubSteps(Arrays.asList(a, b, c, d, e, f, g));
+  }
+  
   public void testGetHeadSteps() throws Exception {
+
+    //  assert that the tmp root is set
+    assertEquals("/tmp/cascading_ext/TestMultiStepAction_AUTOGEN/msa-tmp-stores", msa.getTmpRoot());
+    assertEquals("/tmp/cascading_ext/TestMultiStepAction_AUTOGEN/msa-tmp-stores/a-tmp-stores", a.getAction().getTmpRoot());
+
     assertEquals(new HashSet<Step>(Arrays.asList(a, b, g)), msa.getHeadSteps());
   }
 
