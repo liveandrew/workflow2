@@ -374,7 +374,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   }
 
   private WorkflowDiagram getWorkflowDiagramFromTails(Step first, Step... rest) {
-    WorkflowRunner wfr = new WorkflowRunner("Test Workflow", getTestRoot() + "/test_workflow", 3,
+    WorkflowRunner wfr = new WorkflowRunner("Test Workflow", getTestRoot() + "/test_workflow", 1,
       12345, first, rest);
     return new WorkflowDiagram(wfr);
   }
