@@ -306,7 +306,7 @@ public final class WorkflowRunner {
         runningSteps.add(startableStep);
         pendingSteps.remove(startableStep);
         try {
-          Thread.sleep(2000);
+          Thread.sleep(200);
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
