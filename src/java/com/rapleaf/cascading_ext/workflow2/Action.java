@@ -23,7 +23,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
   
-  private final String tmpRoot;
+  private String tmpRoot;
   
   private final Set<DataStore> readsFromDatastores = new HashSet<DataStore>();
   private final Set<DataStore> createsDatastores = new HashSet<DataStore>();
@@ -40,13 +40,13 @@ public abstract class Action {
   private List<Flow> flows = new ArrayList<Flow>();
   
   private FileSystem fs;
-  
+
   public Action() {
     this.tmpRoot = null;
   }
   
   public Action(String tmpRoot) {
-    if (!tmpRoot.endsWith("/")) {
+    if (tmpRoot != null && !tmpRoot.endsWith("/")) {
       tmpRoot += "/";
     }
 
@@ -229,7 +229,11 @@ public abstract class Action {
     
     return (int) ((double) numComplete / flowstats.getStepsCount() * maxPct);
   }
-  
+
+  public void setTmpRoot(String tmpRoot) {
+    this.tmpRoot = tmpRoot;
+  }
+
   private class FlowProgressMonitor extends Thread {
     private boolean _keepRunning;
     private final Flow _flow;
