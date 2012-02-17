@@ -1,8 +1,16 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
-import com.rapleaf.support.event_timer.EventTimer;
-import com.rapleaf.support.event_timer.TimedEventHelper;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Semaphore;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -10,11 +18,9 @@ import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.*;
-import java.util.concurrent.Semaphore;
+import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
+import com.rapleaf.support.event_timer.EventTimer;
+import com.rapleaf.support.event_timer.TimedEventHelper;
 
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
@@ -299,6 +305,11 @@ public final class WorkflowRunner {
         // start one startable
         runningSteps.add(startableStep);
         pendingSteps.remove(startableStep);
+        try {
+          Thread.sleep(2000);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
         startStep(startableStep);
         
         // note that we explicitly don't release the semaphore here. this is
