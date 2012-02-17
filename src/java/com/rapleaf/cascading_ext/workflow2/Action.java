@@ -1,17 +1,24 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import cascading.flow.Flow;
-import cascading.flow.hadoop.HadoopStepStats;
-import cascading.stats.FlowStats;
-import cascading.stats.StepStats;
-import com.rapleaf.cascading_ext.datastore.DataStore;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.util.*;
+import cascading.flow.Flow;
+import cascading.flow.hadoop.HadoopStepStats;
+import cascading.stats.FlowStats;
+import cascading.stats.StepStats;
+
+import com.rapleaf.cascading_ext.datastore.DataStore;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
@@ -39,7 +46,11 @@ public abstract class Action {
   }
   
   public Action(String tmpRoot) {
-    this.tmpRoot = tmpRoot + "/";
+    if (!tmpRoot.endsWith("/")) {
+      tmpRoot += "/";
+    }
+
+    this.tmpRoot = tmpRoot;
   }
   
   protected FileSystem getFS() throws IOException {
