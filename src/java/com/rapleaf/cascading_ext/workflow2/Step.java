@@ -2,6 +2,9 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.flow.Flow;
 import cascading.stats.StepStats;
+
+import com.rapleaf.cascading_ext.counters.Counter;
+import com.rapleaf.cascading_ext.counters.Counters;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.FixedTimedEvent;
 
@@ -13,6 +16,7 @@ public final class Step {
   private final Action action;
   private final Set<Step> dependencies;
   private final StepTimer timer = new StepTimer();
+  private final List<Counter> counters = new ArrayList<Counter>();
 
   public class StepTimer extends EventTimer {
 
@@ -28,7 +32,7 @@ public final class Step {
 
   public Step(Action action) {
     this.action = action;
-    dependencies = Collections.EMPTY_SET;
+    dependencies = Collections.emptySet();
   }
 
   public Step(Action action, Step previous, Step... rest) {
@@ -80,17 +84,22 @@ public final class Step {
   public StepTimer getTimer() {
     return timer;
   }
+  
+  public List<Counter> getCounters() { 
+    return counters;
+  }
 
   void run() {
     timer.start();
     try {
       action.internalExecute();
     } finally {
-      // If needed, add timers for flow steps that have been executed by the action
       for (Flow flow : action.getRunFlows()) {
+        // add timers and counters from flows the action executed
         for (StepStats stepStats : flow.getFlowStats().getStepStats()) {
           timer.addChild(new FixedTimedEvent(stepStats.getName(), stepStats.getStartTime(), stepStats.getFinishedTime()));
         }
+        counters.addAll( Counters.getCounters(flow) );
       }
       timer.stop();
     }
