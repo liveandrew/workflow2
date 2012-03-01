@@ -5,6 +5,7 @@ import cascading.stats.StepStats;
 
 import com.rapleaf.cascading_ext.counters.Counter;
 import com.rapleaf.cascading_ext.counters.Counters;
+import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.FixedTimedEvent;
 
@@ -16,7 +17,7 @@ public final class Step {
   private final Action action;
   private final Set<Step> dependencies;
   private final StepTimer timer = new StepTimer();
-  private final List<Counter> counters = new ArrayList<Counter>();
+  private final List<NestedCounter> nestedCounters = new ArrayList<NestedCounter>();
 
   public class StepTimer extends EventTimer {
 
@@ -85,8 +86,8 @@ public final class Step {
     return timer;
   }
   
-  public List<Counter> getCounters() { 
-    return counters;
+  public List<NestedCounter> getCounters() { 
+    return nestedCounters;
   }
 
   void run() {
@@ -95,11 +96,20 @@ public final class Step {
       action.internalExecute();
     } finally {
       for (Flow flow : action.getRunFlows()) {
+        Map<StepStats, List<Counter>> counters = Counters.getCountersByStep(flow);
+        
         // add timers and counters from flows the action executed
         for (StepStats stepStats : flow.getFlowStats().getStepStats()) {
           timer.addChild(new FixedTimedEvent(stepStats.getName(), stepStats.getStartTime(), stepStats.getFinishedTime()));
+          
+          if (counters.containsKey(stepStats)) {
+            for (Counter c : counters.get(stepStats)) {
+              NestedCounter nc = new NestedCounter(c, stepStats.getName());
+              nc.addParentEvent(getSimpleCheckpointToken());
+              nestedCounters.add(nc);
+            }
+          }
         }
-        counters.addAll( Counters.getCounters(flow) );
       }
       timer.stop();
     }

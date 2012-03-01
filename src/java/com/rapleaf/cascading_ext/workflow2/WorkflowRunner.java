@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
@@ -435,5 +436,17 @@ public final class WorkflowRunner {
 
   public EventTimer getTimer() {
     return timer;
+  }
+  
+  public List<NestedCounter> getCounters() {
+    // we don't know what stage of execution we are in when this is called
+    // so get an up-to-date list of counters each time
+    List<NestedCounter> counters = new ArrayList<NestedCounter>();
+    for (StepRunner sr : completedSteps) {
+      for (NestedCounter c : sr.step.getCounters()) {
+        counters.add( c.addParentEvent(workflowName) );
+      }
+    }
+    return counters;
   }
 }

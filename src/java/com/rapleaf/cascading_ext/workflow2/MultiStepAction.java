@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.support.event_timer.MultiTimedEvent;
 
@@ -163,5 +164,17 @@ public class MultiStepAction extends Action {
 
   public MultiStepActionTimer getMultiStepActionTimer() {
     return timer;
+  }
+  
+  public List<NestedCounter> getCounters() {
+    // we don't know what stage of execution we are in when this is called
+    // so get an up-to-date list of counters each time
+    List<NestedCounter> counters = new ArrayList<NestedCounter>();
+    for (Step s : steps) {
+      for (NestedCounter c : s.getCounters()) {
+        counters.add( c.addParentEvent(s.getCheckpointToken()) );
+      }
+    }
+    return counters;
   }
 }
