@@ -395,8 +395,10 @@ public final class WorkflowRunner {
         MailerHelper.mail(getNotificationEmail(), subject, body);
       } catch (IOException e) {
         LOG.info("Could not send notification email to: " + notificationEmail);
-        LOG.info(subject);
-        LOG.info(body);
+        LOG.info("subject: " + subject);
+        if (!body.isEmpty()) {
+          LOG.info("body: " + body);
+        }
         throw new RuntimeException(e);
       }
     }
