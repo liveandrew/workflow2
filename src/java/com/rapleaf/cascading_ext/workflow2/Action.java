@@ -98,7 +98,9 @@ public abstract class Action {
     for (Set<DataStore> datastores : Arrays.asList(createsDatastores, createsTemporaryDatastores)) {
       for (DataStore datastore : datastores) {
         LOG.info("Deleting directory " + datastore.getPath());
-        fs.delete(new Path(datastore.getPath()), true);
+        if(!fs.delete(new Path(datastore.getPath()), true)){
+          throw new IOException("failed to delete store "+datastore.getPath()+"!");
+        }
       }
     }
   }
