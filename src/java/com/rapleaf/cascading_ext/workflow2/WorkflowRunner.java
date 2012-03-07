@@ -1,9 +1,18 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
-import com.rapleaf.support.event_timer.EventTimer;
-import com.rapleaf.support.event_timer.TimedEventHelper;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Semaphore;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -11,11 +20,11 @@ import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.*;
-import java.util.concurrent.Semaphore;
+import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
+import com.rapleaf.support.MailerHelper;
+import com.rapleaf.support.event_timer.EventTimer;
+import com.rapleaf.support.event_timer.TimedEventHelper;
 
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
@@ -145,6 +154,7 @@ public final class WorkflowRunner {
   private boolean alreadyRun;
   private FileSystem fs;
   private Integer webUiPort;
+  private final String notificationEmail;
   private WorkflowWebServer webServer;
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
@@ -166,10 +176,20 @@ public final class WorkflowRunner {
   }
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps) {
+    this(workflowName,
+        checkpointDir,
+        maxConcurrentComponents,
+        webUiPort,
+        tailSteps,
+        null);
+  }
+
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmail) {
     this.workflowName = workflowName;
     this.checkpointDir = checkpointDir;
     this.maxConcurrentSteps = maxConcurrentComponents;
     this.webUiPort = webUiPort;
+    this.notificationEmail = notificationEmail;
 
     this.semaphore = new Semaphore(maxConcurrentComponents);
 
@@ -333,16 +353,44 @@ public final class WorkflowRunner {
         n++;
       }
       String wholeMessage = sw.toString();
+
+      sendFailureEmail(wholeMessage);
       throw new RuntimeException("One or more steps failed!\n" + wholeMessage);
     }
 
     // nothing failed, but if there are steps that haven't been executed, it's
     // because someone shut the workflow down.
     if (pendingSteps.size() > 0) {
+      sendShutdownEmail();
       throw new RuntimeException(SHUTDOWN_MESSAGE_PREFIX + getReasonForShutdownRequest());
     }
   }
 
+  private void sendFailureEmail(String msg) {
+    mail("One or more steps failed for \"" + workflowName + "\"!", msg);
+  }
+
+  private void sendShutdownEmail() {
+    mail("Incomplete steps remain but a shutdown was requested for \"" + workflowName + "\"", "Reason for shutdown: " + getReasonForShutdownRequest());
+  }
+
+  private void mail(String subject) {
+    mail(subject, "");
+  }
+
+  private void mail(String subject, String body) {
+    if (notificationEmail != null) {
+      try {
+        MailerHelper.mail(notificationEmail, subject, body);
+      } catch (IOException e) {
+        LOG.info("Could not send notification email to: " + notificationEmail);
+        LOG.info(subject);
+        LOG.info(body);
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  
   public boolean isShutdownPending() {
     return shutdownPending;
   }
@@ -437,14 +485,14 @@ public final class WorkflowRunner {
   public EventTimer getTimer() {
     return timer;
   }
-  
+
   public List<NestedCounter> getCounters() {
     // we don't know what stage of execution we are in when this is called
     // so get an up-to-date list of counters each time
     List<NestedCounter> counters = new ArrayList<NestedCounter>();
     for (StepRunner sr : completedSteps) {
       for (NestedCounter c : sr.step.getCounters()) {
-        counters.add( c.addParentEvent(workflowName) );
+        counters.add(c.addParentEvent(workflowName));
       }
     }
     return counters;
