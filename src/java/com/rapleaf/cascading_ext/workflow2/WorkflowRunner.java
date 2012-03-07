@@ -265,12 +265,19 @@ public final class WorkflowRunner {
       LOG.debug("Deleting checkpoint dir " + checkpointDir);
       fs.delete(new Path(checkpointDir), true);
 
+      LOG.info("Sending success email");
+      sendSuccessEmail();
+
       LOG.info("Done!");
     } finally {
       shutdownWebServer();
       timer.stop();
       LOG.info("Timing statistics:\n" + TimedEventHelper.toTextSummary(timer));
     }
+  }
+
+  private void sendSuccessEmail() {
+    mail("Workflow \"" + getWorkflowName() + "\" succeeded!");
   }
 
   private void runInternal() {
@@ -378,10 +385,14 @@ public final class WorkflowRunner {
     mail(subject, "");
   }
 
+  public String getNotificationEmail() {
+    return notificationEmail;
+  }
+
   private void mail(String subject, String body) {
-    if (notificationEmail != null) {
+    if (getNotificationEmail() != null) {
       try {
-        MailerHelper.mail(notificationEmail, subject, body);
+        MailerHelper.mail(getNotificationEmail(), subject, body);
       } catch (IOException e) {
         LOG.info("Could not send notification email to: " + notificationEmail);
         LOG.info(subject);
