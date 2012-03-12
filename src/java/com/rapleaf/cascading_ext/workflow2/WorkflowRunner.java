@@ -1,18 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Semaphore;
-
+import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
+import com.rapleaf.support.MailerHelper;
+import com.rapleaf.support.event_timer.EventTimer;
+import com.rapleaf.support.event_timer.TimedEventHelper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -20,11 +12,11 @@ import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
-import com.rapleaf.db_schemas.maindb.helpers.TimedEventHelper;
-import com.rapleaf.support.MailerHelper;
-import com.rapleaf.support.event_timer.EventTimer;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.*;
+import java.util.concurrent.Semaphore;
 
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
@@ -403,7 +395,7 @@ public final class WorkflowRunner {
       }
     }
   }
-  
+
   public boolean isShutdownPending() {
     return shutdownPending;
   }
