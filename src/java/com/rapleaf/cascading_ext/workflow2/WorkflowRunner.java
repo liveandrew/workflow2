@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import com.rapleaf.db_schemas.maindb.helpers.TimedEventHelper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -24,7 +25,6 @@ import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.MailerHelper;
 import com.rapleaf.support.event_timer.EventTimer;
-import com.rapleaf.support.event_timer.TimedEventHelper;
 
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
