@@ -146,7 +146,7 @@ public final class WorkflowRunner {
   private boolean alreadyRun;
   private FileSystem fs;
   private Integer webUiPort;
-  private final String notificationEmail;
+  private final String[] notificationEmails;
   private WorkflowWebServer webServer;
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
@@ -176,12 +176,16 @@ public final class WorkflowRunner {
         null);
   }
 
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmail) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
     this.workflowName = workflowName;
     this.checkpointDir = checkpointDir;
     this.maxConcurrentSteps = maxConcurrentComponents;
     this.webUiPort = webUiPort;
-    this.notificationEmail = notificationEmail;
+    if (notificationEmails != null) {
+      this.notificationEmails = notificationEmails.split(",");
+    } else {
+      this.notificationEmails = new String[]{};
+    }
 
     this.semaphore = new Semaphore(maxConcurrentComponents);
 
@@ -377,16 +381,16 @@ public final class WorkflowRunner {
     mail(subject, "");
   }
 
-  public String getNotificationEmail() {
-    return notificationEmail;
+  public String[] getNotificationEmails() {
+    return notificationEmails;
   }
 
   private void mail(String subject, String body) {
-    if (getNotificationEmail() != null) {
+    for (String email : getNotificationEmails()) {
       try {
-        MailerHelper.mail(getNotificationEmail(), subject, body);
+        MailerHelper.mail(email, subject, body);
       } catch (IOException e) {
-        LOG.info("Could not send notification email to: " + notificationEmail);
+        LOG.info("Could not send notification email to: " + email);
         LOG.info("subject: " + subject);
         if (!body.isEmpty()) {
           LOG.info("body: " + body);
