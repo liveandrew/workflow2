@@ -8,25 +8,28 @@ import com.rapleaf.formats.bucket.Bucket;
 
 public class PersistNewVersion extends Action {
 
-  private final BucketDataStore newVersion;
+  private final BucketDataStore versionToPersist;
   private final VersionedBucketDataStore store;
 
-  public PersistNewVersion(String checkpointToken,
-      BucketDataStore newVersion,
-      VersionedBucketDataStore store) {
+  public PersistNewVersion(String checkpointToken, BucketDataStore versionToPersist, VersionedBucketDataStore store) {
     super(checkpointToken);
 
-    this.newVersion = newVersion;
+    this.versionToPersist = versionToPersist;
     this.store = store;
 
-    readsFrom(newVersion);
+    readsFrom(versionToPersist);
     writesTo(store);
   }
 
   @Override
   protected void execute() throws Exception {
     Bucket newVersion = store.getBucketVersionedStore().openNewVersion();
-    newVersion.absorb(this.newVersion.getBucket());
+    newVersion.absorb(versionToPersist.getBucket());
+
+    if (versionToPersist.getBucket().isImmutable()) {
+      newVersion.markAsImmutable();
+    }
+
     store.getBucketVersionedStore().completeVersion(newVersion);
   }
 }
