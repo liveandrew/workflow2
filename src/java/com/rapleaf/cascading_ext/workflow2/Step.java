@@ -90,7 +90,7 @@ public final class Step {
     return nestedCounters;
   }
 
-  void run() {
+  public void run() {
     timer.start();
     try {
       action.internalExecute();
