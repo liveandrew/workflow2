@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.MailerHelper;
@@ -47,6 +48,7 @@ public final class WorkflowRunner {
     }
 
     public void start() {
+      CascadingHelper.getJobConf();
       Runnable r = new Runnable() {
         @Override
         public void run() {
