@@ -24,10 +24,18 @@ public abstract class HankDomainBuilderAction extends Action {
   private final CoordinatorConfigurator configurator;
 
   public HankDomainBuilderAction(String checkpointToken,
+                                 HankVersionType versionType,
+                                 CoordinatorConfigurator configurator,
+                                 HankDataStore output){
+    this(checkpointToken, null, versionType, configurator, output);
+  }
+
+  public HankDomainBuilderAction(String checkpointToken,
+      String tmpRoot,
       HankVersionType versionType,
       CoordinatorConfigurator configurator,
       HankDataStore output) {
-    super(checkpointToken);
+    super(checkpointToken, tmpRoot);
     this.versionType = versionType;
     this.configurator = configurator;
     this.output = output;
