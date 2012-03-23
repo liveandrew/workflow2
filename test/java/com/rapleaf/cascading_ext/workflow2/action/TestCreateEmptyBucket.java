@@ -29,11 +29,13 @@ public class TestCreateEmptyBucket extends CascadingExtTestCase {
   }
 
   public void createBucketWithNumPartitions(BucketDataStore ds, int numPartitions) throws Exception {
-    CreateEmptyBucket action = new CreateEmptyBucket(new Path(ds.getPath()).getName(), ds, numPartitions);
+    CreateEmptyBucket action = new CreateEmptyBucket(new Path(ds.getPath()).getName(), ds, numPartitions, true);
 
     action.execute();
 
     verifyPartitions(ds, numPartitions);
+    
+    assertTrue(ds.getBucket().isImmutable());
   }
 
   private void verifyPartitions(BucketDataStore ds, int numPartitions) throws IOException {
