@@ -21,11 +21,11 @@ public class TestCreateEmptyBucket extends CascadingExtTestCase {
   }
 
   public void testWithOnePart() throws Exception {
-    createBucketWithNumPartitions(builder.getPINDataStore("with_many_parts"), 1);
+    createBucketWithNumPartitions(builder.getPINDataStore("one_part"), 1);
   }
 
   public void testWithNoParts() throws Exception {
-    createBucketWithNumPartitions(builder.getPINDataStore("with_many_parts"), 0);
+    createBucketWithNumPartitions(builder.getPINDataStore("zero_parts"), 0);
   }
 
   public void createBucketWithNumPartitions(BucketDataStore ds, int numPartitions) throws Exception {
