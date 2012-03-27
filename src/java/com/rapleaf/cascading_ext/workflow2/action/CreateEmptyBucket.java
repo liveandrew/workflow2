@@ -9,13 +9,14 @@ public class CreateEmptyBucket extends Action {
   private final BucketDataStore dataStore;
   private final int numPartitions;
   private final boolean immutable;
-  private String filenamePattern = "%s/part-%05d";
 
   public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, int numPartitions, boolean immutable) {
     super(checkpointToken);
     this.dataStore = dataStore;
     this.numPartitions = numPartitions;
     this.immutable = immutable;
+    
+    creates(dataStore);
   }
 
   public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, boolean immutable) {
@@ -30,6 +31,7 @@ public class CreateEmptyBucket extends Action {
   protected void execute() throws Exception {
     String rootPath = dataStore.getPath();
     Bucket bucket = Bucket.create(getFS(), rootPath);
+    String filenamePattern = "%s/part-%05d";
 
     for (int partNum = 0; partNum < numPartitions; partNum++) {
       RecordOutputStream os = bucket.openWrite(String.format(filenamePattern, rootPath, partNum));
