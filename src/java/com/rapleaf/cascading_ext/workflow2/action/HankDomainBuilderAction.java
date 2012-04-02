@@ -25,13 +25,6 @@ public abstract class HankDomainBuilderAction extends Action {
 
   public HankDomainBuilderAction(
       String checkpointToken,
-      CoordinatorConfigurator configurator,
-      HankDataStore output) {
-    this(checkpointToken, null, null, configurator, output);
-  }
-
-  public HankDomainBuilderAction(
-      String checkpointToken,
       HankVersionType versionType,
       CoordinatorConfigurator configurator,
       HankDataStore output) {
