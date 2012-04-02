@@ -44,7 +44,7 @@ public abstract class HankDomainBuilderAction extends Action {
   }
 
   public void execute() throws Exception {
-    preprocess();
+    prepare();
 
     if (getVersionType() == null) {
       throw new IllegalStateException("Must set a version type before executing the domain builder!");
@@ -97,7 +97,7 @@ public abstract class HankDomainBuilderAction extends Action {
     // Default is no-op
   }
 
-  protected void preprocess() {
+  protected void prepare() {
     // Default is no-op
   }
 }
