@@ -1,12 +1,8 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
-
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
@@ -15,6 +11,9 @@ import com.rapleaf.hank.config.CoordinatorConfigurator;
 import com.rapleaf.hank.hadoop.DomainBuilderProperties;
 import com.rapleaf.hank.storage.incremental.IncrementalDomainVersionProperties;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class HankDomainBuilderAction extends Action {
 
   protected final Map<Object, Object> properties;
@@ -22,6 +21,7 @@ public abstract class HankDomainBuilderAction extends Action {
   private final HankDataStore output;
   private HankVersionType versionType;
   private final CoordinatorConfigurator configurator;
+  private Integer partitionToBuild = null;
 
   public HankDomainBuilderAction(
       String checkpointToken,
@@ -32,10 +32,10 @@ public abstract class HankDomainBuilderAction extends Action {
   }
 
   public HankDomainBuilderAction(String checkpointToken,
-      String tmpRoot,
-      HankVersionType versionType,
-      CoordinatorConfigurator configurator,
-      HankDataStore output) {
+                                 String tmpRoot,
+                                 HankVersionType versionType,
+                                 CoordinatorConfigurator configurator,
+                                 HankDataStore output) {
     super(checkpointToken, tmpRoot);
     this.versionType = versionType;
     this.configurator = configurator;
@@ -51,7 +51,7 @@ public abstract class HankDomainBuilderAction extends Action {
     }
 
     DomainBuilderProperties domainBuilderProperties = new DomainBuilderProperties(
-      output.getDomainName(), configurator, output.getPath());
+        output.getDomainName(), configurator, output.getPath());
 
     IncrementalDomainVersionProperties domainVersionProperties;
     switch (versionType) {
@@ -60,14 +60,18 @@ public abstract class HankDomainBuilderAction extends Action {
         break;
       case DELTA:
         domainVersionProperties = new IncrementalDomainVersionProperties.Delta(
-          domainBuilderProperties.getDomain());
+            domainBuilderProperties.getDomain());
         break;
       default:
         throw new RuntimeException("Unknown version type: " + versionType);
     }
 
     CascadingDomainBuilder builder = new CascadingDomainBuilder(domainBuilderProperties,
-      domainVersionProperties, getPipe(), getKeyFieldName(), getValueFieldName());
+        domainVersionProperties, getPipe(), getKeyFieldName(), getValueFieldName());
+
+    if (partitionToBuild != null) {
+      builder.setPartitionToBuild(partitionToBuild);
+    }
 
     properties.putAll(CascadingHelper.DEFAULT_PROPERTIES);
     Flow flow = builder.build(properties, getSources());
@@ -83,6 +87,14 @@ public abstract class HankDomainBuilderAction extends Action {
 
   protected HankVersionType getVersionType() {
     return versionType;
+  }
+
+  protected void setPartitionToBuild(int partitionToBuild) {
+    this.partitionToBuild = partitionToBuild;
+  }
+
+  protected Integer getPartitionToBuild() {
+    return partitionToBuild;
   }
 
   protected abstract Pipe getPipe() throws Exception;
