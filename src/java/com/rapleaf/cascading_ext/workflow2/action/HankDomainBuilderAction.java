@@ -8,9 +8,14 @@ import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.hank.cascading.CascadingDomainBuilder;
 import com.rapleaf.hank.config.CoordinatorConfigurator;
+import com.rapleaf.hank.coordinator.Coordinator;
+import com.rapleaf.hank.coordinator.Domain;
+import com.rapleaf.hank.coordinator.RunWithCoordinator;
+import com.rapleaf.hank.coordinator.RunnableWithCoordinator;
 import com.rapleaf.hank.hadoop.DomainBuilderProperties;
 import com.rapleaf.hank.storage.incremental.IncrementalDomainVersionProperties;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,6 +48,22 @@ public abstract class HankDomainBuilderAction extends Action {
     this.properties = new HashMap<Object, Object>();
   }
 
+  private static class IncrementalDomainVersionPropertiesDeltaGetter implements RunnableWithCoordinator {
+
+    private final String domainName;
+    private IncrementalDomainVersionProperties result;
+
+    public IncrementalDomainVersionPropertiesDeltaGetter(String domainName) {
+      this.domainName = domainName;
+    }
+
+    @Override
+    public void run(Coordinator coordinator) throws IOException {
+      Domain domain = DomainBuilderProperties.getDomain(coordinator, domainName);
+      result = new IncrementalDomainVersionProperties.Delta(domain);
+    }
+  }
+
   public void execute() throws Exception {
     prepare();
 
@@ -50,17 +71,19 @@ public abstract class HankDomainBuilderAction extends Action {
       throw new IllegalStateException("Must set a version type before executing the domain builder!");
     }
 
-    DomainBuilderProperties domainBuilderProperties = new DomainBuilderProperties(
+    final DomainBuilderProperties domainBuilderProperties = new DomainBuilderProperties(
         output.getDomainName(), configurator, output.getPath());
 
-    IncrementalDomainVersionProperties domainVersionProperties;
+    final IncrementalDomainVersionProperties domainVersionProperties;
     switch (versionType) {
       case BASE:
         domainVersionProperties = new IncrementalDomainVersionProperties.Base();
         break;
       case DELTA:
-        domainVersionProperties = new IncrementalDomainVersionProperties.Delta(
-            domainBuilderProperties.getDomain());
+        IncrementalDomainVersionPropertiesDeltaGetter deltaGetter =
+            new IncrementalDomainVersionPropertiesDeltaGetter(domainBuilderProperties.getDomainName());
+        RunWithCoordinator.run(domainBuilderProperties.getConfigurator(), deltaGetter);
+        domainVersionProperties = deltaGetter.result;
         break;
       default:
         throw new RuntimeException("Unknown version type: " + versionType);
