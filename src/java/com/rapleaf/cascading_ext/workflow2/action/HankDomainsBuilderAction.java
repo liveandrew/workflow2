@@ -21,7 +21,7 @@ public abstract class HankDomainsBuilderAction extends Action {
   
   protected final Map<Object, Object> properties;
   
-  private final HankDataStore[] outputs;
+  protected final HankDataStore[] outputs;
   private HankVersionType versionType;
   private final CoordinatorConfigurator configurator;
   private Integer partitionToBuild = null;
@@ -54,7 +54,7 @@ public abstract class HankDomainsBuilderAction extends Action {
       cdbs.add(makeDomainBuilder(output));
     }
     
-    Flow flow = CascadingDomainBuilder.buildDomains(properties, getSources(), getSinks(), getTails(), cdbs.toArray(new CascadingDomainBuilder[cdbs.size()]));
+    Flow flow = CascadingDomainBuilder.buildDomains(properties, getSources(), getOtherSinks(), getOtherTails(), cdbs.toArray(new CascadingDomainBuilder[cdbs.size()]));
     
     if (flow != null) {
       postProcessFlow(flow);
@@ -119,9 +119,17 @@ public abstract class HankDomainsBuilderAction extends Action {
   
   protected abstract Map<String, Tap> getSources();
   
-  protected abstract Map<String, Tap> getSinks();
+  protected Map<String, Tap> getOtherSinks() {
+    // Default is empty
+    Map<String, Tap> otherSinks = new HashMap<String, Tap>();
+    return otherSinks;
+  }
   
-  protected abstract Pipe[] getTails();
+  protected Pipe[] getOtherTails() {
+    // Default is empty
+    Pipe[] otherTails = new Pipe[0];
+    return otherTails;
+  }
   
   protected void postProcessFlow(Flow flow) {
     // Default is no-op
