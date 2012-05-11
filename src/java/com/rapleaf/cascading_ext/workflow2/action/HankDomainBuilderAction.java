@@ -27,6 +27,7 @@ public abstract class HankDomainBuilderAction extends Action {
   private HankVersionType versionType;
   private final CoordinatorConfigurator configurator;
   private Integer partitionToBuild = null;
+  private Integer domainVersionNumber = null;
 
   public HankDomainBuilderAction(
       String checkpointToken,
@@ -98,10 +99,15 @@ public abstract class HankDomainBuilderAction extends Action {
 
     properties.putAll(CascadingHelper.DEFAULT_PROPERTIES);
     Flow flow = builder.build(properties, getSources());
+    domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {
       postProcessFlow(flow);
     }
+  }
+
+  public Integer getDomainVersionNumber() {
+    return domainVersionNumber;
   }
 
   protected void setVersionType(HankVersionType versionType) {
