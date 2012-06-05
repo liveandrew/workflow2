@@ -31,6 +31,9 @@ import com.rapleaf.support.event_timer.TimedEventHelper;
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
 
+  /** Specify this and the system will pick any free port. */
+  public static final Integer ANY_FREE_PORT = 0;
+
   /**
    * StepRunner keeps track of some extra state for each component, as
    * well as manages the actual execution thread. Note that it is itself *not*
@@ -197,7 +200,11 @@ public final class WorkflowRunner {
     this.workflowName = workflowName;
     this.checkpointDir = checkpointDir;
     this.maxConcurrentSteps = maxConcurrentComponents;
-    this.webUiPort = webUiPort;
+    if (webUiPort == null) {
+      this.webUiPort = ANY_FREE_PORT;
+    } else {
+      this.webUiPort = webUiPort;
+    }
     if (notificationEmails != null) {
       this.notificationEmails = notificationEmails.split(",");
       this.enabledNotificationTypes = EnumSet.allOf(NotificationType.class);
