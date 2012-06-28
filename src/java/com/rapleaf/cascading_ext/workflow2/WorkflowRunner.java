@@ -169,10 +169,6 @@ public final class WorkflowRunner {
     SUCCESS, FAILURE, SHUTDOWN
   }
 
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, final Step first, Step... rest){
-    this(workflowName, checkpointDir, maxConcurrentSteps, ANY_FREE_PORT, combine(first, rest));
-  }
-  
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
     this(workflowName,
         checkpointDir,
