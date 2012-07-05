@@ -218,6 +218,7 @@ public final class WorkflowRunner {
     this.tailSteps = tailSteps;
     this.timer = new EventTimer(workflowName);
     dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
+
     
     removeRedundantEdges(dependencyGraph);
     

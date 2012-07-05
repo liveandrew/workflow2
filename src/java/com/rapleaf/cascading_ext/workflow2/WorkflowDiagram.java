@@ -538,6 +538,12 @@ public class WorkflowDiagram {
 
   private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer,
                                                                                Set<Step> multiStepsToExpand, Step isolated) {
+    return dependencyGraphFromTailSteps(tailSteps, workflowTimer, multiStepsToExpand, isolated, true);
+  }
+
+  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer,
+                                                                               Set<Step> multiStepsToExpand, Step isolated,
+                                                                               boolean verifyNoOrphans) {
     DirectedGraph<Step, DefaultEdge> dependencyGraph =
         new SimpleDirectedGraph<Step, DefaultEdge>(DefaultEdge.class);
 
@@ -579,7 +585,62 @@ public class WorkflowDiagram {
       isolateStep(dependencyGraph, isolated);
     }
 
+    if (verifyNoOrphans) {
+      verifyNoOrphanedTailSteps(tailSteps);
+    }
+
     return dependencyGraph;
+  }
+
+  public static void verifyNoOrphanedTailStep(Step tailStep) {
+    verifyNoOrphanedTailSteps(Collections.singleton(tailStep));
+  }
+
+  public static void verifyNoOrphanedTailSteps(Set<Step> tailSteps) {
+    Set<Step> multiStepsToExpand = new HashSet<Step>();
+    Set<Step> allSteps = getAllSteps(tailSteps);
+    for (Step step : allSteps) {
+      if (step.getAction() instanceof MultiStepAction) {
+        multiStepsToExpand.add(step);
+      }
+    }
+    tailSteps.removeAll(multiStepsToExpand);
+
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = dependencyGraphFromTailSteps(tailSteps, null, multiStepsToExpand,
+        null, false);
+
+    Set<Step> orphans = getOrphanedTailSteps(dependencyGraph, tailSteps);
+    if(orphans.size() != 0) {
+      throw new RuntimeException("Orphaned tail steps:" + orphans);
+    }
+  }
+
+  public static Set<Step> getAllSteps(Set<Step> steps) {
+    Set<Step> allSteps = new HashSet<Step>();
+    Stack<Step> toProcess = new Stack<Step>();
+    toProcess.addAll(steps);
+    while(!toProcess.isEmpty()) {
+      Step step = toProcess.pop();
+      if (!allSteps.contains(step)) {
+        allSteps.add(step);
+        toProcess.addAll(step.getChildren());
+        toProcess.addAll(step.getDependencies());
+      }
+    }
+    return allSteps;
+  }
+
+  private static Set<Step> getOrphanedTailSteps(DirectedGraph<Step, DefaultEdge> dependencyGraph, Set<Step> expectedTailSteps) {
+    Set<Step> tailSteps = new HashSet<Step>();
+    for (Step step : dependencyGraph.vertexSet()) {
+      // step.getAction() instanceof MultiStepAction must be false!
+      for (Step child : step.getChildren()) {
+        if (!dependencyGraph.containsVertex(child) && !(child.getAction() instanceof MultiStepAction)) {
+          tailSteps.add(child);
+        }
+      }
+    }
+    return tailSteps;
   }
 
   private static void isolateStep(DirectedGraph<Step, DefaultEdge> graph, Step isolated) {

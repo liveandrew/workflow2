@@ -1,10 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -315,6 +312,21 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("d1__s4__1", "s7");
     verifyEdgeInGraph("s5__1__1", "d3__s5__1__1");
     verifyEdgeInGraph("d3__s5__1__1", "s5__1__2");
+  }
+
+  public void testNoOrphanedTails() throws Exception {
+    Step realTail = getComplexNestedWorkflowTail();
+    Set<Step> allSteps = WorkflowDiagram.getAllSteps(Collections.singleton(realTail));
+    for (Step badTail :allSteps) {
+      if (badTail != realTail) {
+        try {
+          WorkflowDiagram.verifyNoOrphanedTailStep(badTail);
+          fail();
+        } catch (RuntimeException e) {
+          // pass
+        }
+      }
+    }
   }
 
   private Step getComplexNestedWorkflowTail() throws Exception {

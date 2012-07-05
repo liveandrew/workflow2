@@ -16,6 +16,7 @@ public final class Step {
   private String checkpointTokenPrefix = "";
   private final Action action;
   private final Set<Step> dependencies;
+  private Set<Step> children;
   private final StepTimer timer = new StepTimer();
   private final List<NestedCounter> nestedCounters = new ArrayList<NestedCounter>();
 
@@ -32,29 +33,44 @@ public final class Step {
   }
 
   public Step(Action action) {
-    this.action = action;
-    dependencies = Collections.emptySet();
+    this(action, Collections.<Step>emptyList());
   }
 
+  public static List<Step> stepList(Step previous, Step... rest) {
+    List<Step> steps = new ArrayList<Step>();
+    steps.add(previous);
+    steps.addAll(Arrays.asList(rest));
+    return steps;
+  }
   public Step(Action action, Step previous, Step... rest) {
-    this.action = action;
-    dependencies = new HashSet<Step>(Arrays.asList(rest));
-    dependencies.add(previous);
-    if (dependencies.contains(null)) {
-      throw new NullPointerException("null cannot be a dependency for a step!");
-    }
+    this(action, stepList(previous, rest));
   }
 
   public Step(Action action, List<Step> steps) {
     this.action = action;
+    children = new HashSet<Step>();
     dependencies = new HashSet<Step>(steps);
     if (dependencies.contains(null)) {
       throw new NullPointerException("null cannot be a dependency for a step!");
     }
+    for(Step dependent : dependencies) {
+      dependent.addChild(this);
+    }
+  }
+
+  private void addChild(Step child) {
+    if(!child.getDependencies().contains(this)) {
+      throw new RuntimeException("child (" + child + ") does not depend on this (" + this + ")");
+    }
+    children.add(child);
+  }
+
+  public Set<Step> getChildren() {
+    return Collections.unmodifiableSet(children);
   }
 
   public Set<Step> getDependencies() {
-    return dependencies;
+    return Collections.unmodifiableSet(dependencies);
   }
 
   public Action getAction() {
