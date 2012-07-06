@@ -598,6 +598,7 @@ public class WorkflowDiagram {
 
   public static void verifyNoOrphanedTailSteps(Set<Step> tailSteps) {
     Set<Step> multiStepsToExpand = new HashSet<Step>();
+    tailSteps = new HashSet<Step>(tailSteps);
     Set<Step> allSteps = getAllSteps(tailSteps);
     for (Step step : allSteps) {
       if (step.getAction() instanceof MultiStepAction) {
@@ -609,7 +610,7 @@ public class WorkflowDiagram {
     DirectedGraph<Step, DefaultEdge> dependencyGraph = dependencyGraphFromTailSteps(tailSteps, null, multiStepsToExpand,
         null, false);
 
-    Set<Step> orphans = getOrphanedTailSteps(dependencyGraph, tailSteps);
+    Set<Step> orphans = getOrphanedTailSteps(dependencyGraph, allSteps);
     if(orphans.size() != 0) {
       throw new RuntimeException("Orphaned tail steps:" + orphans);
     }
@@ -630,13 +631,15 @@ public class WorkflowDiagram {
     return allSteps;
   }
 
-  private static Set<Step> getOrphanedTailSteps(DirectedGraph<Step, DefaultEdge> dependencyGraph, Set<Step> expectedTailSteps) {
+  private static Set<Step> getOrphanedTailSteps(DirectedGraph<Step, DefaultEdge> dependencyGraph, Set<Step> allSteps) {
     Set<Step> tailSteps = new HashSet<Step>();
-    for (Step step : dependencyGraph.vertexSet()) {
-      // step.getAction() instanceof MultiStepAction must be false!
-      for (Step child : step.getChildren()) {
-        if (!dependencyGraph.containsVertex(child) && !(child.getAction() instanceof MultiStepAction)) {
-          tailSteps.add(child);
+    for (Step step : allSteps) {
+      if (!(step.getAction() instanceof MultiStepAction)) {
+        // step.getAction() instanceof MultiStepAction must be false
+        for (Step child : step.getChildren()) {
+          if (!dependencyGraph.containsVertex(child) && !(child.getAction() instanceof MultiStepAction)) {
+            tailSteps.add(child);
+          }
         }
       }
     }

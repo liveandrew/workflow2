@@ -321,7 +321,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
       if (badTail != realTail) {
         try {
           WorkflowDiagram.verifyNoOrphanedTailStep(badTail);
-          fail();
+          fail("badTail: " + badTail);
         } catch (RuntimeException e) {
           // pass
         }
