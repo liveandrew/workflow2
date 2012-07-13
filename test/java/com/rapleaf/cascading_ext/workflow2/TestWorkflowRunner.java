@@ -1,7 +1,12 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
 import java.util.Arrays;
 
+import cascading.tap.Tap;
+import cascading.tap.hadoop.TapIterator;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.DataStoreImpl;
 import org.apache.hadoop.fs.Path;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
@@ -126,10 +131,70 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testDuplicateCheckpoints() throws Exception {
     try {
       new WorkflowRunner("", checkpointDir, 1, null, new Step(new IncrementAction("a")), new Step(
-        new IncrementAction("a")));
+          new IncrementAction("a")));
       fail("should have thrown an exception");
     } catch (IllegalArgumentException e) {
       // expected
     }
+  }
+
+  public void testSandboxDir() throws Exception {
+    try {
+      WorkflowRunner wfr = new WorkflowRunner("", checkpointDir, 1, null,
+          fakeStep("a", "/fake/EVIL/../path"),
+          fakeStep("b", "/path/of/fakeness"));
+      wfr.setSandboxDir("//fake/path");
+      wfr.run();
+      fail("There was an invalid path!");
+    } catch (RuntimeException e) {
+      // expected
+    }
+
+
+    try {
+      WorkflowRunner wfr = new WorkflowRunner("", checkpointDir, 1, null,
+          fakeStep("a", "/fake/EVIL/../path"),
+          fakeStep("b", "/fake/./path"));
+      wfr.setSandboxDir("//fake/path");
+      wfr.run();
+      // expected
+    } catch (RuntimeException e) {
+      fail(e.getMessage());
+    }
+  }
+
+  public Step fakeStep(String checkpointToken, final String fakePath) {
+    DataStore dataStore = new DataStore() {
+      private String path = fakePath;
+
+      @Override
+      public String getName() {
+        return "fakeDataStore";
+      }
+
+      @Override
+      public Tap getTap() {
+        return null;
+      }
+
+      @Override
+      public TapIterator getTapIterator() throws IOException {
+        return null;
+      }
+
+      @Override
+      public String getPath() {
+        return path;
+      }
+
+      @Override
+      public String getRelPath() {
+        return "." + path;
+      }
+    };
+    Action action = new IncrementAction(checkpointToken);
+    action.creates(dataStore);
+    action.createsTemporary(dataStore);
+    return new Step(action);
   }
 }

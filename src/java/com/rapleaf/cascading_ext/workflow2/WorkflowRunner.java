@@ -1,19 +1,13 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
+import com.rapleaf.cascading_ext.datastore.DataStore;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
@@ -162,6 +156,15 @@ public final class WorkflowRunner {
   private Integer webUiPort;
   private final String[] notificationEmails;
   private final Set<NotificationType> enabledNotificationTypes;
+  private String sandboxDir;
+
+  public String getSandboxDir() {
+    return sandboxDir;
+  }
+
+  public void setSandboxDir(String sandboxDir) {
+    this.sandboxDir = sandboxDir;
+  }
   
   private WorkflowWebServer webServer;
   
@@ -259,6 +262,37 @@ public final class WorkflowRunner {
       getDepsRecursive(s, deps, graph);
     }
   }
+
+  private static String canonicalPath(String path) throws IOException {
+    return new File(path).getCanonicalPath();
+  }
+
+  private static boolean isSubPath(String parentPath, String childPath) throws IOException {
+    return canonicalPath(childPath).startsWith(canonicalPath(parentPath));
+  }
+
+  private void checkStepsSandboxViolation(Set<DataStore> dataStores) throws IOException {
+    if (dataStores != null) {
+      for (DataStore dataStore : dataStores) {
+        if (!isSubPath(getSandboxDir(), dataStore.getPath())) {
+          throw new RuntimeException("Step wants to write outside of sandbox \""
+              + getSandboxDir() + "\"" + " into \"" + dataStore.getPath() + "\"");
+        }
+      }
+    }
+  }
+
+  public void checkStepsSandboxViolation(Collection<Step> steps) throws IOException {
+    if (getSandboxDir() != null) {
+      for (Step step : steps) {
+        Action stepAction = step.getAction();
+        if (stepAction != null) { // TODO: check if this check is necessary, it shouldn't be
+          checkStepsSandboxViolation(stepAction.getCreatesDatastores());
+          checkStepsSandboxViolation(stepAction.getCreatesTemporaryDatastores());
+        }
+      }
+    }
+  }
   
   /**
    * Execute the workflow.
@@ -272,6 +306,9 @@ public final class WorkflowRunner {
     alreadyRun = true;
     timer.start();
     try {
+      LOG.info("Checking that no action goes outside sandboxDir \"" + getSandboxDir() + "\"");
+      checkStepsSandboxViolation(getPhsyicalDependencyGraph().vertexSet());
+
       fs = FileSystemHelper.getFS();
       
       LOG.info("Creating checkpoint dir " + checkpointDir);
@@ -339,7 +376,7 @@ public final class WorkflowRunner {
       StepRunner startableStep = getStartableStep(pendingSteps);
       
       if (startableStep == null) {
-        // we didn't find any ste[ to start, so wait a little.
+        // we didn't find any step to start, so wait a little.
         // important to release the semaphore here, because we're going to go
         // back around the loop.
         semaphore.release();
