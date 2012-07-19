@@ -4,6 +4,10 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
+import com.rapleaf.support.FileSystemHelper;
+import org.apache.hadoop.fs.FileSystem;
+
+import java.io.IOException;
 
 public class CreateEmptyBucket extends Action {
   private final BucketDataStore dataStore;
@@ -29,8 +33,12 @@ public class CreateEmptyBucket extends Action {
 
   @Override
   protected void execute() throws Exception {
+    createEmptyBucket(dataStore, numPartitions, immutable);
+  }
+
+  public static void createEmptyBucket(BucketDataStore dataStore, int numPartitions, boolean immutable) throws IOException {
     String rootPath = dataStore.getPath();
-    Bucket bucket = Bucket.create(getFS(), rootPath);
+    Bucket bucket = Bucket.create(FileSystemHelper.getFS(), rootPath);
     String filenamePattern = "%s/part-%05d";
 
     for (int partNum = 0; partNum < numPartitions; partNum++) {
