@@ -26,6 +26,8 @@ public class AddMissingPartitionsToBucket extends Action {
 
   @Override
   protected void execute() throws Exception {
+    dataStore.getBucket().markAsMutable();
+
     Set<Integer> existingPartitions = Sets.newHashSet();
 
     for (Path path : dataStore.getBucket().getStoredFiles()) {
@@ -40,6 +42,8 @@ public class AddMissingPartitionsToBucket extends Action {
         os.close();
       }
     }
+
+    dataStore.getBucket().markAsImmutable();
   }
 
   protected static Integer getFilePart(String fileName) {
