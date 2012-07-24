@@ -196,7 +196,7 @@ public abstract class Action {
   }
   
   protected void setPercentComplete(int pctComplete) {
-    this.pctComplete = (int) Math.min(Math.max(0, pctComplete), 100);
+    this.pctComplete =  Math.min(Math.max(0, pctComplete), 100);
   }
   
   public int getPercentComplete() {
@@ -217,7 +217,7 @@ public abstract class Action {
       
       if (JOB_TRACKER == null) {
         JOB_TRACKER = flow.getProperty("mapred.job.tracker");
-        if (JOB_TRACKER != null && JOB_TRACKER != "" && JOB_TRACKER.split(":").length > 0) {
+        if (JOB_TRACKER != null && !"".equals(JOB_TRACKER) && JOB_TRACKER.split(":").length > 0) {
           String[] parts = JOB_TRACKER.split(":");
           JOB_TRACKER = "http://" + parts[0];
         } else {
@@ -232,7 +232,7 @@ public abstract class Action {
         try {
           String stepId = hdStepStats.getJobID();
           
-          String name = "Flow " + new Integer(flowCount).toString() + " (" + count + "/" + flow.getFlowStats().getStepStats().size() + ")";
+          String name = "Flow " + Integer.toString(flowCount) + " (" + count + "/" + flow.getFlowStats().getStepStats().size() + ")";
           
           ids.add(stepId);
           names.add(name);
