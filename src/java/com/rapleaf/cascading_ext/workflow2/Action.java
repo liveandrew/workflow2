@@ -6,18 +6,12 @@ import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 import com.rapleaf.support.FileSystemHelper;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
+
+import java.io.IOException;
+import java.util.*;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
@@ -303,6 +297,10 @@ public abstract class Action {
 
   protected void completeWithProgress(Flow flow) {
     completeWithProgress(new FlowOperation(flow));
+  }
+
+  protected void completeWithProgress(Flow flow, int startPct, int maxPct){
+    completeWithProgress(new FlowOperation(flow), startPct, maxPct);
   }
 
   protected void completeWithProgress(RunnableJob job) {
