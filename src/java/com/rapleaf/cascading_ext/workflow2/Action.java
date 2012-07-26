@@ -1,25 +1,23 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import cascading.flow.Flow;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
+import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
+import com.rapleaf.support.FileSystemHelper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
-
-import cascading.flow.Flow;
-import cascading.flow.hadoop.HadoopStepStats;
-import cascading.stats.FlowStats;
-import cascading.stats.StepStats;
-
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.support.FileSystemHelper;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
@@ -39,7 +37,7 @@ public abstract class Action {
   private long startTimestamp;
   private long endTimestamp;
   
-  private List<Flow> flows = new ArrayList<Flow>();
+  private List<ActionOperation> operations = new ArrayList<ActionOperation>();
   
   private FileSystem fs;
   
@@ -64,12 +62,16 @@ public abstract class Action {
     return fs;
   }
   
+  public void runningFlow(ActionOperation operation) {
+    operations.add(operation);
+  }
+
   public void runningFlow(Flow flow) {
-    flows.add(flow);
+    operations.add(new FlowOperation(flow));
   }
   
-  public List<Flow> getRunFlows() {
-    return flows;
+  public List<ActionOperation> getRunFlows() {
+    return operations;
   }
   
   protected void readsFrom(DataStore store) {
@@ -95,7 +97,6 @@ public abstract class Action {
   }
   
   protected final void internalExecute() {
-    this.getClass().toString();
     try {
       startTimestamp = System.currentTimeMillis();
       prepDirs();
@@ -140,8 +141,7 @@ public abstract class Action {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result
-        + ((checkpointToken == null) ? 0 : checkpointToken.hashCode());
+    result = prime * result + ((checkpointToken == null) ? 0 : checkpointToken.hashCode());
     return result;
   }
   
@@ -207,52 +207,37 @@ public abstract class Action {
   private String JOB_TRACKER = null;
   
   public List<String> getJobTrackerLinks() {
-    
     List<String> links = new LinkedList<String>();
-    List<String> ids = new ArrayList<String>();
-    List<String> names = new ArrayList<String>();
-    
-    int flowCount = 1;
-    for (Flow flow : flows) {
-      
-      if (JOB_TRACKER == null) {
-        JOB_TRACKER = flow.getProperty("mapred.job.tracker");
-        if (JOB_TRACKER != null && !"".equals(JOB_TRACKER) && JOB_TRACKER.split(":").length > 0) {
-          String[] parts = JOB_TRACKER.split(":");
-          JOB_TRACKER = "http://" + parts[0];
-        } else {
-          JOB_TRACKER = "http://" + DEFAULT_JOB_TRACKER;
-        }
-      }
-      
-      int count = 1;
-      for (StepStats st : flow.getFlowStats().getStepStats()) {
-        HadoopStepStats hdStepStats = (HadoopStepStats) st;
-        
-        try {
-          String stepId = hdStepStats.getJobID();
-          
-          String name = "Flow " + Integer.toString(flowCount) + " (" + count + "/" + flow.getFlowStats().getStepStats().size() + ")";
-          
-          ids.add(stepId);
-          names.add(name);
-          
-        } catch (NullPointerException e) {
-          // getJobID on occasion throws a null pointer exception, ignore it
-        }
-        
-        count++ ;
-      }
-      flowCount++ ;
+    Map<String, String> idToName = new HashMap<String, String>();
+
+    int operationsCount = 1;
+
+    for (ActionOperation operation : operations) {
+      initJobTracker(operation);
+      idToName.putAll(operation.getSubStepIdToName(operationsCount));
+      operationsCount++;
     }
-    
-    for (int i = 0; i < ids.size(); i++ ) {
-      links.add("<a href=\"" + JOB_TRACKER + "/jobdetails.jsp?jobid=" + ids.get(i) + "&refresh=30\">[" + names.get(i) + "]</a><br>");
+
+    for (Map.Entry<String, String> entry : idToName.entrySet()) {
+      links.add("<a href=\"" + JOB_TRACKER + "/jobdetails.jsp?jobid=" + entry.getKey() + "&refresh=30\">[" + entry.getValue() + "]</a><br>");
     }
     
     return links;
   }
-  
+
+  protected void initJobTracker(ActionOperation operation) {
+    if (JOB_TRACKER == null) {
+      JOB_TRACKER = operation.getProperty("mapred.job.tracker");
+
+      if (JOB_TRACKER != null && !"".equals(JOB_TRACKER) && JOB_TRACKER.split(":").length > 0) {
+        String[] parts = JOB_TRACKER.split(":");
+        JOB_TRACKER = "http://" + parts[0];
+      } else {
+        JOB_TRACKER = "http://" + DEFAULT_JOB_TRACKER;
+      }
+    }
+  }
+
   /**
    * Given a running Flow, compute what percent complete it is. The percent of
    * completion is defined as the number of FlowSteps that have completed
@@ -260,34 +245,29 @@ public abstract class Action {
    * normalizes the percent complete to the max possible percent of the total
    * component's work represented by this one Flow.
    * 
-   * @param flow
+   * @param operation
    * @param maxPct
    * @return
    */
-  public static int getFlowProgress(Flow flow, int maxPct) {
-    FlowStats flowstats = flow.getFlowStats();
-    int numComplete = 0;
-    List<StepStats> stepStatsList = flowstats.getStepStats();
-    for (StepStats stepStats : stepStatsList) {
-      if (stepStats.isFinished()) {
-        numComplete++ ;
-      }
+  public static int getActionProgress(ActionOperation operation, int maxPct) {
+    try {
+      return operation.getProgress(maxPct);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    
-    return (int) ((double) numComplete / flowstats.getStepsCount() * maxPct);
   }
   
-  private class FlowProgressMonitor extends Thread {
+  private class OperationProgressMonitor extends Thread {
     private boolean _keepRunning;
-    private final Flow _flow;
+    private final ActionOperation _operation;
     private final int _startPct;
     private final int _maxPct;
     
-    public FlowProgressMonitor(Flow flow, int startPct, int maxPct) {
-      super("FlowProgressMonitor for " + flow.getName());
+    public OperationProgressMonitor(ActionOperation operation, int startPct, int maxPct) {
+      super("OperationProgressMonitor for " + operation.getName());
       setDaemon(true);
       _keepRunning = true;
-      _flow = flow;
+      _operation = operation;
       _startPct = startPct;
       _maxPct = maxPct;
     }
@@ -296,7 +276,7 @@ public abstract class Action {
     public void run() {
       while (_keepRunning) {
         try {
-          setPercentComplete(_startPct + getFlowProgress(_flow, _maxPct - _startPct));
+          setPercentComplete(_startPct + getActionProgress(_operation, _maxPct - _startPct));
           sleep(15000);
         } catch (InterruptedException e) {
           // just want to stop sleeping and pay attention
@@ -311,34 +291,41 @@ public abstract class Action {
   }
   
   /**
-   * Complete the provided Flow while monitoring and reporting its progress.
+   * Complete the provided operation while monitoring and reporting its progress.
    * This method will call setPercentComplete with values between 0 and 100
-   * incrementally based on the completion of the Flow's steps.
+   * incrementally based on the completion of the operation's steps.
    * 
-   * @param flow
+   * @param operation
    */
+  protected void completeWithProgress(ActionOperation operation) {
+    completeWithProgress(operation, 0, 100);
+  }
+
   protected void completeWithProgress(Flow flow) {
-    completeWithProgress(flow, 0, 100);
+    completeWithProgress(new FlowOperation(flow));
+  }
+
+  protected void completeWithProgress(RunnableJob job) {
+    completeWithProgress(new HadoopOperation(job));
   }
   
   /**
-   * Complete the provided Flow while monitoring and reporting its progress.
+   * Complete the provided ActionOperation while monitoring and reporting its progress.
    * This method will call setPercentComplete with values between startPct and
-   * maxPct incrementally based on the completion of the Flow's steps.
+   * maxPct incrementally based on the completion of the ActionOperation's steps.
    * 
-   * @param flow
+   * @param operation
    * @param startPct
    * @param maxPct
    */
-  protected void completeWithProgress(Flow flow, int startPct, int maxPct) {
-    runningFlow(flow);
+  protected void completeWithProgress(ActionOperation operation, int startPct, int maxPct) {
+    runningFlow(operation);
+    operation.start();
     
-    flow.start();
-    
-    FlowProgressMonitor fpm = new FlowProgressMonitor(flow, startPct, maxPct);
+    OperationProgressMonitor fpm = new OperationProgressMonitor(operation, startPct, maxPct);
     fpm.start();
     
-    flow.complete();
+    operation.complete();
     fpm.stopAndInterrupt();
   }
   
