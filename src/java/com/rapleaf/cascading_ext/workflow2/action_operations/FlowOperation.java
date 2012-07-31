@@ -1,9 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2.action_operations;
 
 import cascading.flow.Flow;
-import cascading.flow.hadoop.HadoopStepStats;
 import cascading.stats.FlowStats;
-import cascading.stats.StepStats;
+import cascading.stats.FlowStepStats;
+import cascading.stats.hadoop.HadoopStepStats;
 import com.rapleaf.cascading_ext.counters.Counter;
 import com.rapleaf.cascading_ext.counters.Counters;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
@@ -40,9 +40,9 @@ public class FlowOperation implements ActionOperation {
   public int getProgress(int maxPct) {
     FlowStats flowstats = flow.getFlowStats();
     int numComplete = 0;
-    List<StepStats> stepStatsList = flowstats.getStepStats();
+    List<FlowStepStats> stepStatsList = flowstats.getFlowStepStats();
 
-    for (StepStats stepStats : stepStatsList) {
+    for (FlowStepStats stepStats : stepStatsList) {
       if (stepStats.isFinished()) {
         numComplete++;
       }
@@ -61,12 +61,12 @@ public class FlowOperation implements ActionOperation {
     Map<String, String> subStepIdToName = new HashMap<String, String>();
 
     int count = 1;
-    for (StepStats st : flow.getFlowStats().getStepStats()) {
+    for (FlowStepStats st : flow.getFlowStats().getFlowStepStats()) {
       HadoopStepStats hdStepStats = (HadoopStepStats) st;
 
       try {
         String stepId = hdStepStats.getJobID();
-        String name = "Flow " + Integer.toString(operationIndex) + " (" + count + "/" + flow.getFlowStats().getStepStats().size() + ")";
+        String name = "Flow " + Integer.toString(operationIndex) + " (" + count + "/" + flow.getFlowStats().getFlowStepStats().size() + ")";
         subStepIdToName.put(stepId, name);
       } catch (NullPointerException e) {
         // getJobID on occasion throws a null pointer exception, ignore it
@@ -80,10 +80,10 @@ public class FlowOperation implements ActionOperation {
 
   @Override
   public void timeOperation(Step.StepTimer stepTimer, String checkpointToken, List<NestedCounter> nestedCounters) {
-    Map<StepStats, List<Counter>> counters = Counters.getCountersByStep(flow);
+    Map<FlowStepStats, List<Counter>> counters = Counters.getCountersByStep(flow);
 
     // add timers and counters from flows the action executed
-    for (StepStats stepStats : flow.getFlowStats().getStepStats()) {
+    for (FlowStepStats stepStats : flow.getFlowStats().getFlowStepStats()) {
       stepTimer.addChild(new FixedTimedEvent(stepStats.getName(), stepStats.getStartTime(), stepStats.getFinishedTime()));
 
       if (counters.containsKey(stepStats)) {

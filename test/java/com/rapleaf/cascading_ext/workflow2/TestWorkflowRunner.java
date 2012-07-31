@@ -1,15 +1,13 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import cascading.tap.Tap;
-import cascading.tap.hadoop.TapIterator;
+import cascading.tuple.TupleEntryIterator;
+import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.DataStoreImpl;
 import org.apache.hadoop.fs.Path;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import java.io.IOException;
+import java.util.Arrays;
 
 public class TestWorkflowRunner extends CascadingExtTestCase {
 
@@ -178,7 +176,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       }
 
       @Override
-      public TapIterator getTapIterator() throws IOException {
+      public TupleEntryIterator getTupleEntryIterator() throws IOException {
         return null;
       }
 

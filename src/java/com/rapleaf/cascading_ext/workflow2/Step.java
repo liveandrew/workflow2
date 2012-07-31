@@ -109,7 +109,6 @@ public final class Step {
     try {
       action.internalExecute();
     } finally {
-
       for (ActionOperation operation : action.getRunFlows()) {
         operation.timeOperation(timer, getCheckpointToken(), nestedCounters);
       }
