@@ -98,7 +98,7 @@ public abstract class HankDomainBuilderAction extends Action {
     }
 
     properties.putAll(CascadingHelper.DEFAULT_PROPERTIES);
-    Flow flow = builder.build(properties, getSources());
+    Flow flow = builder.build(CascadingHelper.getFlowConnectorFactory(), getSources());
     domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {
