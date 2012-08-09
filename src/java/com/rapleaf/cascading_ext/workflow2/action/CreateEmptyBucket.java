@@ -4,8 +4,7 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
-import com.rapleaf.support.FileSystemHelper;
-import org.apache.hadoop.fs.FileSystem;
+import com.rapleaf.cascading_ext.FileSystemHelper;
 
 import java.io.IOException;
 

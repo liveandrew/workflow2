@@ -5,7 +5,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
-import com.rapleaf.support.FileSystemHelper;
+import com.rapleaf.cascading_ext.FileSystemHelper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,9 +19,6 @@ import java.util.Set;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
-
-import java.io.IOException;
-import java.util.*;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);

@@ -25,6 +25,9 @@ public class PINFromPINAndOwnersAction extends Action {
     super(checkpointToken, tmpRoot);
     this.pinAndOwnerSets = pinAndOwnerSets;
     this.pins = pins;
+
+    readsFrom(pinAndOwnerSets);
+    creates(pins);
   }
 
   @Override
