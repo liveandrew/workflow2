@@ -18,7 +18,7 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 import com.rapleaf.cascading_ext.relevance.RelevanceConstants;
-import com.rapleaf.cascading_ext.relevance.Relevance.RelevanceFunction;
+import com.rapleaf.cascading_ext.relevance.function.RelevanceFunction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.formats.test.ThriftBucketHelper;
@@ -75,11 +75,11 @@ public class TestExtractAndCombineKeysAction extends CascadingExtTestCase {
   // alas, dustin common can't be referenced here :(
   public static class PINFromInternalEquiv extends RelevanceFunction<PIN> {
 
-    protected int getAverageMatchSize() {
+    public int getAverageMatchSize() {
       return RelevanceConstants.AVERAGE_PIN_SIZE;
     }
 
-    protected Fields getRequiredFields() {
+    public Fields getRequiredFields() {
       return new Fields("die");
     }
 
@@ -89,7 +89,7 @@ public class TestExtractAndCombineKeysAction extends CascadingExtTestCase {
     }
 
     @Override
-    protected int getAverageRequiredFieldsSize() {
+    public int getAverageRequiredFieldsSize() {
       return RelevanceConstants.AVERAGE_DIE_SIZE;
     }
   }

@@ -1,17 +1,12 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import java.io.IOException;
-import java.util.EnumSet;
-import java.util.Map;
-
-import org.apache.thrift.TUnion;
-
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
-import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.relevance.Relevance;
-import com.rapleaf.cascading_ext.relevance.Relevance.RelevanceFunction;
-import com.rapleaf.cascading_ext.workflow2.Action;
+import com.rapleaf.cascading_ext.relevance.function.RelevanceFunction;
+
+import java.io.IOException;
+import java.util.EnumSet;
 
 public class ExtractKeysFromSplitBucketAction extends RelevanceAction{
 

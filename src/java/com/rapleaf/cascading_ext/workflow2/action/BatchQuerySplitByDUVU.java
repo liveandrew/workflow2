@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.relevance.Relevance;
+import com.rapleaf.cascading_ext.relevance.function.RelevanceFunction;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.types.new_person_data.DataUnitValueUnion;
 
@@ -16,15 +17,15 @@ public class BatchQuerySplitByDUVU extends Action {
   private final BucketDataStore relevantStore;
   private final Set<DataUnitValueUnion._Fields> fields;
 
-  private final Relevance.RelevanceFunction relevanceFunction;
+  private final RelevanceFunction relevanceFunction;
   private final Relevance relevance;
 
-  public BatchQuerySplitByDUVU(String checkpointToken, Relevance relevance, Relevance.RelevanceFunction relevanceFunction,
+  public BatchQuerySplitByDUVU(String checkpointToken, Relevance relevance, RelevanceFunction relevanceFunction,
                                SplitBucketDataStore splitStore, BucketDataStore eids, BucketDataStore relevantSplitStore) {
     this(checkpointToken, relevance, relevanceFunction, splitStore, EnumSet.allOf(DataUnitValueUnion._Fields.class),  eids, relevantSplitStore);
   }
 
-  public BatchQuerySplitByDUVU(String checkpointToken, Relevance relevance, Relevance.RelevanceFunction relevanceFunction, SplitBucketDataStore splitStore, Set<DataUnitValueUnion._Fields> fields, BucketDataStore eids, BucketDataStore relevantSplitStore) {
+  public BatchQuerySplitByDUVU(String checkpointToken, Relevance relevance, RelevanceFunction relevanceFunction, SplitBucketDataStore splitStore, Set<DataUnitValueUnion._Fields> fields, BucketDataStore eids, BucketDataStore relevantSplitStore) {
     super(checkpointToken);
 
     this.relevanceFunction = relevanceFunction;

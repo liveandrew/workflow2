@@ -1,14 +1,14 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.relevance.Relevance;
 import com.rapleaf.cascading_ext.relevance.Relevance.ExtractKeysStats;
-import com.rapleaf.cascading_ext.relevance.Relevance.RelevanceFunction;
+import com.rapleaf.cascading_ext.relevance.function.RelevanceFunction;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 
 public class ExtractKeysAction extends RelevanceAction {
