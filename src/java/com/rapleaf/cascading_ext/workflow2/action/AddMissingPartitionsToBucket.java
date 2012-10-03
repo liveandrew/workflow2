@@ -5,7 +5,7 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
-import com.rapleaf.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.FileSystemHelper;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

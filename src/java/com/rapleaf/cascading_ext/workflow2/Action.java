@@ -5,7 +5,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
-import com.rapleaf.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.FileSystemHelper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;

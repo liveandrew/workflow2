@@ -3,7 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import org.apache.hadoop.fs.Path;
 
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.FileSystemHelper;
 
 public class ReleaseLock extends Action {
   private final String pathToLock;
