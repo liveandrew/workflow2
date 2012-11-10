@@ -12,7 +12,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Insert title here</title>
 </head>
-<body onload="document.location.href='/index.jsp';">
+<body onload="document.location.href='index.jsp';">
 
 </body>
 </html>

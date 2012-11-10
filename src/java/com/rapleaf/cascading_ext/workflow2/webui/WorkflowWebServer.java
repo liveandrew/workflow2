@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.webui;
 
 import java.net.URL;
 
+import com.rapleaf.cascading_ext.LiverampCascadingHelper;
 import org.apache.log4j.Logger;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
@@ -48,7 +49,9 @@ public class WorkflowWebServer {
     server = new Server(port);
     final URL warUrl = getClass().getClassLoader().getResource(
       "com/rapleaf/cascading_ext/workflow2/webui");
+    LOG.info("Workflow WebServer war url: " + warUrl);
     final String warUrlString = warUrl.toExternalForm();
+    LOG.info("War url external form: " + warUrlString);
 
     WebAppContext webAppContext = new WebAppContext(warUrlString, "/");
     webAppContext.setAttribute("workflowRunner", workflowRunner);

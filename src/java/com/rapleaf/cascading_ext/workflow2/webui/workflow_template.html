@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>${workflow_name} Workflow</title>
+  <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+  <link href="css/workflow_diagram.css" rel="stylesheet" media="screen">
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span9">
+      <div id="canvas" class="canvas"></div>
+      <div id="workflow-controls" class="canvas">
+        <a id="expand-all" class="btn btn-info btn-small">Expand All</a>
+        <a id="collapse-all" class="btn btn-info btn-small">Collapse All</a>
+        <a id="datastores" class="btn btn-info btn-small">Show Datastores</a>
+      </div>
+      <div id="details" class="well">
+        <div id="step-details" >
+          <h3>Process Details</h3>
+          <table class="table">
+            <tr>
+              <th>Name</th>
+              <td id="step-details-name">Step 1</td>
+            </tr>
+            <tr>
+              <th>Status</th>
+              <td id="step-details-status">NA</td>
+            </tr>
+            <tr>
+              <th>Action</th>
+              <td id="step-details-action"><a href="https://git.liveramp.net/MasterRepos/s2s_refresher/blob/master/src/java/com/rapleaf/s2s_refresher/FindOrCreateDataSyncConfig.java">ClassName.java</a></td>
+            </tr>
+            <tr>
+              <th>Dependencies</th>
+              <td id="step-details-dependencies">
+                <ul> <li>Step 2</li> </ul>
+              </td>
+            </tr>
+              <th>Inputs</th>
+              <td id="step-details-inputs">
+                <ul> <li>Step 2</li> </ul>
+              </td>
+            </tr>
+              <th>Outputs</th>
+              <td id="step-details-outputs">
+                <ul> <li>Step 2</li> </ul>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div id="ds-details">
+          <h3>Datastore Details</h3>
+          <table class="table">
+            <tr>
+              <th>Name</th>
+              <td id="ds-details-name">Step 1</td>
+            </tr>
+            <tr>
+              <th>Type</th>
+              <td id="ds-details-type">NA</td>
+            </tr>
+            <tr>
+              <th>Path</th>
+              <td id="ds-details-path">NA</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="span3">
+      <div class="well">
+        <div style="overflow: auto; height: 300px">
+          <h3>Processes</h3>
+          <ul id="process-list" class="nav nav-list">
+            <li class='active'><a href="#">Step 1</a></li>
+            <li><a href="#">Step 2</a></li>
+          </ul>
+        </div>
+        <div style="overflow: auto; height: 300px">
+          <h3>Datastores</h3>
+          <ul id="datastore-list" class="nav nav-list">
+            <li class='active'>Datastore 1</li>
+            <li>Datastore 2</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row-fluid">
+  </div>
+</div>
+<script src="js/raphael-min.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/diagrams2.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/graph.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/workflow_diagram.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/dag_layout.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script type="text/javascript">
+
+  var project = "s2s_refresher";
+  ${workflow_def}
+
+  var wfd = new Wfd(workflowSteps, workflowDatastores);
+  var activeStep;
+  var activeDatastore;
+  var activeDetailsType = "step";
+  for (i in wfd.workflowDef) {
+    var step = wfd.workflowDef[i];
+    if (wfd.shouldBeIncluded(step.id)) {
+      activeStep = step.id;
+      break;
+    }
+  }
+  for (i in wfd.datastores) {
+    var ds = wfd.datastores[i];
+    if (wfd.dsShouldBeIncluded(ds.name)) {
+      activeDatastore = ds.name;
+      break;
+    }
+  }
+
+  function updateView() {
+    renderDiagram("canvas", wfd);
+    function updateProcessList() {
+      var processListHtml = "";
+      for (stepId in wfd.workflowDef) {
+        var step = wfd.workflowDef[stepId];
+        if (wfd.shouldBeIncluded(step.id)) {
+          var activeStr = activeStep == step.id && activeDetailsType == "step" ? " class='active'" : "";
+          processListHtml += "<li" + activeStr + "><a id='process-" + step.id + "' href='#'> " + step.name + "</a></li>"
+        }
+        $("#process-list").html(processListHtml);
+        for (stepId in wfd.workflowDef) {
+          var step = wfd.workflowDef[stepId];
+          if (wfd.shouldBeIncluded(step.id)) {
+            $("#process-" + step.id).click(
+                (function (id) {
+                  return function () {
+                    activeStep = id;
+                    activeDetailsType = "step";
+                    updateView();
+                  };
+                })(step.id));
+          }
+        }
+      }
+    }
+
+    function updateDatastoreList() {
+      var datastoreListHtml = "";
+      for (i in wfd.datastores) {
+        var ds = wfd.datastores[i];
+        if (wfd.dsShouldBeIncluded(ds.name)) {
+          var activeStr = activeDatastore == ds.name && activeDetailsType == "datastore" ? " class='active'" : "";
+          datastoreListHtml += "<li" + activeStr + "><a id='datastore-" + ds.name + "' href='#' > " + ds.name + "</a></li>"
+        }
+        $("#datastore-list").html(datastoreListHtml);
+        for (i in wfd.datastores) {
+          var ds = wfd.datastores[i];
+          if (wfd.dsShouldBeIncluded(ds.name)) {
+            $("#datastore-" + ds.name).click(
+                (function (id) {
+                  return function () {
+                    activeDatastore = id;
+                    activeDetailsType = "datastore";
+                    updateView();
+                  };
+                })(ds.name));
+          }
+        }
+      }
+    }
+
+    function updateStepDetails() {
+      var step = wfd.idToStep[activeStep];
+      $("#step-details-name").html(step.name);
+      var project = step.java_class.split(".")[2];
+      var path = step.java_class.replace(/\./g, "/");
+      path += ".java";
+      $("#step-details-action").html("<a href='https://git.liveramp.net/MasterRepos/" + project + "/tree/master/src/java/" + path + "'>" + step.java_class + "</a>");
+
+      var detailsHtml = "";
+      for (i in step.dependencies) {
+        detailsHtml += "<ul><li>" + wfd.idToStep[step.dependencies[i]].name + "</ul></li>"
+      }
+      if (detailsHtml == "") detailsHtml = "NA";
+      $("#step-details-dependencies").html(detailsHtml);
+
+      detailsHtml = "";
+      for (i in step.inputDatastores) {
+        detailsHtml += "<ul><li>" + step.inputDatastores[i] + "</ul></li>"
+      }
+      if (detailsHtml == "") detailsHtml = "NA";
+      $("#step-details-inputs").html(detailsHtml);
+
+      detailsHtml = "";
+      for (i in step.outputDatastores) {
+        detailsHtml += "<ul><li>" + step.outputDatastores[i] + "</ul></li>"
+      }
+      if (detailsHtml == "") detailsHtml = "NA";
+      $("#step-details-outputs").html(detailsHtml);
+    }
+
+    function updateDatastoreDetails() {
+      var ds = wfd.nameToDatastore[activeDatastore];
+      $("#ds-details-name").html(ds.name);
+      $("#ds-details-type").html(ds.type);
+      $("#ds-details-path").html("<a href='http://ds0208.rapleaf.com:50075/browseDirectory.jsp?dir=" + ds.path + "&namenodeInfoPort=50070'>" + ds.path + "</a>");
+    }
+
+    updateDatastoreList();
+    updateProcessList();
+    updateStepDetails();
+    updateDatastoreDetails();
+    if (activeDetailsType == "step") {
+      $("#step-details").show();
+      $("#ds-details").hide();
+    } else {
+      $("#step-details").hide();
+      $("#ds-details").show();
+    }
+  }
+
+  $("#datastores").click(function() {
+    if (wfd.includeDatastores == true) {
+      wfd.includeDatastores = false;
+      $("#datastores").html("Show Datastores");
+    } else {
+      wfd.includeDatastores = true;
+      $("#datastores").html("Hide Datastores");
+    }
+    updateView();
+  });
+
+  $("#expand-all").click(function() {
+    wfd.expandAll();
+    updateView();
+  });
+
+  $("#collapse-all").click(function() {
+    wfd.collapseAll();
+    updateView();
+  });
+
+  window.onload = function () {
+    updateView();
+  };
+</script>
+</body>
+</html>

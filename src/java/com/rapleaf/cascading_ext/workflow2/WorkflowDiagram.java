@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.support.StringHelper;
 import com.rapleaf.support.event_timer.EventTimer;
 import org.apache.commons.lang.StringUtils;
 import org.jgrapht.DirectedGraph;
@@ -168,6 +169,123 @@ public class WorkflowDiagram {
         toProcess.add(dependency);
       }
     }
+  }
+
+  /**
+   * Returns a JS definition of the workflow. Everything needed to render the workflow
+   * diagram is provided here so that it can be done entirely client-side with javascript.
+   * @return
+   */
+  public String getJSWorkflowDefinition(boolean liveWorkflow) {
+    StringBuilder sb = new StringBuilder("var workflowSteps = [\n");
+    Queue<Step> toProcess = new LinkedList<Step>(workflowRunner.getTailSteps());
+    Set<Step> processed = new HashSet<Step>();
+    Map<Step, Integer> stepToId = new HashMap<Step, Integer>();
+    Map<String, DataStore> allDataStores = new HashMap<String, DataStore>();
+
+    int i = 0;
+    boolean first = true;
+    while(!toProcess.isEmpty()) {
+      Step step = toProcess.poll();
+      if (processed.contains(step)) {
+        continue;
+      }
+      if (!stepToId.containsKey(step)) stepToId.put(step, i++);
+      if (first) {
+        first = false;
+      } else {
+        sb.append(",\n\n");
+      }
+      sb.append("new Wfd.Step(\n");
+      sb.append(stepToId.get(step) + ",\n");
+      sb.append("\"" + step.getAction().getCheckpointToken() + "\",\n");
+      sb.append("\"" + step.getAction().getClass().getName() + "\",\n");
+      if (liveWorkflow) {
+        sb.append("\"" + getStepStatus(step).name().toLowerCase() + "\",\n");
+        sb.append("" + step.getTimer().getEventStartTime() + ",\n");
+        sb.append("" + step.getTimer().getEventEndTime() + ",\n");
+        sb.append("" + step.getAction().getPercentComplete() + ",\n");
+      } else {
+        sb.append("\"node\",\n");
+        sb.append("0,\n");
+        sb.append("0,\n");
+        sb.append("0,\n");
+      }
+
+      // Dependencies
+      sb.append("[");
+      List<String> depencencyIds = new ArrayList<String>();
+      for (Step dependency : step.getDependencies()) {
+        if (!stepToId.containsKey(dependency)) stepToId.put(dependency, i++);
+        depencencyIds.add(String.valueOf(stepToId.get(dependency)));
+        if (!processed.contains(dependency)) {
+          toProcess.add(dependency);
+        }
+      }
+      sb.append(StringHelper.join(depencencyIds, ", "));
+      sb.append("],\n");
+
+      // Substeps
+      sb.append("[");
+      if (step.getAction() instanceof MultiStepAction) {
+        MultiStepAction msa = (MultiStepAction) step.getAction();
+        List<String> subStepIds = new ArrayList<String>();
+        for (Step subStep : msa.getSubSteps()) {
+          if (!stepToId.containsKey(subStep)) stepToId.put(subStep, i++);
+          subStepIds.add(String.valueOf(stepToId.get(subStep)));
+          if (!processed.contains(subStep)) {
+            toProcess.add(subStep);
+          }
+        }
+        sb.append(StringHelper.join(subStepIds, ", "));
+      }
+      sb.append("],\n");
+
+      // Input datastores
+      sb.append("[");
+      List<String> datastores = new ArrayList<String>();
+      for (DataStore dataStore : step.getAction().getReadsFromDatastores()) {
+        allDataStores.put(dataStore.getPath(), dataStore);
+        datastores.add("\"" + dataStore.getName().replaceAll("\\s", "-") + "\"");
+      }
+      sb.append(StringHelper.join(datastores, ", "));
+      sb.append("],\n");
+
+
+      // Output datastores
+      sb.append("[");
+      datastores = new ArrayList<String>();
+      Set<DataStore> outputDatastores = new HashSet<DataStore>(step.getAction().getCreatesDatastores());
+      outputDatastores.addAll(step.getAction().getWritesToDatastores());
+      for (DataStore dataStore : outputDatastores) {
+        allDataStores.put(dataStore.getPath(), dataStore);
+        datastores.add("\"" + dataStore.getName().replaceAll("\\s", "-") + "\"");
+      }
+      sb.append(StringHelper.join(datastores, ", "));
+
+
+      sb.append("])");
+
+      processed.add(step);
+    }
+    sb.append("\n];\n");
+
+    sb.append("var workflowDatastores = [\n");
+    first = true;
+    for (DataStore dataStore : allDataStores.values()) {
+      if (first) {
+        first = false;
+      } else {
+        sb.append(",\n\n");
+      }
+      sb.append("new Wfd.Datastore(\n");
+      sb.append("\"" + dataStore.getName().replaceAll("\\s", "-") + "\",\n");
+      sb.append("\"" + dataStore.getClass().getSimpleName() + "\",\n");
+      sb.append("\"" + dataStore.getPath() + "\",\n");
+      sb.append("\"" + dataStore.getRelPath() + "\")");
+    }
+    sb.append("\n];\n");
+    return sb.toString();
   }
 
   private void adjustTokenStrsOfChildren(Step step) {

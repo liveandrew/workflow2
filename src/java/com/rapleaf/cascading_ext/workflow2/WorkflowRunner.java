@@ -1,33 +1,54 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-import com.rapleaf.cascading_ext.datastore.DataStore;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import com.liveramp.cascading_ext.FileSystemHelper;
+
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
-import com.liveramp.cascading_ext.FileSystemHelper;
 import com.rapleaf.support.MailerHelper;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
 
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
-  
+
   /** Specify this and the system will pick any free port. */
   public static final Integer ANY_FREE_PORT = 0;
-  
+
+  private static final String DOC_FILES_ROOT = "com/rapleaf/cascading_ext/workflow2/webui";
+  public static final String WORKFLOW_DOCS_PATH = "/var/nfs/mounts/files/flowdoc/";
+
   /**
    * StepRunner keeps track of some extra state for each component, as
    * well as manages the actual execution thread. Note that it is itself *not*
@@ -293,7 +314,84 @@ public final class WorkflowRunner {
       }
     }
   }
-  
+
+  public void generateDocs() {
+    String outputPath = "/tmp/flowdoc";
+    try {
+      String host = InetAddress.getLocalHost().getHostName();
+      Set<String> productionHosts = new HashSet<String>(Arrays.asList(
+          "ds-jobs.rapleaf.com",
+          "s2s-master.rapleaf.com"
+      ));
+      if (productionHosts.contains(host)) {
+        outputPath = WORKFLOW_DOCS_PATH;
+      }
+    } catch (UnknownHostException e) {}
+    generateDocs(outputPath);
+  }
+
+  /**
+   * Generate HTML docs with the workflow diagram and details about processes and datastores;
+   */
+  public void generateDocs(String outputPath) {
+    try {
+      WorkflowDiagram wfd = new WorkflowDiagram(this);
+      Map<String, String> templateFields = new HashMap<String, String>();
+      templateFields.put("${workflow_name}", workflowName);
+      templateFields.put("${workflow_def}", wfd.getJSWorkflowDefinition(false));
+
+      new File(outputPath).mkdirs();
+      File outputFile = new File(outputPath + "/" + workflowName.replaceAll("\\s", "-") + ".html");
+      FileWriter fw = new FileWriter(outputFile);
+
+      InputStream is = this.getClass().getClassLoader().getResourceAsStream(DOC_FILES_ROOT + "/workflow_template.html");
+      BufferedReader br = new BufferedReader(new InputStreamReader(is));
+      String line;
+      while ((line = br.readLine()) != null) {
+        fw.write(replaceTemplateFields(templateFields, line) + "\n");
+      }
+      fw.close();
+
+      copyResources(outputPath);
+    } catch (Exception e) {
+      LOG.warn("Error generating workflow docs", e);
+    }
+  }
+
+  private String replaceTemplateFields(Map<String, String> templateFields, String line) {
+    for (Map.Entry<String, String> entry : templateFields.entrySet()) {
+      if (line.contains(entry.getKey())) {
+        line = line.replace(entry.getKey(), entry.getValue());
+      }
+    }
+    return line;
+  }
+
+  private void copyResources(String outputPath) throws IOException {
+    InputStream is;
+    new File(outputPath + "/js").mkdirs();
+    new File(outputPath + "/css").mkdirs();
+    new File(outputPath + "/img").mkdirs();
+    String[] files = new String[] {
+        "js/bootstrap.min.js", "js/dag_layout.js", "js/diagrams2.js", "js/graph.js", "js/jquery.min.js",
+        "js/raphael-min.js", "js/workflow_diagram.js",
+        "css/bootstrap-responsive.min.css", "css/bootstrap.min.css", "css/workflow_diagram.css",
+        "img/glyphicons-halflings-white.png", "img/glyphicons-halflings.png"
+    };
+
+    for (String file : files) {
+      is = getClass().getClassLoader().getResourceAsStream(DOC_FILES_ROOT + "/" + file);
+      OutputStream os = new FileOutputStream(outputPath + "/" + file);
+      byte[] buffer = new byte[4096];
+      int length;
+      while ((length = is.read(buffer)) > 0) {
+        os.write(buffer, 0, length);
+      }
+      os.close();
+      is.close();
+    }
+  }
+
   /**
    * Execute the workflow.
    * 
@@ -309,8 +407,11 @@ public final class WorkflowRunner {
       LOG.info("Checking that no action goes outside sandboxDir \"" + getSandboxDir() + "\"");
       checkStepsSandboxViolation(getPhsyicalDependencyGraph().vertexSet());
 
+      LOG.info("Generating workflow docs");
+      generateDocs();
+
       fs = FileSystemHelper.getFS();
-      
+
       LOG.info("Creating checkpoint dir " + checkpointDir);
       fs.mkdirs(new Path(checkpointDir));
       
@@ -335,7 +436,7 @@ public final class WorkflowRunner {
       LOG.info("Timing statistics:\n" + TimedEventHelper.toTextSummary(timer));
     }
   }
-  
+
   private void sendSuccessEmail() {
     if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
       mail("Workflow \"" + getWorkflowName() + "\" succeeded!");

@@ -44,7 +44,7 @@ public class MultiStepAction extends Action {
     throw new IllegalStateException("planner error: method should never be called!");
   }
 
-  protected void setSubSteps(Collection<Step> steps) {
+  protected final void setSubSteps(Collection<Step> steps) {
     Set<String> tokens = new HashSet<String>();
     if (steps == null) {
       return;
@@ -60,11 +60,11 @@ public class MultiStepAction extends Action {
     this.steps = steps;
   }
 
-  protected void setSubStepsFromTail(Step tail) {
+  protected final void setSubStepsFromTail(Step tail) {
     setSubStepsFromTails(Collections.singleton(tail));
   }
 
-  protected void setSubStepsFromTails(Collection<Step> tails) {
+  protected final void setSubStepsFromTails(Collection<Step> tails) {
     Set<Step> steps = new HashSet<Step>(tails);
     List<Step> queue = new ArrayList<Step>(tails);
     int index = 0;

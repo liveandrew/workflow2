@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+         pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 
 <%@page import="com.rapleaf.cascading_ext.workflow2.*"%>
@@ -15,21 +15,32 @@
 <%@page import="java.text.SimpleDateFormat"%>
 <%@page import="com.rapleaf.support.Rap"%>
 <html>
-
-<%!
-public String renderProgressBar(int pctComplete) {
-  if (pctComplete < 0) {
-    return "<br />";
+<script type="text/javascript">
+  function renderProgressBar(pctComplete) {
+    if (pctComplete < 0 ) {
+      return "<br />";
+    }
+    return "(" + pctComplete + "%)" +
+            "<table class=\"progress_bar\">"
+            + "<tr>"
+            + "<td style=\"background-color: #8888ff; width: " + pctComplete + "%\"></td>"
+            + "<td style=\"background-color: #aaffaa; width: " + (100 - pctComplete) + "%\"></td>"
+            + "</tr>"
+            +  "</table>";
   }
-  return "(" + pctComplete + "%)" +
-    "<table class=\"progress_bar\">"
-    + "<tr>"
-    + "<td style=\"background-color: #8888ff; width: " + pctComplete + "%\"></td>"
-    + "<td style=\"background-color: #aaffaa; width: " + (100 - pctComplete) + "%\"></td>"
-    + "</tr>" 
-    +  "</table>";
-}
-%>
+
+  function shortHumanReadableElapsedTime(start, end) {
+    function format(s) {
+      return s.length == 1 ? "0" + s : s;
+    }
+    var elapsed = end - start;
+    var sec = Math.round((elapsed / 1000) % 60);
+    var min = Math.round((elapsed / 1000 / 60) % 60);
+    var hrs = Math.round((elapsed / 1000 / 60 / 60));
+
+    return format(hrs.toString()) + ":" + format(min.toString()) + ":" + format(sec.toString());
+  }
+</script>
 
 <%
   boolean showDatastores = false;
@@ -45,7 +56,7 @@ public String renderProgressBar(int pctComplete) {
   } else {
     wfd = (WorkflowDiagram)session.getAttribute("workflowDiagram");
   }
-  
+
   if (request.getParameter("expand_all") != null && request.getParameter("expand_all").equals("1")) {
     wfd.expandAllMultistepVertices();
   } else if (request.getParameter("collapse_all") != null && request.getParameter("collapse_all").equals("1")) {
@@ -59,7 +70,7 @@ public String renderProgressBar(int pctComplete) {
   } else if (request.getParameter("remove_isolation") != null) {
     wfd.reduceIsolation(request.getParameter("remove_isolation"));
   }
-  
+
   DirectedGraph<Vertex, DefaultEdge> precedenceGraph;
   if (showDatastores) {
     precedenceGraph = wfd.getDiagramGraphWithDataStores();
@@ -83,12 +94,13 @@ public String renderProgressBar(int pctComplete) {
 <head>
   <meta charset="utf-8" />
   <title>Workflow <%= wfr.getWorkflowName() %></title>
+  <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
 
   <style type="text/css">
     body {
       font-size: 10pt
     }
-  
+
     div.shutdown-notice {
       font-weight: bold;
       color: red;
@@ -134,12 +146,12 @@ public String renderProgressBar(int pctComplete) {
     div.<%= StepStatus.FAILED.name().toLowerCase() %> {
       background-color: #ffdddd;
     }
-    
+
     div.datastore {
       border-style: dashed;
       /*background-color: #ffcc88;*/
     }
-    
+
     div.legend-entry {
       width: 50px;
       height: 30px;
@@ -149,22 +161,22 @@ public String renderProgressBar(int pctComplete) {
       display: table-cell;
       padding: 3px;
     }
-    
-    label.collapse {
+
+    label.collapse-node {
       position: absolute;
       top: 0;
       left: 1px;
       font-weight: bold;
       cursor: pointer;
     }
-    label.expand {
+    label.expand-node {
       position: absolute;
       top: 0;
       right: 0;
       font-weight: bold;
       cursor: pointer;
     }
-    
+
     table.progress_bar {
       border: 1px solid #333333;
       height: 12px;
@@ -176,7 +188,7 @@ public String renderProgressBar(int pctComplete) {
       padding: 0;
       margin: 0;
     }
-    
+
     #detail {
       border: 1px solid #333333;
       border-collapse: collapse;
@@ -196,10 +208,14 @@ public String renderProgressBar(int pctComplete) {
   </style>
 
   <script src="js/raphael-min.js" type="text/javascript" charset="utf-8"></script>
-  <script src="diagrams.js" type="text/javascript" charset="utf-8"></script>
-  <script type="text/javascript"><!--
-    // this is where we'll put the node defns
-    var diagramNodes = [
+  <script src="js/diagrams2.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/graph.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/workflow_diagram.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/dag_layout.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/jquery.min.js"></script>
+  <script type="text/javascript">
+  // this is where we'll put the node defns
+  var diagramNodesOld = [
     <%
       boolean outerFirst = true;
       for (Vertex vertex : vertices) {
@@ -208,16 +224,16 @@ public String renderProgressBar(int pctComplete) {
         }
         outerFirst = false;
         %>
-      {
-        id: <%= vertexToId.get(vertex) %>,
-        css_class: "<%= vertex.getStatus().toLowerCase() %>",
-        unit_x: <%= layout.getXCoordForVertex(vertex) %>,
-        unit_y: <%= layout.getYCoordForVertex(vertex) %>,
-        short_name: "<%= vertex.getName() %>",
-        full_name: "<%= vertex.getId() %>",
-        expandable: <%= wfd.isExpandable(vertex.getId()) %>,
-        collapsable: <%= wfd.hasParent(vertex.getId()) %>,
-        outgoing_edges: [
+    {
+      id: <%= vertexToId.get(vertex) %>,
+      css_class: "<%= vertex.getStatus().toLowerCase() %>",
+      unit_x: <%= layout.getXCoordForVertex(vertex) %>,
+      unit_y: <%= layout.getYCoordForVertex(vertex) %>,
+      short_name: "<%= vertex.getName() %>",
+      full_name: "<%= vertex.getId() %>",
+      expandable: <%= wfd.isExpandable(vertex.getId()) %>,
+      collapsable: <%= wfd.hasParent(vertex.getId()) %>,
+      outgoing_edges: [
         <%
           boolean innerFirst = true;
           for (DefaultEdge depEdge : precedenceGraph.incomingEdgesOf(vertex)) {
@@ -229,7 +245,7 @@ public String renderProgressBar(int pctComplete) {
             out.print(vertexToId.get(depVertex));
           }
         %>],
-        incoming_edges: [
+      incoming_edges: [
         <%
           innerFirst = true;
           for (DefaultEdge depEdge : precedenceGraph.outgoingEdgesOf(vertex)) {
@@ -241,16 +257,46 @@ public String renderProgressBar(int pctComplete) {
             out.print(vertexToId.get(depVertex));
           }
         %>]
-      }
-        <%
+    }
+    <%
         i++;
       }
     %>
-    ];
+  ];
 
-    window.onload = function () {
-      renderDiagram("canvas", diagramNodes);
-    };
+  function updateView() {
+    renderDiagram("canvas", wfd);
+    updateTable();
+  }
+
+  <%= wfd.getJSWorkflowDefinition(true) %>
+  var wfd = new Wfd(workflowSteps, workflowDatastores);
+  var graph = wfd.getDiagramGraph();
+  var diagramNodes = getDiagramNodes(graph);
+
+  window.onload = function () {
+    $("#datastores").click(function() {
+      if (wfd.includeDatastores == true) {
+        wfd.includeDatastores = false;
+        $("#datastores").html("Show Datastores");
+      } else {
+        wfd.includeDatastores = true;
+        $("#datastores").html("Hide Datastores");
+      }
+      updateView();
+    });
+
+    $("#expand-all").click(function() {
+      wfd.expandAll();
+      updateView();
+    });
+
+    $("#collapse-all").click(function() {
+      wfd.collapseAll();
+      updateView();
+    });
+    updateView();
+  };
   </script>
 </head>
 <body>
@@ -258,45 +304,43 @@ public String renderProgressBar(int pctComplete) {
 <h2><%= wfr.getWorkflowName() %> </h2>
 
 <form method="GET" name="diagram_options" id="diagram_options">
-<%
-List<String> isolated = wfd.getIsolated();
-if (!isolated.isEmpty()){
-  String previous = isolated.remove(0);
-  for (String current : isolated) { %>
-    <input type="submit" value="<%= previous %>" style="display:none;"
-           name="remove_isolation" id ="remove_isolation_<%=current%>" onclick="this.value=<%= current %>" />
-    <label for="remove_isolation_<%=current%>" style="color:blue;" ><%= previous %></label>
-    <span style="padding: 0 8px 0 8px;">&gt;</span>
   <%
-    previous = current;
-  }
+    List<String> isolated = wfd.getIsolated();
+    if (!isolated.isEmpty()){
+      String previous = isolated.remove(0);
+      for (String current : isolated) { %>
+  <input type="submit" value="<%= previous %>" style="display:none;"
+         name="remove_isolation" id ="remove_isolation_<%=current%>" onclick="this.value=<%= current %>" />
+  <label for="remove_isolation_<%=current%>" style="color:blue;" ><%= previous %></label>
+  <span style="padding: 0 8px 0 8px;">&gt;</span>
+  <%
+      previous = current;
+    }
   %>
   <%= previous %>
-<% 
-} 
-%>
-<br/>
-<div id="canvas" style="border:1px solid black; position:relative; overflow:auto; width:100%"></div>
-
-<div id="legend" style="float:right">
-<%
-for (StepStatus status : StepStatus.values()) {
-  String pretty_name = status.name().toLowerCase();
-  %>
-  <div class="legend-entry <%= status.name().toLowerCase() %>"><%= pretty_name %></div>
   <%
-}
-%>
-<div class="legend-entry datastore">datastore</div>
-</div>
+    }
+  %>
+  <br/>
+  <div id="canvas" style="border:1px solid black; position:relative; overflow:auto; width:100%"></div>
 
-<input type="submit" value="Expand All" name="expand_all" onclick="this.value=1" />
-<input type="submit" value="Collapse All" name="collapse_all" onclick="this.value=1" />
-<input type="checkbox" name="datastores" id="datastores" onclick="document.diagram_options.submit()"
-<% if (showDatastores) out.print("checked=\"checked\""); %> />
-<label for="datastores">Datastores?</label>
+  <div id="legend" style="float:right">
+    <%
+      for (StepStatus status : StepStatus.values()) {
+        String pretty_name = status.name().toLowerCase();
+    %>
+    <div class="legend-entry <%= status.name().toLowerCase() %>"><%= pretty_name %></div>
+    <%
+      }
+    %>
+    <div class="legend-entry datastore">datastore</div>
+  </div>
+
+  <a id="expand-all" class="btn btn-info btn-small">Expand All</a>
+  <a id="collapse-all" class="btn btn-info btn-small">Collapse All</a>
+  <a id="datastores" class="btn btn-info btn-small">Show Datastores</a>
 </form>
-<h4>Controls</h4>
+<h4>Shutdown Controls</h4>
 
 <%
   if (wfr.isShutdownPending()) {
@@ -304,21 +348,21 @@ for (StepStatus status : StepStatus.values()) {
 <div class='shutdown-notice'>
   <p>
     Workflow shutdown has been requested with the following message:
-    <p class="shutdown-notice-message">
-      "<%= wfr.getReasonForShutdownRequest() %>"
-    </p>
+  <p class="shutdown-notice-message">
+    "<%= wfr.getReasonForShutdownRequest() %>"
+  </p>
   </p>
   <p>
     Currently running components will be allowed to complete before exiting.
   </p>
 </div>
 <%} else {%>
-<form action="request_shutdown.jsp" method=post>
+<form action="/request_shutdown.jsp" method=post>
   <p>
-    <label for="reason">Reason for shutdown:</label>
+    <label for="shutdown-reason">Reason for shutdown:</label>
   </p>
   <p>
-    <textarea name="reason" rows="10" cols="70"></textarea>
+    <textarea id="shutdown-reason" name="reason" rows="10" cols="70" style="width:50%"></textarea>
   </p>
   <input type="submit" value="Request Workflow Shutdown"/>
 </form>
@@ -327,63 +371,41 @@ for (StepStatus status : StepStatus.values()) {
 %>
 
 <h4>Workflow Detail</h4>
-<table id="detail">
-  <tr>
-    <th>&nbsp;</th>
-    <th>&nbsp;</th>
-    <th>Token</th>
-    <th>Name</th>
-    <th>Status</th>
-    <th>Job Tracker</th>
-    <th>Messages</th>
-  </tr>
-  <%
-  TopologicalOrderIterator<Vertex, DefaultEdge> topoIter = new TopologicalOrderIterator(precedenceGraph);
-  while (topoIter.hasNext()) {
-    Vertex vertex = topoIter.next();
-    if (vertex.getStatus().equals("datastore")) {
-      continue;
-    }
-  %>
-    <tr>
-      <td class="ec">
-        <% if (wfd.hasParent(vertex.getId())) { %>
-          <label for="collapse_<%= vertex.getId() %>">&ndash;</label>
-        <% } %>
-      </td>
-      <td class="ec">
-        <% if (wfd.isExpandable(vertex.getId())) { %>
-          <label for="expand_<%= vertex.getId() %>">+</label>
-        <% } %>
-      </td>
-      <td>
-        <label for="isolate_<%= vertex.getId() %>"><%= vertex.getId() %></label>        
-      </td>
-      <td>
-        <%= vertex.getActionName() %>
-      </td>
-      <td class="status-column">
-      <%= vertex.getStatus() %>
-      <% if (vertex.getStatus().equals("running")) { %>
-          <%= renderProgressBar(vertex.getPercentageComplete()) %>
-          Started at <%= dateFormat.format(new Date(vertex.getStartTimestamp())) %>
-        <%
-      } else if (vertex.getStatus().equals("completed")) {
-        %>
-          <%= renderProgressBar(100) %>
-          Started at <%= dateFormat.format(new Date(vertex.getStartTimestamp())) %>
-          <br>Ended at <%= dateFormat.format(new Date(vertex.getEndTimestamp())) %>
-          <br>Took <%= TimeHelper.shortHumanReadableElapsedTime(vertex.getStartTimestamp(), vertex.getEndTimestamp()) %>
-        <%
+<table id="detail"></table>
+  <script type="text/javascript">
+    function updateTable() {
+      var tableHtml = "<tr><th>&nbsp;</th><th>&nbsp;</th><th>Token</th><th>Name</th><th>Status</th><th>Job Tracker</th><th>Messages</th></tr>"
+      for (i in wfd.workflowDef) {
+        var step = wfd.workflowDef[i];
+        if (!wfd.shouldBeIncluded(step.id)) continue;
+        var collapseLabel = wfd.isCollapsable(step.id) ? "<label onclick=\"$('#collapse_" + wfd.getLongNameForStep(step).replace(/\s/g, '-') + "_label').click()\">&ndash;</label>" : "";
+        var expandLabel = wfd.isExpandable(step.id) ? "<label onclick=\"$('#expand_" + wfd.getLongNameForStep(step).replace(/\s/g, '-') + "_label').click()\">+</label>" : "";
+
+        tableHtml += "<tr>";
+        tableHtml += "<td class='ec'>" + collapseLabel + "</td>";
+        tableHtml += "<td class='ec'>" + expandLabel + "</td>";
+        tableHtml += "<td>" + step.name + "</td>";
+        tableHtml += "<td>" + step.java_class.split('.').pop() + "</td>";
+        tableHtml += "<td>" + step.status;
+        if (step.status == "running") {
+          tableHtml += renderProgressBar(step.pctComplete);
+          tableHtml += "Started at " + new Date(step.startTimestamp);
+        } else if (step.status == "completed") {
+          tableHtml += renderProgressBar(100);
+          tableHtml += "Started at " + new Date(step.startTimestamp).toString();
+          tableHtml += "<br>Ended at " + new Date(step.endTimestamp).toString();
+          tableHtml += "<br>Took " + shortHumanReadableElapsedTime(step.startTimestamp, step.endTimestamp);
+        }
+
+        tableHtml += "</td>";
+        tableHtml += "<td></td>";
+        tableHtml += "<td></td>";
+        tableHtml += "</tr>";
+
       }
-      %>
-        </td>
-      <td><%= vertex.getJobTrackerLinks() %></td>
-      <td><%= vertex.getMessage() %></td>
-    </tr>
-    <%
-  }%>
-</table>
+      $("#detail").html(tableHtml);
+    }
+  </script>
 
 </body>
 </html>
