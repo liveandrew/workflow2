@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import com.rapleaf.cascading_ext.CascadingHelper;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
@@ -32,7 +33,6 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 
-import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
@@ -66,7 +66,7 @@ public final class WorkflowRunner {
     }
     
     public void start() {
-      CascadingHelper.getJobConf();
+      CascadingHelper.get().getJobConf();
       Runnable r = new Runnable() {
         @Override
         public void run() {

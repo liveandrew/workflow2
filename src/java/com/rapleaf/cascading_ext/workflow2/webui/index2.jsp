@@ -43,11 +43,6 @@
 </script>
 
 <%
-  boolean showDatastores = false;
-  if (request.getParameter("datastores") != null && request.getParameter("datastores").equals("on")) {
-    showDatastores = true;
-  }
-
   WorkflowRunner wfr = (WorkflowRunner)getServletContext().getAttribute("workflowRunner");
   WorkflowDiagram wfd;
   if (session.isNew()) {
@@ -56,39 +51,6 @@
   } else {
     wfd = (WorkflowDiagram)session.getAttribute("workflowDiagram");
   }
-
-  if (request.getParameter("expand_all") != null && request.getParameter("expand_all").equals("1")) {
-    wfd.expandAllMultistepVertices();
-  } else if (request.getParameter("collapse_all") != null && request.getParameter("collapse_all").equals("1")) {
-    wfd.collapseAllMultistepVertices();
-  } else if (request.getParameter("expand") != null) {
-    wfd.expandMultistepVertex(request.getParameter("expand"));
-  } else if (request.getParameter("collapse") != null) {
-    wfd.collapseParentOfVertex(request.getParameter("collapse"));
-  } else if (request.getParameter("isolate") != null) {
-    wfd.isolateVertex(request.getParameter("isolate"));
-  } else if (request.getParameter("remove_isolation") != null) {
-    wfd.reduceIsolation(request.getParameter("remove_isolation"));
-  }
-
-  DirectedGraph<Vertex, DefaultEdge> precedenceGraph;
-  if (showDatastores) {
-    precedenceGraph = wfd.getDiagramGraphWithDataStores();
-  } else {
-    precedenceGraph = wfd.getDiagramGraph();
-  }
-  Set<Vertex> vertices = precedenceGraph.vertexSet();
-
-  Map<Vertex, Integer> vertexToId = new HashMap<Vertex, Integer>(vertices.size());
-  int i = 0;
-  for (Vertex vertex : vertices) {
-    int id = i++;
-    vertexToId.put(vertex, id);
-  }
-
-  DAGLayoutGenerator.DAGLayout<Vertex> layout = DAGLayoutGenerator.generateLayout(precedenceGraph, DAGLayoutGenerator.LayoutDirection.LEFT_TO_RIGHT);
-
-  DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 %>
 
 <head>
@@ -214,55 +176,6 @@
   <script src="js/dag_layout.js" type="text/javascript" charset="utf-8"></script>
   <script src="js/jquery.min.js"></script>
   <script type="text/javascript">
-  // this is where we'll put the node defns
-  var diagramNodesOld = [
-    <%
-      boolean outerFirst = true;
-      for (Vertex vertex : vertices) {
-        if (!outerFirst) {
-          %>, <%
-        }
-        outerFirst = false;
-        %>
-    {
-      id: <%= vertexToId.get(vertex) %>,
-      css_class: "<%= vertex.getStatus().toLowerCase() %>",
-      unit_x: <%= layout.getXCoordForVertex(vertex) %>,
-      unit_y: <%= layout.getYCoordForVertex(vertex) %>,
-      short_name: "<%= vertex.getName() %>",
-      full_name: "<%= vertex.getId() %>",
-      expandable: <%= wfd.isExpandable(vertex.getId()) %>,
-      collapsable: <%= wfd.hasParent(vertex.getId()) %>,
-      outgoing_edges: [
-        <%
-          boolean innerFirst = true;
-          for (DefaultEdge depEdge : precedenceGraph.incomingEdgesOf(vertex)) {
-            if (!innerFirst) {
-              out.print(", ");
-            }
-            innerFirst = false;
-            Vertex depVertex = precedenceGraph.getEdgeSource(depEdge);
-            out.print(vertexToId.get(depVertex));
-          }
-        %>],
-      incoming_edges: [
-        <%
-          innerFirst = true;
-          for (DefaultEdge depEdge : precedenceGraph.outgoingEdgesOf(vertex)) {
-            if (!innerFirst) {
-              out.print(", ");
-            }
-            innerFirst = false;
-            Vertex depVertex = precedenceGraph.getEdgeTarget(depEdge);
-            out.print(vertexToId.get(depVertex));
-          }
-        %>]
-    }
-    <%
-        i++;
-      }
-    %>
-  ];
 
   function updateView() {
     renderDiagram("canvas", wfd);

@@ -51,7 +51,7 @@ public class GetDIEsByPINTypes extends Action {
       taps.add(store.getTap());
     }
 
-    CascadingHelper.getFlowConnector().connect(new MultiSourceTap(taps.toArray(new Tap[0])),
+    CascadingHelper.get().getFlowConnector().connect(new MultiSourceTap(taps.toArray(new Tap[0])),
       napDIEs.getTap(), naps).complete();
   }
 }

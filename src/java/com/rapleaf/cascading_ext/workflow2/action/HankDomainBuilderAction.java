@@ -4,7 +4,6 @@ import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.LiverampCascadingHelper;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.hank.cascading.CascadingDomainBuilder;
@@ -98,8 +97,8 @@ public abstract class HankDomainBuilderAction extends Action {
       builder.setPartitionToBuild(partitionToBuild);
     }
 
-    properties.putAll(LiverampCascadingHelper.get().getDefaultProperties());
-    Flow flow = builder.build(CascadingHelper.getFlowConnectorFactory(properties), getSources());
+    properties.putAll(CascadingHelper.get().getDefaultProperties());
+    Flow flow = builder.build(CascadingHelper.get().getFlowConnectorFactory(properties), getSources());
     domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {

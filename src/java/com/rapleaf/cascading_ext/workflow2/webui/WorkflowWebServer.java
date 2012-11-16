@@ -2,7 +2,6 @@ package com.rapleaf.cascading_ext.workflow2.webui;
 
 import java.net.URL;
 
-import com.rapleaf.cascading_ext.LiverampCascadingHelper;
 import org.apache.log4j.Logger;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;

@@ -92,6 +92,8 @@ public class HadoopOperation implements ActionOperation {
 
     try {
       counterGroups = runningJob.getCounters();
+    } catch (NullPointerException e) {
+      counterGroups = new Counters();
     } catch (IOException e) {
       counterGroups = new Counters();
     }

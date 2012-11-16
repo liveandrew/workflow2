@@ -1,6 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import cascading.flow.Flow;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 import cascading.tuple.Fields;
@@ -34,7 +33,7 @@ public class DistinctDIEsOnPINAndEID extends Action {
     merged = new Each(merged, new Fields("die"), new ExpandThrift(DustinInternalEquiv.class), new Fields("die", "eid", "pin"));
     merged = new Distinct(merged, new Fields("eid", "pin"));
 
-    completeWithProgress(CascadingHelper.getFlowConnector().connect(indistinctDIEs.getTap(),
+    completeWithProgress(CascadingHelper.get().getFlowConnector().connect(indistinctDIEs.getTap(),
         distinctDIEs.getTap(), merged));
   }
 }

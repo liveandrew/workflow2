@@ -45,7 +45,7 @@ public class CombineAndDistinct extends Action {
     Pipe pipes = new Pipe("pipes");
     pipes = new Distinct(pipes, distinct);
 
-    completeWithProgress(CascadingHelper.getFlowConnector().connect(
+    completeWithProgress(CascadingHelper.get().getFlowConnector().connect(
       new MultiSourceTap(taps.toArray(new Tap[0])), output.getTap(), pipes));
   }
 

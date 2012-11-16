@@ -3,7 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
-import com.rapleaf.cascading_ext.LiverampCascadingHelper;
+import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.hank.cascading.CascadingDomainBuilder;
@@ -59,7 +59,7 @@ public abstract class HankDomainsBuilderAction extends Action {
       cdbs.add(makeDomainBuilder(pipe, output));
     }
 
-    properties.putAll(LiverampCascadingHelper.get().getDefaultProperties());
+    properties.putAll(CascadingHelper.get().getDefaultProperties());
 
     Flow flow = CascadingDomainBuilder.buildDomains(properties, getSources(), getOtherSinks(), getOtherTails(),
         cdbs.toArray(new CascadingDomainBuilder[cdbs.size()]));
