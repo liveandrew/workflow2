@@ -44,8 +44,8 @@ public class TestMultiStepAction extends CascadingExtTestCase {
   public void testGetHeadSteps() throws Exception {
 
     //  assert that the tmp root is set
-    assertEquals("/tmp/cascading_ext/TestMultiStepAction_AUTOGEN/msa-tmp-stores", msa.getTmpRoot());
-    assertEquals("/tmp/cascading_ext/TestMultiStepAction_AUTOGEN/msa-tmp-stores/a-tmp-stores", a.getAction().getTmpRoot());
+    assertEquals(getTestRoot()+"/msa-tmp-stores", msa.getTmpRoot());
+    assertEquals(getTestRoot()+"/msa-tmp-stores/a-tmp-stores", a.getAction().getTmpRoot());
 
     assertEquals(new HashSet<Step>(Arrays.asList(a, b, g)), msa.getHeadSteps());
   }
