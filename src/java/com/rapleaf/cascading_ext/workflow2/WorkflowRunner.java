@@ -336,26 +336,41 @@ public final class WorkflowRunner {
   public void generateDocs(String outputPath) {
     try {
       WorkflowDiagram wfd = new WorkflowDiagram(this);
-      Map<String, String> templateFields = new HashMap<String, String>();
-      templateFields.put("${workflow_name}", workflowName);
-      templateFields.put("${workflow_def}", wfd.getJSWorkflowDefinition(false));
 
       new File(outputPath).mkdirs();
       File outputFile = new File(outputPath + "/" + workflowName.replaceAll("\\s", "-") + ".html");
       FileWriter fw = new FileWriter(outputFile);
-
-      InputStream is = this.getClass().getClassLoader().getResourceAsStream(DOC_FILES_ROOT + "/workflow_template.html");
-      BufferedReader br = new BufferedReader(new InputStreamReader(is));
-      String line;
-      while ((line = br.readLine()) != null) {
-        fw.write(replaceTemplateFields(templateFields, line) + "\n");
-      }
+      fw.write(getDocsHtml(wfd, false));
       fw.close();
 
       copyResources(outputPath);
     } catch (Exception e) {
       LOG.warn("Error generating workflow docs", e);
     }
+  }
+
+  public String getDocsHtml(WorkflowDiagram wfd, boolean liveWorkflow) throws IOException {
+    Map<String, String> templateFields = new HashMap<String, String>();
+    templateFields.put("${workflow_name}", workflowName);
+    templateFields.put("${workflow_def}", wfd.getJSWorkflowDefinition(liveWorkflow));
+    if (liveWorkflow) {
+      String liverWorkflowDef = "liveworkflow = true;\n";
+      if (isShutdownPending()) {
+        liverWorkflowDef += "shutdown_reason = \"" + reasonForShutdownRequest + "\"\n";
+      }
+      templateFields.put("${live_workflow_def}", liverWorkflowDef);
+    } else {
+      templateFields.put("${live_workflow_def}", "");
+    }
+
+    StringBuilder sb = new StringBuilder();
+    InputStream is = this.getClass().getClassLoader().getResourceAsStream(DOC_FILES_ROOT + "/workflow_template.html");
+    BufferedReader br = new BufferedReader(new InputStreamReader(is));
+    String line;
+    while ((line = br.readLine()) != null) {
+      sb.append(replaceTemplateFields(templateFields, line) + "\n");
+    }
+    return sb.toString();
   }
 
   private String replaceTemplateFields(Map<String, String> templateFields, String line) {

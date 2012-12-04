@@ -55,15 +55,32 @@ div.node {
   border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff62c462', endColorstr='#ff51a351', GradientType=0);
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
-  /*background-color: #7aba7b;*/
 }
 
 div.waiting {
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #51a351;
+  background-color: #62c462;
+  background-color: #aaaaaa;
   background-color: #dddddd;
+  background-color: #7ab5d3;
+  background-color: #336699;
+  background-image: -moz-linear-gradient(top, #dddddd, #aaaaaa);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#dddddd), to(#aaaaaa));
+  background-image: -webkit-linear-gradient(top, #dddddd, #aaaaaa);
+  background-image: -o-linear-gradient(top, #dddddd, #aaaaaa);
+  background-image: linear-gradient(to bottom, #dddddd, #aaaaaa);
 }
 
 div.running {
-  background-color: #ddffdd;
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-image: -moz-linear-gradient(top, #7ab5d3, #336699);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#7ab5d3), to(#336699));
+  background-image: -webkit-linear-gradient(top, #7ab5d3, #336699);
+  background-image: -o-linear-gradient(top, #7ab5d3, #336699);
+  background-image: linear-gradient(to bottom, #7ab5d3, #336699);
 }
 
 div.skipped {
@@ -71,27 +88,26 @@ div.skipped {
 }
 
 div.completed {
-  background-color: #ddddff;
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-image: -moz-linear-gradient(top, #62c462, #51a351);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#62c462), to(#51a351));
+  background-image: -webkit-linear-gradient(top, #62c462, #51a351);
+  background-image: -o-linear-gradient(top, #62c462, #51a351);
+  background-image: linear-gradient(to bottom, #62c462, #51a351);
 }
 
 div.failed {
-  background-color: #ffdddd;
+  background-color: #ee5f5b;
 }
 
 div.datastore {
   display: inline-block;
   *display: inline;
-  /*padding: 4px 12px;*/
-  /*margin-bottom: 0;*/
-  /**margin-left: .3em;*/
-  /*font-size: 14px;*/
-  /*line-height: 20px;*/
-  /**line-height: 20px;*/
   color: #333333;
   text-align: center;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
   vertical-align: middle;
-  cursor: pointer;
   background-color: #f5f5f5;
   *background-color: #e6e6e6;
   background-image: -moz-linear-gradient(top, #ffffff, #e6e6e6);

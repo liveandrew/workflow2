@@ -64,6 +64,10 @@ public class MultiStepAction extends Action {
     setSubStepsFromTails(Collections.singleton(tail));
   }
 
+  protected final void setSubStepsFromTails(Step ... tails){
+    setSubStepsFromTails(Arrays.asList(tails));
+  }
+
   protected final void setSubStepsFromTails(Collection<Step> tails) {
     Set<Step> steps = new HashSet<Step>(tails);
     List<Step> queue = new ArrayList<Step>(tails);

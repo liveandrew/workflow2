@@ -8,7 +8,9 @@ import org.apache.hadoop.fs.Path;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import org.junit.Ignore;
 
+@Ignore
 public class LongRunningWorkflow extends CascadingExtTestCase {
 
   private final String LONG_RUNNING_WORKFLOW_PATH = getTestRoot() + "/LongRunningHadoopWorkflow";

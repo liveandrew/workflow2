@@ -69,6 +69,30 @@ Wfd.prototype = {
     }
   },
 
+  getSortedSteps: function() {
+    return this.workflowDef.sort(function(s1, s2){
+      if (s1.name.toLowerCase() < s2.name.toLowerCase()) {
+        return -1;
+      } else if (s1.name.toLowerCase() > s2.name.toLowerCase()) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+  },
+
+  getSortedDatastores: function() {
+    return this.datastores.sort(function(d1, d2) {
+      if (d1.name.toLowerCase() < d2.name.toLowerCase()) {
+        return -1;
+      } else if (d1.name.toLowerCase() > d2.name.toLowerCase()) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+  },
+
   getLongNameForStep: function(step) {
     var parents = [];
     var id = this.idToParentId[step.id];
