@@ -1,11 +1,11 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import java.io.IOException;
-
+import com.rapleaf.cascading_ext.consolidator.Consolidator;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.formats.bucket.Consolidator;
+
+import java.io.IOException;
 
 public class ConsolidateAction extends Action {
 
