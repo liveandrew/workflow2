@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import com.liveramp.cascading_ext.counters.Counter;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -699,5 +700,20 @@ public final class WorkflowRunner {
       }
     }
     return counters;
+  }
+
+  public Map<String, Map<String,Long>> getCounterMap() {
+    // we don't know what stage of execution we are in when this is called
+    // so get an up-to-date list of counters each time
+    List<NestedCounter> counters = this.getCounters();
+    Map<String, Map<String,Long>> counterMap = new HashMap<String, Map<String, Long>>();
+    for(NestedCounter nestedCounter: counters){
+      Counter counter = nestedCounter.getCounter();
+      if(counterMap.get(counter.getGroup()) == null){
+        counterMap.put(counter.getGroup(), new HashMap<String, Long>());
+      }
+      counterMap.get(counter.getGroup()).put(counter.getName(), counter.getValue());
+    }
+    return counterMap;
   }
 }
