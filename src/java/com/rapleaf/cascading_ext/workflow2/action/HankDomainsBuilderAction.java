@@ -1,7 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import cascading.flow.Flow;
+import cascading.flow.hadoop.util.HadoopUtil;
 import cascading.pipe.Pipe;
+import cascading.property.AppProps;
 import cascading.tap.Tap;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
@@ -61,7 +63,11 @@ public abstract class HankDomainsBuilderAction extends Action {
 
     properties.putAll(CascadingHelper.get().getDefaultProperties());
 
-    Flow flow = CascadingDomainBuilder.buildDomains(properties, getSources(), getOtherSinks(), getOtherTails(),
+    Flow flow = CascadingDomainBuilder.buildDomains(
+        properties,
+        getSources(),
+        getOtherSinks(),
+        getOtherTails(),
         cdbs.toArray(new CascadingDomainBuilder[cdbs.size()]));
 
     if (flow != null) {
@@ -129,14 +135,12 @@ public abstract class HankDomainsBuilderAction extends Action {
 
   protected Map<String, Tap> getOtherSinks() {
     // Default is empty
-    Map<String, Tap> otherSinks = new HashMap<String, Tap>();
-    return otherSinks;
+    return new HashMap<String, Tap>();
   }
 
   protected Pipe[] getOtherTails() {
     // Default is empty
-    Pipe[] otherTails = new Pipe[0];
-    return otherTails;
+    return new Pipe[0];
   }
 
   protected void postProcessFlow(Flow flow) {
