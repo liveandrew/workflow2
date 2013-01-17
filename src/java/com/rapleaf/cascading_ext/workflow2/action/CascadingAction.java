@@ -43,34 +43,34 @@ public abstract class CascadingAction extends Action {
     Collections.addAll(this.tails, tails);
   }
 
-  protected void addSource(Tap source){
-    addSource("singleton-source", source);
+  protected void addSourceTap(Tap source){
+    addSourceTap("singleton-source", source);
   }
 
-  protected void addSources(Map<String, Tap> sources){
+  protected void addSourceTaps(Map<String, Tap> sources){
     for(Map.Entry<String, Tap> source: sources.entrySet()){
-      addSource(source.getKey(), source.getValue());
+      addSourceTap(source.getKey(), source.getValue());
     }
   }
 
-  protected void addSource(String name, Tap tap){
+  protected void addSourceTap(String name, Tap tap){
     if(this.sources.containsKey(name)){
       throw new RuntimeException("sources already contains name "+name+"!");
     }
 
     this.sources.put(name, tap);
   }
-  protected void addSink(Tap sink){
-    addSink("singleton-sink", sink);
+  protected void addSinkTap(Tap sink){
+    addSinkTap("singleton-sink", sink);
   }
 
-  protected void addSinks(Map<String, Tap> sinks){
+  protected void addSinkTaps(Map<String, Tap> sinks){
     for(Map.Entry<String, Tap> sink: sinks.entrySet()){
-      addSink(sink.getKey(), sink.getValue());
+      addSinkTap(sink.getKey(), sink.getValue());
     }
   }
 
-  protected void addSink(String name, Tap sink){
+  protected void addSinkTap(String name, Tap sink){
     if(this.sinks.containsKey(name)){
       throw new RuntimeException("sinks already contains name "+name+"!");
     }
