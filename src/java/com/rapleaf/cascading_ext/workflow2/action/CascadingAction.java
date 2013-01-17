@@ -14,7 +14,7 @@ public abstract class CascadingAction extends Action {
 
   private final Map<String, Tap> sources = new HashMap<String, Tap>();
   private final Map<String, Tap> sinks = new HashMap<String, Tap>();
-  private Map<Object, Object> flowProperties = Collections.emptyMap();
+  private Map<Object, Object> flowProperties = new HashMap<Object, Object>();
   private List<Pipe> tails = new ArrayList<Pipe>();
 
   public CascadingAction(String checkpointToken,
