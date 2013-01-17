@@ -18,8 +18,8 @@ public abstract class CascadingAction extends Action {
   private List<Pipe> tails = new ArrayList<Pipe>();
 
   public CascadingAction(String checkpointToken,
-                         List<DataStore> inputStores,
-                         List<DataStore> outputStores) {
+                         List<? extends DataStore> inputStores,
+                         List<? extends DataStore> outputStores) {
     super(checkpointToken);
 
     for(DataStore ds: inputStores){
