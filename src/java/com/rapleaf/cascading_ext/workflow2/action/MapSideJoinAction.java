@@ -31,7 +31,12 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
     }
 
     creates(outputStore);
+
+    setUp();
   }
+
+  // override in anonymous classes
+  protected void setUp(){}
 
   protected void addExtractors(List<Extractor<T>> extractors){
     this.extractors.addAll(extractors);
