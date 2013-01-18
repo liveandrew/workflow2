@@ -29,6 +29,8 @@ public abstract class CascadingAction extends Action {
     for(DataStore ds: outputStores){
       creates(ds);
     }
+
+    setUp();
   }
 
   protected void addTails(List<Pipe> tails) {
@@ -80,6 +82,11 @@ public abstract class CascadingAction extends Action {
 
   protected void addFlowProperties(Map<Object, Object> properties){
     flowProperties.putAll(properties);
+  }
+
+
+  // override in anonymous classes
+  protected void setUp(){
   }
 
   @Override

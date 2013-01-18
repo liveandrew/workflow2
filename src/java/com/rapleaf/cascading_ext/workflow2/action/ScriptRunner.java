@@ -6,9 +6,11 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import java.io.IOException;
 
 public class ScriptRunner {
-  public static void run(String path, CascadingAction action) throws IOException {
+  public static void run(CascadingAction action) throws IOException {
+    String tmpPath = "/tmp/"+action.getClass().getSimpleName()+"/checkpoints";
+
     Step step = new Step(action);
-    new WorkflowRunner("Oneoff runner: "+action.getClass().getSimpleName(), path+"/checkpoints", 1, 0, step)
+    new WorkflowRunner("Oneoff runner: "+action.getClass().getSimpleName(), tmpPath, 1, 0, step)
         .run();
   }
 }
