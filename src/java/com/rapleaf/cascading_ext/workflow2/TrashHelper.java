@@ -16,6 +16,7 @@ public class TrashHelper {
   }
 
   public static boolean isEnabled() throws IOException {
-    return CascadingHelper.get().getJobConf().get("fs.trash.interval") != null;
+    Integer interval = Integer.parseInt(CascadingHelper.get().getJobConf().get("fs.trash.interval"));
+    return interval != 0;
   }
 }
