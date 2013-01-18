@@ -29,7 +29,6 @@ public class TestAction extends CascadingExtTestCase {
     getFS().mkdirs(dir3Path);
 
     new ExampleAction().internalExecute();
-    assertFalse("dir1 should be trashed", getFS().exists(dir1Path));
 
     if (TrashHelper.isEnabled()) {
       Path trash = new Path(".Trash/Current/data/dir1");
