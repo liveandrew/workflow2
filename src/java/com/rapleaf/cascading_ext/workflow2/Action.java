@@ -252,7 +252,7 @@ public abstract class Action {
    * @param maxPct
    * @return
    */
-  public static int getActionProgress(ActionOperation operation, int maxPct) {
+  static int getActionProgress(ActionOperation operation, int maxPct) {
     try {
       return operation.getProgress(maxPct);
     } catch (IOException e) {
