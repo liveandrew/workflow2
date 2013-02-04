@@ -10,7 +10,7 @@ public class TestAction extends CascadingExtTestCase {
   public class ExampleAction extends Action {
     public ExampleAction() throws IOException {
       super("example");
-      creates(new BucketDataStoreImpl(getFS(), "example dir 1", "/data", "/dir1"));
+      creates(new BucketDataStoreImpl(getFS(), "example dir 1", getTestRoot(), "/dir1"));
       createsTemporary(new BucketDataStoreImpl(getFS(), "example dir 2", getTestRoot(), "/dir2"));
       readsFrom(new BucketDataStoreImpl(getFS(), "example dir 3", getTestRoot(), "/dir3"));
     }
@@ -21,7 +21,7 @@ public class TestAction extends CascadingExtTestCase {
   }
 
   public void testDeletesCreatesAndTemp() throws Exception {
-    Path dir1Path = new Path("/data/dir1");
+    Path dir1Path = new Path(getTestRoot() + "/data/dir1");
     getFS().mkdirs(dir1Path);
     Path dir2Path = new Path(getTestRoot() + "/dir2");
     getFS().mkdirs(dir2Path);
