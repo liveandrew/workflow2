@@ -21,7 +21,7 @@ public class TestAction extends CascadingExtTestCase {
   }
 
   public void testDeletesCreatesAndTemp() throws Exception {
-    Path dir1Path = new Path(getTestRoot() + "/data/dir1");
+    Path dir1Path = new Path(getTestRoot() + "/dir1");
     getFS().mkdirs(dir1Path);
     Path dir2Path = new Path(getTestRoot() + "/dir2");
     getFS().mkdirs(dir2Path);
