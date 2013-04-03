@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 import java.util.Arrays;
 
+import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import org.apache.hadoop.fs.Path;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
@@ -136,6 +137,6 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
   }
 
   private static DataStore getFakeDS(String name) throws IOException {
-    return new BucketDataStoreImpl(null, name, "/tmp/", name);
+    return new BytesDataStore(null, name, "/tmp/", name);
   }
 }

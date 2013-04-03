@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
+import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import org.apache.hadoop.fs.Path;
 
 import java.io.IOException;
@@ -10,9 +11,9 @@ public class TestAction extends CascadingExtTestCase {
   public class ExampleAction extends Action {
     public ExampleAction() throws IOException {
       super("example");
-      creates(new BucketDataStoreImpl(getFS(), "example dir 1", getTestRoot(), "/dir1"));
-      createsTemporary(new BucketDataStoreImpl(getFS(), "example dir 2", getTestRoot(), "/dir2"));
-      readsFrom(new BucketDataStoreImpl(getFS(), "example dir 3", getTestRoot(), "/dir3"));
+      creates(new BytesDataStore(getFS(), "example dir 1", getTestRoot(), "/dir1"));
+      createsTemporary(new BytesDataStore(getFS(), "example dir 2", getTestRoot(), "/dir2"));
+      readsFrom(new BytesDataStore(getFS(), "example dir 3", getTestRoot(), "/dir3"));
     }
 
     @Override

@@ -11,12 +11,15 @@ import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class HadoopOperation implements ActionOperation {
+  private static Logger LOG = Logger.getLogger(HadoopOperation.class);
+
   public static final String SINGLE_JOB_NAME = "Job 1/1";
   private final RunnableJob runnableJob;
 
@@ -46,10 +49,11 @@ public class HadoopOperation implements ActionOperation {
   public void complete() {
     try {
       runningJob.waitForCompletion();
+      LOG.info(com.liveramp.cascading_ext.counters.Counters.prettyCountersString(runningJob));
       if (!runningJob.isSuccessful()) {
         throw new RuntimeException("Job " + getName() + " failed!: " + runningJob.getFailureInfo());
       }
-      runnableJob.complete();
+      runnableJob.complete(runningJob);
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {

@@ -6,12 +6,12 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Bucket;
 
 
-public class PersistNewVersion extends Action {
+public class PersistNewVersion<T> extends Action {
 
   private final BucketDataStore versionToPersist;
   private final VersionedBucketDataStore store;
 
-  public PersistNewVersion(String checkpointToken, BucketDataStore versionToPersist, VersionedBucketDataStore store) {
+  public PersistNewVersion(String checkpointToken, BucketDataStore<T> versionToPersist, VersionedBucketDataStore<T> store) {
     super(checkpointToken);
 
     this.versionToPersist = versionToPersist;

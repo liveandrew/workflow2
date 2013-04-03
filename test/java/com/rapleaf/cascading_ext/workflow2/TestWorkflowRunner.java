@@ -176,11 +176,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       }
 
       @Override
-      public TupleEntryIterator getTupleEntryIterator() throws IOException {
-        return null;
-      }
-
-      @Override
       public String getPath() {
         return path;
       }

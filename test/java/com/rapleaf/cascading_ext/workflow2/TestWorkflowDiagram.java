@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 import java.util.*;
 
+import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
@@ -392,7 +393,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   }
 
   private static DataStore getFakeDS(String name) throws Exception {
-    return new BucketDataStoreImpl(null, name, "/tmp/", name);
+    return new BytesDataStore(null, name, "/tmp/", name);
   }
 
   private void populateNameToVertex(DirectedGraph<Vertex, DefaultEdge> graph) {

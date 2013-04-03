@@ -31,6 +31,7 @@ public final class WorkflowRunner {
 
   private static final String DOC_FILES_ROOT = "com/rapleaf/cascading_ext/workflow2/webui";
   public static final String WORKFLOW_DOCS_PATH = "/var/nfs/mounts/files/flowdoc/";
+  private boolean deleteCheckpointsOnSuccess = true;
 
   /**
    * StepRunner keeps track of some extra state for each component, as
@@ -56,7 +57,7 @@ public final class WorkflowRunner {
           try {
             if (checkpointExists()) {
               LOG.info("Step " + step.getCheckpointToken()
-                  + " was executed successfully in a prior run. Skipping.");
+                           + " was executed successfully in a prior run. Skipping.");
               status = StepStatus.SKIPPED;
             } else {
               status = StepStatus.RUNNING;
@@ -178,10 +179,10 @@ public final class WorkflowRunner {
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
     this(workflowName,
-        checkpointDir,
-        maxConcurrentSteps,
-        webUiPort,
-        combine(first, rest));
+         checkpointDir,
+         maxConcurrentSteps,
+         webUiPort,
+         combine(first, rest));
   }
 
   private static HashSet<Step> combine(final Step first, Step... rest) {
@@ -196,11 +197,11 @@ public final class WorkflowRunner {
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps) {
     this(workflowName,
-        checkpointDir,
-        maxConcurrentComponents,
-        webUiPort,
-        tailSteps,
-        null);
+         checkpointDir,
+         maxConcurrentComponents,
+         webUiPort,
+         tailSteps,
+         null);
   }
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
@@ -252,7 +253,7 @@ public final class WorkflowRunner {
       for (Step firstDegDep : firstDegDeps) {
         if (secondPlusDegDeps.contains(firstDegDep)) {
           LOG.debug("Found a redundant edge from " + step.getCheckpointToken()
-              + " to " + firstDegDep.getCheckpointToken());
+                        + " to " + firstDegDep.getCheckpointToken());
           graph.removeAllEdges(step, firstDegDep);
         }
       }
@@ -280,7 +281,7 @@ public final class WorkflowRunner {
       for (DataStore dataStore : dataStores) {
         if (!isSubPath(getSandboxDir(), dataStore.getPath())) {
           throw new RuntimeException("Step wants to write outside of sandbox \""
-              + getSandboxDir() + "\"" + " into \"" + dataStore.getPath() + "\"");
+                                         + getSandboxDir() + "\"" + " into \"" + dataStore.getPath() + "\"");
         }
       }
     }
@@ -422,8 +423,10 @@ public final class WorkflowRunner {
 
       LOG.info("All steps in workflow " + getWorkflowName() + " complete");
 
-      LOG.debug("Deleting checkpoint dir " + checkpointDir);
-      fs.delete(new Path(checkpointDir), true);
+      if (deleteCheckpointsOnSuccess) {
+        LOG.debug("Deleting checkpoint dir " + checkpointDir);
+        fs.delete(new Path(checkpointDir), true);
+      }
 
       LOG.info("Sending success email");
       sendSuccessEmail();
@@ -438,7 +441,7 @@ public final class WorkflowRunner {
 
   private void sendSuccessEmail() {
     if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
-      mail("Workflow \"" + getWorkflowName() + "\" succeeded!");
+      mail("Workflow succeeded: \"" + getWorkflowName());
     }
   }
 
@@ -516,8 +519,8 @@ public final class WorkflowRunner {
       PrintWriter pw = new PrintWriter(sw);
       for (StepRunner c : failedSteps) {
         pw.println("(" + n + "/" + failedSteps.size() + ") Step "
-            + c.step.getCheckpointToken() + " failed with exception: "
-            + c.failureCause.getMessage());
+                       + c.step.getCheckpointToken() + " failed with exception: "
+                       + c.failureCause.getMessage());
         c.failureCause.printStackTrace(pw);
         n++;
       }
@@ -702,5 +705,13 @@ public final class WorkflowRunner {
       counterMap.get(counter.getGroup()).put(counter.getName(), counter.getValue());
     }
     return counterMap;
+  }
+
+  public boolean willDeleteCheckpointsOnSuccess() {
+    return deleteCheckpointsOnSuccess;
+  }
+
+  public void setDeleteCheckpointsOnSuccess(boolean deleteCheckpointsOnSuccess) {
+    this.deleteCheckpointsOnSuccess = deleteCheckpointsOnSuccess;
   }
 }

@@ -35,6 +35,6 @@ public class ChooseNewestAction<T extends Comparable> extends Action {
   @Override
   protected void execute() throws Exception {
     MapSideJoin<T> join = new MapSideJoin<T>(this.getClass().getSimpleName(), extractors, new ChooseNewest<T>(), Arrays.asList(oldStore, newStore), results);
-    join.run();
+    completeWithProgress(join);
   }
 }

@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import com.google.common.collect.Maps;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
@@ -10,6 +11,7 @@ import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class MapSideJoinAction<T extends Comparable> extends Action {
 
@@ -17,6 +19,7 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
   private final BucketDataStore outputStore;
   private List<Extractor<T>> extractors = new ArrayList<Extractor<T>>();
   private Joiner<T> joiner = null;
+  private final Map<Object, Object> properties = Maps.newHashMap();
 
   public MapSideJoinAction(String checkpointToken,
                            List<? extends BucketDataStore> inputStores,
@@ -38,15 +41,20 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
   // override in anonymous classes
   protected void setUp(){}
 
-  protected void addExtractors(List<Extractor<T>> extractors){
+  protected void addExtractors(List<? extends Extractor<T>> extractors){
     this.extractors.addAll(extractors);
   }
+
 
   protected void setJoiner(Joiner<T> joiner){
     if(this.joiner != null){
       throw new RuntimeException("Joiner already set!");
     }
     this.joiner = joiner;
+  }
+
+  protected void addProperties(Map<Object, Object> properties){
+    this.properties.putAll(properties);
   }
 
   @Override
@@ -56,6 +64,7 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
         joiner,
         inputStores,
         outputStore);
+    join.addProperties(this.properties);
 
     completeWithProgress(new HadoopOperation(join));
   }

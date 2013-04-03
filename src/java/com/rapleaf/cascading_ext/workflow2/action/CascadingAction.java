@@ -22,11 +22,11 @@ public abstract class CascadingAction extends Action {
                          List<? extends DataStore> outputStores) {
     super(checkpointToken);
 
-    for(DataStore ds: inputStores){
+    for (DataStore ds : inputStores) {
       readsFrom(ds);
     }
 
-    for(DataStore ds: outputStores){
+    for (DataStore ds : outputStores) {
       creates(ds);
     }
 
@@ -41,52 +41,53 @@ public abstract class CascadingAction extends Action {
     this.tails.add(tail);
   }
 
-  protected void addTails(Pipe ... tails){
+  protected void addTails(Pipe... tails) {
     Collections.addAll(this.tails, tails);
   }
 
-  protected void addSourceTap(Tap source){
+  protected void addSourceTap(Tap source) {
     addSourceTap("singleton-source", source);
   }
 
-  protected void addSourceTaps(Map<String, Tap> sources){
-    for(Map.Entry<String, Tap> source: sources.entrySet()){
+  protected void addSourceTaps(Map<String, Tap> sources) {
+    for (Map.Entry<String, Tap> source : sources.entrySet()) {
       addSourceTap(source.getKey(), source.getValue());
     }
   }
 
-  protected void addSourceTap(String name, Tap tap){
-    if(this.sources.containsKey(name)){
-      throw new RuntimeException("sources already contains name "+name+"!");
+  protected void addSourceTap(String name, Tap tap) {
+    if (this.sources.containsKey(name)) {
+      throw new RuntimeException("sources already contains name " + name + "!");
     }
 
     this.sources.put(name, tap);
   }
-  protected void addSinkTap(Tap sink){
+
+  protected void addSinkTap(Tap sink) {
     addSinkTap("singleton-sink", sink);
   }
 
-  protected void addSinkTaps(Map<String, Tap> sinks){
-    for(Map.Entry<String, Tap> sink: sinks.entrySet()){
+  protected void addSinkTaps(Map<String, Tap> sinks) {
+    for (Map.Entry<String, Tap> sink : sinks.entrySet()) {
       addSinkTap(sink.getKey(), sink.getValue());
     }
   }
 
-  protected void addSinkTap(String name, Tap sink){
-    if(this.sinks.containsKey(name)){
-      throw new RuntimeException("sinks already contains name "+name+"!");
+  protected void addSinkTap(String name, Tap sink) {
+    if (this.sinks.containsKey(name)) {
+      throw new RuntimeException("sinks already contains name " + name + "!");
     }
 
     this.sinks.put(name, sink);
   }
 
-  protected void addFlowProperties(Map<Object, Object> properties){
+  protected void addFlowProperties(Map<Object, Object> properties) {
     flowProperties.putAll(properties);
   }
 
 
   // override in anonymous classes
-  protected void setUp(){
+  protected void setUp() {
   }
 
   @Override
@@ -95,23 +96,28 @@ public abstract class CascadingAction extends Action {
 
     FlowConnector connector = CascadingHelper.get().getFlowConnector(flowProperties);
     Flow f;
-    if(sources.size() == 1){
+    if (sources.size() == 1) {
       Tap source = sources.values().iterator().next();
-      if(sinks.size() == 1){
+      if (sinks.size() == 1) {
         Tap sink = sinks.values().iterator().next();
         f = connector.connect(name, source, sink, tails.get(0));
-      }else{
+      } else {
         f = connector.connect(name, source, sinks, tails);
       }
-    }else{
-      if(sinks.size() == 1){
+    } else {
+      if (sinks.size() == 1) {
         Tap sink = sinks.values().iterator().next();
         f = connector.connect(name, sources, sink, tails.get(0));
-      }else{
+      } else {
         f = connector.connect(name, sources, sinks, tails.toArray(new Pipe[tails.size()]));
       }
     }
 
     completeWithProgress(f);
+    postProcess(f);
+  }
+
+  protected void postProcess(Flow flow) {
+    //override in subclass if necessary
   }
 }
