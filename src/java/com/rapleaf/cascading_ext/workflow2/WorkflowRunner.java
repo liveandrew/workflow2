@@ -441,7 +441,7 @@ public final class WorkflowRunner {
 
   private void sendSuccessEmail() {
     if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
-      mail("Workflow succeeded: \"" + getWorkflowName());
+      mail("Workflow succeeded: \"" + getWorkflowName() + "\"");
     }
   }
 
