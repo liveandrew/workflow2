@@ -12,12 +12,12 @@ import java.util.Map;
 public class CascadingActionBuilder {
 
   List<DataStore> inputStores = Lists.newArrayList();
-  List<DataStore> outputStores= Lists.newArrayList();
+  List<DataStore> outputStores = Lists.newArrayList();
   Map<String, Tap> sources = Maps.newHashMap();
   Map<String, Tap> sinks = Maps.newHashMap();
-  List<Pipe> tails= Lists.newArrayList();
-  String name = "defualt";
-
+  List<Pipe> tails = Lists.newArrayList();
+  String checkpoint = null;
+  String name = null;
 
 
   public CascadingActionBuilder addInputStore(DataStore store) {
@@ -61,30 +61,35 @@ public class CascadingActionBuilder {
   }
 
 
-
   public CascadingActionBuilder addTail(Pipe tail) {
     tails.add(tail);
     return this;
   }
 
-  public CascadingActionBuilder setName(String name){
+  public CascadingActionBuilder setName(String name) {
     this.name = name;
     return this;
   }
 
-  public CascadingAction build(){
-    return new GenericCascadingAction(name, inputStores, outputStores, sources, sinks, tails);
+  public CascadingActionBuilder setCheckpoint(String checkpoint) {
+    this.checkpoint = checkpoint;
+    return this;
+  }
+
+  public CascadingAction build() {
+    return new GenericCascadingAction(checkpoint, name, inputStores, outputStores, sources, sinks, tails);
   }
 
 
   protected class GenericCascadingAction extends CascadingAction {
 
-    public GenericCascadingAction(String checkpointToken, List<? extends DataStore> inputStores, List<? extends DataStore> outputStores,
+    public GenericCascadingAction(String checkpointToken, String name, List<? extends DataStore> inputStores, List<? extends DataStore> outputStores,
                                   Map<String, Tap> sources, Map<String, Tap> sinks, List<Pipe> tails) {
       super(checkpointToken, inputStores, outputStores);
       addSourceTaps(sources);
       addSinkTaps(sinks);
       addTails(tails.toArray(new Pipe[tails.size()]));
+      setName(name);
     }
   }
 

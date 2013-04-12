@@ -43,7 +43,7 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
   public void testIt() throws IOException {
 
     String workingDir = getTestRoot() + "/e-workflow";
-    EasyWorkflow workflow = new EasyWorkflow(workingDir);
+    EasyWorkflow workflow = new EasyWorkflow("Test Workflow", workingDir);
 
     workflow.addInput(input);
     workflow.addOutput(output);
@@ -54,21 +54,20 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
     Pipe pipe = new Pipe("pipe");
     pipe = new Each(pipe, new Insert(new Fields("field3"), new Integer(3)), Fields.ALL);
     pipe = new Increment(pipe, "Test", "Tuples");
-    pipe = workflow.addCheckpoint(pipe, "pipe2", new Fields("field1", "field2", "field3"), "check1");
+    pipe = workflow.addCheckpoint(pipe, "pipe2", "check1");
 
     pipe = new Each(pipe, new Insert(new Fields("field4"), "four"), Fields.ALL);
     pipe = new Increment(pipe, "Test", "Tuples2");
-    pipe = workflow.addCheckpoint(pipe, "pipe3", new Fields("field1", "field2", "field3", "field4"), "check2");
+    pipe = workflow.addCheckpoint(pipe, "pipe3", "check2");
 
     pipe = new Retain(pipe, new Fields("field1", "field2"));
-    pipe = new Increment(pipe, "Test", "Tuples3");
-    pipe = workflow.addCheckpoint(pipe, "final", new Fields("field1", "field2"), "check3");
+    pipe = workflow.addCheckpoint(pipe, "final", "check3");
 
     pipe = new FastSum(pipe, new Fields("field1"), new Fields("field2"));
     pipe = new Increment(pipe, "Test", "Tuples4");
 
     workflow.addTail(pipe);
-    Step step = workflow.complete(pipe, "final");
+    Step step = workflow.completeAsStep(pipe, "final");
 
     WorkflowRunner runner = new WorkflowRunner("testWF", workingDir + "/checkpoints", 1, 0, step);
     runner.run();

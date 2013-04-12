@@ -16,6 +16,7 @@ public abstract class CascadingAction extends Action {
   private final Map<String, Tap> sinks = new HashMap<String, Tap>();
   private Map<Object, Object> flowProperties = new HashMap<Object, Object>();
   private List<Pipe> tails = new ArrayList<Pipe>();
+  private String name = null;
 
   public CascadingAction(String checkpointToken,
                          List<? extends DataStore> inputStores,
@@ -47,6 +48,10 @@ public abstract class CascadingAction extends Action {
 
   protected void addSourceTap(Tap source) {
     addSourceTap("singleton-source", source);
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   protected void addSourceTaps(Map<String, Tap> sources) {
@@ -92,7 +97,9 @@ public abstract class CascadingAction extends Action {
 
   @Override
   protected void execute() throws Exception {
-    String name = getClass().getSimpleName();
+    if (name == null) {
+      name = getClass().getSimpleName();
+    }
 
     FlowConnector connector = CascadingHelper.get().getFlowConnector(flowProperties);
     Flow f;
