@@ -133,8 +133,11 @@ public class EasyWorkflow {
     return action;
   }
 
-  public WorkflowRunner completeAsWorkflow(Pipe endPipe, String checkpointName){
+
+  public WorkflowRunner completeAsWorkflow(Pipe endPipe, String checkpointName) {
     Step finalStep = createFinalStep(endPipe, checkpointName);
+    WorkflowRunner runner = new WorkflowRunner(name, workingDir + "/checkpoints", 1, 0, finalStep);
+    return runner;
   }
 
   private Step createFinalStep(Pipe endPipe, String checkpointName) {
@@ -251,8 +254,6 @@ public class EasyWorkflow {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-
-
 
 
   }
