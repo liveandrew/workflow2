@@ -1,15 +1,17 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import com.google.common.collect.Sets;
+import com.liveramp.cascading_ext.FileSystemHelper;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
-import com.liveramp.cascading_ext.FileSystemHelper;
+import org.apache.hadoop.fs.Path;
+
+import java.io.IOException;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.hadoop.fs.Path;
 
 public class AddMissingPartitionsToBucket extends Action {
   private final int numPartitions;
@@ -26,6 +28,10 @@ public class AddMissingPartitionsToBucket extends Action {
 
   @Override
   protected void execute() throws Exception {
+    addPartitions(dataStore, numPartitions);
+  }
+
+  public static void addPartitions(BucketDataStore dataStore, int numPartitions) throws IOException {
     dataStore.getBucket().markAsMutable();
 
     Set<Integer> existingPartitions = Sets.newHashSet();
@@ -55,7 +61,7 @@ public class AddMissingPartitionsToBucket extends Action {
     }
   }
 
-  protected String buildPartFile(Integer partition) {
+  protected static String buildPartFile(Integer partition) {
     return String.format("part-%05d_0", partition);
   }
 }
