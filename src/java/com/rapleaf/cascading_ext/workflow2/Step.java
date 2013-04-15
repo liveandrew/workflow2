@@ -2,6 +2,8 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.support.event_timer.EventTimer;
+import com.rapleaf.support.event_timer.TimedEvent;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -96,8 +98,13 @@ public final class Step {
     return "Step " + checkpointTokenPrefix + " " + action + " deps=" + dependencies;
   }
 
-  public StepTimer getTimer() {
+  public TimedEvent getTimer() {
+    if (action instanceof MultiStepAction) {
+      return ((MultiStepAction) action).getMultiStepActionTimer();
+
+    } else {
     return timer;
+    }
   }
   
   public List<NestedCounter> getCounters() { 

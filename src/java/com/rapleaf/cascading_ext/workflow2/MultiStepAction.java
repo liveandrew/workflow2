@@ -169,7 +169,7 @@ public class MultiStepAction extends Action {
   public MultiStepActionTimer getMultiStepActionTimer() {
     return timer;
   }
-  
+
   public List<NestedCounter> getCounters() {
     // we don't know what stage of execution we are in when this is called
     // so get an up-to-date list of counters each time

@@ -1,12 +1,14 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.tap.Tap;
-import cascading.tuple.TupleEntryIterator;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.support.event_timer.EventTimer;
+import com.rapleaf.support.event_timer.MultiTimedEvent;
+import com.rapleaf.support.event_timer.TimedEvent;
+import com.rapleaf.support.event_timer.TimedEventWithChildren;
 import org.apache.hadoop.fs.Path;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 public class TestWorkflowRunner extends CascadingExtTestCase {
@@ -79,7 +81,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testLoneMultiStepAction() throws Exception {
     // lone multi
     Step s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(
-      new IncrementAction("blah")))));
+        new IncrementAction("blah")))));
     new WorkflowRunner("", checkpointDir, 1, null, s).run();
     assertEquals(1, IncrementAction.counter);
   }
@@ -87,7 +89,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testMultiInTheMiddle() throws Exception {
     Step s = new Step(new IncrementAction("first"));
     s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
-      s);
+        s);
     s = new Step(new IncrementAction("last"), s);
     new WorkflowRunner("", checkpointDir, 1, null, s).run();
     assertEquals(3, IncrementAction.counter);
@@ -96,7 +98,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testMultiAtTheEnd() throws Exception {
     Step s = new Step(new IncrementAction("first"));
     s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
-      s);
+        s);
     new WorkflowRunner("", checkpointDir, 1, null, s).run();
     assertEquals(2, IncrementAction.counter);
   }
@@ -105,7 +107,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Step s = new Step(new IncrementAction("first"));
     // please, never do this in real code
     s = new Step(new MultiStepAction("depth 1", Arrays.asList(new Step(new MultiStepAction(
-      "depth 2", Arrays.asList(new Step(new IncrementAction("blah"))))))), s);
+        "depth 2", Arrays.asList(new Step(new IncrementAction("blah"))))))), s);
     s = new Step(new IncrementAction("last"), s);
     new WorkflowRunner("", checkpointDir, 1, null, s).run();
     assertEquals(3, IncrementAction.counter);
@@ -114,7 +116,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testMulitInMultiMiddle() throws Exception {
     Step b = new Step(new IncrementAction("b"));
     Step innermost = new Step(new MultiStepAction("innermost", Arrays.asList(new Step(
-      new IncrementAction("c")))), b);
+        new IncrementAction("c")))), b);
     Step d = new Step(new IncrementAction("d"), b);
 
     Step a = new Step(new IncrementAction("a"));
@@ -135,6 +137,50 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       // expected
     }
   }
+
+
+  public void testTimingMultiStep() throws Exception {
+
+    Step bottom1 = new Step(new IncrementAction("bottom1"));
+    Step bottom2 = new Step(new IncrementAction("bottom2"));
+
+    Step multiMiddle = new Step(new MultiStepAction("middle", Arrays.asList(bottom1, bottom2)));
+    Step flatMiddle = new Step(new IncrementAction("flatMiddle"));
+
+    Step top = new Step(new MultiStepAction("Tom's first test dude", Arrays.asList(multiMiddle, flatMiddle)));
+
+    WorkflowRunner testWorkflow = new WorkflowRunner("", checkpointDir, 1, null, top);
+
+    testWorkflow.run();
+
+    assertTrue( testWorkflow.getTimer() instanceof EventTimer );
+
+    // Goal here is to detect whether nested MultiTimedEvents ever have "-1"s in their timing and to FAIL if this occurs.
+
+    EventTimer timer = testWorkflow.getTimer();
+
+    TimedEventWithChildren topTimer = (TimedEventWithChildren) timer;
+
+    // Assert that none of the timer.EventStartTime values are -1
+
+//    System.out.println("TOP:");
+    assertTrue( topTimer.getEventStartTime() != -1);
+
+    TimedEvent middleTimer = multiMiddle.getTimer();
+    TimedEvent flatMiddleTimer = flatMiddle.getTimer();
+
+//    System.out.println("CHILDREN:");
+    assertTrue(middleTimer.getEventStartTime() != -1);
+    assertTrue(flatMiddleTimer.getEventStartTime() != -1);
+
+    TimedEvent bottom1Timer = bottom1.getTimer();
+    TimedEvent bottom2Timer = bottom1.getTimer();
+
+//    System.out.println("SUBCHILDREN:");
+    assertTrue(bottom1Timer.getEventStartTime() != -1);
+    assertTrue(bottom2Timer.getEventStartTime() != -1);
+  }
+
 
   public void testSandboxDir() throws Exception {
     try {
@@ -190,4 +236,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     action.createsTemporary(dataStore);
     return new Step(action);
   }
+
+
 }
