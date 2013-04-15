@@ -2,7 +2,6 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.flow.planner.Scope;
 import cascading.pipe.Pipe;
-import cascading.pipe.SubAssembly;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import com.google.common.collect.Lists;
@@ -30,6 +29,8 @@ public class EasyWorkflow {
   private Step previousStep;
   private Pipe currentPipe;
   private String name;
+  private Map<Object, Object> flowProperties;
+  private int checkpoint = 0;
 
   public EasyWorkflow(String name, String workingDir) {
     this.workingDir = workingDir;
@@ -40,6 +41,7 @@ public class EasyWorkflow {
     this.sources = Maps.newHashMap();
     this.tails = Lists.newArrayList();
     this.name = name;
+    this.flowProperties = Maps.newHashMap();
   }
 
   public EasyWorkflow(String name, String workingDir, Map<String, Tap> sources, Map<String, Tap> sinks, Pipe... tails) {
@@ -155,8 +157,15 @@ public class EasyWorkflow {
     return new Step(action, previousStep);
   }
 
+  public Pipe addCheckpoint(Pipe endPipe) {
+    return addCheckpoint(endPipe, "pipe" + checkpoint, "checkpoint" + checkpoint);
+  }
+
+  public Pipe addCheckpoint(Pipe endPipe, String checkpointName) {
+    return addCheckpoint(endPipe, "pipe" + checkpoint, checkpointName);
+  }
+
   public Pipe addCheckpoint(Pipe endPipe, String nextPipeName, String checkpointName) {
-    Pipe tail = getTail(endPipe);
     Fields fields;
     if (previousStep != null) {
       fields = determineOutputFields(endPipe, checkpointStore.getTap());
@@ -166,21 +175,6 @@ public class EasyWorkflow {
       throw new IllegalArgumentException("Can't infer fields for multiple sources");
     }
     return addCheckpoint(endPipe, nextPipeName, fields, checkpointName);
-  }
-
-  private Pipe getTail(Pipe endPipe) {
-    Pipe tail;
-    if (endPipe instanceof SubAssembly) {
-      Pipe[] tails = ((SubAssembly) endPipe).getTails();
-      if (tails.length == 1) {
-        tail = tails[0];
-      } else {
-        throw new IllegalArgumentException("Cannot infer fields for multi-tail subassemblies");
-      }
-    } else {
-      tail = endPipe;
-    }
-    return tail;
   }
 
   private Fields determineOutputFields(Pipe tail, Tap source) {
@@ -221,6 +215,7 @@ public class EasyWorkflow {
             .setSources(sources)
             .addSink(endPipe.getName(), checkpointStore.getTap())
             .addTail(endPipe)
+            .addFlowProperties(flowProperties)
             .build();
 
         Step step = new Step(action);
@@ -238,6 +233,7 @@ public class EasyWorkflow {
             .addSource(currentPipe.getName(), checkpointStore.getTap())
             .addSink(endPipe.getName(), newCheckpointStore.getTap())
             .addTail(endPipe)
+            .addFlowProperties(flowProperties)
             .build();
 
         Step step = new Step(action, previousStep);
@@ -249,6 +245,7 @@ public class EasyWorkflow {
 
       Pipe pipe = new Pipe(nextPipeName);
       currentPipe = pipe;
+      checkpoint++;
       return currentPipe;
 
     } catch (IOException e) {
@@ -256,6 +253,16 @@ public class EasyWorkflow {
     }
 
 
+  }
+
+  public void addTails(List<Pipe> tails) {
+    for (Pipe tail : tails) {
+      addTail(tail);
+    }
+  }
+
+  public void addFlowProperties(Map<Object, Object> properties) {
+    flowProperties.putAll(properties);
   }
 
   private class GenericMultiStepAction extends MultiStepAction {

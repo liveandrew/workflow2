@@ -11,13 +11,14 @@ import java.util.Map;
 
 public class CascadingActionBuilder {
 
-  List<DataStore> inputStores = Lists.newArrayList();
-  List<DataStore> outputStores = Lists.newArrayList();
-  Map<String, Tap> sources = Maps.newHashMap();
-  Map<String, Tap> sinks = Maps.newHashMap();
-  List<Pipe> tails = Lists.newArrayList();
-  String checkpoint = null;
-  String name = null;
+  private List<DataStore> inputStores = Lists.newArrayList();
+  private List<DataStore> outputStores = Lists.newArrayList();
+  private Map<String, Tap> sources = Maps.newHashMap();
+  private Map<String, Tap> sinks = Maps.newHashMap();
+  private List<Pipe> tails = Lists.newArrayList();
+  private String checkpoint = null;
+  private String name = null;
+  private Map<Object, Object> flowProperties = Maps.newHashMap();
 
 
   public CascadingActionBuilder addInputStore(DataStore store) {
@@ -76,20 +77,26 @@ public class CascadingActionBuilder {
     return this;
   }
 
+  public CascadingActionBuilder addFlowProperties(Map<Object, Object> properties) {
+    flowProperties.putAll(properties);
+    return this;
+  }
+
   public CascadingAction build() {
-    return new GenericCascadingAction(checkpoint, name, inputStores, outputStores, sources, sinks, tails);
+    return new GenericCascadingAction(checkpoint, name, inputStores, outputStores, sources, sinks, tails, flowProperties);
   }
 
 
   protected class GenericCascadingAction extends CascadingAction {
 
     public GenericCascadingAction(String checkpointToken, String name, List<? extends DataStore> inputStores, List<? extends DataStore> outputStores,
-                                  Map<String, Tap> sources, Map<String, Tap> sinks, List<Pipe> tails) {
+                                  Map<String, Tap> sources, Map<String, Tap> sinks, List<Pipe> tails, Map<Object, Object> flowProperties) {
       super(checkpointToken, inputStores, outputStores);
       addSourceTaps(sources);
       addSinkTaps(sinks);
       addTails(tails.toArray(new Pipe[tails.size()]));
       setName(name);
+      addFlowProperties(flowProperties);
     }
   }
 
