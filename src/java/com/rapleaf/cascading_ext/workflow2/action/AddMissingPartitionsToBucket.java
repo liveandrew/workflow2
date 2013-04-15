@@ -19,7 +19,7 @@ public class AddMissingPartitionsToBucket extends Action {
   @Override
   protected void execute() throws Exception {
     dataStore.getBucket().markAsMutable();
-    BucketUtil.addMissingPartitions(getFS(), numPartitions, dataStore.getPath());
+    BucketUtil.addMissingPartitions(getFS(), dataStore.getPath(), numPartitions);
     dataStore.getBucket().markAsImmutable();
   }
 }
