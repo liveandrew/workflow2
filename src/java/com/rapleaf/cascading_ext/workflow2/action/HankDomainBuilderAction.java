@@ -24,7 +24,7 @@ public abstract class HankDomainBuilderAction extends Action {
   protected final Map<Object, Object> properties;
 
   private final HankDataStore output;
-  private HankVersionType versionType;
+  protected HankVersionType versionType;
   private final CoordinatorConfigurator configurator;
   private Integer partitionToBuild = null;
   private Integer domainVersionNumber = null;
