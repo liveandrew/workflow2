@@ -40,13 +40,15 @@ public final class WorkflowRunner {
    */
   private final class StepRunner {
     public final Step step;
+    private final StepUpdateCallback callback;
     public StepStatus status;
     public Thread thread;
     public Throwable failureCause;
 
-    public StepRunner(Step c) {
+    public StepRunner(Step c, StepUpdateCallback callback) {
       this.step = c;
       this.status = StepStatus.WAITING;
+      this.callback = callback;
     }
 
     public void start() {
@@ -57,19 +59,19 @@ public final class WorkflowRunner {
           try {
             if (checkpointExists()) {
               LOG.info("Step " + step.getCheckpointToken()
-                           + " was executed successfully in a prior run. Skipping.");
-              status = StepStatus.SKIPPED;
+                  + " was executed successfully in a prior run. Skipping.");
+              update(StepStatus.SKIPPED);
             } else {
-              status = StepStatus.RUNNING;
+              update(StepStatus.RUNNING);
               LOG.info("Executing step " + step.getCheckpointToken());
               step.run();
               writeCheckpoint();
-              status = StepStatus.COMPLETED;
+              update(StepStatus.COMPLETED);
             }
           } catch (Throwable e) {
             LOG.fatal("Step " + step.getCheckpointToken() + " failed!", e);
             failureCause = e;
-            status = StepStatus.FAILED;
+            update(StepStatus.FAILED);
           } finally {
             semaphore.release();
           }
@@ -77,6 +79,11 @@ public final class WorkflowRunner {
       };
       thread = new Thread(r, "Step Runner for " + step.getCheckpointToken());
       thread.start();
+    }
+
+    private void update(StepStatus status){
+      this.status = status;
+      callback.update(step, status);
     }
 
     protected void writeCheckpoint() throws IOException {
@@ -204,7 +211,16 @@ public final class WorkflowRunner {
          null);
   }
 
+  private static class NoCallback implements StepUpdateCallback {
+    @Override
+    public void update(Step step, StepStatus status) {}
+  }
+
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
+    this(workflowName, checkpointDir, maxConcurrentComponents, webUiPort, tailSteps, notificationEmails, new NoCallback());
+  }
+
+    public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails, StepUpdateCallback callback) {
     this.workflowName = workflowName;
     this.checkpointDir = checkpointDir;
     this.maxConcurrentSteps = maxConcurrentComponents;
@@ -234,7 +250,7 @@ public final class WorkflowRunner {
 
     // prep runners
     for (Step step : dependencyGraph.vertexSet()) {
-      StepRunner runner = new StepRunner(step);
+      StepRunner runner = new StepRunner(step, callback);
       stepTokenToRunner.put(step.getCheckpointToken(), runner);
       pendingSteps.add(runner);
     }
