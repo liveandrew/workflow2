@@ -1,5 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.liveramp.workflow_service.generated.StepDefinition;
+import com.liveramp.workflow_service.generated.StepStatus;
+import com.liveramp.workflow_service.generated.WorkflowDefinition;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.support.StringHelper;
 import com.rapleaf.support.event_timer.EventTimer;
@@ -385,11 +390,32 @@ public class WorkflowDiagram {
   }
 
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph() {
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph(
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph<Step, DefaultEdge>(
         dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
     DirectedGraph<Vertex, DefaultEdge> diagramGraph = wrapVertices(dependencyGraph);
     removeRedundantEdges(diagramGraph);
     return diagramGraph;
+  }
+
+  public WorkflowDefinition getDefinition(){
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph<Step, DefaultEdge>(
+        dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
+
+    //  TODO remove redundant edges
+
+    Map<String, StepDefinition> steps = Maps.newHashMap();
+    for(Step step: dependencyGraph.vertexSet()){
+      StepDefinition def= new StepDefinition(step.getAction().getClass().getName(), step.getCheckpointToken(), Lists.<String>newArrayList());
+      steps.put(step.getCheckpointToken(), def);
+    }
+
+    for(DefaultEdge edge: dependencyGraph.edgeSet()){
+      Step source = dependencyGraph.getEdgeSource(edge);
+      Step target = dependencyGraph.getEdgeTarget(edge);
+      steps.get(source.getCheckpointToken()).add_to_required_checkpoints(target.getCheckpointToken());
+    }
+
+    return new WorkflowDefinition(workflowRunner.getWorkflowName(), steps);
   }
 
   private DirectedGraph<Vertex, DefaultEdge> wrapVertices(DirectedGraph<Step, DefaultEdge> graph) {

@@ -1,16 +1,16 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.counters.Counter;
+import com.liveramp.workflow_service.generated.StepStatus;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.MailerHelper;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -24,6 +24,11 @@ import java.util.concurrent.Semaphore;
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
 
+  public static final Set<StepStatus> NON_BLOCKING_STATUS = EnumSet.of(
+      StepStatus.COMPLETED, StepStatus.SKIPPED
+  );
+
+
   /**
    * Specify this and the system will pick any free port.
    */
@@ -31,7 +36,8 @@ public final class WorkflowRunner {
 
   private static final String DOC_FILES_ROOT = "com/rapleaf/cascading_ext/workflow2/webui";
   public static final String WORKFLOW_DOCS_PATH = "/var/nfs/mounts/files/flowdoc/";
-  private boolean deleteCheckpointsOnSuccess = true;
+
+  private final WorkflowStatePersistence persistence;
 
   /**
    * StepRunner keeps track of some extra state for each component, as
@@ -40,15 +46,13 @@ public final class WorkflowRunner {
    */
   private final class StepRunner {
     public final Step step;
-    private final StepUpdateCallback callback;
-    public StepStatus status;
+    private final WorkflowStatePersistence state;
     public Thread thread;
     public Throwable failureCause;
 
-    public StepRunner(Step c, StepUpdateCallback callback) {
+    public StepRunner(Step c, WorkflowStatePersistence state) {
       this.step = c;
-      this.status = StepStatus.WAITING;
-      this.callback = callback;
+      this.state = state;
     }
 
     public void start() {
@@ -57,7 +61,7 @@ public final class WorkflowRunner {
         @Override
         public void run() {
           try {
-            if (checkpointExists()) {
+            if (state.getStatus(step) == StepStatus.SKIPPED) {
               LOG.info("Step " + step.getCheckpointToken()
                   + " was executed successfully in a prior run. Skipping.");
               update(StepStatus.SKIPPED);
@@ -65,13 +69,17 @@ public final class WorkflowRunner {
               update(StepStatus.RUNNING);
               LOG.info("Executing step " + step.getCheckpointToken());
               step.run();
-              writeCheckpoint();
               update(StepStatus.COMPLETED);
             }
           } catch (Throwable e) {
             LOG.fatal("Step " + step.getCheckpointToken() + " failed!", e);
             failureCause = e;
-            update(StepStatus.FAILED);
+
+            try{
+              update(StepStatus.FAILED);
+            }catch(Exception e2){
+              LOG.fatal("Could not update step "+step.getCheckpointToken()+" to failed! ", e2);
+            }
           } finally {
             semaphore.release();
           }
@@ -81,44 +89,27 @@ public final class WorkflowRunner {
       thread.start();
     }
 
-    private void update(StepStatus status){
-      this.status = status;
-      callback.update(step, status);
-    }
-
-    protected void writeCheckpoint() throws IOException {
-      LOG.info("Writing out checkpoint token for " + step.getCheckpointToken());
-      String tokenPath = checkpointDir + "/" + step.getCheckpointToken();
-      if (!fs.createNewFile(new Path(tokenPath))) {
-        throw new IOException("Couldn't create checkpoint file " + tokenPath);
+    private void update(StepStatus status) throws IOException {
+      try{
+        state.updateStatus(step, status);
+      }catch(Exception e){
+        throw new RuntimeException(e);
       }
-      LOG.debug("Done writing checkpoint token for " + step.getCheckpointToken());
-    }
-
-    protected boolean checkpointExists() throws IOException {
-      return fs.exists(new Path(checkpointDir + "/" + step.getCheckpointToken()));
     }
 
     public boolean allDependenciesCompleted() {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if (!runnerFor(dep).isCompleted()) {
+        if(!NON_BLOCKING_STATUS.contains(state.getStatus(dep))){
           return false;
         }
       }
       return true;
     }
-
-    private boolean isCompleted() {
-      return status == StepStatus.COMPLETED || status == StepStatus.SKIPPED;
-    }
   }
 
+
   private final String workflowName;
-  /**
-   * where should we write checkpoints
-   */
-  private final String checkpointDir;
   /**
    * how many components will we allow to execute simultaneously?
    */
@@ -164,7 +155,6 @@ public final class WorkflowRunner {
   public static final String SHUTDOWN_MESSAGE_PREFIX = "Incomplete steps remain but a shutdown was requested. The reason was: ";
 
   private boolean alreadyRun;
-  private FileSystem fs;
   private Integer webUiPort;
   private final String[] notificationEmails;
   private final Set<NotificationType> enabledNotificationTypes;
@@ -198,31 +188,21 @@ public final class WorkflowRunner {
     return s;
   }
 
-  public StepRunner runnerFor(Step step) {
-    return stepTokenToRunner.get(step.getCheckpointToken());
-  }
-
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps) {
-    this(workflowName,
-         checkpointDir,
-         maxConcurrentComponents,
-         webUiPort,
-         tailSteps,
-         null);
-  }
-
-  private static class NoCallback implements StepUpdateCallback {
-    @Override
-    public void update(Step step, StepStatus status) {}
+    this(workflowName, checkpointDir, maxConcurrentComponents, webUiPort, tailSteps, null);
   }
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
-    this(workflowName, checkpointDir, maxConcurrentComponents, webUiPort, tailSteps, notificationEmails, new NoCallback());
+    this(workflowName, new HdfsCheckpointPersistence(checkpointDir), maxConcurrentComponents, webUiPort, tailSteps, notificationEmails);
   }
 
-    public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails, StepUpdateCallback callback) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails, boolean deleteCheckpointsOnSuccess) {
+    this(workflowName, new HdfsCheckpointPersistence(checkpointDir, deleteCheckpointsOnSuccess), maxConcurrentComponents, webUiPort, tailSteps, notificationEmails);
+  }
+
+  public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
     this.workflowName = workflowName;
-    this.checkpointDir = checkpointDir;
+    this.persistence = persistence;
     this.maxConcurrentSteps = maxConcurrentComponents;
     if (webUiPort == null) {
       this.webUiPort = ANY_FREE_PORT;
@@ -250,7 +230,7 @@ public final class WorkflowRunner {
 
     // prep runners
     for (Step step : dependencyGraph.vertexSet()) {
-      StepRunner runner = new StepRunner(step, callback);
+      StepRunner runner = new StepRunner(step, persistence);
       stepTokenToRunner.put(step.getCheckpointToken(), runner);
       pendingSteps.add(runner);
     }
@@ -426,10 +406,7 @@ public final class WorkflowRunner {
       LOG.info("Generating workflow docs");
       generateDocs();
 
-      fs = FileSystemHelper.getFS();
-
-      LOG.info("Creating checkpoint dir " + checkpointDir);
-      fs.mkdirs(new Path(checkpointDir));
+      persistence.prepare();
 
       LOG.info("Starting workflow " + getWorkflowName());
 
@@ -439,10 +416,7 @@ public final class WorkflowRunner {
 
       LOG.info("All steps in workflow " + getWorkflowName() + " complete");
 
-      if (deleteCheckpointsOnSuccess) {
-        LOG.debug("Deleting checkpoint dir " + checkpointDir);
-        fs.delete(new Path(checkpointDir), true);
-      }
+      persistence.complete();
 
       LOG.info("Sending success email");
       sendSuccessEmail();
@@ -624,7 +598,7 @@ public final class WorkflowRunner {
     Iterator<StepRunner> iter = runningSteps.iterator();
     while (iter.hasNext()) {
       StepRunner cr = iter.next();
-      switch (cr.status) {
+      switch (persistence.getStatus(cr.step)) {
         case COMPLETED:
         case SKIPPED:
           completedSteps.add(cr);
@@ -669,15 +643,11 @@ public final class WorkflowRunner {
   }
 
   public StepStatus getStepStatus(Step step) {
-    return stepTokenToRunner.get(step.getCheckpointToken()).status;
+    return persistence.getStatus(stepTokenToRunner.get(step.getCheckpointToken()).step);
   }
 
   public String getWorkflowName() {
     return workflowName;
-  }
-
-  public String getCheckpointDir() {
-    return checkpointDir;
   }
 
   public int getMaxConcurrentSteps() {
@@ -721,13 +691,5 @@ public final class WorkflowRunner {
       counterMap.get(counter.getGroup()).put(counter.getName(), counter.getValue());
     }
     return counterMap;
-  }
-
-  public boolean willDeleteCheckpointsOnSuccess() {
-    return deleteCheckpointsOnSuccess;
-  }
-
-  public void setDeleteCheckpointsOnSuccess(boolean deleteCheckpointsOnSuccess) {
-    this.deleteCheckpointsOnSuccess = deleteCheckpointsOnSuccess;
   }
 }
