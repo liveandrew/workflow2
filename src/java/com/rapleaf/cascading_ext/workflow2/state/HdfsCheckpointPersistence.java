@@ -54,12 +54,18 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
   @Override
   public void updateStatus(Step step, StepStatus status) throws IOException {
-    LOG.info("Writing out checkpoint token for " + step.getCheckpointToken());
-    String tokenPath = checkpointDir + "/" + step.getCheckpointToken();
-    if (!fs.createNewFile(new Path(tokenPath))) {
-      throw new IOException("Couldn't create checkpoint file " + tokenPath);
+    LOG.info("Noting new status for step "+step.getCheckpointToken()+": "+status);
+
+    if(status == StepStatus.COMPLETED){
+      LOG.info("Writing out checkpoint token for " + step.getCheckpointToken());
+      String tokenPath = checkpointDir + "/" + step.getCheckpointToken();
+      if (!fs.createNewFile(new Path(tokenPath))) {
+        throw new IOException("Couldn't create checkpoint file " + tokenPath);
+      }
+      LOG.debug("Done writing checkpoint token for " + step.getCheckpointToken());
     }
-    LOG.debug("Done writing checkpoint token for " + step.getCheckpointToken());
+
+    statuses.put(step.getCheckpointToken(), status);
   }
 
   @Override
