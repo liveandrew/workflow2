@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.state;
 import com.google.common.collect.Maps;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.workflow_service.generated.StepStatus;
+import com.liveramp.workflow_service.generated.WorkflowDefinition;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -69,7 +70,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public void prepare() throws IOException {
+  public void prepare(WorkflowDefinition def) throws IOException {
     LOG.info("Creating checkpoint dir " + checkpointDir);
     fs.mkdirs(new Path(checkpointDir));
   }

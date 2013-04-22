@@ -291,7 +291,7 @@ public final class WorkflowRunner {
     }
   }
 
-  public void generateDocs() {
+  public void generateDocs(WorkflowDiagram diagram) {
     String outputPath = "/tmp/flowdoc";
     try {
       String host = InetAddress.getLocalHost().getHostName();
@@ -304,15 +304,14 @@ public final class WorkflowRunner {
       }
     } catch (UnknownHostException e) {
     }
-    generateDocs(outputPath);
+    generateDocs(diagram, outputPath);
   }
 
   /**
    * Generate HTML docs with the workflow diagram and details about processes and datastores;
    */
-  public void generateDocs(String outputPath) {
+  public void generateDocs(WorkflowDiagram wfd, String outputPath) {
     try {
-      WorkflowDiagram wfd = new WorkflowDiagram(this);
 
       new File(outputPath).mkdirs();
       File outputFile = new File(outputPath + "/" + workflowName.replaceAll("\\s", "-") + ".html");
@@ -400,9 +399,10 @@ public final class WorkflowRunner {
       checkStepsSandboxViolation(getPhsyicalDependencyGraph().vertexSet());
 
       LOG.info("Generating workflow docs");
-      generateDocs();
+      WorkflowDiagram diagram = new WorkflowDiagram(this);
+      generateDocs(diagram);
 
-      persistence.prepare();
+      persistence.prepare(diagram.getDefinition());
 
       LOG.info("Starting workflow " + getWorkflowName());
 
