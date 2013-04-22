@@ -61,7 +61,7 @@ public final class WorkflowRunner {
         @Override
         public void run() {
           try {
-            if (state.getStatus(step) == StepStatus.SKIPPED) {
+            if (NON_BLOCKING.contains(state.getStatus(step))) {
               LOG.info("Step " + step.getCheckpointToken()
                   + " was executed successfully in a prior run. Skipping.");
               update(StepStatus.SKIPPED);
