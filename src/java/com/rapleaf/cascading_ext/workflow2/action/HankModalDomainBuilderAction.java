@@ -7,6 +7,7 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.hank.config.CoordinatorConfigurator;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Map;
@@ -15,6 +16,8 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
   BucketDataStore base = null;
   BucketDataStore delta = null;
   public static final double HANK_DELTA_TO_BASE_SIZE_RATIO = 0.5;
+  private static final Logger LOG = Logger.getLogger(HankModalDomainBuilderAction.class);
+
 
 
   public HankModalDomainBuilderAction(String checkpointToken, HankVersionType versionType, CoordinatorConfigurator configurator, HankDataStore output) {
@@ -55,6 +58,7 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
 
     if(versionType == null){
       setVersionType(deltaLargerThanRatio(getBase(), getDelta()) ? HankVersionType.BASE : HankVersionType.DELTA);
+      LOG.info("Choose version type "+getVersionType());
     }
   }
 
