@@ -90,11 +90,7 @@ public final class WorkflowRunner {
     }
 
     private void update(StepStatus status) throws IOException {
-      try{
-        state.updateStatus(step, status);
-      }catch(Exception e){
-        throw new RuntimeException(e);
-      }
+      state.updateStatus(step, status);
     }
 
     public boolean allDependenciesCompleted() {
