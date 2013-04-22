@@ -24,7 +24,7 @@ import java.util.concurrent.Semaphore;
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
 
-  public static final Set<StepStatus> NON_BLOCKING_STATUS = EnumSet.of(
+  public static final Set<StepStatus> NON_BLOCKING = EnumSet.of(
       StepStatus.COMPLETED, StepStatus.SKIPPED
   );
 
@@ -100,7 +100,7 @@ public final class WorkflowRunner {
     public boolean allDependenciesCompleted() {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if(!NON_BLOCKING_STATUS.contains(state.getStatus(dep))){
+        if(!NON_BLOCKING.contains(state.getStatus(dep))){
           return false;
         }
       }
