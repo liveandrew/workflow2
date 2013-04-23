@@ -58,9 +58,11 @@ public class DeployDomains extends Action {
     Set<DomainGroup> domainGroups = coordinator.getDomainGroups();
     Set<DomainGroup> relevantGroups = Sets.newHashSet();
 
-    for (DomainGroup group : domainGroups) {
-      if (group.getDomains().contains(domain)) {
-        relevantGroups.add(group);
+    if (domainGroups != null) {
+      for (DomainGroup group : domainGroups) {
+        if (group.getDomains().contains(domain)) {
+          relevantGroups.add(group);
+        }
       }
     }
     return relevantGroups;

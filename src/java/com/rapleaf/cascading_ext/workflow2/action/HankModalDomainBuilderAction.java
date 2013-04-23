@@ -12,28 +12,49 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.Map;
 
-public abstract class HankModalDomainBuilderAction extends HankDomainBuilderAction{
-  BucketDataStore base = null;
-  BucketDataStore delta = null;
-  public static final double HANK_DELTA_TO_BASE_SIZE_RATIO = 0.5;
+public abstract class HankModalDomainBuilderAction extends HankDomainBuilderAction {
+  private BucketDataStore base = null;
+  private BucketDataStore delta = null;
+  private BucketDataStore input = null;
+  private double domainDeltaRatio;
   private static final Logger LOG = Logger.getLogger(HankModalDomainBuilderAction.class);
 
 
-
-  public HankModalDomainBuilderAction(String checkpointToken, HankVersionType versionType, CoordinatorConfigurator configurator, HankDataStore output) {
-    super(checkpointToken, versionType, configurator, output);
+  public HankModalDomainBuilderAction(
+      String checkpointToken,
+      HankVersionType versionType,
+      CoordinatorConfigurator configurator,
+      HankDataStore output,
+      double ratio) {
+    this(checkpointToken, null, versionType, configurator, output, ratio);
   }
 
-  public HankModalDomainBuilderAction(String checkpointToken, CoordinatorConfigurator configurator, HankDataStore output) {
-    super(checkpointToken, null, configurator, output);
+  public HankModalDomainBuilderAction(
+      String checkpointToken,
+      CoordinatorConfigurator configurator,
+      HankDataStore output,
+      double ratio) {
+    this(checkpointToken, null, null, configurator, output, ratio);
   }
 
-  public HankModalDomainBuilderAction(String checkpointToken, String tmpRoot, HankVersionType versionType, CoordinatorConfigurator configurator, HankDataStore output) {
+  public HankModalDomainBuilderAction(
+      String checkpointToken,
+      String tmpRoot,
+      HankVersionType versionType,
+      CoordinatorConfigurator configurator,
+      HankDataStore output,
+      double ratio) {
     super(checkpointToken, tmpRoot, versionType, configurator, output);
+    this.domainDeltaRatio = ratio;
   }
 
-  public HankModalDomainBuilderAction(String checkpointToken, String tmpRoot,  CoordinatorConfigurator configurator, HankDataStore output) {
-    super(checkpointToken, tmpRoot, null, configurator, output);
+  public HankModalDomainBuilderAction(
+      String checkpointToken,
+      String tmpRoot,
+      CoordinatorConfigurator configurator,
+      HankDataStore output,
+      double ratio) {
+    this(checkpointToken, tmpRoot, null, configurator, output, ratio);
   }
 
   public void setBase(BucketDataStore base) {
@@ -56,28 +77,25 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
   protected void prepare() {
     super.prepare();
 
-    if(versionType == null){
-      setVersionType(deltaLargerThanRatio(getBase(), getDelta()) ? HankVersionType.BASE : HankVersionType.DELTA);
-      LOG.info("Choose version type "+getVersionType());
+    if (versionType == null) {
+      if (deltaLargerThanRatio(getBase(), getDelta())) {
+        setVersionType(HankVersionType.BASE);
+        setInput(getBase());
+      } else {
+        setVersionType(HankVersionType.DELTA);
+        setInput(getDelta());
+      }
+      LOG.info("Choose version type " + getVersionType());
     }
   }
 
   @Override
   protected Map<String, Tap> getSources() {
-    return Cascades.tapsMap(getPipeName(), getInputStore().getTap());
+    return Cascades.tapsMap(getPipeName(), getInput().getTap());
   }
 
   public abstract String getPipeName();
 
-  private BucketDataStore getInputStore() {
-    if(getBase() == null){
-      return getDelta();
-    }
-    if(getDelta() == null){
-      return getBase();
-    }
-    return deltaLargerThanRatio(getBase(), getDelta()) ? getBase() : getDelta();
-  }
 
   private static double getStoreSize(BucketDataStore store) {
     try {
@@ -87,8 +105,8 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
     }
   }
 
-  private static boolean deltaLargerThanRatio(BucketDataStore base, BucketDataStore delta) {
-    return getStoreSize(delta) / getStoreSize(base) > HANK_DELTA_TO_BASE_SIZE_RATIO;
+  private boolean deltaLargerThanRatio(BucketDataStore base, BucketDataStore delta) {
+    return getStoreSize(delta) / getStoreSize(base) > domainDeltaRatio;
   }
 
   protected void assignSingleStore(BucketDataStore bucket, HankVersionType versionType) {
@@ -97,5 +115,13 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
     } else {
       setDelta(bucket);
     }
+  }
+
+  public void setInput(BucketDataStore input) {
+    this.input = input;
+  }
+
+  public BucketDataStore getInput() {
+    return input;
   }
 }
