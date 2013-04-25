@@ -43,7 +43,7 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
   public void testIt() throws IOException {
 
     String workingDir = getTestRoot() + "/e-workflow";
-    EasyWorkflow workflow = new EasyWorkflow("Test Workflow", workingDir);
+    EasyWorkflow workflow = EasyWorkflow.create("Test Workflow", workingDir);
 
     workflow.addInput(input);
     workflow.addOutput(output);
@@ -63,11 +63,13 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
     pipe = new Retain(pipe, new Fields("field1", "field2"));
     pipe = workflow.addCheckpoint(pipe);
 
-    pipe = new FastSum(pipe, new Fields("field1"), new Fields("field2"));
-    pipe = new Increment(pipe, "Test", "Tuples4");
+    Pipe pipe2 = new FastSum(pipe, new Fields("field1"), new Fields("field2"));
+    pipe2 = new Increment(pipe2, "Test", "Tuples4");
 
-    workflow.addTail(pipe);
-    WorkflowRunner runner = workflow.completeAsWorkflow(pipe, "final");
+    Pipe pipe3 = new FastSum(pipe, new Fields("field1"), new Fields("field2"));
+    pipe3 = new Increment(pipe3, "Test", "Tuples5");
+
+    WorkflowRunner runner = workflow.completeAsWorkflow("final", pipe2, pipe3);
     runner.run();
 
 

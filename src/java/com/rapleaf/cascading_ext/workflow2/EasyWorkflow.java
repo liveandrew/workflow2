@@ -14,7 +14,10 @@ import com.rapleaf.cascading_ext.workflow2.action.CascadingAction;
 import com.rapleaf.cascading_ext.workflow2.action.CascadingActionBuilder;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class EasyWorkflow {
 
@@ -22,7 +25,6 @@ public class EasyWorkflow {
   private TupleDataStore checkpointStore;
   private String workingDir;
   private Map<String, Tap> sinks = Maps.newHashMap();
-  private List<Pipe> tails = Lists.newArrayList();
   private DataStoreBuilder dsBuilder;
   private List<DataStore> inputs;
   private List<DataStore> outputs;
@@ -32,68 +34,46 @@ public class EasyWorkflow {
   private Map<Object, Object> flowProperties;
   private int checkpoint = 0;
 
-  public EasyWorkflow(String name, String workingDir) {
+  private EasyWorkflow(String name, String workingDir) {
     this.workingDir = workingDir;
     this.dsBuilder = new DataStoreBuilder(workingDir);
     this.inputs = Lists.newArrayList();
     this.outputs = Lists.newArrayList();
     this.sinks = Maps.newHashMap();
     this.sources = Maps.newHashMap();
-    this.tails = Lists.newArrayList();
     this.name = name;
     this.flowProperties = Maps.newHashMap();
   }
 
-  public EasyWorkflow(String name, String workingDir, Map<String, Tap> sources, Map<String, Tap> sinks, Pipe... tails) {
-    this.workingDir = workingDir;
+  private EasyWorkflow(String name, String workingDir, Map<String, Tap> sources, Map<String, Tap> sinks) {
+    this(name, workingDir);
     this.sources = sources;
     this.sinks = sinks;
-    this.tails = Lists.newArrayList(tails);
-    this.name = name;
   }
 
-  public static EasyWorkflow create(String name, String workingDir, Map<String, Tap> sources, Map<String, Tap> sinks, Pipe... tails) {
-    return new EasyWorkflow(name, workingDir, sources, sinks, tails);
+
+  public static EasyWorkflow create(String name, String workingDir, Map<String, Tap> sources, Map<String, Tap> sinks) {
+    return new EasyWorkflow(name, workingDir, sources, sinks);
   }
 
-  public static EasyWorkflow create(String name, String workingDir, Tap source, Map<String, Tap> sinks, Pipe... tails) {
-
-    //Copied from FlowConnector
-    Set<Pipe> heads = new HashSet<Pipe>();
-
-    for (Pipe pipe : tails) {
-      Collections.addAll(heads, pipe.getHeads());
-    }
-
-    if (heads.isEmpty())
-      throw new IllegalArgumentException("no pipe instance found");
-
-    if (heads.size() != 1)
-      throw new IllegalArgumentException("there may be only 1 head pipe instance, found " + heads.size());
-
-    Map<String, Tap> sources = new HashMap<String, Tap>();
-
-    for (Pipe pipe : heads) {
-      sources.put(pipe.getName(), source);
-    }
-
-    return create(name, workingDir, sources, sinks, tails);
+  public static EasyWorkflow create(String name, String workingDir) {
+    return new EasyWorkflow(name, workingDir);
   }
 
-  public static EasyWorkflow create(String name, String workingDir, Tap source, Tap sink, Pipe tail) {
-    Pipe[] heads = tail.getHeads();
-    if (heads.length != 1) {
-      throw new IllegalArgumentException("Must be only 1 head pipe");
-    }
-    Map<String, Tap> sources = Collections.singletonMap(heads[0].getName(), source);
-    Map<String, Tap> sinks = Collections.singletonMap(tail.getName(), sink);
-
-    return create(name, workingDir, source, sinks, tail);
+  public void setSources(Map<String, Tap> sources) {
+    this.sources = sources;
   }
 
-  public static EasyWorkflow create(String name, String workingDir, Map<String, Tap> sources, Tap sink, Pipe tail) {
-    Map<String, Tap> sinks = Collections.singletonMap(tail.getName(), sink);
-    return create(name, workingDir, sources, sinks, tail);
+  public void setSinks(Map<String, Tap> sinks) {
+    this.sinks = sinks;
+  }
+
+  public void addToSources(Map<String, Tap> sources) {
+    this.sources.putAll(sources);
+  }
+
+  public void addToSinks(Map<String, Tap> sinks) {
+    this.sinks.putAll(sinks);
   }
 
   public void addSourceTap(String pipeName, Tap tap) {
@@ -102,10 +82,6 @@ public class EasyWorkflow {
 
   public void addSinkTap(String pipeName, Tap tap) {
     sinks.put(pipeName, tap);
-  }
-
-  public void addTail(Pipe tail) {
-    tails.add(tail);
   }
 
   public void setInputs(List<DataStore> inputs) {
@@ -124,25 +100,25 @@ public class EasyWorkflow {
     this.outputs = outputs;
   }
 
-  public Step completeAsStep(Pipe endPipe, String checkpointName) {
-    Step finalStep = createFinalStep(endPipe, checkpointName);
+  public Step completeAsStep(String checkpointName, Pipe... endPipes) {
+    Step finalStep = createFinalStep(checkpointName, endPipes);
     return finalStep;
   }
 
-  public MultiStepAction completeAsMultiStepAction(Pipe endPipe, String checkpointName) {
-    Step finalStep = createFinalStep(endPipe, checkpointName);
+  public MultiStepAction completeAsMultiStepAction(String checkpointName, Pipe...endPipes) {
+    Step finalStep = createFinalStep(checkpointName, endPipes);
     MultiStepAction action = new GenericMultiStepAction(name, finalStep);
     return action;
   }
 
 
-  public WorkflowRunner completeAsWorkflow(Pipe endPipe, String checkpointName) {
-    Step finalStep = createFinalStep(endPipe, checkpointName);
+  public WorkflowRunner completeAsWorkflow(String checkpointName, Pipe...endPipes) {
+    Step finalStep = createFinalStep(checkpointName, endPipes);
     WorkflowRunner runner = new WorkflowRunner(name, workingDir + "/checkpoints", 1, 0, finalStep);
     return runner;
   }
 
-  private Step createFinalStep(Pipe endPipe, String checkpointName) {
+  private Step createFinalStep(String checkpointName, Pipe... endPipes) {
     CascadingActionBuilder builder = new CascadingActionBuilder();
 
     CascadingAction action = builder.setName(name + ":" + checkpointName)
@@ -151,7 +127,7 @@ public class EasyWorkflow {
         .addOutputStores(outputs)
         .addSource(currentPipe.getName(), checkpointStore.getTap())
         .setSinks(sinks)
-        .addTail(endPipe)
+        .addTails(endPipes)
         .build();
 
     return new Step(action, previousStep);
@@ -253,12 +229,6 @@ public class EasyWorkflow {
     }
 
 
-  }
-
-  public void addTails(List<Pipe> tails) {
-    for (Pipe tail : tails) {
-      addTail(tail);
-    }
   }
 
   public void addFlowProperties(Map<Object, Object> properties) {

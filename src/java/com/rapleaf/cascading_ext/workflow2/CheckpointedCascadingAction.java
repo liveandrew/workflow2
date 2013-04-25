@@ -3,7 +3,6 @@ package com.rapleaf.cascading_ext.workflow2;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
-import com.google.common.collect.Lists;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
 import java.util.List;
@@ -16,14 +15,14 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
 
   public CheckpointedCascadingAction(String checkpointToken, String workingDirectory, List<DataStore> inputs, List<DataStore> outputs) {
     super(checkpointToken);
-    workflowHelper = new EasyWorkflow(this.getClass().getSimpleName(), workingDirectory);
+    workflowHelper = EasyWorkflow.create(this.getClass().getSimpleName(), workingDirectory);
     workflowHelper.setInputs(inputs);
     workflowHelper.setOutputs(outputs);
 
   }
 
   protected void complete(Pipe pipe, String pipeName) {
-    setSubStepsFromTail(workflowHelper.completeAsStep(pipe, pipeName));
+    setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, pipe));
   }
 
 
@@ -43,9 +42,6 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
     return workflowHelper.addCheckpoint(pipe);
   }
 
-  protected void addTail(Pipe tail) {
-    workflowHelper.addTail(tail);
-  }
 
   protected void addSourceTap(String name, Tap tap) {
     workflowHelper.addSourceTap(name, tap);
@@ -53,14 +49,6 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
 
   protected void addSinkTap(String name, Tap tap) {
     workflowHelper.addSinkTap(name, tap);
-  }
-
-  protected void addTails(List<Pipe> tails) {
-    workflowHelper.addTails(tails);
-  }
-
-  protected void addTails(Pipe... tails) {
-    workflowHelper.addTails(Lists.newArrayList(tails));
   }
 
   public void setName(String name) {

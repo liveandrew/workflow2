@@ -67,6 +67,11 @@ public class CascadingActionBuilder {
     return this;
   }
 
+  public CascadingActionBuilder addTails(Pipe... tails) {
+    this.tails.addAll(Lists.newArrayList(tails));
+    return this;
+  }
+
   public CascadingActionBuilder setName(String name) {
     this.name = name;
     return this;
@@ -90,7 +95,7 @@ public class CascadingActionBuilder {
   protected class GenericCascadingAction extends CascadingAction {
 
     public GenericCascadingAction(String checkpointToken, String name, List<? extends DataStore> inputStores, List<? extends DataStore> outputStores,
-                                  Map<String, Tap> sources, Map<String, Tap> sinks, List<Pipe> tails, Map<Object, Object> flowProperties) {
+        Map<String, Tap> sources, Map<String, Tap> sinks, List<Pipe> tails, Map<Object, Object> flowProperties) {
       super(checkpointToken, inputStores, outputStores);
       addSourceTaps(sources);
       addSinkTaps(sinks);
