@@ -115,7 +115,6 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
     } else {
       setDelta(bucket);
     }
-    setInput(bucket);
   }
 
   public void setInput(BucketDataStore input) {
