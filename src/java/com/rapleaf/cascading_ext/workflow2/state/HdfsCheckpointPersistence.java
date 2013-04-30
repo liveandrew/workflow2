@@ -2,8 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.state;
 
 import com.google.common.collect.Maps;
 import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.workflow_service.generated.StepStatus;
-import com.liveramp.workflow_service.generated.WorkflowDefinition;
+import com.liveramp.workflow_service.generated.*;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -20,10 +19,12 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private final boolean deleteCheckpointsOnSuccess;
   private final FileSystem fs;
 
-  private final Map<String, StepStatus> statuses = Maps.newHashMap();
+  private final Map<String, StepExecuteStatus> statuses = Maps.newHashMap();
+  private ExecuteStatus currentStatus;
 
   public HdfsCheckpointPersistence(String checkpointDir){
     this(checkpointDir, true);
+    this.currentStatus = ExecuteStatus.active(new ActiveState().set_status(ActiveStatus.running(new RunningMeta())));
   }
 
   public HdfsCheckpointPersistence(String checkpointDir, boolean deleteOnSuccess) {
@@ -33,7 +34,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
     try{
       for(FileStatus status: FileSystemHelper.safeListStatus(fs, new Path(checkpointDir))){
-        statuses.put(status.getPath().getName(), StepStatus.SKIPPED);
+        statuses.put(status.getPath().getName(), StepExecuteStatus.skipped(new StepSkippedMeta()));
       }
     }catch(Exception e){
       throw new RuntimeException("Error reading from checkpoint directory!", e);
@@ -41,29 +42,41 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public StepStatus getStatus(Step step) {
+  public Map<String, StepExecuteStatus> getAllStepStatuses(){
+    return statuses;
+  }
+
+  @Override
+  public StepExecuteStatus getStatus(Step step) {
     String checkpoint = step.getCheckpointToken();
 
     //  if we know the status, return it
     if(!statuses.containsKey(checkpoint)){
       //  we haven't seen it before, it's waiting
-      statuses.put(checkpoint, StepStatus.WAITING);
+      statuses.put(checkpoint, StepExecuteStatus.waiting(new StepWaitingMeta()));
     }
 
     return statuses.get(checkpoint);
   }
 
   @Override
-  public void updateStatus(Step step, StepStatus status) throws IOException {
+  public ExecuteStatus getFlowStatus() {
+    return currentStatus;
+  }
+
+  @Override
+  public void updateStatus(Step step, StepExecuteStatus status) throws IOException {
     LOG.info("Noting new status for step "+step.getCheckpointToken()+": "+status);
 
-    if(status == StepStatus.COMPLETED){
+    if(status.is_set_completed()){
       LOG.info("Writing out checkpoint token for " + step.getCheckpointToken());
       String tokenPath = checkpointDir + "/" + step.getCheckpointToken();
       if (!fs.createNewFile(new Path(tokenPath))) {
         throw new IOException("Couldn't create checkpoint file " + tokenPath);
       }
       LOG.debug("Done writing checkpoint token for " + step.getCheckpointToken());
+    }else if(status.is_set_failed()){
+      currentStatus = ExecuteStatus.active(new ActiveState(ActiveStatus.fail_pending(new FailMeta())));// asdfadfa ffailed(new FailedMeta());
     }
 
     statuses.put(step.getCheckpointToken(), status);
@@ -76,10 +89,17 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public void complete() throws IOException {
-    if (deleteCheckpointsOnSuccess) {
-      LOG.debug("Deleting checkpoint dir " + checkpointDir);
-      fs.delete(new Path(checkpointDir), true);
+  public void setStatus(ExecuteStatus status) {
+    currentStatus = status;
+    if(status.is_set_complete()){
+      try{
+        if (deleteCheckpointsOnSuccess) {
+          LOG.debug("Deleting checkpoint dir " + checkpointDir);
+          fs.delete(new Path(checkpointDir), true);
+        }
+      }catch(Exception e){
+        throw new RuntimeException(e);
+      }
     }
   }
 }

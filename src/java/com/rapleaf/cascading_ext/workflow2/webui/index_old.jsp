@@ -14,6 +14,7 @@
 <%@page import="java.text.DateFormat"%>
 <%@page import="java.text.SimpleDateFormat"%>
 <%@page import="com.rapleaf.support.Rap"%>
+<%@ page import="com.liveramp.workflow_service.generated.StepExecuteStatus" %>
 <html>
 
 <%!
@@ -115,23 +116,23 @@ public String renderProgressBar(int pctComplete) {
       position: absolute;
     }
 
-    div.<%= StepStatus.WAITING.name().toLowerCase() %> {
+    div.<%=StepExecuteStatus._Fields.WAITING.name().toLowerCase() %> {
       background-color: #dddddd;
     }
 
-    div.<%= StepStatus.RUNNING.name().toLowerCase() %> {
+    div.<%= StepExecuteStatus._Fields.RUNNING.name().toLowerCase() %> {
       background-color: #ddffdd;
     }
 
-    div.<%= StepStatus.SKIPPED.name().toLowerCase() %> {
+    div.<%= StepExecuteStatus._Fields.SKIPPED.name().toLowerCase() %> {
       background-color: #ffffdd;
     }
 
-    div.<%= StepStatus.COMPLETED.name().toLowerCase() %> {
+    div.<%= StepExecuteStatus._Fields.COMPLETED.name().toLowerCase() %> {
       background-color: #ddddff;
     }
 
-    div.<%= StepStatus.FAILED.name().toLowerCase() %> {
+    div.<%= StepExecuteStatus._Fields.FAILED.name().toLowerCase() %> {
       background-color: #ffdddd;
     }
     
@@ -280,7 +281,7 @@ if (!isolated.isEmpty()){
 
 <div id="legend" style="float:right">
 <%
-for (StepStatus status : StepStatus.values()) {
+for (StepExecuteStatus._Fields status : StepExecuteStatus._Fields.values()) {
   String pretty_name = status.name().toLowerCase();
   %>
   <div class="legend-entry <%= status.name().toLowerCase() %>"><%= pretty_name %></div>

@@ -3,7 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.liveramp.workflow_service.generated.StepDefinition;
-import com.liveramp.workflow_service.generated.StepStatus;
+import com.liveramp.workflow_service.generated.StepExecuteStatus;
 import com.liveramp.workflow_service.generated.WorkflowDefinition;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.support.StringHelper;
@@ -36,7 +36,7 @@ public class WorkflowDiagram {
       this.status = status;
     }
 
-    public Vertex(Step step, StepStatus status) {
+    public Vertex(Step step, StepExecuteStatus._Fields status) {
       this.id = step.getCheckpointToken();
       this.name = step.getSimpleCheckpointToken();
       this.status = status.name().toLowerCase();
@@ -399,7 +399,7 @@ public class WorkflowDiagram {
 
   public WorkflowDefinition getDefinition(){
     DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph<Step, DefaultEdge>(
-        dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
+        flatDependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null));
 
     //  TODO remove redundant edges
 
@@ -546,26 +546,26 @@ public class WorkflowDiagram {
     return new Vertex(step, getStepStatus(step));
   }
 
-  private StepStatus getStepStatus(Step step) {
+  private StepExecuteStatus._Fields getStepStatus(Step step) {
     if (step.getAction() instanceof MultiStepAction) {
       MultiStepAction msa = (MultiStepAction) step.getAction();
-      Set<StepStatus> statusSet = new HashSet<StepStatus>();
+      Set<StepExecuteStatus._Fields> statusSet = new HashSet<StepExecuteStatus._Fields>();
       for (Step substep : msa.getSubSteps()) {
         statusSet.add(getStepStatus(substep));
       }
-      if (statusSet.contains(StepStatus.FAILED)) {
-        return StepStatus.FAILED;
-      } else if (statusSet.contains(StepStatus.RUNNING)) {
-        return StepStatus.RUNNING;
-      } else if (statusSet.contains(StepStatus.WAITING)) {
-        return StepStatus.WAITING;
-      } else if (statusSet.contains(StepStatus.COMPLETED)) {
-        return StepStatus.COMPLETED;
+      if (statusSet.contains(StepExecuteStatus._Fields.FAILED)) {
+        return StepExecuteStatus._Fields.FAILED;
+      } else if (statusSet.contains(StepExecuteStatus._Fields.RUNNING)) {
+        return StepExecuteStatus._Fields.RUNNING;
+      } else if (statusSet.contains(StepExecuteStatus._Fields.WAITING)) {
+        return StepExecuteStatus._Fields.WAITING;
+      } else if (statusSet.contains(StepExecuteStatus._Fields.COMPLETED)) {
+        return StepExecuteStatus._Fields.COMPLETED;
       } else {
-        return StepStatus.SKIPPED;
+        return StepExecuteStatus._Fields.SKIPPED;
       }
     } else {
-      return workflowRunner.getStepStatus(step);
+      return workflowRunner.getStepStatus(step).getSetField();
     }
   }
 

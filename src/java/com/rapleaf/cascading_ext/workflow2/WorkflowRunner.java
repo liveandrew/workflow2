@@ -1,7 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import com.liveramp.cascading_ext.counters.Counter;
-import com.liveramp.workflow_service.generated.StepStatus;
+import com.liveramp.workflow_service.generated.*;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -24,10 +24,9 @@ import java.util.concurrent.Semaphore;
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
 
-  public static final Set<StepStatus> NON_BLOCKING = EnumSet.of(
-      StepStatus.COMPLETED, StepStatus.SKIPPED
+  public static final Set<StepExecuteStatus._Fields> NON_BLOCKING = EnumSet.of(
+      StepExecuteStatus._Fields.COMPLETED, StepExecuteStatus._Fields.SKIPPED
   );
-
 
   /**
    * Specify this and the system will pick any free port.
@@ -48,7 +47,6 @@ public final class WorkflowRunner {
     public final Step step;
     private final WorkflowStatePersistence state;
     public Thread thread;
-    public Throwable failureCause;
 
     public StepRunner(Step c, WorkflowStatePersistence state) {
       this.step = c;
@@ -61,22 +59,35 @@ public final class WorkflowRunner {
         @Override
         public void run() {
           try {
-            if (NON_BLOCKING.contains(state.getStatus(step))) {
+            if (NON_BLOCKING.contains(state.getStatus(step).getSetField())) {
               LOG.info("Step " + step.getCheckpointToken()
                   + " was executed successfully in a prior run. Skipping.");
-              update(StepStatus.SKIPPED);
+              update(StepExecuteStatus.skipped(new StepSkippedMeta()));
             } else {
-              update(StepStatus.RUNNING);
+              update(StepExecuteStatus.running(new StepRunningMeta()));
               LOG.info("Executing step " + step.getCheckpointToken());
               step.run();
-              update(StepStatus.COMPLETED);
+              update(StepExecuteStatus.completed(new StepCompletedMeta()));
             }
           } catch (Throwable e) {
             LOG.fatal("Step " + step.getCheckpointToken() + " failed!", e);
-            failureCause = e;
 
             try{
-              update(StepStatus.FAILED);
+
+              StringWriter sw = new StringWriter();
+              PrintWriter pw = new PrintWriter(sw);
+              e.printStackTrace(pw);
+
+              WorkflowException exception = new WorkflowException(e.getMessage(), sw.toString());
+              update(StepExecuteStatus.failed(new StepFailedMeta(exception)));
+
+              //  mark the flow as failed if nothing else has already
+              if(!persistence.getFlowStatus().is_set_failed()){
+                ExecuteStatus status = persistence.getFlowStatus();
+                status.get_active().set_status(ActiveStatus.fail_pending(new FailMeta()));
+                persistence.setStatus(status);
+              }
+
             }catch(Exception e2){
               LOG.fatal("Could not update step "+step.getCheckpointToken()+" to failed! ", e2);
             }
@@ -89,14 +100,14 @@ public final class WorkflowRunner {
       thread.start();
     }
 
-    private void update(StepStatus status) throws IOException {
+    private void update(StepExecuteStatus status) throws IOException {
       state.updateStatus(step, status);
     }
 
     public boolean allDependenciesCompleted() {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if(!NON_BLOCKING.contains(state.getStatus(dep))){
+        if(!NON_BLOCKING.contains(state.getStatus(dep).getSetField())){
           return false;
         }
       }
@@ -132,19 +143,11 @@ public final class WorkflowRunner {
    */
   private final Set<StepRunner> runningSteps = new HashSet<StepRunner>();
   /**
-   * started and failed
-   */
-  private final Set<StepRunner> failedSteps = new HashSet<StepRunner>();
-  /**
    * started and completed successfully
    */
   private final Set<StepRunner> completedSteps = new HashSet<StepRunner>();
 
   private final Map<String, StepRunner> stepTokenToRunner = new HashMap<String, StepRunner>();
-
-  private boolean shutdownPending = false;
-
-  private String reasonForShutdownRequest = null;
 
   private final EventTimer timer;
 
@@ -331,8 +334,9 @@ public final class WorkflowRunner {
     templateFields.put("${workflow_def}", wfd.getJSWorkflowDefinition(liveWorkflow));
     if (liveWorkflow) {
       String liverWorkflowDef = "liveworkflow = true;\n";
-      if (isShutdownPending()) {
-        liverWorkflowDef += "shutdown_reason = \"" + reasonForShutdownRequest + "\"\n";
+      ExecuteStatus status = persistence.getFlowStatus();
+      if (status.is_set_active() && status.get_active().get_status().is_set_shutdown_pending()) {
+        liverWorkflowDef += "shutdown_reason = \"" + status.get_active().get_status().get_shutdown_pending().get_cause() + "\"\n";
       }
       templateFields.put("${live_workflow_def}", liverWorkflowDef);
     } else {
@@ -402,6 +406,8 @@ public final class WorkflowRunner {
       WorkflowDiagram diagram = new WorkflowDiagram(this);
       generateDocs(diagram);
 
+      LOG.info("Preparing workflow state");
+
       persistence.prepare(diagram.getDefinition());
 
       LOG.info("Starting workflow " + getWorkflowName());
@@ -412,7 +418,7 @@ public final class WorkflowRunner {
 
       LOG.info("All steps in workflow " + getWorkflowName() + " complete");
 
-      persistence.complete();
+      persistence.setStatus(ExecuteStatus.complete(new CompleteMeta()));
 
       LOG.info("Sending success email");
       sendSuccessEmail();
@@ -499,17 +505,29 @@ public final class WorkflowRunner {
     clearFinishedSteps();
 
     // if there are any failures, the the workflow failed. throw an exception.
-    if (failedSteps.size() > 0) {
+    if (isFailPending()) {
       int n = 1;
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
-      for (StepRunner c : failedSteps) {
-        pw.println("(" + n + "/" + failedSteps.size() + ") Step "
-                       + c.step.getCheckpointToken() + " failed with exception: "
-                       + c.failureCause.getMessage());
-        c.failureCause.printStackTrace(pw);
-        n++;
+
+      int numFailed = 0;
+      for(Map.Entry<String, StepExecuteStatus> status: persistence.getAllStepStatuses().entrySet()){
+        if(status.getValue().is_set_failed()){
+          numFailed++;
+        }
       }
+
+      for(Map.Entry<String, StepExecuteStatus> status: persistence.getAllStepStatuses().entrySet()){
+        if(status.getValue().is_set_failed()){
+          StepFailedMeta meta = status.getValue().get_failed();
+          pw.println("(" + n + "/" + numFailed + ") Step "
+              + status.getKey() + " failed with exception: "
+              + meta.get_cause().get_cause());
+          pw.println(meta.get_cause().get_stacktrace());
+          n++;
+        }
+      }
+
       String wholeMessage = sw.toString();
 
       sendFailureEmail(wholeMessage);
@@ -520,7 +538,11 @@ public final class WorkflowRunner {
     // because someone shut the workflow down.
     if (pendingSteps.size() > 0) {
       sendShutdownEmail();
-      throw new RuntimeException(SHUTDOWN_MESSAGE_PREFIX + getReasonForShutdownRequest());
+
+      String reason = getReasonForShutdownRequest();
+      persistence.setStatus(ExecuteStatus.shutdown(new ShutdownMeta(reason)));
+
+      throw new RuntimeException(SHUTDOWN_MESSAGE_PREFIX + reason);
     }
   }
 
@@ -563,8 +585,14 @@ public final class WorkflowRunner {
     }
   }
 
+  public boolean isFailPending() {
+    ExecuteStatus flowStatus = persistence.getFlowStatus();
+    return flowStatus.is_set_active() && flowStatus.get_active().get_status().is_set_fail_pending();
+  }
+
   public boolean isShutdownPending() {
-    return shutdownPending;
+    ExecuteStatus flowStatus = persistence.getFlowStatus();
+    return flowStatus.is_set_active() && flowStatus.get_active().get_status().is_set_shutdown_pending();
   }
 
   public void disableNotificationType(NotificationType notificationType) {
@@ -577,31 +605,34 @@ public final class WorkflowRunner {
 
   public void requestShutdown(String reason) {
     LOG.info("Shutdown was requested. Running components will be allowed to complete before shutdown.");
-    this.shutdownPending = true;
 
+    String reasonForShutdown;
     if (reason == null || reason.equals("")) {
-      this.reasonForShutdownRequest = "No reason provided.";
+      reasonForShutdown = "No reason provided.";
     } else {
-      this.reasonForShutdownRequest = reason;
+      reasonForShutdown = reason;
     }
+
+    ActiveState state = persistence.getFlowStatus().get_active();
+    ExecuteStatus newStatus = ExecuteStatus.active(state.set_status(ActiveStatus.shutdown_pending(new ShutdownMeta(reasonForShutdown))));
+    persistence.setStatus(newStatus);
   }
 
   public String getReasonForShutdownRequest() {
-    return reasonForShutdownRequest;
+    return persistence.getFlowStatus().get_active().get_status().get_shutdown_pending().get_cause();
   }
 
   private void clearFinishedSteps() {
     Iterator<StepRunner> iter = runningSteps.iterator();
     while (iter.hasNext()) {
       StepRunner cr = iter.next();
-      switch (persistence.getStatus(cr.step)) {
+      switch (persistence.getStatus(cr.step).getSetField()) {
         case COMPLETED:
         case SKIPPED:
           completedSteps.add(cr);
           iter.remove();
           break;
         case FAILED:
-          failedSteps.add(cr);
           iter.remove();
           break;
       }
@@ -622,7 +653,7 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() {
-    return failedSteps.isEmpty() && !isShutdownPending();
+    return !isFailPending() && !isShutdownPending();
   }
 
   private void shutdownWebServer() {
@@ -638,7 +669,7 @@ public final class WorkflowRunner {
     }
   }
 
-  public StepStatus getStepStatus(Step step) {
+  public StepExecuteStatus getStepStatus(Step step) {
     return persistence.getStatus(stepTokenToRunner.get(step.getCheckpointToken()).step);
   }
 
