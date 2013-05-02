@@ -26,10 +26,6 @@ public class PersistNewVersion<T> extends Action {
     Bucket newVersion = store.getBucketVersionedStore().openNewVersion();
     newVersion.absorb(versionToPersist.getBucket());
 
-    if (versionToPersist.getBucket().isImmutable()) {
-      newVersion.markAsImmutable();
-    }
-
     store.getBucketVersionedStore().completeVersion(newVersion);
   }
 }
