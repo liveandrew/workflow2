@@ -17,7 +17,6 @@ public class WaitForHankDeploy extends Action {
 
   private static final Logger LOG = Logger.getLogger(WaitForHankDeploy.class);
 
-
   private final Coordinator coordinator;
   private final List<String> ringGroupNames;
 
@@ -39,7 +38,14 @@ public class WaitForHankDeploy extends Action {
       ringsToWaitFor.add(coordinator.getRingGroup(ringGroupName));
     }
 
+    boolean firstIteration = true;
+
     while (!ringsToWaitFor.isEmpty()) {
+      if (!firstIteration) {
+        LOG.info("Some RingGroups are still updating, sleeping for 5 minutes");
+        TimeUnit.MINUTES.sleep(5);
+        firstIteration = false;
+      }
       LOG.info("Checking for deploy completeness...");
       Iterator<RingGroup> itr = ringsToWaitFor.iterator();
       while (itr.hasNext()) {
@@ -48,10 +54,7 @@ public class WaitForHankDeploy extends Action {
           itr.remove();
         }
       }
-      LOG.info("Some RingGroups are still updateing, sleeping for 5 minutes");
-      TimeUnit.MINUTES.sleep(5);
     }
     LOG.info("Checking for deploy complete!");
-
   }
 }
