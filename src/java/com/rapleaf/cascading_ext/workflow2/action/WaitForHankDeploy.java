@@ -6,6 +6,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.hank.coordinator.Coordinator;
 import com.rapleaf.hank.coordinator.RingGroup;
 import com.rapleaf.hank.coordinator.RingGroups;
+import org.apache.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +14,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class WaitForHankDeploy extends Action {
+
+  private static final Logger LOG = Logger.getLogger(WaitForHankDeploy.class);
+
 
   private final Coordinator coordinator;
   private final List<String> ringGroupNames;
@@ -36,6 +40,7 @@ public class WaitForHankDeploy extends Action {
     }
 
     while (!ringsToWaitFor.isEmpty()) {
+      LOG.info("Checking for deploy completeness...");
       Iterator<RingGroup> itr = ringsToWaitFor.iterator();
       while (itr.hasNext()) {
         RingGroup ringGroup = itr.next();
@@ -43,7 +48,10 @@ public class WaitForHankDeploy extends Action {
           itr.remove();
         }
       }
+      LOG.info("Some RingGroups are still updateing, sleeping for 5 minutes");
       TimeUnit.MINUTES.sleep(5);
     }
+    LOG.info("Checking for deploy complete!");
+
   }
 }
