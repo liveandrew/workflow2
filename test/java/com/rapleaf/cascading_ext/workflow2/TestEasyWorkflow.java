@@ -1,6 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import cascading.operation.Debug;
 import cascading.operation.Insert;
 import cascading.pipe.CoGroup;
 import cascading.pipe.Each;
