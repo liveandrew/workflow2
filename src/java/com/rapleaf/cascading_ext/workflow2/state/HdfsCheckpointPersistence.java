@@ -24,7 +24,6 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
   public HdfsCheckpointPersistence(String checkpointDir){
     this(checkpointDir, true);
-    this.currentStatus = ExecuteStatus.active(new ActiveState().set_status(ActiveStatus.running(new RunningMeta())));
   }
 
   public HdfsCheckpointPersistence(String checkpointDir, boolean deleteOnSuccess) {
@@ -39,6 +38,8 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     }catch(Exception e){
       throw new RuntimeException("Error reading from checkpoint directory!", e);
     }
+
+    this.currentStatus = ExecuteStatus.active(new ActiveState().set_status(ActiveStatus.running(new RunningMeta())));
   }
 
   @Override
