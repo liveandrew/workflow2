@@ -12,27 +12,29 @@ import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action.CascadingAction;
 import com.rapleaf.cascading_ext.workflow2.action.CascadingActionBuilder;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class EasyWorkflow {
 
-  private Map<String, Tap> sources = Maps.newHashMap();
-  private TupleDataStore checkpointStore;
+  private Map<String, Tap> initialSources = Maps.newHashMap();
   private String workingDir;
   private Map<String, Tap> sinks = Maps.newHashMap();
   private DataStoreBuilder dsBuilder;
   private List<DataStore> inputs;
   private List<DataStore> outputs;
-  private Step previousStep;
-  private Pipe currentPipe;
+  private Map<String, Step> pipenameToStep;
+  private Map<String, TupleDataStore> pipenameToStore;
+  private Map<String, String> tailPipeNameToCheckpoint;
   private String name;
   private Map<Object, Object> flowProperties;
   private int checkpoint = 0;
+
+  private static final Logger LOG = Logger.getLogger(EasyWorkflow.class);
 
   private EasyWorkflow(String name, String workingDir) {
     this.workingDir = workingDir;
@@ -40,17 +42,19 @@ public class EasyWorkflow {
     this.inputs = Lists.newArrayList();
     this.outputs = Lists.newArrayList();
     this.sinks = Maps.newHashMap();
-    this.sources = Maps.newHashMap();
+    this.initialSources = Maps.newHashMap();
     this.name = name;
     this.flowProperties = Maps.newHashMap();
+    this.pipenameToStep = Maps.newHashMap();
+    this.pipenameToStore = Maps.newHashMap();
+    this.tailPipeNameToCheckpoint = Maps.newHashMap();
   }
 
   private EasyWorkflow(String name, String workingDir, Map<String, Tap> sources, Map<String, Tap> sinks) {
     this(name, workingDir);
-    this.sources = sources;
+    this.initialSources = sources;
     this.sinks = sinks;
   }
-
 
   public static EasyWorkflow create(String name, String workingDir, Map<String, Tap> sources, Map<String, Tap> sinks) {
     return new EasyWorkflow(name, workingDir, sources, sinks);
@@ -60,44 +64,54 @@ public class EasyWorkflow {
     return new EasyWorkflow(name, workingDir);
   }
 
-  public void setSources(Map<String, Tap> sources) {
-    this.sources = sources;
+  public EasyWorkflow setSources(Map<String, Tap> sources) {
+    this.initialSources = sources;
+    return this;
   }
 
-  public void setSinks(Map<String, Tap> sinks) {
+  public EasyWorkflow setSinks(Map<String, Tap> sinks) {
     this.sinks = sinks;
+    return this;
   }
 
-  public void addToSources(Map<String, Tap> sources) {
-    this.sources.putAll(sources);
+  public EasyWorkflow addToSources(Map<String, Tap> sources) {
+    this.initialSources.putAll(sources);
+    return this;
   }
 
-  public void addToSinks(Map<String, Tap> sinks) {
+  public EasyWorkflow addToSinks(Map<String, Tap> sinks) {
     this.sinks.putAll(sinks);
+    return this;
   }
 
-  public void addSourceTap(String pipeName, Tap tap) {
-    sources.put(pipeName, tap);
+  public EasyWorkflow addSourceTap(String pipeName, Tap tap) {
+    initialSources.put(pipeName, tap);
+    return this;
   }
 
-  public void addSinkTap(String pipeName, Tap tap) {
+  public EasyWorkflow addSinkTap(String pipeName, Tap tap) {
     sinks.put(pipeName, tap);
+    return this;
   }
 
-  public void setInputs(List<DataStore> inputs) {
+  public EasyWorkflow setInputs(List<DataStore> inputs) {
     this.inputs = inputs;
+    return this;
   }
 
-  public void addInput(DataStore input) {
+  public EasyWorkflow addInput(DataStore input) {
     this.inputs.add(input);
+    return this;
   }
 
-  public void addOutput(DataStore output) {
+  public EasyWorkflow addOutput(DataStore output) {
     this.outputs.add(output);
+    return this;
   }
 
-  public void setOutputs(List<DataStore> outputs) {
+  public EasyWorkflow setOutputs(List<DataStore> outputs) {
     this.outputs = outputs;
+    return this;
   }
 
   public Step completeAsStep(String checkpointName, Pipe... endPipes) {
@@ -105,14 +119,13 @@ public class EasyWorkflow {
     return finalStep;
   }
 
-  public MultiStepAction completeAsMultiStepAction(String checkpointName, Pipe...endPipes) {
+  public MultiStepAction completeAsMultiStepAction(String checkpointName, Pipe... endPipes) {
     Step finalStep = createFinalStep(checkpointName, endPipes);
     MultiStepAction action = new GenericMultiStepAction(name, finalStep);
     return action;
   }
 
-
-  public WorkflowRunner completeAsWorkflow(String checkpointName, Pipe...endPipes) {
+  public WorkflowRunner completeAsWorkflow(String checkpointName, Pipe... endPipes) {
     Step finalStep = createFinalStep(checkpointName, endPipes);
     WorkflowRunner runner = new WorkflowRunner(name, workingDir + "/checkpoints", 1, 0, finalStep);
     return runner;
@@ -120,115 +133,132 @@ public class EasyWorkflow {
 
   private Step createFinalStep(String checkpointName, Pipe... endPipes) {
     CascadingActionBuilder builder = new CascadingActionBuilder();
+    Map<String, Tap> sources = Maps.newHashMap();
+    Set<DataStore> inputs = Sets.newHashSet();
+    List<Step> previousSteps = Lists.newArrayList();
+    for (Pipe endPipe : endPipes) {
+      sources.putAll(createSourceMap(endPipe.getHeads()));
+      inputs.addAll(getInputStores(endPipe.getHeads()));
+      previousSteps.addAll(getPreviousSteps(endPipe.getHeads()));
+    }
 
     CascadingAction action = builder.setName(name + ":" + checkpointName)
         .setCheckpoint(checkpointName)
-        .addInputStore(checkpointStore)
+        .addInputStores(Lists.newArrayList(inputs))
         .addOutputStores(outputs)
-        .addSource(currentPipe.getName(), checkpointStore.getTap())
+        .setSources(sources)
         .setSinks(sinks)
         .addTails(endPipes)
         .build();
 
-    return new Step(action, previousStep);
+    return new Step(action, previousSteps);
+  }
+
+  private List<Step> getPreviousSteps(Pipe[] heads) {
+    List<Step> output = Lists.newArrayList();
+    for (Pipe head : heads) {
+      if (pipenameToStep.containsKey(head.getName())) {
+        output.add(pipenameToStep.get(head.getName()));
+      }
+    }
+    return output;
+  }
+
+  private Map<String, Tap> createSourceMap(Pipe[] heads) {
+    Map<String, Tap> output = Maps.newHashMap();
+    for (Pipe head : heads) {
+      if (initialSources.containsKey(head.getName())) {
+        output.put(head.getName(), initialSources.get(head.getName()));
+      } else if (pipenameToStore.containsKey(head.getName())) {
+        output.put(head.getName(), pipenameToStore.get(head.getName()).getTap());
+      } else {
+        throw new RuntimeException("Could not find tap for head pipe named " + head.getName());
+      }
+    }
+    return output;
+  }
+
+  private Fields determineOutputFields(Pipe tail) {
+    return getScope(tail).getIncomingTapFields();
+  }
+
+  private Scope getScope(Pipe tail) {
+    Pipe[] previousPipes = tail.getPrevious();
+    if (previousPipes.length == 0) {
+      Fields sourceFields;
+      if (initialSources.containsKey(tail.getName())) {
+        sourceFields = initialSources.get(tail.getName()).getSourceFields();
+      } else if (pipenameToStore.containsKey(tail.getName())) {
+        sourceFields = pipenameToStore.get(tail.getName()).getTap().getSourceFields();
+      } else {
+        throw new RuntimeException("Cannot find head pipe name " + tail.getName() + " in any source map during field resolution");
+      }
+      Scope scope = new Scope(sourceFields);
+      scope.setName(tail.getName());
+      return scope;
+    } else {
+      Set<Scope> scopes = Sets.newHashSet();
+      for (Pipe previous : previousPipes) {
+        scopes.add(getScope(previous));
+      }
+      return tail.outgoingScopeFor(scopes);
+    }
   }
 
   public Pipe addCheckpoint(Pipe endPipe) {
-    return addCheckpoint(endPipe, "pipe" + checkpoint, "checkpoint" + checkpoint);
+    return addCheckpoint(endPipe, "check" + checkpoint);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName) {
-    return addCheckpoint(endPipe, "pipe" + checkpoint, checkpointName);
-  }
-
-  public Pipe addCheckpoint(Pipe endPipe, String nextPipeName, String checkpointName) {
-    Fields fields;
-    if (previousStep != null) {
-      fields = determineOutputFields(endPipe, checkpointStore.getTap());
-    } else if (sources.size() == 1) {
-      fields = determineOutputFields(endPipe, sources.entrySet().iterator().next().getValue());
-    } else {
-      throw new IllegalArgumentException("Can't infer fields for multiple sources");
-    }
-    return addCheckpoint(endPipe, nextPipeName, fields, checkpointName);
-  }
-
-  private Fields determineOutputFields(Pipe tail, Tap source) {
-    List<Pipe> pipes = Lists.newArrayList();
-    pipes.add(tail);
-    Pipe current = tail;
-    while (current.getPrevious().length != 0) {
-      if (current.getPrevious().length > 1) {
-        throw new IllegalArgumentException("Can't infer fields for forking pipe assemblies yet");
-      } else {
-        pipes.add(current.getPrevious()[0]);
-        current = current.getPrevious()[0];
-      }
-    }
-    Collections.reverse(pipes);
-    Set<Scope> scopes = Sets.newHashSet(new Scope(source.getSourceFields()));
-    for (Pipe pipe : pipes) {
-      scopes = Sets.newHashSet(pipe.outgoingScopeFor(scopes));
-    }
-    Scope finalScope = scopes.iterator().next();
-    return finalScope.getIncomingTapFields();
-
-  }
-
-
-  public Pipe addCheckpoint(Pipe endPipe, String nextPipeName, Fields fields, String checkpointName) {
     try {
 
       CascadingActionBuilder builder = new CascadingActionBuilder();
+      Fields fields = determineOutputFields(endPipe);
+      LOG.info("determined output fields to be " + fields + " for step " + checkpointName);
+      TupleDataStore checkpointStore = dsBuilder.getTupleDataStore(checkpointName, fields);
 
-      if (previousStep == null) {
-        checkpointStore = dsBuilder.getTupleDataStore(checkpointName, fields);
+      Pipe[] heads = endPipe.getHeads();
+      Map<String, Tap> sources = createSourceMap(heads);
+      Set<DataStore> inputStores = getInputStores(heads);
 
-        CascadingAction action = builder.setName(name + ":" + checkpointName)
-            .setCheckpoint(checkpointName)
-            .addInputStores(inputs)
-            .addOutputStore(checkpointStore)
-            .setSources(sources)
-            .addSink(endPipe.getName(), checkpointStore.getTap())
-            .addTail(endPipe)
-            .addFlowProperties(flowProperties)
-            .build();
+      CascadingAction action = builder.setName(name + ":" + checkpointName)
+          .setCheckpoint(checkpointName)
+          .addInputStores(Lists.newArrayList(inputStores))
+          .addOutputStore(checkpointStore)
+          .setSources(sources)
+          .addSink(endPipe.getName(), checkpointStore.getTap())
+          .addTail(endPipe)
+          .addFlowProperties(flowProperties)
+          .build();
 
-        Step step = new Step(action);
-        previousStep = step;
+      Step step = new Step(action, getPreviousSteps(heads));
 
+      String nextPipeName = "tail-" + checkpointName;
 
-      } else {
-
-        TupleDataStore newCheckpointStore = dsBuilder.getTupleDataStore(checkpointName, fields);
-
-        CascadingAction action = builder.setName(name + ":" + checkpointName)
-            .setCheckpoint(checkpointName)
-            .addInputStore(checkpointStore)
-            .addOutputStore(newCheckpointStore)
-            .addSource(currentPipe.getName(), checkpointStore.getTap())
-            .addSink(endPipe.getName(), newCheckpointStore.getTap())
-            .addTail(endPipe)
-            .addFlowProperties(flowProperties)
-            .build();
-
-        Step step = new Step(action, previousStep);
-        previousStep = step;
-        checkpointStore = newCheckpointStore;
-
-
-      }
+      pipenameToStore.put(nextPipeName, checkpointStore);
+      pipenameToStep.put(nextPipeName, step);
+      tailPipeNameToCheckpoint.put(nextPipeName, checkpointName);
 
       Pipe pipe = new Pipe(nextPipeName);
-      currentPipe = pipe;
       checkpoint++;
-      return currentPipe;
-
+      return pipe;
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
 
-
+  private Set<DataStore> getInputStores(Pipe[] heads) {
+    Set<DataStore> inputStores = Sets.newHashSet();
+    for (Pipe head : heads) {
+      if (initialSources.containsKey(head.getName())) {
+        inputStores.addAll(this.inputs);
+      } else if (pipenameToStore.containsKey(head.getName())) {
+        inputStores.add(pipenameToStore.get(head.getName()));
+      } else {
+        throw new RuntimeException("Could not find store for head pipe " + head.getName());
+      }
+    }
+    return inputStores;
   }
 
   public void addFlowProperties(Map<Object, Object> properties) {
@@ -243,5 +273,5 @@ public class EasyWorkflow {
       setSubStepsFromTail(tail);
     }
   }
-
 }
+
