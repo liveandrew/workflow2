@@ -104,7 +104,6 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
     pipe2 = workflow.addCheckpoint(pipe2, "distinct");
 
     Pipe pipe3 = new CoGroup(pipe, new Fields("field1"), pipe2, new Fields("field3"));
-    pipe3 = new Each(pipe3, new Debug());
     pipe3 = new Increment(pipe3, "Test", "Tuples1");
     pipe3 = workflow.addCheckpoint(pipe3, "group");
 
