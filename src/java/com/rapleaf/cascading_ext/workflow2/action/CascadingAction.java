@@ -17,10 +17,11 @@ public abstract class CascadingAction extends Action {
   private Map<Object, Object> flowProperties = new HashMap<Object, Object>();
   private List<Pipe> tails = new ArrayList<Pipe>();
   private String name = null;
+  private Flow flow;
 
   public CascadingAction(String checkpointToken,
-                         List<? extends DataStore> inputStores,
-                         List<? extends DataStore> outputStores) {
+      List<? extends DataStore> inputStores,
+      List<? extends DataStore> outputStores) {
     super(checkpointToken);
 
     for (DataStore ds : inputStores) {
@@ -90,38 +91,42 @@ public abstract class CascadingAction extends Action {
     flowProperties.putAll(properties);
   }
 
-
   // override in anonymous classes
   protected void setUp() {
   }
 
+  public Flow getFlow() {
+    if (flow == null) {
+      if (name == null) {
+        name = getClass().getSimpleName();
+      }
+
+      FlowConnector connector = CascadingHelper.get().getFlowConnector(flowProperties);
+      if (sources.size() == 1) {
+        Tap source = sources.values().iterator().next();
+        if (sinks.size() == 1) {
+          Tap sink = sinks.values().iterator().next();
+          flow = connector.connect(name, source, sink, tails.get(0));
+        } else {
+          flow = connector.connect(name, source, sinks, tails);
+        }
+      } else {
+        if (sinks.size() == 1) {
+          Tap sink = sinks.values().iterator().next();
+          flow = connector.connect(name, sources, sink, tails.get(0));
+        } else {
+          flow = connector.connect(name, sources, sinks, tails.toArray(new Pipe[tails.size()]));
+        }
+      }
+    }
+    return flow;
+  }
+
   @Override
   protected void execute() throws Exception {
-    if (name == null) {
-      name = getClass().getSimpleName();
-    }
-
-    FlowConnector connector = CascadingHelper.get().getFlowConnector(flowProperties);
-    Flow f;
-    if (sources.size() == 1) {
-      Tap source = sources.values().iterator().next();
-      if (sinks.size() == 1) {
-        Tap sink = sinks.values().iterator().next();
-        f = connector.connect(name, source, sink, tails.get(0));
-      } else {
-        f = connector.connect(name, source, sinks, tails);
-      }
-    } else {
-      if (sinks.size() == 1) {
-        Tap sink = sinks.values().iterator().next();
-        f = connector.connect(name, sources, sink, tails.get(0));
-      } else {
-        f = connector.connect(name, sources, sinks, tails.toArray(new Pipe[tails.size()]));
-      }
-    }
-
-    completeWithProgress(f);
-    postProcess(f);
+    Flow flow = getFlow();
+    completeWithProgress(flow);
+    postProcess(flow);
   }
 
   protected void postProcess(Flow flow) {

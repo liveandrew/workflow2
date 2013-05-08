@@ -1,7 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import cascading.flow.Flow;
 import cascading.flow.planner.Scope;
 import cascading.pipe.Pipe;
+import cascading.stats.FlowStepStats;
+import cascading.stats.hadoop.HadoopStepStats;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import com.google.common.collect.Lists;
@@ -33,6 +36,7 @@ public class EasyWorkflow {
   private String name;
   private Map<Object, Object> flowProperties;
   private int checkpoint = 0;
+  private List<Flow> childFlows;
 
   private static final Logger LOG = Logger.getLogger(EasyWorkflow.class);
 
@@ -48,6 +52,7 @@ public class EasyWorkflow {
     this.pipenameToStep = Maps.newHashMap();
     this.pipenameToStore = Maps.newHashMap();
     this.tailPipeNameToCheckpoint = Maps.newHashMap();
+    this.childFlows = Lists.newArrayList();
   }
 
   private EasyWorkflow(String name, String workingDir, Map<String, Tap> sources, Map<String, Tap> sinks) {
@@ -151,7 +156,34 @@ public class EasyWorkflow {
         .addTails(endPipes)
         .build();
 
+    childFlows.add(action.getFlow());
+
+    analyze();
+
     return new Step(action, previousSteps);
+  }
+
+  private void analyze() {
+    StringBuilder logMessage = new StringBuilder("\n==================================\n");
+    logMessage.append("Your workflow will require " + childFlows.size() + " actions\n");
+    int numSteps = 0;
+    int maps = 0;
+    int reduces = 0;
+    for (Flow flow : childFlows) {
+      numSteps += flow.getFlowStats().getStepsCount();
+      for (FlowStepStats flowStepStats : flow.getFlowStats().getFlowStepStats()) {
+        if (flowStepStats instanceof HadoopStepStats) {
+          maps += ((HadoopStepStats) flowStepStats).getNumMapTasks();
+          reduces += ((HadoopStepStats) flowStepStats).getNumReduceTasks();
+        }
+      }
+    }
+    logMessage.append("Your workflow will require " + numSteps + " mapreduce jobs\n");
+    logMessage.append("Your workflow will require " + maps + " map tasks\n");
+    logMessage.append("Your workflow will require " + reduces + " reduce tasks\n");
+
+    logMessage.append("==================================");
+    LOG.info(logMessage.toString());
   }
 
   private List<Step> getPreviousSteps(Pipe[] heads) {
@@ -230,6 +262,8 @@ public class EasyWorkflow {
           .addTail(endPipe)
           .addFlowProperties(flowProperties)
           .build();
+
+      childFlows.add(action.getFlow());
 
       Step step = new Step(action, getPreviousSteps(heads));
 
