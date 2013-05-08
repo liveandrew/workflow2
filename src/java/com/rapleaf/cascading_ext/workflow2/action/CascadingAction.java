@@ -35,15 +35,11 @@ public abstract class CascadingAction extends Action {
     setUp();
   }
 
-  protected void addTails(List<Pipe> tails) {
-    this.tails.addAll(tails);
+  protected void completeFromTail(Pipe tail) {
+    completeFromTails(tail);
   }
 
-  protected void addTail(Pipe tail) {
-    this.tails.add(tail);
-  }
-
-  protected void addTails(Pipe... tails) {
+  protected void completeFromTails(Pipe... tails) {
     Collections.addAll(this.tails, tails);
   }
 
