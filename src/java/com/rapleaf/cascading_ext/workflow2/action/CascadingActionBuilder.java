@@ -99,9 +99,9 @@ public class CascadingActionBuilder {
       super(checkpointToken, inputStores, outputStores);
       addSourceTaps(sources);
       addSinkTaps(sinks);
-      completeFromTails(tails.toArray(new Pipe[tails.size()]));
       setName(name);
       addFlowProperties(flowProperties);
+      completeFromTails(tails.toArray(new Pipe[tails.size()]));
     }
   }
 

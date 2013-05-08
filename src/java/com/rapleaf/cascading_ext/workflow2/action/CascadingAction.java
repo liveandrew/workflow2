@@ -41,6 +41,10 @@ public abstract class CascadingAction extends Action {
 
   protected void completeFromTails(Pipe... tails) {
     Collections.addAll(this.tails, tails);
+    if (sources.isEmpty() || sinks.isEmpty()) {
+      throw new RuntimeException("You must specify sources and sinks. Call completeFromTails last.");
+    }
+    planFlow();
   }
 
   protected void addSourceTap(Tap source) {
@@ -91,7 +95,7 @@ public abstract class CascadingAction extends Action {
   protected void setUp() {
   }
 
-  public Flow getFlow() {
+  protected Flow planFlow() {
     if (flow == null) {
       if (name == null) {
         name = getClass().getSimpleName();
@@ -115,6 +119,10 @@ public abstract class CascadingAction extends Action {
         }
       }
     }
+    return flow;
+  }
+
+  public Flow getFlow() {
     return flow;
   }
 
