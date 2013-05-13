@@ -8,6 +8,7 @@ import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
+import com.rapleaf.cascading_ext.workflow2.FlowCompletedCallback;
 import java.util.*;
 
 public abstract class CascadingAction extends Action {
@@ -18,6 +19,7 @@ public abstract class CascadingAction extends Action {
   private List<Pipe> tails = new ArrayList<Pipe>();
   private String name = null;
   private Flow flow;
+  private FlowCompletedCallback flowCompletedCallback = null;
 
   public CascadingAction(String checkpointToken,
       List<? extends DataStore> inputStores,
@@ -67,6 +69,10 @@ public abstract class CascadingAction extends Action {
     }
 
     this.sources.put(name, tap);
+  }
+
+  protected void setFlowCompletedCallback(FlowCompletedCallback callback) {
+    this.flowCompletedCallback = callback;
   }
 
   protected void addSinkTap(Tap sink) {
@@ -130,10 +136,8 @@ public abstract class CascadingAction extends Action {
   protected void execute() throws Exception {
     Flow flow = getFlow();
     completeWithProgress(flow);
-    postProcess(flow);
-  }
-
-  protected void postProcess(Flow flow) {
-    //override in subclass if necessary
+    if (flowCompletedCallback != null) {
+      flowCompletedCallback.flowCompleted(flow);
+    }
   }
 }

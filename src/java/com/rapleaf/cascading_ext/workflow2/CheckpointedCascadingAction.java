@@ -20,7 +20,11 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
   }
 
   protected void complete(Pipe pipe, String pipeName) {
-    setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, pipe));
+    complete(pipe, pipeName, null);
+  }
+
+  protected void complete(Pipe pipe, String pipeName, FlowCompletedCallback flowCompletedCallback) {
+    setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, flowCompletedCallback, pipe));
   }
 
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName) {
@@ -29,6 +33,14 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
 
   protected Pipe addCheckpoint(Pipe pipe) {
     return workflowHelper.addCheckpoint(pipe);
+  }
+
+  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, FlowCompletedCallback flowCompletedCallback) {
+    return workflowHelper.addCheckpoint(pipe, checkpointName, flowCompletedCallback);
+  }
+
+  protected Pipe addCheckpoint(Pipe pipe, FlowCompletedCallback flowCompletedCallback) {
+    return workflowHelper.addCheckpoint(pipe, flowCompletedCallback);
   }
 
   protected void addSourceTap(String name, Tap tap) {
