@@ -39,7 +39,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
       throw new RuntimeException("Error reading from checkpoint directory!", e);
     }
 
-    this.currentStatus = ExecuteStatus.active(new ActiveState().set_status(ActiveStatus.running(new RunningMeta())));
+    this.currentStatus = ExecuteStatus.active(new ActiveState(ActiveStatus.running(new RunningMeta())));
   }
 
   @Override
@@ -69,15 +69,15 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   public void updateStatus(Step step, StepExecuteStatus status) throws IOException {
     LOG.info("Noting new status for step "+step.getCheckpointToken()+": "+status);
 
-    if(status.is_set_completed()){
+    if(status.isSetCompleted()){
       LOG.info("Writing out checkpoint token for " + step.getCheckpointToken());
       String tokenPath = checkpointDir + "/" + step.getCheckpointToken();
       if (!fs.createNewFile(new Path(tokenPath))) {
         throw new IOException("Couldn't create checkpoint file " + tokenPath);
       }
       LOG.debug("Done writing checkpoint token for " + step.getCheckpointToken());
-    }else if(status.is_set_failed()){
-      currentStatus = ExecuteStatus.active(new ActiveState(ActiveStatus.fail_pending(new FailMeta())));// asdfadfa ffailed(new FailedMeta());
+    }else if(status.isSetFailed()){
+      currentStatus = ExecuteStatus.active(new ActiveState(ActiveStatus.failPending(new FailMeta())));
     }
 
     statuses.put(step.getCheckpointToken(), status);
@@ -92,7 +92,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   @Override
   public void setStatus(ExecuteStatus status) {
     currentStatus = status;
-    if(status.is_set_complete()){
+    if(status.isSetComplete()){
       try{
         if (deleteCheckpointsOnSuccess) {
           LOG.debug("Deleting checkpoint dir " + checkpointDir);
