@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.flow.Flow;
 import cascading.flow.planner.Scope;
+import cascading.pipe.OperatorException;
 import cascading.pipe.Pipe;
 import cascading.stats.FlowStepStats;
 import cascading.stats.hadoop.HadoopStepStats;
@@ -246,27 +247,46 @@ public class EasyWorkflow {
       for (Pipe previous : previousPipes) {
         scopes.add(getScope(previous));
       }
-      return tail.outgoingScopeFor(scopes);
+      try {
+        return tail.outgoingScopeFor(scopes);
+      }
+      catch (OperatorException e) {
+        throw e;
+      }
     }
   }
 
+  public Pipe addCheckpoint(Pipe endPipe, Fields fields) {
+    return addCheckpoint(endPipe, "check" + checkpoint, fields, null);
+  }
+
+  public Pipe addCheckpoint(Pipe endPipe, Fields fields, FlowCompletedCallback flowCompletedCallback) {
+    return addCheckpoint(endPipe, "check" + checkpoint, fields, flowCompletedCallback);
+  }
+
+  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields) {
+    return addCheckpoint(endPipe, checkpointName, fields, null);
+  }
+
   public Pipe addCheckpoint(Pipe endPipe) {
-    return addCheckpoint(endPipe, "check" + checkpoint, null);
+    return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), null);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, FlowCompletedCallback flowCompletedCallback) {
-    return addCheckpoint(endPipe, "check" + checkpoint, flowCompletedCallback);
+    return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), flowCompletedCallback);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName) {
-    return addCheckpoint(endPipe, checkpointName, null);
+    return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), null);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName, FlowCompletedCallback flowCompletedCallback) {
-    try {
+    return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), flowCompletedCallback);
+  }
 
+  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields, FlowCompletedCallback flowCompletedCallback) {
+    try {
       CascadingActionBuilder builder = new CascadingActionBuilder();
-      Fields fields = determineOutputFields(endPipe);
       LOG.info("determined output fields to be " + fields + " for step " + checkpointName);
       TupleDataStore checkpointStore = dsBuilder.getTupleDataStore(checkpointName, fields);
 
