@@ -7,6 +7,7 @@ import cascading.pipe.Pipe;
 import cascading.pipe.assembly.Retain;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
+import com.liveramp.cascading_ext.assembly.BloomJoin;
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.assembly.Distinct;
@@ -102,7 +103,7 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
     pipe2 = new Distinct(pipe2);
     pipe2 = workflow.addCheckpoint(pipe2, "distinct");
 
-    Pipe pipe3 = new CoGroup(pipe, new Fields("field1"), pipe2, new Fields("field3"));
+    Pipe pipe3 = new BloomJoin(pipe, new Fields("field1"), pipe2, new Fields("field3"));
     pipe3 = new Increment(pipe3, "Test", "Tuples1");
     pipe3 = workflow.addCheckpoint(pipe3, "group");
 

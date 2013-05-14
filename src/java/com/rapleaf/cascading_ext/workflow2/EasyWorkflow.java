@@ -134,7 +134,7 @@ public class EasyWorkflow {
   }
 
   public MultiStepAction completeAsMultiStepAction(String checkpointName, FlowCompletedCallback flowCompletedCallback, Pipe... endPipes) {
-    Step finalStep = createFinalStep(checkpointName, flowCompletedCallback,endPipes);
+    Step finalStep = createFinalStep(checkpointName, flowCompletedCallback, endPipes);
     MultiStepAction action = new GenericMultiStepAction(name, finalStep);
     return action;
   }
@@ -245,12 +245,13 @@ public class EasyWorkflow {
     } else {
       Set<Scope> scopes = Sets.newHashSet();
       for (Pipe previous : previousPipes) {
-        scopes.add(getScope(previous));
+        Scope scope = getScope(previous);
+        scope.setName(previous.getName());
+        scopes.add(scope);
       }
       try {
         return tail.outgoingScopeFor(scopes);
-      }
-      catch (OperatorException e) {
+      } catch (OperatorException e) {
         throw e;
       }
     }
