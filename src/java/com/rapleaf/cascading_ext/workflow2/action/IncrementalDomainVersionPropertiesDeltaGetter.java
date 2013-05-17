@@ -1,10 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import com.rapleaf.hank.coordinator.Coordinator;
-import com.rapleaf.hank.coordinator.Domain;
-import com.rapleaf.hank.coordinator.RunnableWithCoordinator;
-import com.rapleaf.hank.hadoop.DomainBuilderProperties;
-import com.rapleaf.hank.storage.incremental.IncrementalDomainVersionProperties;
+import com.liveramp.hank.coordinator.Coordinator;
+import com.liveramp.hank.coordinator.Domain;
+import com.liveramp.hank.coordinator.RunnableWithCoordinator;
+import com.liveramp.hank.hadoop.DomainBuilderProperties;
+import com.liveramp.hank.storage.incremental.IncrementalDomainVersionProperties;
 
 import java.io.IOException;
 

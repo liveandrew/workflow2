@@ -5,7 +5,7 @@ import cascading.tap.Tap;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
-import com.rapleaf.hank.config.CoordinatorConfigurator;
+import com.liveramp.hank.config.CoordinatorConfigurator;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 

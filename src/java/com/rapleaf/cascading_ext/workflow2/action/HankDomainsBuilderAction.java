@@ -6,11 +6,11 @@ import cascading.tap.Tap;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.hank.cascading.CascadingDomainBuilder;
-import com.rapleaf.hank.config.CoordinatorConfigurator;
-import com.rapleaf.hank.coordinator.RunWithCoordinator;
-import com.rapleaf.hank.hadoop.DomainBuilderProperties;
-import com.rapleaf.hank.storage.incremental.IncrementalDomainVersionProperties;
+import com.liveramp.hank.cascading.CascadingDomainBuilder;
+import com.liveramp.hank.config.CoordinatorConfigurator;
+import com.liveramp.hank.coordinator.RunWithCoordinator;
+import com.liveramp.hank.hadoop.DomainBuilderProperties;
+import com.liveramp.hank.storage.incremental.IncrementalDomainVersionProperties;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -3,9 +3,9 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.hank.coordinator.Coordinator;
-import com.rapleaf.hank.coordinator.RingGroup;
-import com.rapleaf.hank.coordinator.RingGroups;
+import com.liveramp.hank.coordinator.Coordinator;
+import com.liveramp.hank.coordinator.RingGroup;
+import com.liveramp.hank.coordinator.RingGroups;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
