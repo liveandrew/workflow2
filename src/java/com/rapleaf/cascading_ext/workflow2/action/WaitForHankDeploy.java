@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 public class WaitForHankDeploy extends Action {
 
   private static final Logger LOG = Logger.getLogger(WaitForHankDeploy.class);
+  private static final long FIVE_MINUTES = 300000l;
 
   private final Coordinator coordinator;
   private final List<String> ringGroupNames;
@@ -43,7 +44,7 @@ public class WaitForHankDeploy extends Action {
     while (!ringsToWaitFor.isEmpty()) {
       if (!firstIteration) {
         LOG.info("Some RingGroups are still updating, sleeping for 5 minutes");
-        TimeUnit.MINUTES.sleep(5);
+        Thread.sleep(FIVE_MINUTES);
         firstIteration = false;
       }
       LOG.info("Checking for deploy completeness...");
