@@ -6,6 +6,7 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
+import com.rapleaf.support.Strings;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,7 +26,7 @@ public class TestAddMissingPartitionsToBucket extends CascadingExtTestCase {
     Set<String> data = new HashSet<String>();
 
     for (byte[] record : bucket) {
-      data.add(new String(record));
+      data.add(Strings.fromBytes(record));
     }
 
     return data;
@@ -34,7 +35,7 @@ public class TestAddMissingPartitionsToBucket extends CascadingExtTestCase {
     RecordOutputStream os = bucket.openWrite(relPath);
 
     for (String record : records) {
-      os.write(record.getBytes());
+      os.write(Strings.toBytes(record));
     }
 
     os.close();

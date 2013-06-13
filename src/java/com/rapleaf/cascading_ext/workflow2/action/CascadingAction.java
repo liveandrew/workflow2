@@ -7,8 +7,8 @@ import cascading.tap.Tap;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
-
 import com.rapleaf.cascading_ext.workflow2.FlowCompletedCallback;
+
 import java.util.*;
 
 public abstract class CascadingAction extends Action {
@@ -21,9 +21,13 @@ public abstract class CascadingAction extends Action {
   private Flow flow;
   private FlowCompletedCallback flowCompletedCallback = null;
 
+  public CascadingAction(String checkpointToken) {
+    this(checkpointToken, Collections.<DataStore>emptyList(), Collections.<DataStore>emptyList());
+  }
+
   public CascadingAction(String checkpointToken,
-      List<? extends DataStore> inputStores,
-      List<? extends DataStore> outputStores) {
+                         List<? extends DataStore> inputStores,
+                         List<? extends DataStore> outputStores) {
     super(checkpointToken);
 
     for (DataStore ds : inputStores) {
