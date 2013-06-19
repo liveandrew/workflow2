@@ -1,32 +1,20 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.Stack;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.commons.lang.StringUtils;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.EdgeReversedGraph;
-import org.jgrapht.graph.SimpleDirectedGraph;
-
 import com.liveramp.workflow_service.generated.StepDefinition;
 import com.liveramp.workflow_service.generated.StepExecuteStatus;
 import com.liveramp.workflow_service.generated.WorkflowDefinition;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.support.StringHelper;
 import com.rapleaf.support.event_timer.EventTimer;
+import org.apache.commons.lang.StringUtils;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.EdgeReversedGraph;
+import org.jgrapht.graph.SimpleDirectedGraph;
+
+import java.util.*;
 
 
 public class WorkflowDiagram {
@@ -60,8 +48,8 @@ public class WorkflowDiagram {
       if (action instanceof MultiStepAction) {
         percentageComplete = -1;
         message = "";
-        startTimestamp = computeStartTimestamp((MultiStepAction)action);
-        endTimestamp = computeEndTimestamp((MultiStepAction)action);
+        startTimestamp = computeStartTimestamp((MultiStepAction) action);
+        endTimestamp = computeEndTimestamp((MultiStepAction) action);
       } else {
         percentageComplete = action.getPercentComplete();
         message = action.getStatusMessage();
@@ -81,7 +69,7 @@ public class WorkflowDiagram {
       for (Step substep : action.getSubSteps()) {
         Action subAction = substep.getAction();
         if (subAction instanceof MultiStepAction) {
-          best = Math.min(best, computeStartTimestamp((MultiStepAction)subAction));
+          best = Math.min(best, computeStartTimestamp((MultiStepAction) subAction));
         } else {
           long ts = subAction.getStartTimestamp();
           if (ts != 0) {
@@ -97,7 +85,7 @@ public class WorkflowDiagram {
       for (Step substep : action.getSubSteps()) {
         Action subAction = substep.getAction();
         if (subAction instanceof MultiStepAction) {
-          best = Math.max(best, computeEndTimestamp((MultiStepAction)subAction));
+          best = Math.max(best, computeEndTimestamp((MultiStepAction) subAction));
         } else {
           best = Math.max(best, subAction.getEndTimestamp());
         }
@@ -176,7 +164,7 @@ public class WorkflowDiagram {
       if (step.getAction() instanceof MultiStepAction) {
         adjustTokenStrsOfChildren(step);
         multiStepsIds.add(step.getCheckpointToken());
-        for (Step substep : ((MultiStepAction)step.getAction()).getSubSteps()) {
+        for (Step substep : ((MultiStepAction) step.getAction()).getSubSteps()) {
           vertexIdToParentVertexId.put(substep.getCheckpointToken(), step.getCheckpointToken());
           toProcess.add(substep);
         }
@@ -202,14 +190,12 @@ public class WorkflowDiagram {
 
     int i = 0;
     boolean first = true;
-    while (!toProcess.isEmpty()) {
+    while(!toProcess.isEmpty()) {
       Step step = toProcess.poll();
       if (processed.contains(step)) {
         continue;
       }
-      if (!stepToId.containsKey(step)) {
-        stepToId.put(step, i++);
-      }
+      if (!stepToId.containsKey(step)) stepToId.put(step, i++);
       if (first) {
         first = false;
       } else {
@@ -235,9 +221,7 @@ public class WorkflowDiagram {
       sb.append("[");
       List<String> depencencyIds = new ArrayList<String>();
       for (Step dependency : step.getDependencies()) {
-        if (!stepToId.containsKey(dependency)) {
-          stepToId.put(dependency, i++);
-        }
+        if (!stepToId.containsKey(dependency)) stepToId.put(dependency, i++);
         depencencyIds.add(String.valueOf(stepToId.get(dependency)));
         if (!processed.contains(dependency)) {
           toProcess.add(dependency);
@@ -249,12 +233,10 @@ public class WorkflowDiagram {
       // Substeps
       sb.append("[");
       if (step.getAction() instanceof MultiStepAction) {
-        MultiStepAction msa = (MultiStepAction)step.getAction();
+        MultiStepAction msa = (MultiStepAction) step.getAction();
         List<String> subStepIds = new ArrayList<String>();
         for (Step subStep : msa.getSubSteps()) {
-          if (!stepToId.containsKey(subStep)) {
-            stepToId.put(subStep, i++);
-          }
+          if (!stepToId.containsKey(subStep)) stepToId.put(subStep, i++);
           subStepIds.add(String.valueOf(stepToId.get(subStep)));
           if (!processed.contains(subStep)) {
             toProcess.add(subStep);
@@ -312,7 +294,7 @@ public class WorkflowDiagram {
   }
 
   private void adjustTokenStrsOfChildren(Step step) {
-    MultiStepAction msa = (MultiStepAction)step.getAction();
+    MultiStepAction msa = (MultiStepAction) step.getAction();
     for (Step substep : msa.getSubSteps()) {
       substep.setCheckpointTokenPrefix(step.getCheckpointTokenPrefix() + msa.getCheckpointToken() + "__");
     }
@@ -409,25 +391,25 @@ public class WorkflowDiagram {
 
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph() {
     DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph<Step, DefaultEdge>(
-      dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
+        dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
     DirectedGraph<Vertex, DefaultEdge> diagramGraph = wrapVertices(dependencyGraph);
     removeRedundantEdges(diagramGraph);
     return diagramGraph;
   }
 
-  public WorkflowDefinition getDefinition() {
+  public WorkflowDefinition getDefinition(){
     DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph<Step, DefaultEdge>(
-      flatDependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null));
+        flatDependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null));
 
     //  TODO remove redundant edges
 
     Map<String, StepDefinition> steps = Maps.newHashMap();
-    for (Step step : dependencyGraph.vertexSet()) {
-      StepDefinition def = new StepDefinition(step.getAction().getClass().getName(), step.getCheckpointToken(), Lists.<String>newArrayList());
+    for(Step step: dependencyGraph.vertexSet()){
+      StepDefinition def= new StepDefinition(step.getAction().getClass().getName(), step.getCheckpointToken(), Lists.<String>newArrayList());
       steps.put(step.getCheckpointToken(), def);
     }
 
-    for (DefaultEdge edge : dependencyGraph.edgeSet()) {
+    for(DefaultEdge edge: dependencyGraph.edgeSet()){
       Step source = dependencyGraph.getEdgeSource(edge);
       Step target = dependencyGraph.getEdgeTarget(edge);
       steps.get(source.getCheckpointToken()).addToRequiredCheckpoints(target.getCheckpointToken());
@@ -438,7 +420,7 @@ public class WorkflowDiagram {
 
   private DirectedGraph<Vertex, DefaultEdge> wrapVertices(DirectedGraph<Step, DefaultEdge> graph) {
     DirectedGraph<Vertex, DefaultEdge> resultGraph =
-      new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
+        new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
 
     Map<Step, Vertex> stepToVertex = new HashMap<Step, Vertex>();
     for (Step step : graph.vertexSet()) {
@@ -458,10 +440,10 @@ public class WorkflowDiagram {
 
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraphWithDataStores() {
     DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph(
-      dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
+        dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
 
     DirectedGraph<Vertex, DefaultEdge> diagramGraph =
-      new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
+        new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
 
 
     addVerticesAndInputDSDependenciesToDiagramGraph(dependencyGraph, diagramGraph);
@@ -479,9 +461,9 @@ public class WorkflowDiagram {
   private void addVerticesAndInputDSDependenciesToDiagramGraph(DirectedGraph<Step, DefaultEdge> dependencyGraph,
                                                                DirectedGraph<Vertex, DefaultEdge> diagramGraph) {
     stepToVertex =
-      new HashMap<Step, Vertex>();
+        new HashMap<Step, Vertex>();
     dsToVertex =
-      new HashMap<DataStore, Vertex>();
+        new HashMap<DataStore, Vertex>();
     for (Step step : dependencyGraph.vertexSet()) {
       Vertex stepVertex = createVertexFromStep(step);
       stepToVertex.put(step, stepVertex);
@@ -555,7 +537,7 @@ public class WorkflowDiagram {
 
   private Set<DataStore> getOutputDSsFromStep(Step step) {
     Set<DataStore> outputDSs =
-      new HashSet<DataStore>(step.getAction().getCreatesDatastores());
+        new HashSet<DataStore>(step.getAction().getCreatesDatastores());
     outputDSs.addAll(step.getAction().getWritesToDatastores());
     return outputDSs;
   }
@@ -566,7 +548,7 @@ public class WorkflowDiagram {
 
   private StepExecuteStatus._Fields getStepStatus(Step step) {
     if (step.getAction() instanceof MultiStepAction) {
-      MultiStepAction msa = (MultiStepAction)step.getAction();
+      MultiStepAction msa = (MultiStepAction) step.getAction();
       Set<StepExecuteStatus._Fields> statusSet = new HashSet<StepExecuteStatus._Fields>();
       for (Step substep : msa.getSubSteps()) {
         statusSet.add(getStepStatus(substep));
@@ -707,7 +689,7 @@ public class WorkflowDiagram {
                                                                                Set<Step> multiStepsToExpand, Step isolated,
                                                                                boolean verifyNoOrphans) {
     DirectedGraph<Step, DefaultEdge> dependencyGraph =
-      new SimpleDirectedGraph<Step, DefaultEdge>(DefaultEdge.class);
+        new SimpleDirectedGraph<Step, DefaultEdge>(DefaultEdge.class);
 
     Queue<Step> multiSteps = new LinkedList<Step>();
 
@@ -726,10 +708,10 @@ public class WorkflowDiagram {
       if (!dependencyGraph.containsVertex(s)) {
         continue;
       }
-      MultiStepAction msa = (MultiStepAction)s.getAction();
+      MultiStepAction msa = (MultiStepAction) s.getAction();
 
       pullUpSubstepsAndAdjustCheckpointTokens(dependencyGraph, multiSteps, s,
-        msa, multiStepsToExpand);
+          msa, multiStepsToExpand);
 
       // now that the dep graph contains the unwrapped multistep *and* the
       // original multistep, let's move the edges to the unwrapped stuff so that
@@ -759,28 +741,6 @@ public class WorkflowDiagram {
   }
 
   public static void verifyNoOrphanedTailSteps(Set<Step> tailSteps) {
-    Set<Step> orphans = getOrphanedTailSteps(tailSteps);
-    if (orphans.size() != 0) {
-      throw new RuntimeException("Orphaned tail steps:" + orphans);
-    }
-  }
-
-  public static Set<Step> getAllSteps(Set<Step> steps) {
-    Set<Step> allSteps = new HashSet<Step>();
-    Stack<Step> toProcess = new Stack<Step>();
-    toProcess.addAll(steps);
-    while (!toProcess.isEmpty()) {
-      Step step = toProcess.pop();
-      if (!allSteps.contains(step)) {
-        allSteps.add(step);
-        toProcess.addAll(step.getChildren());
-        toProcess.addAll(step.getDependencies());
-      }
-    }
-    return allSteps;
-  }
-
-  static Set<Step> getOrphanedTailSteps(Set<Step> tailSteps) {
     Set<Step> multiStepsToExpand = new HashSet<Step>();
     tailSteps = new HashSet<Step>(tailSteps);
     Set<Step> allSteps = getAllSteps(tailSteps);
@@ -792,9 +752,27 @@ public class WorkflowDiagram {
     tailSteps.removeAll(multiStepsToExpand);
 
     DirectedGraph<Step, DefaultEdge> dependencyGraph = dependencyGraphFromTailSteps(tailSteps, null, multiStepsToExpand,
-      null, false);
+        null, false);
 
-    return getOrphanedTailSteps(dependencyGraph, allSteps);
+    Set<Step> orphans = getOrphanedTailSteps(dependencyGraph, allSteps);
+    if(orphans.size() != 0) {
+      throw new RuntimeException("Orphaned tail steps:" + orphans);
+    }
+  }
+
+  public static Set<Step> getAllSteps(Set<Step> steps) {
+    Set<Step> allSteps = new HashSet<Step>();
+    Stack<Step> toProcess = new Stack<Step>();
+    toProcess.addAll(steps);
+    while(!toProcess.isEmpty()) {
+      Step step = toProcess.pop();
+      if (!allSteps.contains(step)) {
+        allSteps.add(step);
+        toProcess.addAll(step.getChildren());
+        toProcess.addAll(step.getDependencies());
+      }
+    }
+    return allSteps;
   }
 
   private static Set<Step> getOrphanedTailSteps(DirectedGraph<Step, DefaultEdge> dependencyGraph, Set<Step> allSteps) {
@@ -818,7 +796,7 @@ public class WorkflowDiagram {
 
     Queue<MultiStepAction> multiSteps = new LinkedList<MultiStepAction>();
     if (isolated.getAction() instanceof MultiStepAction) {
-      multiSteps.add((MultiStepAction)isolated.getAction());
+      multiSteps.add((MultiStepAction) isolated.getAction());
     }
 
     while (!multiSteps.isEmpty()) {
@@ -826,7 +804,7 @@ public class WorkflowDiagram {
       toInclude.addAll(action.getSubSteps());
       for (Step step : action.getSubSteps()) {
         if (step.getAction() instanceof MultiStepAction) {
-          multiSteps.add((MultiStepAction)step.getAction());
+          multiSteps.add((MultiStepAction) step.getAction());
         }
       }
     }
@@ -863,7 +841,7 @@ public class WorkflowDiagram {
       // if we see a MultiStepAction, we know that there are subgraphs
       // involved, so let's note them down for later.
       if (action instanceof MultiStepAction) {
-        MultiStepAction msa = (MultiStepAction)action;
+        MultiStepAction msa = (MultiStepAction) action;
         multiSteps.add(s);
         // Use a timer list as a direct child of the workflow timer
         if (workflowTimer != null) {
@@ -886,8 +864,8 @@ public class WorkflowDiagram {
   }
 
   private static void copyOutgoingEdges(
-    DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s,
-    MultiStepAction msa) {
+      DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s,
+      MultiStepAction msa) {
     // next, the head steps of this multistep, which are naturally dependent
     // upon nothing, should depend on all the dependencies of the multistep
     for (DefaultEdge dependedUponEdge : dependencyGraph.outgoingEdgesOf(s)) {
@@ -901,8 +879,8 @@ public class WorkflowDiagram {
   }
 
   private static void copyIncomingEdges(
-    DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s,
-    MultiStepAction msa) {
+      DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s,
+      MultiStepAction msa) {
     // anyone who was dependent on this multistep should instead be
     // dependent on the tail steps of the multistep
     for (DefaultEdge dependsOnThis : dependencyGraph.incomingEdgesOf(s)) {
@@ -915,8 +893,8 @@ public class WorkflowDiagram {
   }
 
   private static void pullUpSubstepsAndAdjustCheckpointTokens(
-    DirectedGraph<Step, DefaultEdge> dependencyGraph, Queue<Step> multiSteps,
-    Step s, MultiStepAction msa, Set<Step> multiStepsToExpand) {
+      DirectedGraph<Step, DefaultEdge> dependencyGraph, Queue<Step> multiSteps,
+      Step s, MultiStepAction msa, Set<Step> multiStepsToExpand) {
     // take all the substeps out of the multistep and put them into the top
     // level dependency graph, making sure to add their dependencies.
     // this is certain to visit some vertices repeatedly, and could probably
