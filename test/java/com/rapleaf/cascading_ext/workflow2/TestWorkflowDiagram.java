@@ -1,14 +1,18 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-import com.rapleaf.cascading_ext.datastore.BytesDataStore;
+import com.google.common.collect.Sets;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
-import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
+import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram.Vertex;
 
@@ -45,10 +49,40 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   private Map<String, Vertex> idToVertex;
   DirectedGraph<Vertex, DefaultEdge> graph;
 
+  public void testVerifyNoOrphanedTailStep() throws Exception {
+    DataStore ds = getFakeDS("ds");
+
+    Step s1 = new Step(new FakeAction("s1", new DataStore[]{ds}, new DataStore[]{ds}));
+    Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
+    Step s3 = new Step(new FakeAction("s3", new DataStore[]{ds}, new DataStore[]{ds}), s2);
+    assertTrue(WorkflowDiagram.getOrphanedTailSteps(Sets.newHashSet(s3)).isEmpty());
+  }
+
+  public void testVerifyNoOrphanedTailStepWithMultistep() throws Exception {
+    DataStore ds = getFakeDS("ds");
+
+    Step s1 = new Step(new FakeAction("s1", new DataStore[]{ds}, new DataStore[]{ds}));
+    Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
+    Step s3 = new Step(new FakeMultistepAction("s3", new Step[]{}), s2);
+    Step s4 = new Step(new FakeAction("s4", new DataStore[]{ds}, new DataStore[]{ds}), s3);
+    Set<Step> orphans = WorkflowDiagram.getOrphanedTailSteps(Sets.newHashSet(s4));
+    assertTrue(orphans.isEmpty());
+  }
+
+  public void testVerifyNoOrphanedTailStepWithMultistepAtTheEnd() throws Exception {
+    DataStore ds = getFakeDS("ds");
+
+    Step s1 = new Step(new FakeAction("s1", new DataStore[]{ds}, new DataStore[]{ds}));
+    Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
+    Step s3 = new Step(new FakeMultistepAction("s3", new Step[]{}), s2);
+    Set<Step> orphans = WorkflowDiagram.getOrphanedTailSteps(Sets.newHashSet(s3));
+    assertTrue(orphans.isEmpty());
+  }
+
   public void testDiagramWithDSCyclesSimple() throws Exception {
     DataStore ds = getFakeDS("ds");
 
-    Step step = new Step(new FakeAction("step", new DataStore[] { ds }, new DataStore[] { ds }));
+    Step step = new Step(new FakeAction("step", new DataStore[]{ds}, new DataStore[]{ds}));
     setupWorkflowGraphWithDSs(step);
 
     verifyNumVertices(3);
@@ -66,11 +100,11 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     DataStore d2 = getFakeDS("d2");
     DataStore d3 = getFakeDS("d3");
 
-    Step s1 = new Step(new FakeAction("s1", new DataStore[] { d1 }, new DataStore[] { d1 }));
-    Step s2 = new Step(new FakeAction("s2", new DataStore[] { d1 }, new DataStore[] { d2 }));
-    Step s3 = new Step(new FakeAction("s3", new DataStore[] { d1 }, new DataStore[] { d1, d3 }), s1);
-    Step s4 = new Step(new FakeAction("s4", new DataStore[] { d1, d2 }, new DataStore[] { d1 }), s2);
-    Step s5 = new Step(new FakeAction("s5", new DataStore[] { d1, d3 }, new DataStore[0]), s3);
+    Step s1 = new Step(new FakeAction("s1", new DataStore[]{d1}, new DataStore[]{d1}));
+    Step s2 = new Step(new FakeAction("s2", new DataStore[]{d1}, new DataStore[]{d2}));
+    Step s3 = new Step(new FakeAction("s3", new DataStore[]{d1}, new DataStore[]{d1, d3}), s1);
+    Step s4 = new Step(new FakeAction("s4", new DataStore[]{d1, d2}, new DataStore[]{d1}), s2);
+    Step s5 = new Step(new FakeAction("s5", new DataStore[]{d1, d3}, new DataStore[0]), s3);
 
     setupWorkflowGraphWithDSs(s4, s5);
 
@@ -318,7 +352,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   public void testNoOrphanedTails() throws Exception {
     Step realTail = getComplexNestedWorkflowTail();
     Set<Step> allSteps = WorkflowDiagram.getAllSteps(Collections.singleton(realTail));
-    for (Step badTail :allSteps) {
+    for (Step badTail : allSteps) {
       if (badTail != realTail) {
         try {
           WorkflowDiagram.verifyNoOrphanedTailStep(badTail);
@@ -344,28 +378,28 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     DataStore id4 = getFakeDS("id4");
 
     Step s1 = new Step(new FakeAction("s1", new DataStore[0], new DataStore[0]));
-    Step s2 = new Step(new FakeAction("s2", new DataStore[0], new DataStore[] { d1, d2 }), s1);
-    Step s3 = new Step(new FakeAction("s3", new DataStore[0], new DataStore[] { d3 }), s1);
+    Step s2 = new Step(new FakeAction("s2", new DataStore[0], new DataStore[]{d1, d2}), s1);
+    Step s3 = new Step(new FakeAction("s3", new DataStore[0], new DataStore[]{d3}), s1);
 
-    Step s4_1 = new Step(new FakeAction("1", new DataStore[] { d1 }, new DataStore[] { d1, id1 }));
-    Step s4_2 = new Step(new FakeAction("2", new DataStore[] { d2 }, new DataStore[] { id2 }));
-    Step s4_3 = new Step(new FakeAction("3", new DataStore[] { d1, id1, id2 },
-      new DataStore[] { d4 }), s4_1, s4_2);
-    Step s4 = new Step(new FakeMultistepAction("s4", new Step[] { s4_1, s4_2, s4_3 }), s2);
+    Step s4_1 = new Step(new FakeAction("1", new DataStore[]{d1}, new DataStore[]{d1, id1}));
+    Step s4_2 = new Step(new FakeAction("2", new DataStore[]{d2}, new DataStore[]{id2}));
+    Step s4_3 = new Step(new FakeAction("3", new DataStore[]{d1, id1, id2},
+      new DataStore[]{d4}), s4_1, s4_2);
+    Step s4 = new Step(new FakeMultistepAction("s4", new Step[]{s4_1, s4_2, s4_3}), s2);
 
-    Step s5_1_1 = new Step(new FakeAction("1", new DataStore[] { d2, d3 }, new DataStore[] { d3 }));
-    Step s5_1_2 = new Step(new FakeAction("2", new DataStore[] { d3 }, new DataStore[] { id3 }),
+    Step s5_1_1 = new Step(new FakeAction("1", new DataStore[]{d2, d3}, new DataStore[]{d3}));
+    Step s5_1_2 = new Step(new FakeAction("2", new DataStore[]{d3}, new DataStore[]{id3}),
       s5_1_1);
-    Step s5_1 = new Step(new FakeMultistepAction("1", new Step[] { s5_1_1, s5_1_2 }));
+    Step s5_1 = new Step(new FakeMultistepAction("1", new Step[]{s5_1_1, s5_1_2}));
 
-    Step s5_2 = new Step(new FakeAction("2", new DataStore[] { d3 }, new DataStore[] { id4 }), s3);
-    Step s5_3 = new Step(new FakeAction("3", new DataStore[] { id4 }, new DataStore[] { d6 }), s5_2);
-    Step s5_4 = new Step(new FakeAction("4", new DataStore[] { id3, id4 }, new DataStore[] { d5 }),
+    Step s5_2 = new Step(new FakeAction("2", new DataStore[]{d3}, new DataStore[]{id4}), s3);
+    Step s5_3 = new Step(new FakeAction("3", new DataStore[]{id4}, new DataStore[]{d6}), s5_2);
+    Step s5_4 = new Step(new FakeAction("4", new DataStore[]{id3, id4}, new DataStore[]{d5}),
       s5_1, s5_2);
-    Step s5 = new Step(new FakeMultistepAction("s5", new Step[] { s5_1, s5_2, s5_3, s5_4 }), s2, s3);
+    Step s5 = new Step(new FakeMultistepAction("s5", new Step[]{s5_1, s5_2, s5_3, s5_4}), s2, s3);
 
-    Step s6 = new Step(new FakeAction("s6", new DataStore[] { d5, d6 }, new DataStore[] { d7 }), s5);
-    Step s7 = new Step(new FakeAction("s7", new DataStore[] { d1, d4, d7 }, new DataStore[0]), s4,
+    Step s6 = new Step(new FakeAction("s6", new DataStore[]{d5, d6}, new DataStore[]{d7}), s5);
+    Step s7 = new Step(new FakeAction("s7", new DataStore[]{d1, d4, d7}, new DataStore[0]), s4,
       s6);
 
     return s7;
