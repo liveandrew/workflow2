@@ -24,6 +24,7 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
   private final Map<E, Path> categoryToPath;
   private List<Extractor<T>> extractors = new ArrayList<Extractor<T>>();
   private MOJoiner<T, E> joiner = null;
+  private final Map<E, BucketDataStore> categoryToOutputBucket;
 
   public MOMapSideJoinAction(String checkpointToken,
                              String tmpRoot,
@@ -31,6 +32,7 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
                              Map<E, BucketDataStore> categoryToOutputBucket) {
     super(checkpointToken, tmpRoot);
     this.categoryToPath = Maps.newHashMap();
+    this.categoryToOutputBucket = categoryToOutputBucket;
     for (Map.Entry<E, BucketDataStore> entry : categoryToOutputBucket.entrySet()) {
       categoryToPath.put(entry.getKey(), new Path(entry.getValue().getPath()));
     }
@@ -70,10 +72,9 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
   @Override
   protected void execute() throws Exception {
 
-    Map categoryToRecordType = new HashMap();
-    for(Map.Entry categoryEntry : categoryToPath.entrySet()) {
-      Class valueClass = categoryEntry.getValue().getClass();
-      categoryToRecordType.put(categoryEntry.getKey(), valueClass);
+    Map<E, Class<?>> categoryToRecordType = new HashMap<E, Class<?>>();
+    for(Map.Entry<E, BucketDataStore> categoryEntry : categoryToOutputBucket.entrySet()) {
+      categoryToRecordType.put(categoryEntry.getKey(), categoryEntry.getValue().getRecordsType());
     }
     MOMapSideJoin<T, E> join = new MOMapSideJoin<T, E>(this.getClass().getSimpleName(),
                                                        extractors,
