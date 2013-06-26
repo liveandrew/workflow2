@@ -11,8 +11,7 @@ import java.io.IOException;
 
 public class TrashHelper {
   public static void moveToTrash(FileSystem fs, Path path) throws IOException {
-    Trash trash = new Trash(fs.getConf());
-    if (!trash.moveToTrash(path)) {
+    if(!Trash.moveToAppropriateTrash(fs, path, CascadingHelper.get().getJobConf())){
       throw new RuntimeException("Trash disabled or path already in trash: " + path);
     }
   }
