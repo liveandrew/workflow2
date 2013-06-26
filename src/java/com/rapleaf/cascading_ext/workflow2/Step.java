@@ -1,15 +1,15 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.support.event_timer.EventTimer;
-import com.rapleaf.support.event_timer.TimedEvent;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.support.event_timer.EventTimer;
+import com.rapleaf.support.event_timer.TimedEvent;
 
 public final class Step {
 
@@ -32,34 +32,24 @@ public final class Step {
     }
   }
 
-  public Step(Action action) {
-    this(action, Collections.<Step>emptyList());
+  public Step(Action action, Step... dependencies) {
+    this(action, Arrays.asList(dependencies));
   }
 
-  public static List<Step> stepList(Step previous, Step... rest) {
-    List<Step> steps = new ArrayList<Step>();
-    steps.add(previous);
-    steps.addAll(Arrays.asList(rest));
-    return steps;
-  }
-  public Step(Action action, Step previous, Step... rest) {
-    this(action, stepList(previous, rest));
-  }
-
-  public Step(Action action, List<Step> steps) {
+  public Step(Action action, List<Step> dependencies) {
     this.action = action;
     children = new HashSet<Step>();
-    dependencies = new HashSet<Step>(steps);
-    if (dependencies.contains(null)) {
+    this.dependencies = new HashSet<Step>(dependencies);
+    if (this.dependencies.contains(null)) {
       throw new NullPointerException("null cannot be a dependency for a step!");
     }
-    for(Step dependent : dependencies) {
+    for (Step dependent : this.dependencies) {
       dependent.addChild(this);
     }
   }
 
   private void addChild(Step child) {
-    if(!child.getDependencies().contains(this)) {
+    if (!child.getDependencies().contains(this)) {
       throw new RuntimeException("child (" + child + ") does not depend on this (" + this + ")");
     }
     children.add(child);
@@ -100,14 +90,14 @@ public final class Step {
 
   public TimedEvent getTimer() {
     if (action instanceof MultiStepAction) {
-      return ((MultiStepAction) action).getMultiStepActionTimer();
+      return ((MultiStepAction)action).getMultiStepActionTimer();
 
     } else {
-    return timer;
+      return timer;
     }
   }
-  
-  public List<NestedCounter> getCounters() { 
+
+  public List<NestedCounter> getCounters() {
     return nestedCounters;
   }
 
