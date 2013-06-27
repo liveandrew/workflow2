@@ -43,8 +43,8 @@ public final class Step {
     if (this.dependencies.contains(null)) {
       throw new NullPointerException("null cannot be a dependency for a step!");
     }
-    for (Step dependent : this.dependencies) {
-      dependent.addChild(this);
+    for (Step dependency : this.dependencies) {
+      dependency.addChild(this);
     }
   }
 
