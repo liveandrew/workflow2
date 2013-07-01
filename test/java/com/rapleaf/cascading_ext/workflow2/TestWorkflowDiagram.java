@@ -68,7 +68,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     assertTrue(orphans.isEmpty());
   }
 
-  public void disabledTestVerifyNoOrphanedTailStepWithMultistepTail() throws Exception {
+  public void testVerifyNoOrphanedTailStepWithMultistepTail() throws Exception {
     DataStore ds = getFakeDS("ds");
 
     Step s1 = new Step(new FakeAction("s1", new DataStore[]{ds}, new DataStore[]{ds}));
@@ -350,7 +350,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
 
   public void testNoOrphanedTails() throws Exception {
     Step realTail = getComplexNestedWorkflowTail();
-    Set<Step> allSteps = WorkflowDiagram.getAllSteps(Collections.singleton(realTail));
+    Set<Step> allSteps = WorkflowDiagram.reachableSteps(Collections.singleton(realTail));
     for (Step badTail : allSteps) {
       if (badTail != realTail) {
         try {

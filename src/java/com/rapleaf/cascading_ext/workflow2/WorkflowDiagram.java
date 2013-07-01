@@ -408,8 +408,11 @@ public class WorkflowDiagram {
   }
 
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph() {
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph<Step, DefaultEdge>(
-      dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
+    DirectedGraph<Step, DefaultEdge> graph = dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand);
+    if (peekIsolated() != null) {
+      isolateStep(graph, peekIsolated());
+    }
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph(graph);
     DirectedGraph<Vertex, DefaultEdge> diagramGraph = wrapVertices(dependencyGraph);
     removeRedundantEdges(diagramGraph);
     return diagramGraph;
@@ -457,8 +460,12 @@ public class WorkflowDiagram {
   }
 
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraphWithDataStores() {
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph(
-      dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand, peekIsolated()));
+
+    DirectedGraph<Step, DefaultEdge> graph = dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand);
+    if (peekIsolated() != null) {
+      isolateStep(graph, peekIsolated());
+    }
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph(graph);
 
     DirectedGraph<Vertex, DefaultEdge> diagramGraph =
       new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
@@ -695,23 +702,22 @@ public class WorkflowDiagram {
 
   protected static DirectedGraph<Step, DefaultEdge> flatDependencyGraphFromTailSteps(Set<Step> tailSteps,
                                                                                      EventTimer workflowTimer) {
-    return dependencyGraphFromTailSteps(tailSteps, workflowTimer, null, null);
+    return dependencyGraphFromTailSteps(tailSteps, workflowTimer, null);
   }
 
   private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer,
-                                                                               Set<Step> multiStepsToExpand, Step isolated) {
-    return dependencyGraphFromTailSteps(tailSteps, workflowTimer, multiStepsToExpand, isolated, true);
+                                                                               Set<Step> multiStepsToExpand) {
+    verifyNoOrphanedTailSteps(tailSteps);
+    return dependencyGraphFromTailStepsNoVerification(tailSteps, workflowTimer, multiStepsToExpand);
   }
 
-  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer,
-                                                                               Set<Step> multiStepsToExpand, Step isolated,
-                                                                               boolean verifyNoOrphans) {
-    DirectedGraph<Step, DefaultEdge> dependencyGraph =
-      new SimpleDirectedGraph<Step, DefaultEdge>(DefaultEdge.class);
-
-    Queue<Step> multiSteps = new LinkedList<Step>();
-
-    preprocessTailSteps(tailSteps, dependencyGraph, multiSteps, workflowTimer);
+  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailStepsNoVerification(Set<Step> tailSteps, EventTimer workflowTimer,
+                                                                                             Set<Step> multiStepsToExpand) {
+    Set<Step> tailsAndDependencies = addDependencies(tailSteps);
+    addToWorkflowTimer(tailsAndDependencies, workflowTimer);
+    Queue<Step> multiSteps = new LinkedList<Step>(filterMultiStep(tailsAndDependencies));
+    verifyUniqueCheckpointTokens(tailsAndDependencies);
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = createGraph(tailsAndDependencies);
 
     // now, proceed through each MultiStepAction node in the dependency graph,
     // recursively flattening it out and merging it into the current dependency
@@ -723,34 +729,33 @@ public class WorkflowDiagram {
       Step s = multiSteps.poll();
       // If the dependency graph doesn't contain the vertex, then we've already
       // processed it
-      if (!dependencyGraph.containsVertex(s)) {
-        continue;
+      if (dependencyGraph.containsVertex(s)) {
+        MultiStepAction msa = (MultiStepAction)s.getAction();
+
+        pullUpSubstepsAndAdjustCheckpointTokens(dependencyGraph, multiSteps, s,
+          msa, multiStepsToExpand);
+
+        // now that the dep graph contains the unwrapped multistep *and* the
+        // original multistep, let's move the edges to the unwrapped stuff so that
+        // we can remove the multistep.
+
+        copyIncomingEdges(dependencyGraph, s, msa);
+
+        copyOutgoingEdges(dependencyGraph, s, msa);
+
+        // finally, the multistep's vertex should be removed.
+        dependencyGraph.removeVertex(s);
       }
-      MultiStepAction msa = (MultiStepAction)s.getAction();
-
-      pullUpSubstepsAndAdjustCheckpointTokens(dependencyGraph, multiSteps, s,
-        msa, multiStepsToExpand);
-
-      // now that the dep graph contains the unwrapped multistep *and* the
-      // original multistep, let's move the edges to the unwrapped stuff so that
-      // we can remove the multistep.
-
-      copyIncomingEdges(dependencyGraph, s, msa);
-
-      copyOutgoingEdges(dependencyGraph, s, msa);
-
-      // finally, the multistep's vertex should be removed.
-      dependencyGraph.removeVertex(s);
     }
 
-    if (isolated != null) {
-      isolateStep(dependencyGraph, isolated);
-    }
+    return dependencyGraph;
+  }
 
-    if (verifyNoOrphans) {
-      verifyNoOrphanedTailSteps(tailSteps);
+  private static DirectedGraph<Step, DefaultEdge> createGraph(Set<Step> tailsAndDependencies) {
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = new SimpleDirectedGraph<Step, DefaultEdge>(DefaultEdge.class);
+    for (Step step : tailsAndDependencies) {
+      addStepAndDependencies(dependencyGraph, step);
     }
-
     return dependencyGraph;
   }
 
@@ -765,43 +770,40 @@ public class WorkflowDiagram {
     }
   }
 
-  public static Set<Step> getAllSteps(Set<Step> steps) {
-    Set<Step> allSteps = new HashSet<Step>();
+  public static Set<Step> reachableSteps(Set<Step> steps) {
+    Set<Step> reachableSteps = new HashSet<Step>();
     Stack<Step> toProcess = new Stack<Step>();
     toProcess.addAll(steps);
     while (!toProcess.isEmpty()) {
       Step step = toProcess.pop();
-      if (!allSteps.contains(step)) {
-        allSteps.add(step);
+      if (!reachableSteps.contains(step)) {
+        reachableSteps.add(step);
         toProcess.addAll(step.getChildren());
         toProcess.addAll(step.getDependencies());
       }
     }
-    return allSteps;
+    return reachableSteps;
   }
 
   static Set<Step> getOrphanedTailSteps(Set<Step> tailSteps) {
     Set<Step> multiStepsToExpand = new HashSet<Step>();
     tailSteps = new HashSet<Step>(tailSteps);
-    Set<Step> allSteps = getAllSteps(tailSteps);
-    for (Step step : allSteps) {
+    Set<Step> reachableSteps = reachableSteps(tailSteps);
+    for (Step step : reachableSteps) {
       if (step.getAction() instanceof MultiStepAction) {
         multiStepsToExpand.add(step);
       }
     }
-    tailSteps.removeAll(multiStepsToExpand);
 
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = dependencyGraphFromTailSteps(tailSteps, null, multiStepsToExpand,
-      null, false);
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = dependencyGraphFromTailStepsNoVerification(tailSteps, null, multiStepsToExpand);
 
-    return getOrphanedTailSteps(dependencyGraph, allSteps);
+    return getOrphanedTailSteps(dependencyGraph, reachableSteps);
   }
 
   private static Set<Step> getOrphanedTailSteps(DirectedGraph<Step, DefaultEdge> dependencyGraph, Set<Step> allSteps) {
     Set<Step> tailSteps = new HashSet<Step>();
     for (Step step : allSteps) {
       if (!(step.getAction() instanceof MultiStepAction)) {
-        // step.getAction() instanceof MultiStepAction must be false
         for (Step child : step.getChildren()) {
           if (!dependencyGraph.containsVertex(child) && !(child.getAction() instanceof MultiStepAction)) {
             tailSteps.add(child);
@@ -836,58 +838,52 @@ public class WorkflowDiagram {
     graph.removeAllVertices(toRemove);
   }
 
-  private static void preprocessTailSteps(Set<Step> tailSteps,
-                                          DirectedGraph<Step, DefaultEdge> dependencyGraph,
-                                          Queue<Step> multiSteps,
-                                          EventTimer workflowTimer) {
-    Queue<Step> toProcess = new LinkedList<Step>(tailSteps);
+  private static void verifyUniqueCheckpointTokens(Iterable<Step> steps) {
     Set<String> tokens = new HashSet<String>();
+    for (Step step : steps) {
+      String token = step.getAction().getCheckpointToken();
+      if (tokens.contains(token)) {
+        throw new IllegalArgumentException(step.toString() + " has a non-unique checkpoint token!");
+      }
+      tokens.add(token);
+    }
+  }
+
+  private static Set<Step> addDependencies(Set<Step> steps) {
+    Queue<Step> toProcess = new LinkedList<Step>(steps);
     Set<Step> visited = new HashSet<Step>();
-    // starting with the tailSteps, proceed through all through the entire
-    // (possibly non-flat) step dependency graph, creating an actual dependency
-    // graph.
     while (!toProcess.isEmpty()) {
-      Step s = toProcess.poll();
-      if (visited.contains(s)) {
-        continue;
-      }
-      visited.add(s);
-
-      Action action = s.getAction();
-      String checkpointToken = action.getCheckpointToken();
-      if (tokens.contains(checkpointToken)) {
-        throw new IllegalArgumentException(s.toString() + " has a non-unique checkpoint token!");
-      }
-      tokens.add(checkpointToken);
-
-      // if we see a MultiStepAction, we know that there are subgraphs
-      // involved, so let's note them down for later.
-      if (action instanceof MultiStepAction) {
-        MultiStepAction msa = (MultiStepAction)action;
-        multiSteps.add(s);
-        // Use a timer list as a direct child of the workflow timer
-        if (workflowTimer != null) {
-          workflowTimer.addChild(msa.getMultiStepActionTimer());
-        }
-      } else {
-        // Use the step's timer as a direct child of the workflow timer
-        if (workflowTimer != null) {
-          workflowTimer.addChild(s.getTimer());
+      Step step = toProcess.poll();
+      if (!visited.contains(step)) {
+        visited.add(step);
+        for (Step dependency : step.getDependencies()) {
+          toProcess.add(dependency);
         }
       }
+    }
+    return visited;
+  }
 
-      dependencyGraph.addVertex(s);
-      for (Step dependency : s.getDependencies()) {
-        dependencyGraph.addVertex(dependency);
-        dependencyGraph.addEdge(s, dependency);
-        toProcess.add(dependency);
+  private static Set<Step> filterMultiStep(Iterable<Step> steps) {
+    Set<Step> multiSteps = new HashSet<Step>();
+    for (Step step : steps) {
+      if (step.getAction() instanceof MultiStepAction) {
+        multiSteps.add(step);
+      }
+    }
+    return multiSteps;
+  }
+
+  private static void addToWorkflowTimer(Set<Step> tailsAndDependencies,
+                                         EventTimer workflowTimer) {
+    if (workflowTimer != null) {
+      for (Step step : tailsAndDependencies) {
+        workflowTimer.addChild(step.getTimer());
       }
     }
   }
 
-  private static void copyOutgoingEdges(
-    DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s,
-    MultiStepAction msa) {
+  private static void copyOutgoingEdges(DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s, MultiStepAction msa) {
     // next, the head steps of this multistep, which are naturally dependent
     // upon nothing, should depend on all the dependencies of the multistep
     for (DefaultEdge dependedUponEdge : dependencyGraph.outgoingEdgesOf(s)) {
@@ -900,9 +896,7 @@ public class WorkflowDiagram {
     }
   }
 
-  private static void copyIncomingEdges(
-    DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s,
-    MultiStepAction msa) {
+  private static void copyIncomingEdges(DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s, MultiStepAction msa) {
     // anyone who was dependent on this multistep should instead be
     // dependent on the tail steps of the multistep
     for (DefaultEdge dependsOnThis : dependencyGraph.incomingEdgesOf(s)) {
@@ -930,18 +924,20 @@ public class WorkflowDiagram {
         }
       }
 
-      dependencyGraph.addVertex(substep);
       // adjust the checkpoint token prefix to include the checkpoint token of
       // the multistep. this makes sure that, so long as token are unique in
       // their subgraph, they will also be unique in the flattened graph.
       substep.setCheckpointTokenPrefix(s.getCheckpointTokenPrefix() + msa.getCheckpointToken() + "__");
 
-      // add edges to their dependencies
-      for (Step dep : substep.getDependencies()) {
-        dependencyGraph.addVertex(dep);
-        dependencyGraph.addEdge(substep, dep);
-      }
+      addStepAndDependencies(dependencyGraph, substep);
     }
   }
 
+  private static void addStepAndDependencies(DirectedGraph<Step, DefaultEdge> dependencyGraph, Step step) {
+    dependencyGraph.addVertex(step);
+    for (Step dep : step.getDependencies()) {
+      dependencyGraph.addVertex(dep);
+      dependencyGraph.addEdge(step, dep);
+    }
+  }
 }
