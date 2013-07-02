@@ -11,7 +11,6 @@ import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.MailerHelper;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -156,7 +155,7 @@ public final class WorkflowRunner {
 
   private boolean alreadyRun;
   private Integer webUiPort;
-  private final String[] notificationEmails;
+  private final String notificationEmails;
   private final Set<NotificationType> enabledNotificationTypes;
   private String sandboxDir;
 
@@ -209,11 +208,10 @@ public final class WorkflowRunner {
     } else {
       this.webUiPort = webUiPort;
     }
+    this.notificationEmails = notificationEmails;
     if (notificationEmails != null) {
-      this.notificationEmails = StringUtils.split(notificationEmails, ",");
       this.enabledNotificationTypes = EnumSet.allOf(NotificationType.class);
     } else {
-      this.notificationEmails = new String[]{};
       this.enabledNotificationTypes = EnumSet.noneOf(NotificationType.class);
     }
 
@@ -563,19 +561,11 @@ public final class WorkflowRunner {
     mail(subject, "");
   }
 
-  public String[] getNotificationEmails() {
-    return notificationEmails;
-  }
-
   private void mail(String subject, String body) {
-    String fromEmail = null;
-    if (getNotificationEmails().length > 0) {
-      fromEmail = getNotificationEmails()[0];
-    }
     try {
-      MailerHelper.mail(fromEmail, Arrays.asList(getNotificationEmails()), subject, body);
+      MailerHelper.mail(notificationEmails, subject, body);
     } catch (IOException e) {
-      LOG.info("Could not send notification email to: " + Arrays.toString(getNotificationEmails()));
+      LOG.info("Could not send notification email to: " + notificationEmails);
       LOG.info("subject: " + subject);
       if (!body.isEmpty()) {
         LOG.info("body: " + body);
