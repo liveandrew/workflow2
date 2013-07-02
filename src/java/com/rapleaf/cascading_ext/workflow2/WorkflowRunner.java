@@ -11,6 +11,7 @@ import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.MailerHelper;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -209,7 +210,7 @@ public final class WorkflowRunner {
       this.webUiPort = webUiPort;
     }
     if (notificationEmails != null) {
-      this.notificationEmails = notificationEmails.split(",");
+      this.notificationEmails = StringUtils.split(notificationEmails, ",");
       this.enabledNotificationTypes = EnumSet.allOf(NotificationType.class);
     } else {
       this.notificationEmails = new String[]{};
