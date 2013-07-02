@@ -73,7 +73,7 @@ public final class WorkflowRunner {
           } catch (Throwable e) {
             LOG.fatal("Step " + step.getCheckpointToken() + " failed!", e);
 
-            try{
+            try {
 
               StringWriter sw = new StringWriter();
               PrintWriter pw = new PrintWriter(sw);
@@ -83,14 +83,14 @@ public final class WorkflowRunner {
               update(StepExecuteStatus.failed(new StepFailedMeta(exception)));
 
               //  mark the flow as failed if nothing else has already
-              if(!persistence.getFlowStatus().isSetFailed()){
+              if (!persistence.getFlowStatus().isSetFailed()) {
                 ExecuteStatus status = persistence.getFlowStatus();
                 status.getActive().setStatus(ActiveStatus.failPending(new FailMeta()));
                 persistence.setStatus(status);
               }
 
-            }catch(Exception e2){
-              LOG.fatal("Could not update step "+step.getCheckpointToken()+" to failed! ", e2);
+            } catch (Exception e2) {
+              LOG.fatal("Could not update step " + step.getCheckpointToken() + " to failed! ", e2);
             }
           } finally {
             semaphore.release();
@@ -108,7 +108,7 @@ public final class WorkflowRunner {
     public boolean allDependenciesCompleted() {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if(!NON_BLOCKING.contains(state.getStatus(dep).getSetField())){
+        if (!NON_BLOCKING.contains(state.getStatus(dep).getSetField())) {
           return false;
         }
       }
@@ -176,10 +176,10 @@ public final class WorkflowRunner {
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
     this(workflowName,
-         checkpointDir,
-         maxConcurrentSteps,
-         webUiPort,
-         combine(first, rest));
+        checkpointDir,
+        maxConcurrentSteps,
+        webUiPort,
+        combine(first, rest));
   }
 
   private static HashSet<Step> combine(final Step first, Step... rest) {
@@ -249,7 +249,7 @@ public final class WorkflowRunner {
       for (Step firstDegDep : firstDegDeps) {
         if (secondPlusDegDeps.contains(firstDegDep)) {
           LOG.debug("Found a redundant edge from " + step.getCheckpointToken()
-                        + " to " + firstDegDep.getCheckpointToken());
+              + " to " + firstDegDep.getCheckpointToken());
           graph.removeAllEdges(step, firstDegDep);
         }
       }
@@ -277,7 +277,7 @@ public final class WorkflowRunner {
       for (DataStore dataStore : dataStores) {
         if (!isSubPath(getSandboxDir(), dataStore.getPath())) {
           throw new RuntimeException("Step wants to write outside of sandbox \""
-                                         + getSandboxDir() + "\"" + " into \"" + dataStore.getPath() + "\"");
+              + getSandboxDir() + "\"" + " into \"" + dataStore.getPath() + "\"");
         }
       }
     }
@@ -512,14 +512,14 @@ public final class WorkflowRunner {
       PrintWriter pw = new PrintWriter(sw);
 
       int numFailed = 0;
-      for(Map.Entry<String, StepExecuteStatus> status: persistence.getAllStepStatuses().entrySet()){
-        if(status.getValue().isSetFailed()){
+      for (Map.Entry<String, StepExecuteStatus> status : persistence.getAllStepStatuses().entrySet()) {
+        if (status.getValue().isSetFailed()) {
           numFailed++;
         }
       }
 
-      for(Map.Entry<String, StepExecuteStatus> status: persistence.getAllStepStatuses().entrySet()){
-        if(status.getValue().isSetFailed()){
+      for (Map.Entry<String, StepExecuteStatus> status : persistence.getAllStepStatuses().entrySet()) {
+        if (status.getValue().isSetFailed()) {
           StepFailedMeta meta = status.getValue().getFailed();
           pw.println("(" + n + "/" + numFailed + ") Step "
               + status.getKey() + " failed with exception: "
@@ -572,17 +572,15 @@ public final class WorkflowRunner {
     if (getNotificationEmails().length > 0) {
       fromEmail = getNotificationEmails()[0];
     }
-    for (String email : getNotificationEmails()) {
-      try {
-        MailerHelper.mail(fromEmail, email, subject, body);
-      } catch (IOException e) {
-        LOG.info("Could not send notification email to: " + email);
-        LOG.info("subject: " + subject);
-        if (!body.isEmpty()) {
-          LOG.info("body: " + body);
-        }
-        throw new RuntimeException(e);
+    try {
+      MailerHelper.mail(fromEmail, Arrays.asList(getNotificationEmails()), subject, body);
+    } catch (IOException e) {
+      LOG.info("Could not send notification email to: " + Arrays.toString(getNotificationEmails()));
+      LOG.info("subject: " + subject);
+      if (!body.isEmpty()) {
+        LOG.info("body: " + body);
       }
+      throw new RuntimeException(e);
     }
   }
 
