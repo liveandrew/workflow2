@@ -175,10 +175,28 @@ public final class WorkflowRunner {
     START, SUCCESS, FAILURE, SHUTDOWN
   }
 
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
+  public WorkflowRunner(String workflowName, String checkpointDir, Set<Step> tailSteps) {
+    this(workflowName, checkpointDir, new WorkflowRunnerOptions(), tailSteps);
+  }
+
+  public WorkflowRunner(String workflowName, String checkpointDir, WorkflowRunnerOptions options, Set<Step> tailSteps) {
+    this(
+        workflowName,
+        checkpointDir,
+        options.getMaxConcurrentComponents(),
+        options.getWebUiPort(),
+        tailSteps,
+        options.getNotificationEmails());
+  }
+
+  public WorkflowRunner(String workflowName, String checkpointDir, WorkflowRunnerOptions options, final Step first, Step... rest) {
+    this(workflowName, checkpointDir, options, combine(first, rest));
+  }
+
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, final Step first, Step... rest) {
     this(workflowName,
         checkpointDir,
-        maxConcurrentSteps,
+        maxConcurrentComponents,
         webUiPort,
         combine(first, rest));
   }
