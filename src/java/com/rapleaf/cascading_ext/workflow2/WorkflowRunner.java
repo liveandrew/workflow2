@@ -529,7 +529,7 @@ public final class WorkflowRunner {
     }
 
     // nothing failed, but if there are steps that haven't been executed, it's
-    // because someone shut the workflow down.
+    // because someone shut down the workflow.
     if (pendingSteps.size() > 0) {
       sendShutdownEmail();
 
