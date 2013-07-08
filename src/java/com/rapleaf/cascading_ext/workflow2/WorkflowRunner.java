@@ -32,6 +32,7 @@ public final class WorkflowRunner {
    * Specify this and the system will pick any free port.
    */
   public static final Integer ANY_FREE_PORT = 0;
+  private static final String WORKFLOW_EMAIL_SUBJECT_PREFIX = "[WORKFLOW] ";
 
   private static final String DOC_FILES_ROOT = "com/rapleaf/cascading_ext/workflow2/webui";
   public static final String WORKFLOW_DOCS_PATH = "/var/nfs/mounts/files/flowdoc/";
@@ -430,12 +431,6 @@ public final class WorkflowRunner {
     }
   }
 
-  private void sendSuccessEmail() {
-    if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
-      mail("Workflow succeeded: \"" + getWorkflowName() + "\"");
-    }
-  }
-
   private void runInternal() {
     // keep trying to start new components for as long as we are allowed and
     // there are components left to start
@@ -545,23 +540,26 @@ public final class WorkflowRunner {
     }
   }
 
+  private void sendSuccessEmail() {
+    if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
+      mail("Succeeded: " + getWorkflowName(), "");
+    }
+  }
+
   private void sendFailureEmail(String msg) {
     if (enabledNotificationTypes.contains(NotificationType.FAILURE)) {
-      mail("One or more steps failed for \"" + workflowName + "\"!", msg);
+      mail("Failed: " + workflowName, msg);
     }
   }
 
   private void sendShutdownEmail() {
     if (enabledNotificationTypes.contains(NotificationType.SHUTDOWN)) {
-      mail("Incomplete steps remain but a shutdown was requested for \"" + workflowName + "\"", "Reason for shutdown: " + getReasonForShutdownRequest());
+      mail("Shutdown requested: " + workflowName, "Reason for shutdown: " + getReasonForShutdownRequest());
     }
   }
 
-  private void mail(String subject) {
-    mail(subject, "");
-  }
-
   private void mail(String subject, String body) {
+    subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
     try {
       MailerHelper.mail(notificationEmails, subject, body);
     } catch (IOException e) {
@@ -616,6 +614,7 @@ public final class WorkflowRunner {
     Iterator<StepRunner> iter = runningSteps.iterator();
     while (iter.hasNext()) {
       StepRunner cr = iter.next();
+      LOG.info("Checking persistence for " + cr.step.getCheckpointToken());
       switch (persistence.getStatus(cr.step).getSetField()) {
         case COMPLETED:
         case SKIPPED:
