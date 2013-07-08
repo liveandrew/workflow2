@@ -431,7 +431,7 @@ public final class WorkflowRunner {
     }
   }
 
-  private void runInternal() {
+  private void runInternal() throws IOException {
     // keep trying to start new components for as long as we are allowed and
     // there are components left to start
     while (shouldKeepStartingSteps() && pendingSteps.size() > 0) {
@@ -508,11 +508,9 @@ public final class WorkflowRunner {
     // nothing failed, but if there are steps that haven't been executed, it's
     // because someone shut down the workflow.
     if (pendingSteps.size() > 0) {
-      sendShutdownEmail();
-
       String reason = getReasonForShutdownRequest();
       persistence.setStatus(ExecuteStatus.shutdown(new ShutdownMeta(reason)));
-
+      sendShutdownEmail();
       throw new WorkflowFailedException(SHUTDOWN_MESSAGE_PREFIX + reason);
     }
   }
@@ -542,25 +540,25 @@ public final class WorkflowRunner {
     return sw.toString();
   }
 
-  private void sendStartEmail() {
+  private void sendStartEmail() throws IOException {
     if (enabledNotificationTypes.contains(NotificationType.START)) {
       mail(getStartMessage());
     }
   }
 
-  private void sendSuccessEmail() {
+  private void sendSuccessEmail() throws IOException {
     if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
       mail(getSuccessMessage());
     }
   }
 
-  private void sendFailureEmail(String msg) {
+  private void sendFailureEmail(String msg) throws IOException {
     if (enabledNotificationTypes.contains(NotificationType.FAILURE)) {
       mail(getFailureMessage(), msg);
     }
   }
 
-  private void sendShutdownEmail() {
+  private void sendShutdownEmail() throws IOException {
     if (enabledNotificationTypes.contains(NotificationType.SHUTDOWN)) {
       mail(getShutdownMessage(), "Reason for shutdown: " + getReasonForShutdownRequest());
     }
@@ -582,11 +580,11 @@ public final class WorkflowRunner {
     return "Shutdown requested: " + getWorkflowName();
   }
 
-  private void mail(String subject) {
+  private void mail(String subject) throws IOException {
     mail(subject, "");
   }
 
-  private void mail(String subject, String body) {
+  private void mail(String subject, String body) throws IOException {
     subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
     try {
       MailerHelper.mail(notificationEmails, subject, body);
@@ -594,7 +592,7 @@ public final class WorkflowRunner {
       LOG.error("Could not send notification email to: " + notificationEmails
           + ", subject: " + subject
           + ", body: " + body);
-      throw new RuntimeException(e);
+      throw e;
     }
   }
 
