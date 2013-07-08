@@ -8,7 +8,7 @@ public class WorkflowRunnerOptions {
 
   public WorkflowRunnerOptions() {
     maxConcurrentComponents = Integer.MAX_VALUE;
-    webUiPort = WorkflowRunner.ANY_FREE_PORT;
+    webUiPort = null;
     notificationEmails = null;
   }
 

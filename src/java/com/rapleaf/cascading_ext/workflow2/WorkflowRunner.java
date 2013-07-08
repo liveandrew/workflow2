@@ -201,12 +201,6 @@ public final class WorkflowRunner {
         combine(first, rest));
   }
 
-  private static HashSet<Step> combine(final Step first, Step... rest) {
-    HashSet<Step> s = new HashSet<Step>(Arrays.asList(rest));
-    s.add(first);
-    return s;
-  }
-
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps) {
     this(workflowName, checkpointDir, maxConcurrentComponents, webUiPort, tailSteps, null);
   }
@@ -252,6 +246,12 @@ public final class WorkflowRunner {
       stepTokenToRunner.put(step.getCheckpointToken(), runner);
       pendingSteps.add(runner);
     }
+  }
+
+  private static HashSet<Step> combine(final Step first, Step... rest) {
+    HashSet<Step> s = new HashSet<Step>(Arrays.asList(rest));
+    s.add(first);
+    return s;
   }
 
   private void removeRedundantEdges(DirectedGraph<Step, DefaultEdge> graph) {
