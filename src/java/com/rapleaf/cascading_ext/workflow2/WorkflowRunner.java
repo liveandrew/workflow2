@@ -550,13 +550,13 @@ public final class WorkflowRunner {
 
   private void sendFailureEmail(String msg) {
     if (enabledNotificationTypes.contains(NotificationType.FAILURE)) {
-      mail("Failed: " + workflowName, msg);
+      mail("Failed: " + getWorkflowName(), msg);
     }
   }
 
   private void sendShutdownEmail() {
     if (enabledNotificationTypes.contains(NotificationType.SHUTDOWN)) {
-      mail("Shutdown requested: " + workflowName, "Reason for shutdown: " + getReasonForShutdownRequest());
+      mail("Shutdown requested: " + getWorkflowName(), "Reason for shutdown: " + getReasonForShutdownRequest());
     }
   }
 
