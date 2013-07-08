@@ -500,32 +500,9 @@ public final class WorkflowRunner {
 
     // if there are any failures, then the workflow failed. throw an exception.
     if (isFailPending()) {
-      int n = 1;
-      StringWriter sw = new StringWriter();
-      PrintWriter pw = new PrintWriter(sw);
-
-      int numFailed = 0;
-      for (Map.Entry<String, StepExecuteStatus> status : persistence.getAllStepStatuses().entrySet()) {
-        if (status.getValue().isSetFailed()) {
-          numFailed++;
-        }
-      }
-
-      for (Map.Entry<String, StepExecuteStatus> status : persistence.getAllStepStatuses().entrySet()) {
-        if (status.getValue().isSetFailed()) {
-          StepFailedMeta meta = status.getValue().getFailed();
-          pw.println("(" + n + "/" + numFailed + ") Step "
-              + status.getKey() + " failed with exception: "
-              + meta.getCause().getCause());
-          pw.println(meta.getCause().getStacktrace());
-          n++;
-        }
-      }
-
-      String wholeMessage = sw.toString();
-
-      sendFailureEmail(wholeMessage);
-      throw new RuntimeException("One or more steps failed!\n" + wholeMessage);
+      String failureMessage = buildFailureMessage();
+      sendFailureEmail(failureMessage);
+      throw new RuntimeException("One or more steps failed!\n" + failureMessage);
     }
 
     // nothing failed, but if there are steps that haven't been executed, it's
@@ -538,6 +515,31 @@ public final class WorkflowRunner {
 
       throw new RuntimeException(SHUTDOWN_MESSAGE_PREFIX + reason);
     }
+  }
+
+  private String buildFailureMessage() {
+    int n = 1;
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+
+    int numFailed = 0;
+    for (Map.Entry<String, StepExecuteStatus> status : persistence.getAllStepStatuses().entrySet()) {
+      if (status.getValue().isSetFailed()) {
+        numFailed++;
+      }
+    }
+
+    for (Map.Entry<String, StepExecuteStatus> status : persistence.getAllStepStatuses().entrySet()) {
+      if (status.getValue().isSetFailed()) {
+        StepFailedMeta meta = status.getValue().getFailed();
+        pw.println("(" + n + "/" + numFailed + ") Step "
+            + status.getKey() + " failed with exception: "
+            + meta.getCause().getCause());
+        pw.println(meta.getCause().getStacktrace());
+        n++;
+      }
+    }
+    return sw.toString();
   }
 
   private void sendSuccessEmail() {
