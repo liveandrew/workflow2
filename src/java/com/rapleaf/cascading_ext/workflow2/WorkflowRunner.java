@@ -5,6 +5,7 @@ import com.liveramp.workflow_service.generated.*;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.exception.WorkflowFailedException;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
@@ -275,7 +276,7 @@ public final class WorkflowRunner {
     if (dataStores != null) {
       for (DataStore dataStore : dataStores) {
         if (!isSubPath(getSandboxDir(), dataStore.getPath())) {
-          throw new RuntimeException("Step wants to write outside of sandbox \""
+          throw new IOException("Step wants to write outside of sandbox \""
               + getSandboxDir() + "\"" + " into \"" + dataStore.getPath() + "\"");
         }
       }
@@ -501,7 +502,7 @@ public final class WorkflowRunner {
     if (isFailPending()) {
       String failureMessage = buildStepsFailureMessage();
       sendFailureEmail(failureMessage);
-      throw new RuntimeException(getFailureMessage() + "\n" + failureMessage);
+      throw new WorkflowFailedException(getFailureMessage() + "\n" + failureMessage);
     }
 
     // nothing failed, but if there are steps that haven't been executed, it's
@@ -512,7 +513,7 @@ public final class WorkflowRunner {
       String reason = getReasonForShutdownRequest();
       persistence.setStatus(ExecuteStatus.shutdown(new ShutdownMeta(reason)));
 
-      throw new RuntimeException(SHUTDOWN_MESSAGE_PREFIX + reason);
+      throw new WorkflowFailedException(SHUTDOWN_MESSAGE_PREFIX + reason);
     }
   }
 
@@ -543,13 +544,13 @@ public final class WorkflowRunner {
 
   private void sendStartEmail() {
     if (enabledNotificationTypes.contains(NotificationType.START)) {
-      mail(getStartMessage(), "");
+      mail(getStartMessage());
     }
   }
 
   private void sendSuccessEmail() {
     if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
-      mail(getSuccessMessage(), "");
+      mail(getSuccessMessage());
     }
   }
 
@@ -581,17 +582,18 @@ public final class WorkflowRunner {
     return "Shutdown requested: " + getWorkflowName();
   }
 
+  private void mail(String subject) {
+    mail(subject, "");
+  }
 
   private void mail(String subject, String body) {
     subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
     try {
       MailerHelper.mail(notificationEmails, subject, body);
     } catch (IOException e) {
-      LOG.info("Could not send notification email to: " + notificationEmails);
-      LOG.info("subject: " + subject);
-      if (!body.isEmpty()) {
-        LOG.info("body: " + body);
-      }
+      LOG.error("Could not send notification email to: " + notificationEmails
+          + ", subject: " + subject
+          + ", body: " + body);
       throw new RuntimeException(e);
     }
   }
