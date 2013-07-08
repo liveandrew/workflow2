@@ -498,7 +498,7 @@ public final class WorkflowRunner {
     // case someone failed.
     clearFinishedSteps();
 
-    // if there are any failures, the the workflow failed. throw an exception.
+    // if there are any failures, then the workflow failed. throw an exception.
     if (isFailPending()) {
       int n = 1;
       StringWriter sw = new StringWriter();
