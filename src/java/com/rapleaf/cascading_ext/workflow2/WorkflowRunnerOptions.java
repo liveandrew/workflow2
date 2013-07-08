@@ -2,22 +2,22 @@ package com.rapleaf.cascading_ext.workflow2;
 
 public class WorkflowRunnerOptions {
 
-  private int maxConcurrentComponents;
+  private int maxConcurrentSteps;
   private Integer webUiPort;
   private String notificationEmails;
 
   public WorkflowRunnerOptions() {
-    maxConcurrentComponents = Integer.MAX_VALUE;
+    maxConcurrentSteps = Integer.MAX_VALUE;
     webUiPort = null;
     notificationEmails = null;
   }
 
-  public int getMaxConcurrentComponents() {
-    return maxConcurrentComponents;
+  public int getMaxConcurrentSteps() {
+    return maxConcurrentSteps;
   }
 
-  public WorkflowRunnerOptions setMaxConcurrentComponents(int maxConcurrentComponents) {
-    this.maxConcurrentComponents = maxConcurrentComponents;
+  public WorkflowRunnerOptions setMaxConcurrentSteps(int maxConcurrentSteps) {
+    this.maxConcurrentSteps = maxConcurrentSteps;
     return this;
   }
 

@@ -183,7 +183,7 @@ public final class WorkflowRunner {
     this(
         workflowName,
         checkpointDir,
-        options.getMaxConcurrentComponents(),
+        options.getMaxConcurrentSteps(),
         options.getWebUiPort(),
         tailSteps,
         options.getNotificationEmails());
@@ -193,6 +193,7 @@ public final class WorkflowRunner {
     this(workflowName, checkpointDir, options, combine(first, rest));
   }
 
+  @Deprecated
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, final Step first, Step... rest) {
     this(workflowName,
         checkpointDir,
@@ -201,35 +202,44 @@ public final class WorkflowRunner {
         combine(first, rest));
   }
 
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps) {
-    this(workflowName, checkpointDir, maxConcurrentComponents, webUiPort, tailSteps, null);
+  @Deprecated
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps) {
+    this(workflowName, checkpointDir, maxConcurrentSteps, webUiPort, tailSteps, null);
   }
 
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
-    this(workflowName, new HdfsCheckpointPersistence(checkpointDir), maxConcurrentComponents, webUiPort, tailSteps, notificationEmails);
+  @Deprecated
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
+    this(workflowName,
+        new HdfsCheckpointPersistence(checkpointDir),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationEmails(notificationEmails),
+        tailSteps);
   }
 
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails, boolean deleteCheckpointsOnSuccess) {
-    this(workflowName, new HdfsCheckpointPersistence(checkpointDir, deleteCheckpointsOnSuccess), maxConcurrentComponents, webUiPort, tailSteps, notificationEmails);
+  @Deprecated
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationEmails, boolean deleteCheckpointsOnSuccess) {
+    this(workflowName,
+        new HdfsCheckpointPersistence(checkpointDir, deleteCheckpointsOnSuccess),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationEmails(notificationEmails),
+        tailSteps);
   }
 
-  public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, int maxConcurrentComponents, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
+  public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowRunnerOptions options, Set<Step> tailSteps) {
     this.workflowName = workflowName;
     this.persistence = persistence;
-    this.maxConcurrentSteps = maxConcurrentComponents;
-    if (webUiPort == null) {
+    this.maxConcurrentSteps = options.getMaxConcurrentSteps();
+    if (options.getWebUiPort() == null) {
       this.webUiPort = ANY_FREE_PORT;
     } else {
-      this.webUiPort = webUiPort;
+      this.webUiPort = options.getWebUiPort();
     }
-    this.notificationEmails = notificationEmails;
+    this.notificationEmails = options.getNotificationEmails();
     if (notificationEmails != null) {
       this.enabledNotificationTypes = EnumSet.allOf(NotificationType.class);
     } else {
       this.enabledNotificationTypes = EnumSet.noneOf(NotificationType.class);
     }
 
-    this.semaphore = new Semaphore(maxConcurrentComponents);
+    this.semaphore = new Semaphore(maxConcurrentSteps);
 
     this.tailSteps = tailSteps;
     this.timer = new EventTimer(workflowName);
