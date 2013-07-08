@@ -171,7 +171,7 @@ public final class WorkflowRunner {
   private WorkflowWebServer webServer;
 
   public enum NotificationType {
-    SUCCESS, FAILURE, SHUTDOWN
+    START, SUCCESS, FAILURE, SHUTDOWN
   }
 
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
@@ -410,20 +410,19 @@ public final class WorkflowRunner {
 
       persistence.prepare(diagram.getDefinition());
 
-      LOG.info("Starting workflow " + getWorkflowName());
-
+      // Notify
+      LOG.info(getStartMessage());
       startWebServer();
+      // Note: start email after web server so that UI is functional
+      sendStartEmail();
 
+      // Run internal
       runInternal();
 
-      LOG.info("All steps in workflow " + getWorkflowName() + " complete");
-
+      // Notify success
       persistence.setStatus(ExecuteStatus.complete(new CompleteMeta()));
-
-      LOG.info("Sending success email");
       sendSuccessEmail();
-
-      LOG.info("Done!");
+      LOG.info(getSuccessMessage());
     } finally {
       shutdownWebServer();
       timer.stop();
@@ -500,9 +499,9 @@ public final class WorkflowRunner {
 
     // if there are any failures, then the workflow failed. throw an exception.
     if (isFailPending()) {
-      String failureMessage = buildFailureMessage();
+      String failureMessage = buildStepsFailureMessage();
       sendFailureEmail(failureMessage);
-      throw new RuntimeException("One or more steps failed!\n" + failureMessage);
+      throw new RuntimeException(getFailureMessage() + "\n" + failureMessage);
     }
 
     // nothing failed, but if there are steps that haven't been executed, it's
@@ -517,7 +516,7 @@ public final class WorkflowRunner {
     }
   }
 
-  private String buildFailureMessage() {
+  private String buildStepsFailureMessage() {
     int n = 1;
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
@@ -542,23 +541,46 @@ public final class WorkflowRunner {
     return sw.toString();
   }
 
+  private void sendStartEmail() {
+    if (enabledNotificationTypes.contains(NotificationType.START)) {
+      mail(getStartMessage(), "");
+    }
+  }
+
   private void sendSuccessEmail() {
     if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
-      mail("Succeeded: " + getWorkflowName(), "");
+      mail(getSuccessMessage(), "");
     }
   }
 
   private void sendFailureEmail(String msg) {
     if (enabledNotificationTypes.contains(NotificationType.FAILURE)) {
-      mail("Failed: " + getWorkflowName(), msg);
+      mail(getFailureMessage(), msg);
     }
   }
 
   private void sendShutdownEmail() {
     if (enabledNotificationTypes.contains(NotificationType.SHUTDOWN)) {
-      mail("Shutdown requested: " + getWorkflowName(), "Reason for shutdown: " + getReasonForShutdownRequest());
+      mail(getShutdownMessage(), "Reason for shutdown: " + getReasonForShutdownRequest());
     }
   }
+
+  private String getStartMessage() {
+    return "Started: " + getWorkflowName();
+  }
+
+  private String getSuccessMessage() {
+    return "Succeeded: " + getWorkflowName();
+  }
+
+  private String getFailureMessage() {
+    return "Failed: " + getWorkflowName();
+  }
+
+  private String getShutdownMessage() {
+    return "Shutdown requested: " + getWorkflowName();
+  }
+
 
   private void mail(String subject, String body) {
     subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
