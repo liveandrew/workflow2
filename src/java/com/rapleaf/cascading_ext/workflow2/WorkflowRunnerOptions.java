@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class WorkflowRunnerOptions {
 
@@ -13,7 +14,7 @@ public class WorkflowRunnerOptions {
     maxConcurrentSteps = Integer.MAX_VALUE;
     webUiPort = null;
     notificationRecipients = null;
-    enabledNotifications = new WorkflowRunnerNotificationSet();
+    enabledNotifications = WorkflowRunnerNotificationSet.all();
   }
 
   public int getMaxConcurrentSteps() {
@@ -48,28 +49,20 @@ public class WorkflowRunnerOptions {
     return this;
   }
 
-  public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotification... enabledNotifications) {
-    this.enabledNotifications.set(enabledNotifications);
+  public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
+                                                       WorkflowRunnerNotification... enabledNotifications) {
+    this.enabledNotifications = WorkflowRunnerNotificationSet.only(enabledNotification, enabledNotifications);
     return this;
   }
 
-  public WorkflowRunnerOptions setEnabledNotifications(Set<WorkflowRunnerNotification> enabledNotifications) {
-    this.enabledNotifications.set(enabledNotifications);
+  public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
+    this.enabledNotifications = enabledNotifications;
     return this;
   }
 
-  public WorkflowRunnerOptions enableNotification(WorkflowRunnerNotification notification) {
-    this.enabledNotifications.enable(notification);
-    return this;
-  }
-
-  public WorkflowRunnerOptions enableNotificationOnly(WorkflowRunnerNotification notification) {
-    this.enabledNotifications.only(notification);
-    return this;
-  }
-
-  public WorkflowRunnerOptions disableNotification(WorkflowRunnerNotification notification) {
-    this.enabledNotifications.disable(notification);
+  public WorkflowRunnerOptions setEnabledNotificationsExcept(WorkflowRunnerNotification enabledNotification,
+                                                             WorkflowRunnerNotification... enabledNotifications) {
+    this.enabledNotifications = WorkflowRunnerNotificationSet.except(enabledNotification, enabledNotifications);
     return this;
   }
 
