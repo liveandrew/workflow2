@@ -186,7 +186,7 @@ public final class WorkflowRunner {
 
   private boolean alreadyRun;
   private Integer webUiPort;
-  private final List<String> notificationEmails;
+  private final List<String> notificationRecipients;
   private final Set<NotificationType> enabledNotifications;
   private String sandboxDir;
 
@@ -237,26 +237,26 @@ public final class WorkflowRunner {
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationRecipients) {
     this(workflowName,
         checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationEmails(notificationEmails),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationRecipients(notificationRecipients),
         tailSteps);
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, List<String> notificationEmails) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, List<String> notificationRecipients) {
     this(workflowName,
         checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationEmails(notificationEmails),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationRecipients(notificationRecipients),
         tailSteps);
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationEmails, boolean deleteCheckpointsOnSuccess) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationRecipients, boolean deleteCheckpointsOnSuccess) {
     this(workflowName,
         new HdfsCheckpointPersistence(checkpointDir, deleteCheckpointsOnSuccess),
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationEmails(notificationEmails),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationRecipients(notificationRecipients),
         tailSteps);
   }
 
@@ -269,7 +269,7 @@ public final class WorkflowRunner {
     } else {
       this.webUiPort = options.getWebUiPort();
     }
-    this.notificationEmails = options.getNotificationEmails();
+    this.notificationRecipients = options.getNotificationRecipients();
     this.enabledNotifications = options.getEnabledNotifications();
     this.semaphore = new Semaphore(maxConcurrentSteps);
     this.tailSteps = tailSteps;
@@ -643,12 +643,12 @@ public final class WorkflowRunner {
   }
 
   private void mail(String subject, String body) throws IOException {
-    if (notificationEmails != null) {
+    if (notificationRecipients != null) {
       subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
       try {
-        MailerHelper.mail(notificationEmails, subject, body);
+        MailerHelper.mail(notificationRecipients, subject, body);
       } catch (IOException e) {
-        LOG.error("Could not send notification email to: " + notificationEmails
+        LOG.error("Could not send notification email to: " + notificationRecipients
             + ", subject: " + subject
             + ", body: " + body);
         throw e;

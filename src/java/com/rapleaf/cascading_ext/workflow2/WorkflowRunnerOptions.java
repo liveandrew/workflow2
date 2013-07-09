@@ -6,13 +6,13 @@ public class WorkflowRunnerOptions {
 
   private int maxConcurrentSteps;
   private Integer webUiPort;
-  private List<String> notificationEmails;
+  private List<String> notificationRecipients;
   private Set<WorkflowRunner.NotificationType> enabledNotifications;
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
     webUiPort = null;
-    notificationEmails = null;
+    notificationRecipients = null;
     enabledNotifications = EnumSet.allOf(WorkflowRunner.NotificationType.class);
   }
 
@@ -34,17 +34,17 @@ public class WorkflowRunnerOptions {
     return this;
   }
 
-  public List<String> getNotificationEmails() {
-    return notificationEmails;
+  public List<String> getNotificationRecipients() {
+    return notificationRecipients;
   }
 
-  public WorkflowRunnerOptions setNotificationEmails(String... notificationEmails) {
-    this.notificationEmails = Arrays.asList(notificationEmails);
+  public WorkflowRunnerOptions setNotificationRecipients(String... notificationRecipients) {
+    this.notificationRecipients = Arrays.asList(notificationRecipients);
     return this;
   }
 
-  public WorkflowRunnerOptions setNotificationEmails(List<String> notificationEmails) {
-    this.notificationEmails = notificationEmails;
+  public WorkflowRunnerOptions setNotificationRecipients(List<String> notificationEmails) {
+    this.notificationRecipients = notificationEmails;
     return this;
   }
 
