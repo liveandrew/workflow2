@@ -4,11 +4,11 @@ import cascading.tap.Tap;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.support.event_timer.EventTimer;
-import com.rapleaf.support.event_timer.MultiTimedEvent;
 import com.rapleaf.support.event_timer.TimedEvent;
 import com.rapleaf.support.event_timer.TimedEventWithChildren;
 import org.apache.hadoop.fs.Path;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 public class TestWorkflowRunner extends CascadingExtTestCase {
@@ -153,7 +153,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     testWorkflow.run();
 
-    assertTrue( testWorkflow.getTimer() instanceof EventTimer );
+    assertTrue(testWorkflow.getTimer() instanceof EventTimer);
 
     // Goal here is to detect whether nested MultiTimedEvents ever have "-1"s in their timing and to FAIL if this occurs.
 
@@ -163,20 +163,20 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     // Assert that none of the timer.EventStartTime values are -1
 
-//    System.out.println("TOP:");
-    assertTrue( topTimer.getEventStartTime() != -1);
+    //    System.out.println("TOP:");
+    assertTrue(topTimer.getEventStartTime() != -1);
 
     TimedEvent middleTimer = multiMiddle.getTimer();
     TimedEvent flatMiddleTimer = flatMiddle.getTimer();
 
-//    System.out.println("CHILDREN:");
+    //    System.out.println("CHILDREN:");
     assertTrue(middleTimer.getEventStartTime() != -1);
     assertTrue(flatMiddleTimer.getEventStartTime() != -1);
 
     TimedEvent bottom1Timer = bottom1.getTimer();
     TimedEvent bottom2Timer = bottom1.getTimer();
 
-//    System.out.println("SUBCHILDREN:");
+    //    System.out.println("SUBCHILDREN:");
     assertTrue(bottom1Timer.getEventStartTime() != -1);
     assertTrue(bottom2Timer.getEventStartTime() != -1);
   }
@@ -190,7 +190,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       wfr.setSandboxDir("//fake/path");
       wfr.run();
       fail("There was an invalid path!");
-    } catch (RuntimeException e) {
+    } catch (IOException e) {
       // expected
     }
 
@@ -202,7 +202,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       wfr.setSandboxDir("//fake/path");
       wfr.run();
       // expected
-    } catch (RuntimeException e) {
+    } catch (IOException e) {
       fail(e.getMessage());
     }
   }

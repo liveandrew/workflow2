@@ -44,7 +44,6 @@ import com.liveramp.workflow_service.generated.WorkflowException;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.exception.WorkflowFailedException;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
@@ -187,8 +186,8 @@ public final class WorkflowRunner {
 
   private boolean alreadyRun;
   private Integer webUiPort;
-  private final String notificationEmails;
-  private final Set<NotificationType> enabledNotificationTypes;
+  private final List<String> notificationEmails;
+  private final Set<NotificationType> enabledNotifications;
   private String sandboxDir;
 
   public String getSandboxDir() {
@@ -212,11 +211,9 @@ public final class WorkflowRunner {
   public WorkflowRunner(String workflowName, String checkpointDir, WorkflowRunnerOptions options, Set<Step> tailSteps) {
     this(
         workflowName,
-        checkpointDir,
-        options.getMaxConcurrentSteps(),
-        options.getWebUiPort(),
-        tailSteps,
-        options.getNotificationEmails());
+        new HdfsCheckpointPersistence(checkpointDir),
+        options,
+        tailSteps);
   }
 
   public WorkflowRunner(String workflowName, String checkpointDir, WorkflowRunnerOptions options, final Step first, Step... rest) {
@@ -224,23 +221,33 @@ public final class WorkflowRunner {
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentComponents, Integer webUiPort, final Step first, Step... rest) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
     this(workflowName,
         checkpointDir,
-        maxConcurrentComponents,
-        webUiPort,
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort),
         combine(first, rest));
   }
 
   @Deprecated
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps) {
-    this(workflowName, checkpointDir, maxConcurrentSteps, webUiPort, tailSteps, null);
+    this(workflowName,
+        checkpointDir,
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort),
+        tailSteps);
   }
 
   @Deprecated
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationEmails) {
     this(workflowName,
-        new HdfsCheckpointPersistence(checkpointDir),
+        checkpointDir,
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationEmails(notificationEmails),
+        tailSteps);
+  }
+
+  @Deprecated
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, List<String> notificationEmails) {
+    this(workflowName,
+        checkpointDir,
         new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationEmails(notificationEmails),
         tailSteps);
   }
@@ -263,18 +270,11 @@ public final class WorkflowRunner {
       this.webUiPort = options.getWebUiPort();
     }
     this.notificationEmails = options.getNotificationEmails();
-    if (notificationEmails != null) {
-      this.enabledNotificationTypes = EnumSet.allOf(NotificationType.class);
-    } else {
-      this.enabledNotificationTypes = EnumSet.noneOf(NotificationType.class);
-    }
-
+    this.enabledNotifications = options.getEnabledNotifications();
     this.semaphore = new Semaphore(maxConcurrentSteps);
-
     this.tailSteps = tailSteps;
     this.timer = new EventTimer(workflowName);
     dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
-
 
     removeRedundantEdges(dependencyGraph);
 
@@ -560,7 +560,7 @@ public final class WorkflowRunner {
     if (isFailPending()) {
       String failureMessage = buildStepsFailureMessage();
       sendFailureEmail(failureMessage);
-      throw new WorkflowFailedException(getFailureMessage() + "\n" + failureMessage);
+      throw new RuntimeException(getFailureMessage() + "\n" + failureMessage);
     }
 
     // nothing failed, but if there are steps that haven't been executed, it's
@@ -569,7 +569,7 @@ public final class WorkflowRunner {
       String reason = getReasonForShutdownRequest();
       persistence.setStatus(ExecuteStatus.shutdown(new ShutdownMeta(reason)));
       sendShutdownEmail();
-      throw new WorkflowFailedException(SHUTDOWN_MESSAGE_PREFIX + reason);
+      throw new RuntimeException(SHUTDOWN_MESSAGE_PREFIX + reason);
     }
   }
 
@@ -599,25 +599,25 @@ public final class WorkflowRunner {
   }
 
   private void sendStartEmail() throws IOException {
-    if (enabledNotificationTypes.contains(NotificationType.START)) {
+    if (enabledNotifications.contains(NotificationType.START)) {
       mail(getStartMessage());
     }
   }
 
   private void sendSuccessEmail() throws IOException {
-    if (enabledNotificationTypes.contains(NotificationType.SUCCESS)) {
+    if (enabledNotifications.contains(NotificationType.SUCCESS)) {
       mail(getSuccessMessage());
     }
   }
 
   private void sendFailureEmail(String msg) throws IOException {
-    if (enabledNotificationTypes.contains(NotificationType.FAILURE)) {
+    if (enabledNotifications.contains(NotificationType.FAILURE)) {
       mail(getFailureMessage(), msg);
     }
   }
 
   private void sendShutdownEmail() throws IOException {
-    if (enabledNotificationTypes.contains(NotificationType.SHUTDOWN)) {
+    if (enabledNotifications.contains(NotificationType.SHUTDOWN)) {
       mail(getShutdownMessage(), "Reason for shutdown: " + getReasonForShutdownRequest());
     }
   }
@@ -643,14 +643,16 @@ public final class WorkflowRunner {
   }
 
   private void mail(String subject, String body) throws IOException {
-    subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
-    try {
-      MailerHelper.mail(notificationEmails, subject, body);
-    } catch (IOException e) {
-      LOG.error("Could not send notification email to: " + notificationEmails
-          + ", subject: " + subject
-          + ", body: " + body);
-      throw e;
+    if (notificationEmails != null) {
+      subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
+      try {
+        MailerHelper.mail(notificationEmails, subject, body);
+      } catch (IOException e) {
+        LOG.error("Could not send notification email to: " + notificationEmails
+            + ", subject: " + subject
+            + ", body: " + body);
+        throw e;
+      }
     }
   }
 
@@ -665,11 +667,11 @@ public final class WorkflowRunner {
   }
 
   public void disableNotificationType(NotificationType notificationType) {
-    enabledNotificationTypes.remove(notificationType);
+    enabledNotifications.remove(notificationType);
   }
 
   public void enableNotificationType(NotificationType notificationType) {
-    enabledNotificationTypes.add(notificationType);
+    enabledNotifications.add(notificationType);
   }
 
   public void requestShutdown(String reason) {
