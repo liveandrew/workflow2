@@ -1,46 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Semaphore;
-
-import org.apache.log4j.Logger;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-
 import com.liveramp.cascading_ext.counters.Counter;
-import com.liveramp.workflow_service.generated.ActiveState;
-import com.liveramp.workflow_service.generated.ActiveStatus;
-import com.liveramp.workflow_service.generated.CompleteMeta;
-import com.liveramp.workflow_service.generated.ExecuteStatus;
-import com.liveramp.workflow_service.generated.FailMeta;
-import com.liveramp.workflow_service.generated.ShutdownMeta;
-import com.liveramp.workflow_service.generated.StepCompletedMeta;
-import com.liveramp.workflow_service.generated.StepExecuteStatus;
-import com.liveramp.workflow_service.generated.StepFailedMeta;
-import com.liveramp.workflow_service.generated.StepRunningMeta;
-import com.liveramp.workflow_service.generated.StepSkippedMeta;
-import com.liveramp.workflow_service.generated.WorkflowException;
+import com.liveramp.workflow_service.generated.*;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -50,6 +11,15 @@ import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.MailerHelper;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
+import org.apache.log4j.Logger;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+
+import java.io.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.Semaphore;
 
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
@@ -187,7 +157,7 @@ public final class WorkflowRunner {
   private boolean alreadyRun;
   private Integer webUiPort;
   private final List<String> notificationRecipients;
-  private final Set<NotificationType> enabledNotifications;
+  private final Set<WorkflowRunnerNotification> enabledNotifications;
   private String sandboxDir;
 
   public String getSandboxDir() {
@@ -199,10 +169,6 @@ public final class WorkflowRunner {
   }
 
   private WorkflowWebServer webServer;
-
-  public enum NotificationType {
-    START, SUCCESS, FAILURE, SHUTDOWN
-  }
 
   public WorkflowRunner(String workflowName, String checkpointDir, Set<Step> tailSteps) {
     this(workflowName, checkpointDir, new WorkflowRunnerOptions(), tailSteps);
@@ -599,25 +565,25 @@ public final class WorkflowRunner {
   }
 
   private void sendStartEmail() throws IOException {
-    if (enabledNotifications.contains(NotificationType.START)) {
+    if (enabledNotifications.contains(WorkflowRunnerNotification.START)) {
       mail(getStartMessage());
     }
   }
 
   private void sendSuccessEmail() throws IOException {
-    if (enabledNotifications.contains(NotificationType.SUCCESS)) {
+    if (enabledNotifications.contains(WorkflowRunnerNotification.SUCCESS)) {
       mail(getSuccessMessage());
     }
   }
 
   private void sendFailureEmail(String msg) throws IOException {
-    if (enabledNotifications.contains(NotificationType.FAILURE)) {
+    if (enabledNotifications.contains(WorkflowRunnerNotification.FAILURE)) {
       mail(getFailureMessage(), msg);
     }
   }
 
   private void sendShutdownEmail() throws IOException {
-    if (enabledNotifications.contains(NotificationType.SHUTDOWN)) {
+    if (enabledNotifications.contains(WorkflowRunnerNotification.SHUTDOWN)) {
       mail(getShutdownMessage(), "Reason for shutdown: " + getReasonForShutdownRequest());
     }
   }
@@ -666,12 +632,12 @@ public final class WorkflowRunner {
     return flowStatus.isSetActive() && flowStatus.getActive().getStatus().isSetShutdownPending();
   }
 
-  public void disableNotificationType(NotificationType notificationType) {
-    enabledNotifications.remove(notificationType);
+  public void disableNotification(WorkflowRunnerNotification workflowRunnerNotification) {
+    enabledNotifications.remove(workflowRunnerNotification);
   }
 
-  public void enableNotificationType(NotificationType notificationType) {
-    enabledNotifications.add(notificationType);
+  public void enableNotification(WorkflowRunnerNotification workflowRunnerNotification) {
+    enabledNotifications.add(workflowRunnerNotification);
   }
 
   public void requestShutdown(String reason) {
