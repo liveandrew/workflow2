@@ -236,7 +236,7 @@ public final class WorkflowRunner {
       this.webUiPort = options.getWebUiPort();
     }
     this.notificationRecipients = options.getNotificationRecipients();
-    this.enabledNotifications = options.getEnabledNotifications();
+    this.enabledNotifications = options.getEnabledNotifications().get();
     this.semaphore = new Semaphore(maxConcurrentSteps);
     this.tailSteps = tailSteps;
     this.timer = new EventTimer(workflowName);

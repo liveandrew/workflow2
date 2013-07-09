@@ -7,13 +7,13 @@ public class WorkflowRunnerOptions {
   private int maxConcurrentSteps;
   private Integer webUiPort;
   private List<String> notificationRecipients;
-  private Set<WorkflowRunnerNotification> enabledNotifications;
+  private WorkflowRunnerNotificationSet enabledNotifications;
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
     webUiPort = null;
     notificationRecipients = null;
-    enabledNotifications = EnumSet.allOf(WorkflowRunnerNotification.class);
+    enabledNotifications = new WorkflowRunnerNotificationSet();
   }
 
   public int getMaxConcurrentSteps() {
@@ -49,32 +49,31 @@ public class WorkflowRunnerOptions {
   }
 
   public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotification... enabledNotifications) {
-    this.enabledNotifications = new HashSet<WorkflowRunnerNotification>(Arrays.asList(enabledNotifications));
+    this.enabledNotifications.set(enabledNotifications);
     return this;
   }
 
   public WorkflowRunnerOptions setEnabledNotifications(Set<WorkflowRunnerNotification> enabledNotifications) {
-    this.enabledNotifications = enabledNotifications;
+    this.enabledNotifications.set(enabledNotifications);
     return this;
   }
 
   public WorkflowRunnerOptions enableNotification(WorkflowRunnerNotification notification) {
-    this.enabledNotifications.add(notification);
+    this.enabledNotifications.enable(notification);
     return this;
   }
 
   public WorkflowRunnerOptions enableNotificationOnly(WorkflowRunnerNotification notification) {
-    this.enabledNotifications = new HashSet<WorkflowRunnerNotification>();
-    this.enabledNotifications.add(notification);
+    this.enabledNotifications.only(notification);
     return this;
   }
 
   public WorkflowRunnerOptions disableNotification(WorkflowRunnerNotification notification) {
-    this.enabledNotifications.remove(notification);
+    this.enabledNotifications.disable(notification);
     return this;
   }
 
-  public Set<WorkflowRunnerNotification> getEnabledNotifications() {
+  public WorkflowRunnerNotificationSet getEnabledNotifications() {
     return enabledNotifications;
   }
 }
