@@ -32,4 +32,18 @@ public class WorkflowRunnerNotificationSet {
   public Set<WorkflowRunnerNotification> get() {
     return notifications;
   }
+
+  public WorkflowRunnerNotificationSet copy() {
+    return new WorkflowRunnerNotificationSet(EnumSet.copyOf(notifications));
+  }
+
+  public WorkflowRunnerNotificationSet remove(WorkflowRunnerNotification notification) {
+    notifications.remove(notification);
+    return this;
+  }
+
+  public WorkflowRunnerNotificationSet add(WorkflowRunnerNotification notification) {
+    notifications.add(notification);
+    return this;
+  }
 }
