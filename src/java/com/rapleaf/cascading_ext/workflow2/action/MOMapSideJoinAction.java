@@ -76,13 +76,13 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
     for(Map.Entry<E, BucketDataStore> categoryEntry : categoryToOutputBucket.entrySet()) {
       categoryToRecordType.put(categoryEntry.getKey(), categoryEntry.getValue().getRecordsType());
     }
+
+
     MOMapSideJoin<T, E> join = new MOMapSideJoin<T, E>(this.getClass().getSimpleName(),
                                                        extractors,
                                                        joiner,
                                                        inputStores,
-                                                       outputStore,
-                                                       categoryToPath,
-                                                       categoryToRecordType);
+                                                       categoryToOutputBucket);
 
     completeWithProgress(new HadoopOperation(join));
   }
