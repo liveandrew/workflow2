@@ -152,8 +152,6 @@ public final class WorkflowRunner {
 
   private final EventTimer timer;
 
-  public static final String SHUTDOWN_MESSAGE_PREFIX = "Incomplete steps remain but a shutdown was requested. The reason was: ";
-
   private boolean alreadyRun;
   private Integer webUiPort;
   private final List<String> notificationRecipients;
@@ -535,7 +533,7 @@ public final class WorkflowRunner {
       String reason = getReasonForShutdownRequest();
       persistence.setStatus(ExecuteStatus.shutdown(new ShutdownMeta(reason)));
       sendShutdownEmail();
-      throw new RuntimeException(SHUTDOWN_MESSAGE_PREFIX + reason);
+      throw new RuntimeException(getShutdownMessage(reason));
     }
   }
 
@@ -584,7 +582,7 @@ public final class WorkflowRunner {
 
   private void sendShutdownEmail() throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.SHUTDOWN)) {
-      mail(getShutdownMessage(), "Reason for shutdown: " + getReasonForShutdownRequest());
+      mail(getShutdownMessage(getReasonForShutdownRequest()));
     }
   }
 
@@ -600,8 +598,8 @@ public final class WorkflowRunner {
     return "Failed: " + getWorkflowName();
   }
 
-  private String getShutdownMessage() {
-    return "Shutdown requested: " + getWorkflowName();
+  private String getShutdownMessage(String reason) {
+    return "Shutdown requested: " + getWorkflowName() + ". Reason: " + reason;
   }
 
   private void mail(String subject) throws IOException {
