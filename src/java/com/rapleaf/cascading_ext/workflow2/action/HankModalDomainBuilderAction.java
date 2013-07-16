@@ -3,9 +3,9 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import cascading.cascade.Cascades;
 import cascading.tap.Tap;
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
-import com.liveramp.hank.config.CoordinatorConfigurator;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 
@@ -85,7 +85,7 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
         setVersionType(HankVersionType.DELTA);
         setInput(getDelta());
       }
-      LOG.info("Choose version type " + getVersionType());
+      LOG.info("Chose version type " + getVersionType());
     }
   }
 
