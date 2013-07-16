@@ -96,9 +96,9 @@ public abstract class Action {
       startTimestamp = System.currentTimeMillis();
       prepDirs();
       execute();
-    } catch (Throwable e) {
-      LOG.fatal("Action " + checkpointToken + " failed due to exception!", e);
-      throw new RuntimeException(e);
+    } catch (Throwable t) {
+      LOG.fatal("Action " + checkpointToken + " failed due to Throwable", t);
+      throw new RuntimeException(t);
     } finally {
       endTimestamp = System.currentTimeMillis();
     }
@@ -117,7 +117,7 @@ public abstract class Action {
           if (uri.startsWith("/tmp/") || !trashEnabled) {
             LOG.info("Deleting " + uri);
             fs.delete(path, true);
-          // otherwise, move to trash
+            // otherwise, move to trash
           } else {
             LOG.info("Moving to trash: " + uri);
             TrashHelper.moveToTrash(fs, path);
