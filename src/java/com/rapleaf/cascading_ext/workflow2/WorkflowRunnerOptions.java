@@ -76,7 +76,8 @@ public class WorkflowRunnerOptions {
     return enableWebUiServer;
   }
 
-  public void setEnableWebUiServer(boolean enableWebUiServer) {
+  public WorkflowRunnerOptions setEnableWebUiServer(boolean enableWebUiServer) {
     this.enableWebUiServer = enableWebUiServer;
+    return this;
   }
 }
