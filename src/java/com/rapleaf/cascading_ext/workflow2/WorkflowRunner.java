@@ -150,6 +150,7 @@ public final class WorkflowRunner {
 
   private boolean alreadyRun;
   private Integer webUiPort;
+  private final boolean enableWebUiServer;
   private final List<String> notificationRecipients;
   private final Set<WorkflowRunnerNotification> enabledNotifications;
   private String sandboxDir;
@@ -229,6 +230,7 @@ public final class WorkflowRunner {
     } else {
       this.webUiPort = options.getWebUiPort();
     }
+    this.enableWebUiServer = options.getEnableWebUiServer();
     this.notificationRecipients = options.getNotificationRecipients();
     this.enabledNotifications = options.getEnabledNotifications().get();
     this.semaphore = new Semaphore(maxConcurrentSteps);
@@ -690,13 +692,13 @@ public final class WorkflowRunner {
   }
 
   private void shutdownWebServer() {
-    if (webUiPort != null && webServer != null) {
+    if (webServer != null) {
       webServer.stop();
     }
   }
 
   private void startWebServer() {
-    if (webUiPort != null) {
+    if (enableWebUiServer && webUiPort != null) {
       webServer = new WorkflowWebServer(this, webUiPort);
       webServer.start();
     }

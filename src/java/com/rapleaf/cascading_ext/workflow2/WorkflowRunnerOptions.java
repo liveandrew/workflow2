@@ -9,12 +9,14 @@ public class WorkflowRunnerOptions {
   private Integer webUiPort;
   private List<String> notificationRecipients;
   private WorkflowRunnerNotificationSet enabledNotifications;
+  private boolean enableWebUiServer;
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
     webUiPort = null;
     notificationRecipients = null;
     enabledNotifications = WorkflowRunnerNotificationSet.all();
+    enableWebUiServer = true;
   }
 
   public int getMaxConcurrentSteps() {
@@ -68,5 +70,13 @@ public class WorkflowRunnerOptions {
 
   public WorkflowRunnerNotificationSet getEnabledNotifications() {
     return enabledNotifications;
+  }
+
+  public boolean getEnableWebUiServer() {
+    return enableWebUiServer;
+  }
+
+  public void setEnableWebUiServer(boolean enableWebUiServer) {
+    this.enableWebUiServer = enableWebUiServer;
   }
 }
