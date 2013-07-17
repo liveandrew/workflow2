@@ -122,10 +122,6 @@ public final class WorkflowRunner {
    * how many components will we allow to execute simultaneously?
    */
   private final int maxConcurrentSteps;
-  /**
-   * the port to run the status UI on
-   */
-  // private final Integer webUiPort;
 
   private final DirectedGraph<Step, DefaultEdge> dependencyGraph;
   private final Set<Step> tailSteps;
