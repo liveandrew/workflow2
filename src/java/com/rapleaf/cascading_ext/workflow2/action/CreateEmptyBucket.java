@@ -14,38 +14,40 @@ public class CreateEmptyBucket extends Action {
   private final int numPartitions;
   private final boolean immutable;
   private final boolean createNewVersion;
+  private Class recordType;
 
-  public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, int numPartitions, boolean immutable, boolean createNewVersion) {
+  public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, int numPartitions, boolean immutable, boolean createNewVersion, Class recordType) {
     super(checkpointToken);
     this.dataStore = dataStore;
     this.numPartitions = numPartitions;
     this.immutable = immutable;
     this.createNewVersion = createNewVersion;
+    this.recordType = recordType;
 
 
     creates(dataStore);
   }
 
-  public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, boolean immutable) {
-    this(checkpointToken, dataStore, 0, immutable, false);
+  public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, boolean immutable, Class recordType) {
+    this(checkpointToken, dataStore, 0, immutable, false, recordType);
   }
 
-  public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore) {
-    this(checkpointToken, dataStore, 0, false, false);
+  public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, Class recordType) {
+    this(checkpointToken, dataStore, 0, false, false, recordType);
   }
 
-  public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, int numPartitions, boolean immutable) {
-    this(checkpointToken, dataStore, numPartitions, immutable, false);
+  public CreateEmptyBucket(String checkpointToken, BucketDataStore dataStore, int numPartitions, boolean immutable, Class recordType) {
+    this(checkpointToken, dataStore, numPartitions, immutable, false, recordType);
   }
 
   @Override
   protected void execute() throws Exception {
-    createEmptyBucket(dataStore, numPartitions, immutable, createNewVersion);
+    createEmptyBucket(dataStore, numPartitions, immutable, createNewVersion, recordType);
   }
 
-  public static void createEmptyBucket(BucketDataStore dataStore, int numPartitions, boolean immutable, boolean createNewVersion) throws IOException {
+  public static void createEmptyBucket(BucketDataStore dataStore, int numPartitions, boolean immutable, boolean createNewVersion, Class recordType) throws IOException {
     String rootPath = getPath(dataStore, createNewVersion);
-    createStore(numPartitions, immutable, rootPath);
+    createStore(numPartitions, immutable, rootPath, recordType);
   }
 
   private static String getPath(BucketDataStore dataStore, boolean createNewVersion) throws IOException {
@@ -60,8 +62,8 @@ public class CreateEmptyBucket extends Action {
     }
   }
 
-  private static void createStore(int numPartitions, boolean immutable, String rootPath) throws IOException {
-    Bucket bucket = Bucket.create(FileSystemHelper.getFS(), rootPath);
+  private static void createStore(int numPartitions, boolean immutable, String rootPath, Class recordType) throws IOException {
+    Bucket bucket = Bucket.create(FileSystemHelper.getFS(), rootPath, recordType);
     String filenamePattern = "%s/part-%05d";
 
     for (int partNum = 0; partNum < numPartitions; partNum++) {
