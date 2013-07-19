@@ -457,6 +457,21 @@ Wfd.prototype = {
     }
   },
 
+  getNumSteps: function() {
+    return  this.getSortedSteps().length;
+  },
+
+  getNumStepsRemaining: function() {
+    var numStepsRemaining = 0;
+    for (var i = 0; i < this.getNumSteps(); ++i) {
+      var step = wfd.getSortedSteps()[i];
+      if (step.status != 'completed' && step.status != 'skipped') {
+        ++numStepsRemaining;
+      }
+    }
+    return numStepsRemaining;
+  },
+
   // For debugging
 
   stepIdsToString: function(stepIds) {
