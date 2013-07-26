@@ -149,12 +149,10 @@
       return "<br />";
     }
     return "(" + pctComplete + "%)" +
-        "<table style='width: 100px'>"
-        + "<tr>"
-        + "<td style=\"background-color: #8888ff; width: " + pctComplete + "%\"></td>"
-        + "<td style=\"background-color: #aaffaa; width: " + (100 - pctComplete) + "%\"></td>"
-        + "</tr>"
-        +  "</table>";
+        "<div style='width: 200px; height: 20px'>"
+        + "<div style=\"float: left; background-color: #8888ff; width: " + pctComplete + "%\">&nbsp;</div>"
+        + "<div style=\"float: left; background-color: #aaffaa; width: " + (100 - pctComplete) + "%\">&nbsp;</div>"
+        + "</div>";
   }
 
   function shortHumanReadableElapsedTime(start, end) {

@@ -1,12 +1,13 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.util.List;
+import java.util.Map;
+
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
-import com.rapleaf.cascading_ext.datastore.DataStore;
 
-import java.util.List;
-import java.util.Map;
+import com.rapleaf.cascading_ext.datastore.DataStore;
 
 public abstract class CheckpointedCascadingAction extends MultiStepAction {
 
@@ -24,8 +25,16 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
     complete(pipe, pipeName, null);
   }
 
+  protected void complete(String pipeName, Pipe... pipes) {
+    complete(pipeName, null, pipes);
+  }
+
   protected void complete(Pipe pipe, String pipeName, FlowCompletedCallback flowCompletedCallback) {
     setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, flowCompletedCallback, pipe));
+  }
+
+  protected void complete(String pipeName, FlowCompletedCallback flowCompletedCallback, Pipe... pipes) {
+    setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, flowCompletedCallback, pipes));
   }
 
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName) {
