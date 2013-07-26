@@ -608,7 +608,7 @@ public final class WorkflowRunner {
     if (notificationRecipients != null) {
       subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
       try {
-        MailerHelper.mail(notificationRecipients, subject, body);
+        MailerHelper.mail(new MailerHelper.MailOptions(notificationRecipients, subject, body));
       } catch (IOException e) {
         LOG.error("Could not send notification email to: " + notificationRecipients
             + ", subject: " + subject
