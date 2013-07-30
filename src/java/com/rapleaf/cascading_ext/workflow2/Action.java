@@ -1,18 +1,27 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Logger;
+
 import cascading.flow.Flow;
+
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.*;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
@@ -98,10 +107,14 @@ public abstract class Action {
       execute();
     } catch (Throwable t) {
       LOG.fatal("Action " + checkpointToken + " failed due to Throwable", t);
-      throw new RuntimeException(t);
+      throw wrapRuntimeException(t);
     } finally {
       endTimestamp = System.currentTimeMillis();
     }
+  }
+
+  public static RuntimeException wrapRuntimeException(Throwable t) {
+    return (t instanceof RuntimeException) ? (RuntimeException)t : new RuntimeException(t);
   }
 
   private void prepDirs() throws Exception {
@@ -159,7 +172,7 @@ public abstract class Action {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    Action other = (Action) obj;
+    Action other = (Action)obj;
     if (checkpointToken == null) {
       if (other.checkpointToken != null) {
         return false;
