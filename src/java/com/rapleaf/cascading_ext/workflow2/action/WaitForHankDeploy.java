@@ -45,7 +45,6 @@ public class WaitForHankDeploy extends Action {
       if (!firstIteration) {
         LOG.info("Some RingGroups are still updating, sleeping for 5 minutes");
         Thread.sleep(FIVE_MINUTES);
-        firstIteration = false;
       }
       LOG.info("Checking for deploy completeness...");
       Iterator<RingGroup> itr = ringsToWaitFor.iterator();
@@ -55,6 +54,7 @@ public class WaitForHankDeploy extends Action {
           itr.remove();
         }
       }
+      firstIteration = false;
     }
     LOG.info("Checking for deploy complete!");
   }
