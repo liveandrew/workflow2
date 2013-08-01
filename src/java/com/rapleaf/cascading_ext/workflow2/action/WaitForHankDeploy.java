@@ -50,7 +50,7 @@ public class WaitForHankDeploy extends Action {
       Iterator<RingGroup> itr = ringsToWaitFor.iterator();
       while (itr.hasNext()) {
         RingGroup ringGroup = itr.next();
-        if (RingGroups.isServingOnlyUpToDate(ringGroup)) {
+        if (ringGroup == null || RingGroups.isServingOnlyUpToDate(ringGroup)) {
           itr.remove();
         }
       }
