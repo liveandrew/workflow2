@@ -7,11 +7,13 @@ import com.rapleaf.formats.bucket.BucketUtil;
 public class AddMissingPartitionsToBucket extends Action {
   private final int numPartitions;
   private final BucketDataStore dataStore;
+  private final Class recordClass;
 
-  public AddMissingPartitionsToBucket(String checkpointToken, int numPartitions, BucketDataStore dataStore) {
+  public AddMissingPartitionsToBucket(String checkpointToken, int numPartitions, BucketDataStore dataStore, Class recordClass) {
     super(checkpointToken);
     this.numPartitions = numPartitions;
     this.dataStore = dataStore;
+    this.recordClass = recordClass;
 
     writesTo(dataStore);
   }
@@ -19,7 +21,7 @@ public class AddMissingPartitionsToBucket extends Action {
   @Override
   protected void execute() throws Exception {
     dataStore.getBucket().markAsMutable();
-    BucketUtil.addMissingPartitions(getFS(), dataStore.getPath(), numPartitions);
+    BucketUtil.addMissingPartitions(getFS(), dataStore.getPath(), numPartitions, recordClass);
     dataStore.getBucket().markAsImmutable();
   }
 }
