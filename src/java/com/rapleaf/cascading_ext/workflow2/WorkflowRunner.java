@@ -1,7 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import com.liveramp.cascading_ext.counters.Counter;
-import com.liveramp.cascading_ext.generated.*;
+import com.liveramp.workflow_service.generated.*;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
