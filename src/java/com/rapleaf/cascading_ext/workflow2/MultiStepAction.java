@@ -64,7 +64,7 @@ public class MultiStepAction extends Action {
     setSubStepsFromTails(Collections.singleton(tail));
   }
 
-  protected final void setSubStepsFromTails(Step ... tails){
+  protected final void setSubStepsFromTails(Step... tails) {
     setSubStepsFromTails(Arrays.asList(tails));
   }
 
@@ -176,9 +176,15 @@ public class MultiStepAction extends Action {
     List<NestedCounter> counters = new ArrayList<NestedCounter>();
     for (Step s : steps) {
       for (NestedCounter c : s.getCounters()) {
-        counters.add( c.addParentEvent(s.getCheckpointToken()) );
+        counters.add(c.addParentEvent(s.getCheckpointToken()));
       }
     }
     return counters;
+  }
+
+  public void setConditionsOnSubSteps(Collection<Step.Conditional> conditions) {
+    for (Step step : steps) {
+      step.addConditions(conditions);
+    }
   }
 }

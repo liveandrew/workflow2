@@ -1,15 +1,12 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEvent;
+
+import java.util.*;
 
 public final class Step {
 
@@ -19,6 +16,7 @@ public final class Step {
   private Set<Step> children;
   private final StepTimer timer = new StepTimer();
   private final List<NestedCounter> nestedCounters = new ArrayList<NestedCounter>();
+  private final Set<Conditional> conditions = Sets.newHashSet();
 
   public class StepTimer extends EventTimer {
 
@@ -37,6 +35,10 @@ public final class Step {
   }
 
   public Step(Action action, List<Step> dependencies) {
+    this(action, dependencies, Lists.<Conditional>newArrayList());
+  }
+
+  public Step(Action action, Collection<Step> dependencies, Collection<Conditional> conditions) {
     this.action = action;
     children = new HashSet<Step>();
     this.dependencies = new HashSet<Step>(dependencies);
@@ -45,6 +47,10 @@ public final class Step {
     }
     for (Step dependency : this.dependencies) {
       dependency.addChild(this);
+    }
+    this.conditions.addAll(conditions);
+    if (action instanceof MultiStepAction) {
+      ((MultiStepAction) action).setConditionsOnSubSteps(conditions);
     }
   }
 
@@ -90,11 +96,25 @@ public final class Step {
 
   public TimedEvent getTimer() {
     if (action instanceof MultiStepAction) {
-      return ((MultiStepAction)action).getMultiStepActionTimer();
-
+      return ((MultiStepAction) action).getMultiStepActionTimer();
     } else {
       return timer;
     }
+  }
+
+  public void addCondition(Conditional condition) {
+    addConditions(Sets.newHashSet(condition));
+  }
+
+  public void addConditions(Collection<Conditional> conditions) {
+    this.conditions.addAll(conditions);
+    if (getAction() instanceof MultiStepAction) {
+      ((MultiStepAction) getAction()).setConditionsOnSubSteps(conditions);
+    }
+  }
+
+  public Set<Conditional> getConditions() {
+    return conditions;
   }
 
   public List<NestedCounter> getCounters() {
@@ -102,6 +122,9 @@ public final class Step {
   }
 
   public void run() {
+    if (conditionsNotMet()) {
+      return;
+    }
     timer.start();
     try {
       action.internalExecute();
@@ -112,5 +135,18 @@ public final class Step {
 
       timer.stop();
     }
+  }
+
+  private boolean conditionsNotMet() {
+    for (Conditional condition : conditions) {
+      if (!condition.shouldRun()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public interface Conditional {
+    public boolean shouldRun();
   }
 }
