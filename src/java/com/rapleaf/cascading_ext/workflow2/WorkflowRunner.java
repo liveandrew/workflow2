@@ -1,7 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import com.liveramp.cascading_ext.counters.Counter;
-import com.liveramp.workflow_service.generated.*;
+import com.liveramp.mugatu.generated.*;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -167,6 +167,10 @@ public final class WorkflowRunner {
 
   public WorkflowRunner(String workflowName, String checkpointDir, Set<Step> tailSteps) {
     this(workflowName, checkpointDir, new WorkflowRunnerOptions(), tailSteps);
+  }
+
+  public WorkflowRunner(String workflowName, String checkpointDir, final Step first, final Step... rest) {
+    this(workflowName, checkpointDir, new WorkflowRunnerOptions(), first, rest);
   }
 
   public WorkflowRunner(String workflowName, String checkpointDir, WorkflowRunnerOptions options, Set<Step> tailSteps) {
