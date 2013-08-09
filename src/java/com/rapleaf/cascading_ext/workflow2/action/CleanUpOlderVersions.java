@@ -11,10 +11,6 @@ public class CleanUpOlderVersions extends Action {
   public CleanUpOlderVersions(String checkpointToken, String tmpRoot, int numVersionsToKeep, Iterable<? extends VersionedBucketDataStore> versionedDataStores) {
     super(checkpointToken, tmpRoot);
 
-    if (numVersionsToKeep < 1) {
-      throw new RuntimeException("Cannot delete all valid versions of a production data store!");
-    }
-
     this.numVersionsToKeep = numVersionsToKeep;
     this.versionedDataStores = versionedDataStores;
   }
