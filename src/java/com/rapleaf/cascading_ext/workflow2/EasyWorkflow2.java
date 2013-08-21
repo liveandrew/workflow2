@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.flow.Flow;
+import cascading.flow.FlowListener;
 import cascading.flow.planner.Scope;
 import cascading.pipe.Pipe;
 import cascading.stats.FlowStepStats;
@@ -71,50 +72,49 @@ public class EasyWorkflow2 {
   }
 
   public void bindSink(String stepName, Pipe output, DataStore outputStore) {
-    bindSink(stepName, output, outputStore, new NoCallback());
+    bindSink(stepName, output, outputStore, new EmptyListener());
   }
 
-  public void bindSink(String stepName, Pipe output, DataStore outputStore, FlowCompletedCallback callback) {
+  public void bindSink(String stepName, Pipe output, DataStore outputStore, FlowListener callback) {
     subSteps.add(completeFlows(stepName, Lists.newArrayList(output), Collections.singletonMap(stepName, outputStore), callback));
   }
-
 
   //  force a persistent checkpoint
 
   public Pipe addCheckpoint(Pipe endPipe, Fields fields) throws IOException {
-    return addCheckpoint(endPipe, "check" + checkpoint, fields, new NoCallback());
+    return addCheckpoint(endPipe, "check" + checkpoint, fields, new EmptyListener());
   }
 
-  public Pipe addCheckpoint(Pipe endPipe, Fields fields, FlowCompletedCallback flowCompletedCallback) throws IOException {
+  public Pipe addCheckpoint(Pipe endPipe, Fields fields, FlowListener flowCompletedCallback) throws IOException {
     return addCheckpoint(endPipe, "check" + checkpoint, fields, flowCompletedCallback);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields) throws IOException {
-    return addCheckpoint(endPipe, checkpointName, fields, null);
+    return addCheckpoint(endPipe, checkpointName, fields, new EmptyListener());
   }
 
   public Pipe addCheckpoint(Pipe endPipe) throws IOException {
-    return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), new NoCallback());
+    return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), new EmptyListener());
   }
 
-  public Pipe addCheckpoint(Pipe endPipe, FlowCompletedCallback flowCompletedCallback) throws IOException {
+  public Pipe addCheckpoint(Pipe endPipe, FlowListener flowCompletedCallback) throws IOException {
     return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), flowCompletedCallback);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName) throws IOException {
-    return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), new NoCallback());
+    return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), new EmptyListener());
   }
 
-  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, FlowCompletedCallback flowCompletedCallback) throws IOException {
-    return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), flowCompletedCallback);
+  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, FlowListener flowListener) throws IOException {
+    return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), flowListener);
   }
 
-  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields, FlowCompletedCallback flowCompletedCallback) throws IOException {
+  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields, FlowListener flowListener) throws IOException {
     LOG.info("determined output fields to be " + fields + " for step " + checkpointName);
     TupleDataStore checkpointStore = dsBuilder.getTupleDataStore(checkpointName, fields);
 
     Step step = completeFlows(checkpointName, Lists.newArrayList(endPipe),
-        Collections.<String, DataStore>singletonMap(endPipe.getName(), checkpointStore), flowCompletedCallback);
+        Collections.<String, DataStore>singletonMap(endPipe.getName(), checkpointStore), flowListener);
 
     String nextPipeName = "tail-" + checkpointName;
 
@@ -148,7 +148,7 @@ public class EasyWorkflow2 {
 
   //  internal stuff
 
-  private Step completeFlows(String name, List<Pipe> endPipes, Map<String, DataStore> sinkStores, FlowCompletedCallback flowCompletedCallback) {
+  private Step completeFlows(String name, List<Pipe> endPipes, Map<String, DataStore> sinkStores, FlowListener flowListener) {
     CascadingActionBuilder builder = new CascadingActionBuilder();
     Map<String, Tap> sources = Maps.newHashMap();
     Map<String, Tap> sinks = Maps.newHashMap();
@@ -174,7 +174,7 @@ public class EasyWorkflow2 {
         .setSinks(sinks)
         .addTails(endPipes.toArray(new Pipe[endPipes.size()]))
         .addFlowProperties(flowProperties)
-        .setFlowCompletedCallback(flowCompletedCallback)
+        .setFlowListener(flowListener)
         .build();
 
     return new Step(action, previousSteps);

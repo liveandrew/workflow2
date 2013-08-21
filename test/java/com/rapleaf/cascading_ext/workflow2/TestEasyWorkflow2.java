@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import cascading.flow.Flow;
 import cascading.operation.Insert;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
@@ -14,12 +15,26 @@ import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.assembly.Distinct;
 import com.rapleaf.cascading_ext.assembly.FastSum;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.DataStores;
+import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.formats.bucket.Bucket;
+import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
+import com.rapleaf.formats.test.VersionedSplitBucketDataStoreHelper;
+import com.rapleaf.support.test.NPDH;
+import com.rapleaf.types.importer.DUVUExtractorSpec;
+import com.rapleaf.types.new_person_data.DataUnit;
+import com.rapleaf.types.new_person_data.DataUnitValueUnion;
+import com.rapleaf.types.new_person_data.DataUnitValueUnion._Fields;
+import com.rapleaf.types.person_data.GenderType;
+import org.apache.thrift.TException;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TestEasyWorkflow2 extends CascadingExtTestCase {
 
@@ -70,8 +85,7 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
     TupleDataStoreHelper.writeToStore(store1, new Tuple("test tuple", 80085l));
     TupleDataStoreHelper.writeToStore(store2, new Tuple("test tuple", 80085l));
 
-    String workingDir = getTestRoot() + "/e-workflow";
-    EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", workingDir);
+    EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", getTestRoot() + "/e-workflow");
 
     Pipe pipe = workflow.bindSource("pipe", input);
 
@@ -124,8 +138,61 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
     assertEquals(TUPLE_NAMES, HRap.getAllTuples(output.getTap()));
   }
 
+  public void testTapVsDs() throws IOException, TException {
 
-  
+    SplitBucketDataStore<DataUnit, _Fields> inputSplit =
+        builder().getSplitBucketDataStore("split_store", DataUnit.class);
+    TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("dataunit"));
+
+    DataUnit prevDU = NPDH.getAgeDataUnit((byte) 12);
+    DataUnit keepDU = NPDH.getGenderDataUnit(GenderType.MALE);
+
+    ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(_Fields.AGE.getThriftFieldId()),
+        prevDU);
+
+    ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(_Fields.GENDER.getThriftFieldId()),
+        keepDU);
+
+    EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", getTestRoot() + "/e-workflow");
+
+    Pipe pipe1 = workflow.bindSource("pipe1", inputSplit, inputSplit.getTap(EnumSet.of(_Fields.GENDER)));
+
+    workflow.bindSink("flo0w", pipe1, output);
+
+    WorkflowRunner workflowRunner = workflow.buildWorkflow();
+    workflowRunner.run();
+
+    assertCollectionEquivalent(Lists.<Tuple>newArrayList(new Tuple(keepDU)),
+        HRap.getAllTuples(output.getTap()));
+
+    assertCollectionEquivalent(Lists.<DataUnit>newArrayList(keepDU, prevDU),
+        HRap.<DataUnit>getValuesFromBucket(inputSplit));
+
+
+  }
+
+  public void testCallback() throws IOException {
+    TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1", "field2"));
+    EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", getTestRoot() + "/e-workflow");
+
+    Pipe pipe1 = workflow.bindSource("pipe1", input);
+
+    final AtomicBoolean isCompleted = new AtomicBoolean(false);
+
+    workflow.bindSink("output", pipe1, output, new EmptyListener(){
+      @Override
+      public void onCompleted(Flow flow) {
+        isCompleted.set(true);
+      }
+    });
+
+    WorkflowRunner workflowRunner = workflow.buildWorkflow();
+    workflowRunner.run();
+
+    assertTrue(isCompleted.get());
+  }
+
+
   private EasyWorkflow2 buildComplex(DataStore output) throws IOException {
     EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", getTestRoot()+"/e-workflow");
 

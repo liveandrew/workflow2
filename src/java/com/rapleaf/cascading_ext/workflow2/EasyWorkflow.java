@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.flow.Flow;
+import cascading.flow.FlowListener;
 import cascading.flow.planner.Scope;
 import cascading.pipe.OperatorException;
 import cascading.pipe.Pipe;
@@ -124,8 +125,8 @@ public class EasyWorkflow {
     return completeAsStep(checkpointName, null, endPipes);
   }
 
-  public Step completeAsStep(String checkpointName, FlowCompletedCallback flowCompletedCallback, Pipe... endPipes) {
-    Step finalStep = createFinalStep(checkpointName, flowCompletedCallback, endPipes);
+  public Step completeAsStep(String checkpointName, FlowListener flowListener, Pipe... endPipes) {
+    Step finalStep = createFinalStep(checkpointName, flowListener, endPipes);
     return finalStep;
   }
 
@@ -133,8 +134,8 @@ public class EasyWorkflow {
     return completeAsMultiStepAction(checkpointName, null, endPipes);
   }
 
-  public MultiStepAction completeAsMultiStepAction(String checkpointName, FlowCompletedCallback flowCompletedCallback, Pipe... endPipes) {
-    Step finalStep = createFinalStep(checkpointName, flowCompletedCallback, endPipes);
+  public MultiStepAction completeAsMultiStepAction(String checkpointName, FlowListener flowListener, Pipe... endPipes) {
+    Step finalStep = createFinalStep(checkpointName, flowListener, endPipes);
     MultiStepAction action = new GenericMultiStepAction(name, finalStep);
     return action;
   }
@@ -143,13 +144,13 @@ public class EasyWorkflow {
     return completeAsWorkflow(checkpointName, null, endPipes);
   }
 
-  public WorkflowRunner completeAsWorkflow(String checkpointName, FlowCompletedCallback flowCompletedCallback, Pipe... endPipes) {
-    Step finalStep = createFinalStep(checkpointName, flowCompletedCallback, endPipes);
+  public WorkflowRunner completeAsWorkflow(String checkpointName, FlowListener flowListener, Pipe... endPipes) {
+    Step finalStep = createFinalStep(checkpointName, flowListener, endPipes);
     WorkflowRunner runner = new WorkflowRunner(name, workingDir + "/checkpoints", 1, 0, finalStep);
     return runner;
   }
 
-  private Step createFinalStep(String checkpointName, FlowCompletedCallback flowCompletedCallback, Pipe... endPipes) {
+  private Step createFinalStep(String checkpointName, FlowListener flowListener, Pipe... endPipes) {
     CascadingActionBuilder builder = new CascadingActionBuilder();
     Map<String, Tap> sources = Maps.newHashMap();
     Set<DataStore> inputs = Sets.newHashSet();
@@ -167,7 +168,7 @@ public class EasyWorkflow {
         .setSources(sources)
         .setSinks(sinks)
         .addTails(endPipes)
-        .setFlowCompletedCallback(flowCompletedCallback)
+        .setFlowListener(flowListener)
         .build();
 
     childFlows.add(action.getFlow());
@@ -261,8 +262,8 @@ public class EasyWorkflow {
     return addCheckpoint(endPipe, "check" + checkpoint, fields, null);
   }
 
-  public Pipe addCheckpoint(Pipe endPipe, Fields fields, FlowCompletedCallback flowCompletedCallback) {
-    return addCheckpoint(endPipe, "check" + checkpoint, fields, flowCompletedCallback);
+  public Pipe addCheckpoint(Pipe endPipe, Fields fields, FlowListener flowListener) {
+    return addCheckpoint(endPipe, "check" + checkpoint, fields, flowListener);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields) {
@@ -273,19 +274,19 @@ public class EasyWorkflow {
     return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), null);
   }
 
-  public Pipe addCheckpoint(Pipe endPipe, FlowCompletedCallback flowCompletedCallback) {
-    return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), flowCompletedCallback);
+  public Pipe addCheckpoint(Pipe endPipe, FlowListener flowListener) {
+    return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), flowListener);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName) {
     return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), null);
   }
 
-  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, FlowCompletedCallback flowCompletedCallback) {
-    return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), flowCompletedCallback);
+  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, FlowListener flowListener) {
+    return addCheckpoint(endPipe, checkpointName, determineOutputFields(endPipe), flowListener);
   }
 
-  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields, FlowCompletedCallback flowCompletedCallback) {
+  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields, FlowListener flowListener) {
     try {
       CascadingActionBuilder builder = new CascadingActionBuilder();
       LOG.info("determined output fields to be " + fields + " for step " + checkpointName);
@@ -303,7 +304,7 @@ public class EasyWorkflow {
           .addSink(endPipe.getName(), checkpointStore.getTap())
           .addTail(endPipe)
           .addFlowProperties(flowProperties)
-          .setFlowCompletedCallback(flowCompletedCallback)
+          .setFlowListener(flowListener)
           .build();
 
       childFlows.add(action.getFlow());

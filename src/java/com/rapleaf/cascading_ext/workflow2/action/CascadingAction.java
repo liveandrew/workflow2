@@ -2,12 +2,12 @@ package com.rapleaf.cascading_ext.workflow2.action;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
+import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.cascading_ext.workflow2.FlowCompletedCallback;
 
 import java.util.*;
 
@@ -19,7 +19,7 @@ public abstract class CascadingAction extends Action {
   private List<Pipe> tails = new ArrayList<Pipe>();
   private String name = null;
   private Flow flow;
-  private FlowCompletedCallback flowCompletedCallback = null;
+  private FlowListener flowListener = null;
 
   public CascadingAction(String checkpointToken) {
     this(checkpointToken, Collections.<DataStore>emptyList(), Collections.<DataStore>emptyList());
@@ -75,8 +75,8 @@ public abstract class CascadingAction extends Action {
     this.sources.put(name, tap);
   }
 
-  protected void setFlowCompletedCallback(FlowCompletedCallback callback) {
-    this.flowCompletedCallback = callback;
+  protected void setFlowListener(FlowListener callback) {
+    this.flowListener = callback;
   }
 
   protected void addSinkTap(Tap sink) {
@@ -128,6 +128,9 @@ public abstract class CascadingAction extends Action {
           flow = connector.connect(name, sources, sinks, tails.toArray(new Pipe[tails.size()]));
         }
       }
+      if(flowListener != null){
+        flow.addListener(flowListener);
+      }
     }
     return flow;
   }
@@ -140,8 +143,5 @@ public abstract class CascadingAction extends Action {
   protected void execute() throws Exception {
     Flow flow = getFlow();
     completeWithProgress(flow);
-    if (flowCompletedCallback != null) {
-      flowCompletedCallback.flowCompleted(flow);
-    }
   }
 }

@@ -1,13 +1,12 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import cascading.flow.Flow;
+import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
-import com.rapleaf.cascading_ext.workflow2.FlowCompletedCallback;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +20,7 @@ public class CascadingActionBuilder {
   private String checkpoint = null;
   private String name = null;
   private Map<Object, Object> flowProperties = Maps.newHashMap();
-  private FlowCompletedCallback flowCompletedCallback = null;
+  private FlowListener flowListener = null;
 
   public CascadingActionBuilder addInputStore(DataStore store) {
     inputStores.add(store);
@@ -89,27 +88,27 @@ public class CascadingActionBuilder {
     return this;
   }
 
-  public CascadingActionBuilder setFlowCompletedCallback(FlowCompletedCallback callback) {
-    this.flowCompletedCallback = callback;
+  public CascadingActionBuilder setFlowListener(FlowListener callback) {
+    this.flowListener = callback;
     return this;
   }
 
   public CascadingAction build() {
-    return new GenericCascadingAction(checkpoint, name, inputStores, outputStores, sources, sinks, tails, flowProperties, flowCompletedCallback);
+    return new GenericCascadingAction(checkpoint, name, inputStores, outputStores, sources, sinks, tails, flowProperties, flowListener);
   }
 
 
   protected class GenericCascadingAction extends CascadingAction {
 
     public GenericCascadingAction(String checkpointToken, String name, List<? extends DataStore> inputStores, List<? extends DataStore> outputStores,
-        Map<String, Tap> sources, Map<String, Tap> sinks, List<Pipe> tails, Map<Object, Object> flowProperties, FlowCompletedCallback flowCompleteCallback) {
+        Map<String, Tap> sources, Map<String, Tap> sinks, List<Pipe> tails, Map<Object, Object> flowProperties, FlowListener flowListener) {
       super(checkpointToken, inputStores, outputStores);
       addSourceTaps(sources);
       addSinkTaps(sinks);
       setName(name);
       addFlowProperties(flowProperties);
+      setFlowListener(flowListener);
       completeFromTails(tails.toArray(new Pipe[tails.size()]));
-      setFlowCompletedCallback(flowCompleteCallback);
     }
   }
 

@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.util.List;
 import java.util.Map;
 
+import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
@@ -29,12 +30,12 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
     complete(pipeName, null, pipes);
   }
 
-  protected void complete(Pipe pipe, String pipeName, FlowCompletedCallback flowCompletedCallback) {
-    setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, flowCompletedCallback, pipe));
+  protected void complete(Pipe pipe, String pipeName, FlowListener flowListener) {
+    setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, flowListener, pipe));
   }
 
-  protected void complete(String pipeName, FlowCompletedCallback flowCompletedCallback, Pipe... pipes) {
-    setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, flowCompletedCallback, pipes));
+  protected void complete(String pipeName, FlowListener flowListener, Pipe... pipes) {
+    setSubStepsFromTail(workflowHelper.completeAsStep(pipeName, flowListener, pipes));
   }
 
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName) {
@@ -45,12 +46,12 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
     return workflowHelper.addCheckpoint(pipe);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, FlowCompletedCallback flowCompletedCallback) {
-    return workflowHelper.addCheckpoint(pipe, checkpointName, flowCompletedCallback);
+  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, FlowListener flowListener) {
+    return workflowHelper.addCheckpoint(pipe, checkpointName, flowListener);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, FlowCompletedCallback flowCompletedCallback) {
-    return workflowHelper.addCheckpoint(pipe, flowCompletedCallback);
+  protected Pipe addCheckpoint(Pipe pipe, FlowListener flowListener) {
+    return workflowHelper.addCheckpoint(pipe, flowListener);
   }
 
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName, Fields fields) {
@@ -61,12 +62,12 @@ public abstract class CheckpointedCascadingAction extends MultiStepAction {
     return workflowHelper.addCheckpoint(pipe, fields);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, Fields fields, FlowCompletedCallback flowCompletedCallback) {
-    return workflowHelper.addCheckpoint(pipe, checkpointName, fields, flowCompletedCallback);
+  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, Fields fields, FlowListener flowListener) {
+    return workflowHelper.addCheckpoint(pipe, checkpointName, fields, flowListener);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, Fields fields, FlowCompletedCallback flowCompletedCallback) {
-    return workflowHelper.addCheckpoint(pipe, fields, flowCompletedCallback);
+  protected Pipe addCheckpoint(Pipe pipe, Fields fields, FlowListener flowListener) {
+    return workflowHelper.addCheckpoint(pipe, fields, flowListener);
   }
 
   protected void addSourceTap(String name, Tap tap) {
