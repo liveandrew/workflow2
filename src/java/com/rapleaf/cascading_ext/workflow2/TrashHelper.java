@@ -16,7 +16,7 @@ public class TrashHelper {
     }
   }
 
-  public static void moveToTrashIfEnabled(FileSystem fs, Path path) throws IOException {
+  public static void deleteUsingTrashIfEnabled(FileSystem fs, Path path) throws IOException {
     if(isEnabled()){
       moveToTrash(fs, path);
     }else{
