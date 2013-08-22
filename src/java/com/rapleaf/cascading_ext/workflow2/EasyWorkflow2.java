@@ -13,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
@@ -21,6 +22,8 @@ import com.rapleaf.cascading_ext.workflow2.action.CascadingActionBuilder;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +39,8 @@ public class EasyWorkflow2 {
   private DataStoreBuilder dsBuilder;
   private Set<Step> subSteps = Sets.newHashSet();
 
-  private Map<String, DataStore> pipenameToSourceStore; //  store which is the source for the pipe
   private Map<String, Tap> pipenameToTap;               //  tap which provides input
+  private Multimap<String, DataStore> pipenameToSourceStore; //  stores which are the source for the pipe
   private Multimap<String, Step> pipenameToParentStep;  //  what step(s) does the pipe depend on
 
   private String name;
@@ -54,7 +57,7 @@ public class EasyWorkflow2 {
     this.name = name;
     this.flowProperties = Maps.newHashMap(flowProperties);
     this.pipenameToParentStep = HashMultimap.create();
-    this.pipenameToSourceStore = Maps.newHashMap();
+    this.pipenameToSourceStore = HashMultimap.create();
     this.pipenameToTap = Maps.newHashMap();
   }
 
@@ -62,17 +65,25 @@ public class EasyWorkflow2 {
   //  create the necessary actions
 
   public Pipe bindSource(String name, DataStore source) {
-    return bindSource(name, source, source.getTap());
+    return bindSource(name, Lists.newArrayList(source), source.getTap());
+  }
+
+  public Pipe bindSource(String name, Collection<DataStore> inputs) {
+    return bindSource(name, inputs, HRap.getMultiTap(inputs));
   }
 
   public Pipe bindSource(String name, DataStore source, Tap tap) {
-    pipenameToSourceStore.put(name, source);
+    return bindSource(name, Lists.newArrayList(source), tap);
+  }
+
+  public Pipe bindSource(String name, Collection<DataStore> sources, Tap tap) {
+    pipenameToSourceStore.putAll(name, sources);
     pipenameToTap.put(name, tap);
     return new Pipe(name);
   }
 
-  public void bindSink(String stepName, Pipe output, DataStore outputStore) {
-    bindSink(stepName, output, outputStore, new EmptyListener());
+  public void bindSink(String name, Pipe output, DataStore outputStore) {
+    bindSink(name, output, outputStore, new EmptyListener());
   }
 
   public void bindSink(String stepName, Pipe output, DataStore outputStore, FlowListener callback) {
@@ -262,7 +273,7 @@ public class EasyWorkflow2 {
     Set<DataStore> inputStores = Sets.newHashSet();
     for (Pipe head : heads) {
       if (pipenameToSourceStore.containsKey(head.getName())) {
-        inputStores.add(pipenameToSourceStore.get(head.getName()));
+        inputStores.addAll(pipenameToSourceStore.get(head.getName()));
       } else {
         throw new RuntimeException("Could not find store for head pipe " + head.getName());
       }

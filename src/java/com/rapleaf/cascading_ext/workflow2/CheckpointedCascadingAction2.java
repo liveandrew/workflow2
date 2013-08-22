@@ -7,6 +7,7 @@ import cascading.tuple.Fields;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class CheckpointedCascadingAction2 extends MultiStepAction {
@@ -29,6 +30,10 @@ public class CheckpointedCascadingAction2 extends MultiStepAction {
 
   protected Pipe bindSource(String name, DataStore input){
     return workflowHelper.bindSource(name, input);
+  }
+
+  protected Pipe bindSource(String name, List<DataStore> inputs){
+    return workflowHelper.bindSource(name, inputs);
   }
 
   public void bindSink(String stepName, Pipe output, DataStore outputStore) {

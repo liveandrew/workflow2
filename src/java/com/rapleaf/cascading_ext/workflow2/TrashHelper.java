@@ -16,6 +16,14 @@ public class TrashHelper {
     }
   }
 
+  public static void moveToTrashIfEnabled(FileSystem fs, Path path) throws IOException {
+    if(isEnabled()){
+      moveToTrash(fs, path);
+    }else{
+      fs.delete(path, true);
+    }
+  }
+
   public static boolean isEnabled() throws IOException {
 
     //  check if enabled locally
