@@ -4,11 +4,9 @@ import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
-import com.google.common.collect.Lists;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
 public class CheckpointedCascadingAction2 extends MultiStepAction {
@@ -19,7 +17,9 @@ public class CheckpointedCascadingAction2 extends MultiStepAction {
     super(checkpointToken, tmpRoot);
 
     workflowHelper = new EasyWorkflow2(checkpointToken, getTmpRoot(), flowProperties);
+  }
 
+  protected void complete(){
     setSubStepsFromTail(workflowHelper.buildStep("checkpointed-flow"));
   }
 

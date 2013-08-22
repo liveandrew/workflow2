@@ -26,6 +26,8 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
       Pipe source = bindSource("source", input);
       source = addCheckpoint(source, "intermediate");
       bindSink("step", source, output);
+
+      complete();
     }
   }
 

@@ -183,6 +183,10 @@ public class MultiStepAction extends Action {
   }
 
   public void setConditionsOnSubSteps(Collection<Step.Conditional> conditions) {
+    if(steps == null){
+      throw new RuntimeException("Sub steps in MSA '"+getCheckpointToken()+"' were never set!");
+    }
+
     for (Step step : steps) {
       step.addConditions(conditions);
     }

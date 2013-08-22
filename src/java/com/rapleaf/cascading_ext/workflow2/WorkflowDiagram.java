@@ -713,6 +713,7 @@ public class WorkflowDiagram {
 
   private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailStepsNoVerification(Set<Step> tailSteps, EventTimer workflowTimer,
                                                                                              Set<Step> multiStepsToExpand) {
+
     Set<Step> tailsAndDependencies = addDependencies(tailSteps);
     addToWorkflowTimer(tailsAndDependencies, workflowTimer);
     Queue<Step> multiSteps = new LinkedList<Step>(filterMultiStep(tailsAndDependencies));
