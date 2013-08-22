@@ -17,10 +17,12 @@ public class TrashHelper {
   }
 
   public static void deleteUsingTrashIfEnabled(FileSystem fs, Path path) throws IOException {
-    if(isEnabled()){
-      moveToTrash(fs, path);
-    }else{
-      fs.delete(path, true);
+    if(fs.exists(path)){
+      if(isEnabled()){
+        moveToTrash(fs, path);
+      }else{
+        fs.delete(path, true);
+      }
     }
   }
 
