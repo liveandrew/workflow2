@@ -15,18 +15,13 @@ import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.assembly.Distinct;
 import com.rapleaf.cascading_ext.assembly.FastSum;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.DataStores;
 import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
-import com.rapleaf.formats.test.VersionedSplitBucketDataStoreHelper;
 import com.rapleaf.support.test.NPDH;
-import com.rapleaf.types.importer.DUVUExtractorSpec;
 import com.rapleaf.types.new_person_data.DataUnit;
-import com.rapleaf.types.new_person_data.DataUnitValueUnion;
 import com.rapleaf.types.new_person_data.DataUnitValueUnion._Fields;
 import com.rapleaf.types.person_data.GenderType;
 import org.apache.thrift.TException;
@@ -85,7 +80,7 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
     TupleDataStoreHelper.writeToStore(store1, new Tuple("test tuple", 80085l));
     TupleDataStoreHelper.writeToStore(store2, new Tuple("test tuple", 80085l));
 
-    EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", getTestRoot() + "/e-workflow");
+    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");
 
     Pipe pipe = workflow.bindSource("pipe", input);
 
@@ -100,17 +95,18 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
     pipe = new Retain(pipe, new Fields("field1", "field2"));
     pipe = workflow.addCheckpoint(pipe);
 
-    Pipe pipe2 = new FastSum(pipe, new Fields("field1"), new Fields("field2"));
+    Pipe pipe2 = new Pipe("pipe2", pipe);
+    pipe2 = new FastSum(pipe2, new Fields("field1"), new Fields("field2"));
     pipe2 = new Increment(pipe2, "Test", "Tuples4");
 
-    Pipe pipe3 = new FastSum(pipe, new Fields("field1"), new Fields("field2"));
+    Pipe pipe3 = new Pipe("pipe3", pipe);
+    pipe3 = new FastSum(pipe3, new Fields("field1"), new Fields("field2"));
     pipe3 = new Increment(pipe3, "Test", "Tuples5");
 
-    workflow.bindSink("last-step", pipe3, store1);
-    workflow.bindSink("other-last-step", pipe2, store2);
+    Step step = workflow.buildTail("last-step",
+        Lists.newArrayList(new SinkBinding(pipe3, store1), new SinkBinding(pipe2, store2)));
 
-    WorkflowRunner workflowRunner = workflow.buildWorkflow();
-    workflowRunner.run();
+    executeWorkflow(step);
 
     List<Tuple> allTuples = HRap.getAllTuples(store1.getTap());
     List<Tuple> allTuples2 = HRap.getAllTuples(store2.getTap());
@@ -122,9 +118,7 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
   public void testMultiSourcePipes() throws Exception {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1"));
 
-    buildComplex(output)
-        .buildWorkflow()
-        .run();
+    executeWorkflow(buildComplex(output));
 
     assertEquals(TUPLE_NAMES, HRap.getAllTuples(output.getTap()));
   }
@@ -132,8 +126,7 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
   public void testBuildStep() throws IOException {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1"));
 
-    executeWorkflow(buildComplex(output)
-        .buildStep("Parent step"));
+    executeWorkflow(buildComplex(output));
 
     assertEquals(TUPLE_NAMES, HRap.getAllTuples(output.getTap()));
   }
@@ -153,14 +146,11 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
     ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(_Fields.GENDER.getThriftFieldId()),
         keepDU);
 
-    EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", getTestRoot() + "/e-workflow");
+    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");
 
     Pipe pipe1 = workflow.bindSource("pipe1", inputSplit, inputSplit.getTap(EnumSet.of(_Fields.GENDER)));
 
-    workflow.bindSink("flo0w", pipe1, output);
-
-    WorkflowRunner workflowRunner = workflow.buildWorkflow();
-    workflowRunner.run();
+    executeWorkflow(workflow.buildTail(pipe1, output));
 
     assertCollectionEquivalent(Lists.<Tuple>newArrayList(new Tuple(keepDU)),
         HRap.getAllTuples(output.getTap()));
@@ -173,28 +163,25 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
 
   public void testCallback() throws IOException {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1", "field2"));
-    EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", getTestRoot() + "/e-workflow");
+    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");
 
     Pipe pipe1 = workflow.bindSource("pipe1", input);
 
     final AtomicBoolean isCompleted = new AtomicBoolean(false);
 
-    workflow.bindSink("output", pipe1, output, new EmptyListener(){
+    executeWorkflow(workflow.buildTail("tail-step", pipe1, output, new EmptyListener() {
       @Override
       public void onCompleted(Flow flow) {
         isCompleted.set(true);
       }
-    });
-
-    WorkflowRunner workflowRunner = workflow.buildWorkflow();
-    workflowRunner.run();
+    }));
 
     assertTrue(isCompleted.get());
   }
 
 
-  private EasyWorkflow2 buildComplex(DataStore output) throws IOException {
-    EasyWorkflow2 workflow = new EasyWorkflow2("Test Workflow", getTestRoot()+"/e-workflow");
+  private Step buildComplex(DataStore output) throws IOException {
+    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot()+"/e-workflow");
 
     Pipe pipe = workflow.bindSource("pipe1", input);
     Pipe pipe2 = workflow.bindSource("pipe2", input2);
@@ -211,8 +198,6 @@ public class TestEasyWorkflow2 extends CascadingExtTestCase {
 
     Pipe finalPipe = new Pipe("final", pipe3);
 
-    workflow.bindSink("final-step", finalPipe, output);
-
-    return workflow;
+    return workflow.buildTail(finalPipe, output);
   }
 }

@@ -12,16 +12,28 @@ import java.util.Map;
 
 public class CheckpointedCascadingAction2 extends MultiStepAction {
 
-  private EasyWorkflow2 workflowHelper;
+  private CascadingWorkflowBuilder workflowHelper;
 
   public CheckpointedCascadingAction2(String checkpointToken, String tmpRoot, Map<Object, Object> flowProperties) {
     super(checkpointToken, tmpRoot);
 
-    workflowHelper = new EasyWorkflow2(checkpointToken, getTmpRoot(), flowProperties);
+    workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), flowProperties);
   }
 
-  protected void complete(){
-    setSubStepsFromTail(workflowHelper.buildStep("checkpointed-flow"));
+  protected void complete(String stepName, List<SinkBinding> sinkBindings){
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, new EmptyListener()));
+  }
+
+  protected void complete(String stepName, List<SinkBinding> sinkBindings, FlowListener listener){
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, listener));
+  }
+
+  protected void complete(String stepName, Pipe output, DataStore outputStore, FlowListener listener){
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore, listener));
+  }
+
+  protected void complete(String stepName, Pipe output, DataStore outputStore){
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore));
   }
 
   protected Pipe bindSource(String name, DataStore input, Tap sourceTap){
@@ -34,14 +46,6 @@ public class CheckpointedCascadingAction2 extends MultiStepAction {
 
   protected Pipe bindSource(String name, List<DataStore> inputs){
     return workflowHelper.bindSource(name, inputs);
-  }
-
-  public void bindSink(String stepName, Pipe output, DataStore outputStore) {
-    workflowHelper.bindSink(stepName, output, outputStore);
-  }
-
-  public void bindSink(String stepName, Pipe output, DataStore outputStore, FlowListener callback) {
-    workflowHelper.bindSink(stepName, output, outputStore, callback);
   }
 
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException {

@@ -22,39 +22,30 @@ import com.rapleaf.cascading_ext.workflow2.action.CascadingActionBuilder;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-public class EasyWorkflow2 {
-  private static final Logger LOG = Logger.getLogger(EasyWorkflow2.class);
-  private static final int DEFAULT_MAX_CONCURRENCY = 1;
-
-  private String workingDir;
+public class CascadingWorkflowBuilder {
+  private static final Logger LOG = Logger.getLogger(CascadingWorkflowBuilder.class);
 
   private DataStoreBuilder dsBuilder;
   private Set<Step> subSteps = Sets.newHashSet();
 
-  private Map<String, Tap> pipenameToTap;               //  tap which provides input
-  private Multimap<String, DataStore> pipenameToSourceStore; //  stores which are the source for the pipe
-  private Multimap<String, Step> pipenameToParentStep;  //  what step(s) does the pipe depend on
+  private Map<String, Tap> pipenameToTap;                     //  tap which provides input
+  private Multimap<String, DataStore> pipenameToSourceStore;  //  stores which are the source for the pipe
+  private Multimap<String, Step> pipenameToParentStep;        //  what step(s) does the pipe depend on
 
-  private String name;
   private Map<Object, Object> flowProperties;
-  private int checkpoint = 0;
+  private int checkpointCount = 0;
 
-  public EasyWorkflow2(String name, String workingDir) {
-    this(name, workingDir, Maps.newHashMap());
+  public CascadingWorkflowBuilder(String workingDir) {
+    this(workingDir, Maps.newHashMap());
   }
 
-  public EasyWorkflow2(String name, String workingDir, Map<Object, Object> flowProperties) {
-    this.workingDir = workingDir;
+  public CascadingWorkflowBuilder(String workingDir, Map<Object, Object> flowProperties) {
     this.dsBuilder = new DataStoreBuilder(workingDir+"/temp-stores");
-    this.name = name;
     this.flowProperties = Maps.newHashMap(flowProperties);
     this.pipenameToParentStep = HashMultimap.create();
     this.pipenameToSourceStore = HashMultimap.create();
@@ -82,22 +73,14 @@ public class EasyWorkflow2 {
     return new Pipe(name);
   }
 
-  public void bindSink(String name, Pipe output, DataStore outputStore) {
-    bindSink(name, output, outputStore, new EmptyListener());
-  }
-
-  public void bindSink(String stepName, Pipe output, DataStore outputStore, FlowListener callback) {
-    subSteps.add(completeFlows(stepName, Lists.newArrayList(output), Collections.singletonMap(stepName, outputStore), callback));
-  }
-
   //  force a persistent checkpoint
 
   public Pipe addCheckpoint(Pipe endPipe, Fields fields) throws IOException {
-    return addCheckpoint(endPipe, "check" + checkpoint, fields, new EmptyListener());
+    return addCheckpoint(endPipe, getNextStepName(), fields, new EmptyListener());
   }
 
   public Pipe addCheckpoint(Pipe endPipe, Fields fields, FlowListener flowCompletedCallback) throws IOException {
-    return addCheckpoint(endPipe, "check" + checkpoint, fields, flowCompletedCallback);
+    return addCheckpoint(endPipe, getNextStepName(), fields, flowCompletedCallback);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields) throws IOException {
@@ -105,11 +88,11 @@ public class EasyWorkflow2 {
   }
 
   public Pipe addCheckpoint(Pipe endPipe) throws IOException {
-    return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), new EmptyListener());
+    return addCheckpoint(endPipe, getNextStepName(), determineOutputFields(endPipe), new EmptyListener());
   }
 
   public Pipe addCheckpoint(Pipe endPipe, FlowListener flowCompletedCallback) throws IOException {
-    return addCheckpoint(endPipe, "check" + checkpoint, determineOutputFields(endPipe), flowCompletedCallback);
+    return addCheckpoint(endPipe, getNextStepName(), determineOutputFields(endPipe), flowCompletedCallback);
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName) throws IOException {
@@ -124,8 +107,7 @@ public class EasyWorkflow2 {
     LOG.info("determined output fields to be " + fields + " for step " + checkpointName);
     TupleDataStore checkpointStore = dsBuilder.getTupleDataStore(checkpointName, fields);
 
-    Step step = completeFlows(checkpointName, Lists.newArrayList(endPipe),
-        Collections.<String, DataStore>singletonMap(endPipe.getName(), checkpointStore), flowListener);
+    Step step = completeFlows(checkpointName, Lists.newArrayList(new SinkBinding(endPipe, checkpointStore)), flowListener);
 
     String nextPipeName = "tail-" + checkpointName;
 
@@ -134,56 +116,80 @@ public class EasyWorkflow2 {
     pipenameToSourceStore.put(nextPipeName, checkpointStore);
     pipenameToTap.put(nextPipeName, checkpointStore.getTap());
 
-    Pipe pipe = new Pipe(nextPipeName);
-    checkpoint++;
-    return pipe;
+    return new Pipe(nextPipeName);
   }
-
 
   //  build the workflow or multi step action
 
-  public WorkflowRunner buildWorkflow() {
-    return buildWorkflow(new WorkflowRunnerOptions().setMaxConcurrentSteps(DEFAULT_MAX_CONCURRENCY));
+  public Step buildTail(Pipe output, DataStore outputStore) {
+    return buildTail(getNextStepName(), output, outputStore);
   }
 
-  public WorkflowRunner buildWorkflow(WorkflowRunnerOptions options){
-    analyze();
-    return new WorkflowRunner(name, workingDir + "/checkpoints", options, subSteps);
+  public Step buildTail(String tailStepName, Pipe output, DataStore outputStore) {
+    return buildTail(tailStepName, Lists.newArrayList(new SinkBinding(output, outputStore)), new EmptyListener());
   }
 
-  public Step buildStep(String stepName) {
-    analyze();
-    return new Step(new MultiStepAction(stepName, subSteps));
+  public Step buildTail(String tailStepName, Pipe output, DataStore outputStore, FlowListener listener) {
+    return buildTail(tailStepName, Lists.newArrayList(new SinkBinding(output, outputStore)), listener);
   }
 
+  public Step buildTail(String tailStepName, List<SinkBinding> sinks) {
+    return buildTail(tailStepName, sinks, new EmptyListener());
+  }
+
+  public Step buildTail(String tailStepName, List<SinkBinding> sinks, FlowListener listener) {
+    Step tail = completeFlows(tailStepName, sinks, listener);
+
+    List<Step> steps = Lists.newArrayList(subSteps);
+    steps.add(tail);
+    analyze(steps);
+
+    return tail;
+  }
 
   //  internal stuff
 
-  private Step completeFlows(String name, List<Pipe> endPipes, Map<String, DataStore> sinkStores, FlowListener flowListener) {
+  private String getNextStepName(){
+    return "step-"+(checkpointCount++);
+  }
+
+  private Step completeFlows(String name, List<SinkBinding> sinkBindings, FlowListener flowListener) {
     CascadingActionBuilder builder = new CascadingActionBuilder();
     Map<String, Tap> sources = Maps.newHashMap();
     Map<String, Tap> sinks = Maps.newHashMap();
+    List<DataStore> sinkStores = Lists.newArrayList();
 
     Set<DataStore> inputs = Sets.newHashSet();
     List<Step> previousSteps = Lists.newArrayList();
+    List<Pipe> pipes = Lists.newArrayList();
 
-    for (Entry<String, DataStore> entry : sinkStores.entrySet()) {
-      sinks.put(entry.getKey(), entry.getValue().getTap());
+    for (SinkBinding sinkBinding : sinkBindings) {
+      Pipe pipe = sinkBinding.getPipe();
+      DataStore dataStore = sinkBinding.getOutputStore();
+      Pipe[] heads = pipe.getHeads();
+
+      String pipeName = pipe.getName();
+      if(sinks.containsKey(pipeName)){
+        throw new RuntimeException("Pipe with name "+ pipeName +" already exists!");
+      }
+
+      sinks.put(pipeName, dataStore.getTap());
+
+      sources.putAll(createSourceMap(heads));
+      inputs.addAll(getInputStores(heads));
+      previousSteps.addAll(getPreviousSteps(heads));
+
+      sinkStores.add(dataStore);
+      pipes.add(pipe);
     }
 
-    for (Pipe endPipe : endPipes) {
-      sources.putAll(createSourceMap(endPipe.getHeads()));
-      inputs.addAll(getInputStores(endPipe.getHeads()));
-      previousSteps.addAll(getPreviousSteps(endPipe.getHeads()));
-    }
-
-    CascadingAction action = builder.setName(name + ":" + name)
+    CascadingAction action = builder.setName(name)
         .setCheckpoint(name)
         .addInputStores(Lists.newArrayList(inputs))
-        .addOutputStores(Lists.newArrayList(sinkStores.values()))
+        .addOutputStores(Lists.newArrayList(sinkStores))
         .setSources(sources)
         .setSinks(sinks)
-        .addTails(endPipes.toArray(new Pipe[endPipes.size()]))
+        .addTails(pipes.toArray(new Pipe[pipes.size()]))
         .addFlowProperties(flowProperties)
         .setFlowListener(flowListener)
         .build();
@@ -191,15 +197,15 @@ public class EasyWorkflow2 {
     return new Step(action, previousSteps);
   }
 
-  private void analyze() {
+  private static void analyze(List<Step> steps) {
 
     StringBuilder logMessage = new StringBuilder("\n==================================\n");
-    logMessage.append("Your workflow will require ").append(subSteps.size()).append(" actions\n");
+    logMessage.append("Your workflow will require ").append(steps.size()).append(" actions\n");
     int numSteps = 0;
     int maps = 0;
     int reduces = 0;
 
-    for (Step subStep : subSteps) {
+    for (Step subStep : steps) {
       if (subStep.getAction() instanceof CascadingAction) {
         Flow flow = ((CascadingAction) subStep.getAction()).getFlow();
         numSteps += flow.getFlowStats().getStepsCount();
