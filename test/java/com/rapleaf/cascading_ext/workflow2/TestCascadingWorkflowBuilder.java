@@ -31,7 +31,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TestEasyWorkflow2 extends CascadingExtTestCase {
+public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
   private TupleDataStore input;
   private TupleDataStore input2;
