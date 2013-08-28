@@ -10,20 +10,26 @@ import org.apache.hadoop.fs.TrashPolicyDefault;
 import java.io.IOException;
 
 public class TrashHelper {
-  public static void moveToTrash(FileSystem fs, Path path) throws IOException {
-    if(!Trash.moveToAppropriateTrash(fs, path, CascadingHelper.get().getJobConf())){
+  public static boolean moveToTrash(FileSystem fs, Path path) throws IOException {
+    boolean move = Trash.moveToAppropriateTrash(fs, path, CascadingHelper.get().getJobConf());
+    if(!move){
       throw new RuntimeException("Trash disabled or path already in trash: " + path);
     }
+
+    return true;
   }
 
-  public static void deleteUsingTrashIfEnabled(FileSystem fs, Path path) throws IOException {
+  public static boolean deleteUsingTrashIfEnabled(FileSystem fs, Path path) throws IOException {
     if(fs.exists(path)){
       if(isEnabled()){
-        moveToTrash(fs, path);
+        return moveToTrash(fs, path);
       }else{
-        fs.delete(path, true);
+        return fs.delete(path, true);
       }
     }
+
+    //  if it wasn't there, consider it a success
+    return true;
   }
 
   public static boolean isEnabled() throws IOException {
