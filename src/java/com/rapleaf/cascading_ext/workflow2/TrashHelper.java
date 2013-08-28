@@ -6,10 +6,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.Trash;
 import org.apache.hadoop.fs.TrashPolicyDefault;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
 public class TrashHelper {
+  private static final Logger LOG = Logger.getLogger(TrashHelper.class);
+
   public static boolean moveToTrash(FileSystem fs, Path path) throws IOException {
     boolean move = Trash.moveToAppropriateTrash(fs, path, CascadingHelper.get().getJobConf());
     if(!move){
@@ -22,8 +25,10 @@ public class TrashHelper {
   public static boolean deleteUsingTrashIfEnabled(FileSystem fs, Path path) throws IOException {
     if(fs.exists(path)){
       if(isEnabled()){
+        LOG.info("Moving to trash: " + path);
         return moveToTrash(fs, path);
       }else{
+        LOG.info("Deleting: " + path);
         return fs.delete(path, true);
       }
     }
