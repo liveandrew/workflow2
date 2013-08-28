@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import com.rapleaf.cascading_ext.workflow2.TrashHelper;
 import org.apache.hadoop.fs.Path;
 
 import com.rapleaf.cascading_ext.workflow2.Action;
@@ -15,6 +16,6 @@ public class ReleaseLock extends Action {
   
   @Override
   protected void execute() throws Exception {
-    FileSystemHelper.getFS().delete(new Path(pathToLock), true);
+    TrashHelper.deleteUsingTrashIfEnabled(FileSystemHelper.getFS(), new Path(pathToLock));
   }
 }

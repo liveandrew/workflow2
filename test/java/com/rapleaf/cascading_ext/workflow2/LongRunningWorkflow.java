@@ -129,7 +129,6 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
 
   public void testIt() throws IOException {
     Step tail = getTailStep();
-    getFS().delete(new Path(LONG_RUNNING_WORKFLOW_PATH), true);
     WorkflowRunner wfr = new WorkflowRunner("Long Running Test Workflow",
       LONG_RUNNING_WORKFLOW_PATH, 3, 34627, tail);
 
