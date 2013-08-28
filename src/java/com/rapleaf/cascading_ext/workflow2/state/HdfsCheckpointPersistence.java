@@ -97,12 +97,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
       try{
         if (deleteCheckpointsOnSuccess) {
           LOG.debug("Deleting checkpoint dir " + checkpointDir);
-          Path path = new Path(checkpointDir);
-          if(TrashHelper.isEnabled()){
-            TrashHelper.moveToTrash(fs, path);
-          }else{
-            fs.delete(path, true);
-          }
+          TrashHelper.deleteUsingTrashIfEnabled(fs, new Path(checkpointDir));
         }
       }catch(Exception e){
         throw new RuntimeException(e);
