@@ -4,7 +4,7 @@ import com.google.common.collect.Maps;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.workflow_service.generated.*;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.cascading_ext.workflow2.TrashHelper;
+import com.liveramp.cascading_ext.fs.TrashHelper;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;

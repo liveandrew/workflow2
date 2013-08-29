@@ -1,6 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import com.rapleaf.cascading_ext.workflow2.TrashHelper;
+import com.liveramp.cascading_ext.fs.TrashHelper;
 import org.apache.hadoop.fs.Path;
 
 import com.rapleaf.cascading_ext.workflow2.Action;
