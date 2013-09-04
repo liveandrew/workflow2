@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -27,8 +28,8 @@ public class TestMultiStepAction extends CascadingExtTestCase {
     public void execute() {}
   }
 
-  public void setUp() throws Exception {
-    super.setUp();
+  @Before
+  public void prepare() throws Exception {
 
     msa = new MultiStepAction("msa", getTestRoot());
 
