@@ -1,7 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.operation.Insert;
-import cascading.pipe.CoGroup;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 import cascading.pipe.assembly.Retain;
@@ -15,6 +14,8 @@ import com.rapleaf.cascading_ext.assembly.FastSum;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 
@@ -25,8 +26,9 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
   private TupleDataStore output;
   private TupleDataStore output2;
 
-  public void setUp() throws Exception {
-    super.setUp();
+  @Before
+  public void prepare() throws Exception {
+
     DataStoreBuilder builder = new DataStoreBuilder(getTestRoot() + "/insAndOuts");
     input = builder.getTupleDataStore("input", new Fields("field1", "field2"));
     input2 = builder.getTupleDataStore("input2", new Fields("field3"));
@@ -54,6 +56,7 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
     );
   }
 
+  @Test
   public void testStraightPipe() throws IOException {
 
     String workingDir = getTestRoot() + "/e-workflow";
@@ -65,7 +68,7 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
     workflow.addSinkTap("final", output.getTap());
 
     Pipe pipe = new Pipe("pipe");
-    pipe = new Each(pipe, new Insert(new Fields("field3"), new Integer(3)), Fields.ALL);
+    pipe = new Each(pipe, new Insert(new Fields("field3"), 3), Fields.ALL);
     pipe = new Increment(pipe, "Test", "Tuples");
     pipe = workflow.addCheckpoint(pipe);
 
@@ -86,6 +89,7 @@ public class TestEasyWorkflow extends CascadingExtTestCase {
     runner.run();
   }
 
+  @Test
   public void testMultiSourcePipes() throws Exception {
     String workingDir = getTestRoot() + "/e-workflow";
     EasyWorkflow workflow = EasyWorkflow.create("Test Workflow", workingDir);

@@ -1,11 +1,14 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
-import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import org.apache.hadoop.fs.Path;
+import org.junit.Test;
 
 import java.io.IOException;
+
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 
 public class TestAction extends CascadingExtTestCase {
   public class ExampleAction extends Action {
@@ -21,6 +24,7 @@ public class TestAction extends CascadingExtTestCase {
     }
   }
 
+  @Test
   public void testDeletesCreatesAndTemp() throws Exception {
     Path dir1Path = new Path(getTestRoot() + "/dir1");
     getFS().mkdirs(dir1Path);

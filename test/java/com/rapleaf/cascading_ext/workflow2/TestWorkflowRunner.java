@@ -6,6 +6,7 @@ import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.support.event_timer.TimedEvent;
 import org.apache.hadoop.fs.Path;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -43,8 +44,8 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   private final String checkpointDir = getTestRoot() + "/checkpoints";
 
-  public void setUp() throws Exception {
-    super.setUp();
+  @Before
+  public void prepare() throws Exception {
     IncrementAction.counter = 0;
   }
 
@@ -180,10 +181,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     WorkflowRunner testWorkflow = new WorkflowRunner("", checkpointDir,
         new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
         top);
-
     testWorkflow.run();
-
-    executeWorkflow(top);
 
     assertTrue(testWorkflow.getTimer() != null);
 
