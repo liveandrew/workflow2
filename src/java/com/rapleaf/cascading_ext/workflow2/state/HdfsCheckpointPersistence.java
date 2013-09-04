@@ -23,7 +23,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private final Map<String, StepExecuteStatus> statuses = Maps.newHashMap();
   private ExecuteStatus currentStatus;
 
-  public HdfsCheckpointPersistence(String checkpointDir){
+  public HdfsCheckpointPersistence(String checkpointDir) {
     this(checkpointDir, true);
   }
 
@@ -32,11 +32,11 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     this.deleteCheckpointsOnSuccess = deleteOnSuccess;
     this.fs = FileSystemHelper.getFS();
 
-    try{
-      for(FileStatus status: FileSystemHelper.safeListStatus(fs, new Path(checkpointDir))){
+    try {
+      for (FileStatus status : FileSystemHelper.safeListStatus(fs, new Path(checkpointDir))) {
         statuses.put(status.getPath().getName(), StepExecuteStatus.skipped(new StepSkippedMeta()));
       }
-    }catch(Exception e){
+    } catch (Exception e) {
       throw new RuntimeException("Error reading from checkpoint directory!", e);
     }
 
@@ -44,7 +44,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public Map<String, StepExecuteStatus> getAllStepStatuses(){
+  public Map<String, StepExecuteStatus> getAllStepStatuses() {
     return statuses;
   }
 
@@ -53,7 +53,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     String checkpoint = step.getCheckpointToken();
 
     //  if we know the status, return it
-    if(!statuses.containsKey(checkpoint)){
+    if (!statuses.containsKey(checkpoint)) {
       //  we haven't seen it before, it's waiting
       statuses.put(checkpoint, StepExecuteStatus.waiting(new StepWaitingMeta()));
     }
@@ -68,16 +68,16 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
   @Override
   public void updateStatus(Step step, StepExecuteStatus status) throws IOException {
-    LOG.info("Noting new status for step "+step.getCheckpointToken()+": "+status);
+    LOG.info("Noting new status for step " + step.getCheckpointToken() + ": " + status);
 
-    if(status.isSetCompleted()){
+    if (status.isSetCompleted()) {
       LOG.info("Writing out checkpoint token for " + step.getCheckpointToken());
       String tokenPath = checkpointDir + "/" + step.getCheckpointToken();
       if (!fs.createNewFile(new Path(tokenPath))) {
         throw new IOException("Couldn't create checkpoint file " + tokenPath);
       }
       LOG.debug("Done writing checkpoint token for " + step.getCheckpointToken());
-    }else if(status.isSetFailed()){
+    } else if (status.isSetFailed()) {
       currentStatus = ExecuteStatus.active(new ActiveState(ActiveStatus.failPending(new FailMeta())));
     }
 
@@ -93,13 +93,13 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   @Override
   public void setStatus(ExecuteStatus status) {
     currentStatus = status;
-    if(status.isSetComplete()){
-      try{
+    if (status.isSetComplete()) {
+      try {
         if (deleteCheckpointsOnSuccess) {
           LOG.debug("Deleting checkpoint dir " + checkpointDir);
           TrashHelper.deleteUsingTrashIfEnabled(fs, new Path(checkpointDir));
         }
-      }catch(Exception e){
+      } catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
