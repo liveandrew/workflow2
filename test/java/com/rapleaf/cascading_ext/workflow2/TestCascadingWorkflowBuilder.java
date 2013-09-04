@@ -25,11 +25,16 @@ import com.rapleaf.types.new_person_data.DataUnit;
 import com.rapleaf.types.new_person_data.DataUnitValueUnion._Fields;
 import com.rapleaf.types.person_data.GenderType;
 import org.apache.thrift.TException;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
@@ -62,8 +67,8 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
       new Tuple("red")
   );
 
-  public void setUp() throws Exception {
-    super.setUp();
+  @Before
+  public void prepare() throws Exception {
     DataStoreBuilder builder = new DataStoreBuilder(getTestRoot() + "/insAndOuts");
     input = builder.getTupleDataStore("input", new Fields("field1", "field2"));
     input2 = builder.getTupleDataStore("input2", new Fields("field3"));
@@ -72,6 +77,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     TupleDataStoreHelper.writeToStore(input2,TUPLES2);
   }
 
+  @Test
   public void testStraightPipe() throws IOException {
     TupleDataStore store1 = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1", "sum"));
     TupleDataStore store2 = builder().getTupleDataStore(getTestRoot() + "/store2", new Fields("field1", "sum"));
@@ -115,6 +121,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     assertCollectionEquivalent(TUPLE_SUMS, allTuples2);
   }
 
+  @Test
   public void testMultiSourcePipes() throws Exception {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1"));
 
@@ -123,6 +130,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     assertEquals(TUPLE_NAMES, HRap.getAllTuples(output.getTap()));
   }
 
+  @Test
   public void testBuildStep() throws IOException {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1"));
 
@@ -131,6 +139,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     assertEquals(TUPLE_NAMES, HRap.getAllTuples(output.getTap()));
   }
 
+  @Test
   public void testTapVsDs() throws IOException, TException {
 
     SplitBucketDataStore<DataUnit, _Fields> inputSplit =
@@ -161,6 +170,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
   }
 
+  @Test
   public void testCallback() throws IOException {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1", "field2"));
     CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");

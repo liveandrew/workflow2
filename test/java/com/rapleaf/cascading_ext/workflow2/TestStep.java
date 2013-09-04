@@ -1,8 +1,13 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import org.junit.Test;
+
+import static junit.framework.Assert.fail;
 
 public class TestStep extends CascadingExtTestCase {
+
+  @Test
   public void testDoesntAcceptNullDeps() {
     try {
       new Step(new NullAction("1"), (Step)null);

@@ -14,11 +14,14 @@ import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
 
@@ -104,6 +107,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     assertCollectionEquivalent(data, HRap.getAllTuples(output1.getTap()));
   }
 
+  @Test
   public void testCheckTailNames() throws IOException {
 
     final TupleDataStore input = builder().getTupleDataStore("input", new Fields("field"));

@@ -1,5 +1,13 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import com.rapleaf.cascading_ext.datastore.BytesDataStore;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram.Vertex;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,13 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
-import com.rapleaf.cascading_ext.datastore.BytesDataStore;
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram.Vertex;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertEquals;
 
 public class TestWorkflowDiagram extends CascadingExtTestCase {
 
@@ -35,6 +39,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
       try {
         Thread.sleep(1000000L);
       } catch (InterruptedException e) {
+        // no-op
       }
     }
   }
@@ -48,6 +53,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   private Map<String, Vertex> idToVertex;
   DirectedGraph<Vertex, DefaultEdge> graph;
 
+  @Test
   public void testVerifyNoOrphanedTailStep() throws Exception {
     DataStore ds = getFakeDS("ds");
 
@@ -57,6 +63,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     assertTrue(WorkflowDiagram.getOrphanedTailSteps(Collections.singleton(s3)).isEmpty());
   }
 
+  @Test
   public void testVerifyNoOrphanedTailStepWithMultistep() throws Exception {
     DataStore ds = getFakeDS("ds");
 
@@ -68,6 +75,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     assertTrue(orphans.isEmpty());
   }
 
+  @Test
   public void testVerifyNoOrphanedTailStepWithMultistepTail() throws Exception {
     DataStore ds = getFakeDS("ds");
 
@@ -78,6 +86,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     assertTrue(orphans.isEmpty());
   }
 
+  @Test
   public void testDiagramWithDSCyclesSimple() throws Exception {
     DataStore ds = getFakeDS("ds");
 
@@ -94,6 +103,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("step", "ds__step");
   }
 
+  @Test
   public void testDiagramWithDSCyclesComplex() throws Exception {
     DataStore d1 = getFakeDS("d1");
     DataStore d2 = getFakeDS("d2");
@@ -135,6 +145,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s4", "d1__s4");
   }
 
+  @Test
   public void testComplexNestedAllContracted() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
@@ -160,6 +171,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s6", "s7");
   }
 
+  @Test
   public void testComplexNestedVertexS5Expanded() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
@@ -194,6 +206,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s6", "s7");
   }
 
+  @Test
   public void testComplexNestedAllExpanded() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
@@ -235,6 +248,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("s6", "s7");
   }
 
+  @Test
   public void testComplexNestedAllContractedWithDSs() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
@@ -279,6 +293,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("d7", "s7");
   }
 
+  @Test
   public void testComplexNestedAllExpandedWithDSs() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
@@ -348,6 +363,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     verifyEdgeInGraph("d3__s5__1__1", "s5__1__2");
   }
 
+  @Test
   public void testNoOrphanedTails() throws Exception {
     Step realTail = getComplexNestedWorkflowTail();
     Set<Step> allSteps = WorkflowDiagram.reachableSteps(Collections.singleton(realTail));
@@ -398,10 +414,9 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     Step s5 = new Step(new FakeMultistepAction("s5", new Step[]{s5_1, s5_2, s5_3, s5_4}), s2, s3);
 
     Step s6 = new Step(new FakeAction("s6", new DataStore[]{d5, d6}, new DataStore[]{d7}), s5);
-    Step s7 = new Step(new FakeAction("s7", new DataStore[]{d1, d4, d7}, new DataStore[0]), s4,
-      s6);
 
-    return s7;
+    return new Step(new FakeAction("s7", new DataStore[]{d1, d4, d7}, new DataStore[0]), s4,
+      s6);
   }
 
   private void setupWorkflowGraph(WorkflowDiagram wfd) {
@@ -420,8 +435,9 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   }
 
   private WorkflowDiagram getWorkflowDiagramFromTails(Step first, Step... rest) {
-    WorkflowRunner wfr = new WorkflowRunner("Test Workflow", getTestRoot() + "/test_workflow", 1,
-      12345, first, rest);
+    WorkflowRunner wfr = new WorkflowRunner("Test Workflow", getTestRoot() + "/test_workflow",
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
+        first, rest);
     return new WorkflowDiagram(wfr);
   }
 

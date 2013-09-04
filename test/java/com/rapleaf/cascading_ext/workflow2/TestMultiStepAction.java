@@ -1,17 +1,19 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.HashSet;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertEquals;
 
 public class TestMultiStepAction extends CascadingExtTestCase {
   private Step a;
   private Step b;
   private Step g;
-  private Step c ;
   private Step d;
-  private Step e;
   private Step f;
   
   private MultiStepAction msa;
@@ -32,15 +34,16 @@ public class TestMultiStepAction extends CascadingExtTestCase {
 
     b = new Step(new NullAction2("b", msa.getTmpRoot()));
     a = new Step(new NullAction2("a", msa.getTmpRoot()));
-    c = new Step(new NullAction2("c", msa.getTmpRoot()), a);
+    Step c = new Step(new NullAction2("c", msa.getTmpRoot()), a);
     d = new Step(new NullAction2("d", msa.getTmpRoot()), a, b);
-    e = new Step(new NullAction2("e", msa.getTmpRoot()), b);
+    Step e = new Step(new NullAction2("e", msa.getTmpRoot()), b);
     f = new Step(new NullAction2("f", msa.getTmpRoot()), c, e);
     g = new Step(new NullAction2("g", msa.getTmpRoot()));
 
     msa.setSubSteps(Arrays.asList(a, b, c, d, e, f, g));
   }
-  
+
+  @Test
   public void testGetHeadSteps() throws Exception {
 
     //  assert that the tmp root is set
@@ -50,10 +53,12 @@ public class TestMultiStepAction extends CascadingExtTestCase {
     assertEquals(new HashSet<Step>(Arrays.asList(a, b, g)), msa.getHeadSteps());
   }
 
+  @Test
   public void testGetTailSteps() throws Exception {
     assertEquals(new HashSet<Step>(Arrays.asList(d, f, g)), msa.getTailSteps());
   }
 
+  @Test
   public void testNoDuplicateTokens() throws Exception {
     try {
       new MultiStepAction("blah", Arrays.asList(a, a));

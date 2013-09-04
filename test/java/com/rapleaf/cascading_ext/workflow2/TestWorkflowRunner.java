@@ -1,15 +1,19 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.tap.Tap;
+import com.google.common.collect.Sets;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEvent;
-import com.rapleaf.support.event_timer.TimedEventWithChildren;
 import org.apache.hadoop.fs.Path;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertEquals;
 
 public class TestWorkflowRunner extends CascadingExtTestCase {
 
@@ -44,20 +48,23 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     IncrementAction.counter = 0;
   }
 
+  @Test
   public void testSimple() throws Exception {
     Step first = new Step(new IncrementAction("first"));
     Step second = new Step(new IncrementAction("second"), first);
-    new WorkflowRunner("test", checkpointDir, 1, null, second).run();
+
+    executeWorkflow(second);
 
     assertEquals(2, IncrementAction.counter);
   }
 
+  @Test
   public void testWritesCheckpoints() throws Exception {
     Step first = new Step(new IncrementAction("first"));
     Step second = new Step(new FailingAction("second"), first);
 
     try {
-      new WorkflowRunner("test", checkpointDir, 1, null, second).run();
+      executeWorkflow(second);
       fail("should have failed!");
     } catch (Exception e) {
       // expected
@@ -67,52 +74,69 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertTrue(getFS().exists(new Path(checkpointDir + "/first")));
   }
 
+  @Test
   public void testResume() throws Exception {
     Step first = new Step(new IncrementAction("first"));
     Step second = new Step(new IncrementAction("second"), first);
 
     getFS().createNewFile(new Path(checkpointDir + "/first"));
 
-    new WorkflowRunner("test", checkpointDir, 1, null, second).run();
+    new WorkflowRunner("test", checkpointDir,
+        new WorkflowRunnerOptions()
+            .setMaxConcurrentSteps(1),
+        second).run();
 
     assertEquals(1, IncrementAction.counter);
   }
 
+  @Test
   public void testLoneMultiStepAction() throws Exception {
     // lone multi
     Step s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(
         new IncrementAction("blah")))));
-    new WorkflowRunner("", checkpointDir, 1, null, s).run();
+
+    executeWorkflow(s);
+
     assertEquals(1, IncrementAction.counter);
   }
 
+  @Test
   public void testMultiInTheMiddle() throws Exception {
     Step s = new Step(new IncrementAction("first"));
     s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
     s = new Step(new IncrementAction("last"), s);
-    new WorkflowRunner("", checkpointDir, 1, null, s).run();
+
+    executeWorkflow(s);
+
     assertEquals(3, IncrementAction.counter);
   }
 
+  @Test
   public void testMultiAtTheEnd() throws Exception {
     Step s = new Step(new IncrementAction("first"));
     s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
-    new WorkflowRunner("", checkpointDir, 1, null, s).run();
+
+    executeWorkflow(s);
+
     assertEquals(2, IncrementAction.counter);
   }
 
+  @Test
   public void testMultiInMultiEnd() throws Exception {
     Step s = new Step(new IncrementAction("first"));
     // please, never do this in real code
     s = new Step(new MultiStepAction("depth 1", Arrays.asList(new Step(new MultiStepAction(
         "depth 2", Arrays.asList(new Step(new IncrementAction("blah"))))))), s);
     s = new Step(new IncrementAction("last"), s);
-    new WorkflowRunner("", checkpointDir, 1, null, s).run();
+
+    executeWorkflow(s);
+
     assertEquals(3, IncrementAction.counter);
   }
 
+  @Test
   public void testMulitInMultiMiddle() throws Exception {
     Step b = new Step(new IncrementAction("b"));
     Step innermost = new Step(new MultiStepAction("innermost", Arrays.asList(new Step(
@@ -123,22 +147,26 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     Step outer = new Step(new MultiStepAction("outer", Arrays.asList(b, innermost, d)), a);
 
-    new WorkflowRunner("", checkpointDir, 1, null, outer).run();
+    executeWorkflow(outer);
 
     assertEquals(4, IncrementAction.counter);
   }
 
+  @Test
   public void testDuplicateCheckpoints() throws Exception {
     try {
-      new WorkflowRunner("", checkpointDir, 1, null, new Step(new IncrementAction("a")), new Step(
-          new IncrementAction("a")));
+      executeWorkflow(Sets.<Step>newHashSet(
+          new Step(new IncrementAction("a")),
+          new Step(new IncrementAction("a"))),
+          checkpointDir);
+
       fail("should have thrown an exception");
     } catch (IllegalArgumentException e) {
       // expected
     }
   }
 
-
+  @Test
   public void testTimingMultiStep() throws Exception {
 
     Step bottom1 = new Step(new IncrementAction("bottom1"));
@@ -149,22 +177,20 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     Step top = new Step(new MultiStepAction("Tom's first test dude", Arrays.asList(multiMiddle, flatMiddle)));
 
-    WorkflowRunner testWorkflow = new WorkflowRunner("", checkpointDir, 1, null, top);
+    WorkflowRunner testWorkflow = new WorkflowRunner("", checkpointDir,
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
+        top);
 
     testWorkflow.run();
 
-    assertTrue(testWorkflow.getTimer() instanceof EventTimer);
+    executeWorkflow(top);
+
+    assertTrue(testWorkflow.getTimer() != null);
 
     // Goal here is to detect whether nested MultiTimedEvents ever have "-1"s in their timing and to FAIL if this occurs.
 
-    EventTimer timer = testWorkflow.getTimer();
-
-    TimedEventWithChildren topTimer = (TimedEventWithChildren) timer;
-
     // Assert that none of the timer.EventStartTime values are -1
-
-    //    System.out.println("TOP:");
-    assertTrue(topTimer.getEventStartTime() != -1);
+    assertTrue(testWorkflow.getTimer().getEventStartTime() != -1);
 
     TimedEvent middleTimer = multiMiddle.getTimer();
     TimedEvent flatMiddleTimer = flatMiddle.getTimer();
@@ -181,10 +207,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertTrue(bottom2Timer.getEventStartTime() != -1);
   }
 
-
+  @Test
   public void testSandboxDir() throws Exception {
     try {
-      WorkflowRunner wfr = new WorkflowRunner("", checkpointDir, 1, null,
+      WorkflowRunner wfr = new WorkflowRunner("", checkpointDir,
+          new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
           fakeStep("a", "/fake/EVIL/../path"),
           fakeStep("b", "/path/of/fakeness"));
       wfr.setSandboxDir("//fake/path");
@@ -196,7 +223,8 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
 
     try {
-      WorkflowRunner wfr = new WorkflowRunner("", checkpointDir, 1, null,
+      WorkflowRunner wfr = new WorkflowRunner("", checkpointDir,
+          new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
           fakeStep("a", "/fake/EVIL/../path"),
           fakeStep("b", "/fake/./path"));
       wfr.setSandboxDir("//fake/path");
