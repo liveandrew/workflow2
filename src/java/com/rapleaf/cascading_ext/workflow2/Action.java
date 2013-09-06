@@ -118,6 +118,7 @@ public abstract class Action {
     return (t instanceof RuntimeException) ? (RuntimeException)t : new RuntimeException(t);
   }
 
+  @SuppressWarnings("PMD.BlacklistedMethods") //  temporary hopefully, until we get more cluster space
   private void prepDirs() throws Exception {
     FileSystem fs = FileSystemHelper.getFS();
     for (Set<DataStore> datastores : Arrays.asList(createsDatastores, createsTemporaryDatastores)) {
