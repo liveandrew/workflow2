@@ -3,9 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
-import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.datastore.HankDataStore;
-import com.rapleaf.cascading_ext.workflow2.Action;
+import com.beust.jcommander.internal.Maps;
 import com.liveramp.hank.cascading.CascadingDomainBuilder;
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.coordinator.Coordinator;
@@ -14,9 +12,11 @@ import com.liveramp.hank.coordinator.RunWithCoordinator;
 import com.liveramp.hank.coordinator.RunnableWithCoordinator;
 import com.liveramp.hank.hadoop.DomainBuilderProperties;
 import com.liveramp.hank.storage.incremental.IncrementalDomainVersionProperties;
+import com.rapleaf.cascading_ext.CascadingHelper;
+import com.rapleaf.cascading_ext.datastore.HankDataStore;
+import com.rapleaf.cascading_ext.workflow2.Action;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class HankDomainBuilderAction extends Action {
@@ -42,12 +42,22 @@ public abstract class HankDomainBuilderAction extends Action {
                                  HankVersionType versionType,
                                  CoordinatorConfigurator configurator,
                                  HankDataStore output) {
+    this(checkpointToken, tmpRoot, versionType, configurator, output, Maps.newHashMap());
+  }
+
+  public HankDomainBuilderAction(String checkpointToken,
+                                 String tmpRoot,
+                                 HankVersionType versionType,
+                                 CoordinatorConfigurator configurator,
+                                 HankDataStore output,
+                                 Map<Object, Object> properties) {
     super(checkpointToken, tmpRoot);
     this.versionType = versionType;
     this.configurator = configurator;
     this.output = output;
-    this.properties = new HashMap<Object, Object>();
+    this.properties = properties;
   }
+
 
   private static class IncrementalDomainVersionPropertiesDeltaGetter implements RunnableWithCoordinator {
 
