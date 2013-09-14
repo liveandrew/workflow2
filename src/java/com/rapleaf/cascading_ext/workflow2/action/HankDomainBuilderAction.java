@@ -3,7 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
-import com.beust.jcommander.internal.Maps;
+import com.google.common.collect.Maps;
 import com.liveramp.hank.cascading.CascadingDomainBuilder;
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.coordinator.Coordinator;
