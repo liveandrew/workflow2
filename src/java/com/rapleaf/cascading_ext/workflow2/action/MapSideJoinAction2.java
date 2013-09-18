@@ -1,6 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import com.google.common.collect.Maps;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
@@ -40,12 +39,6 @@ public class MapSideJoinAction2<T extends Comparable> extends Action {
     }
 
     creates(outputStore);
-
-    setUp();
-  }
-
-  // override in anonymous classes
-  protected void setUp() {
   }
 
   protected void addExtractors(List<? extends Extractor<T>> extractors) {
