@@ -9,11 +9,13 @@ import cascading.tuple.Tuple;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.liveramp.cascading_ext.assembly.Increment;
+import com.liveramp.collections.list.ListBuilder;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
+import com.rapleaf.cascading_ext.function.ExpandThrift;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.formats.test.ThriftBucketHelper;
@@ -105,11 +107,45 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
       Pipe input = bindMSJ("msj-source", Lists.newArrayList(
           new SourceMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, store1),
           new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)),
-        new ExampleMultiJoiner());
+          new ExampleMultiJoiner());
 
       input = new Increment(input, "COUNTER", "INCREMENT");
 
       complete("mjs-plus-cascading", input, output);
+    }
+  }
+
+  public static class MidMSJAction extends CheckpointedCascadingAction2 {
+
+    public MidMSJAction(String checkpointToken,
+                        BucketDataStore store1,
+                        BucketDataStore store2,
+                        BucketDataStore sink,
+                        String tmpRoot, Map<Object, Object> flowProperties) throws IOException {
+      super(checkpointToken, tmpRoot, flowProperties);
+
+      Pipe pipe1 = bindSource("pipe1", store1);
+      pipe1 = new Increment(pipe1, "DIES", "COUNT");
+      pipe1 = new Each(pipe1, new Fields("die"),
+          new ExpandThrift(DustinInternalEquiv.class),
+          new Fields("die", "eid"));
+      pipe1 = new GroupBy(pipe1, new Fields("eid"));
+
+      Pipe pipe2 = bindSource("pipe2", store2);
+      pipe2 = new Increment(pipe2, "SUMMS", "COUNT");
+      pipe2 = new Each(pipe2, new Fields("identity-summ"),
+          new ExpandThrift(IdentitySumm.class),
+          new Fields("identity-summ", "eid"));
+      pipe2 = new GroupBy(pipe2, new Fields("eid"));
+
+      Pipe summ = msj("msj-step", new ListBuilder<FlowMSJBinding<BytesWritable>>()
+          .add(new FlowMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, pipe1, "die", DustinInternalEquiv.class))
+          .add(new FlowMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity-summ", IdentitySumm.class)).get(),
+          new ExampleMultiJoiner());
+      summ = new Increment(summ, "AFTER", "COUNT");
+
+      complete("thestep", summ, sink);
+
     }
   }
 
@@ -188,7 +224,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
   public void testMSJ() throws Exception {
 
     BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
-    BucketDataStore<IdentitySumm> store2   = builder().getBucketDataStore("delta", IdentitySumm.class);
+    BucketDataStore<IdentitySumm> store2 = builder().getBucketDataStore("delta", IdentitySumm.class);
     BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
 
     ThriftBucketHelper.writeToBucketAndSort(store1.getBucket(), DIE_EID_COMPARATOR, die1, die3);
@@ -199,5 +235,24 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     assertEquals(new Long(1l), token.getCounterMap().get("COUNTER").get("INCREMENT"));
     assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
 
+  }
+
+  @Test
+  public void testMidMSJ() throws Exception {
+
+    BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
+    BucketDataStore<IdentitySumm> store2   = builder().getBucketDataStore("delta", IdentitySumm.class);
+    BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
+
+    ThriftBucketHelper.writeToBucket(store1.getBucket(), die1, die3);
+    ThriftBucketHelper.writeToBucket(store2.getBucket(), SUMM);
+
+    WorkflowRunner output1 = executeWorkflow(new MidMSJAction("token", store1, store2, output, getTestRoot()+"/tmp", Collections.emptyMap()));
+
+    assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
+    assertEquals(new Long(1), output1.getCounterMap().get("SUMMS").get("COUNT"));
+    assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
+
+    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
   }
 }

@@ -54,6 +54,10 @@ public class CheckpointedCascadingAction2 extends MultiStepAction {
     return workflowHelper.bindMSJ(name, bindings, joiner);
   }
 
+  protected <T extends Comparable> Pipe msj(String name, List<FlowMSJBinding<T>> bindings, TOutputMultiJoiner<T, ?> joiner) throws IOException {
+    return workflowHelper.msj(name, bindings, joiner);
+  }
+
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException {
     return workflowHelper.addCheckpoint(pipe, checkpointName);
   }
