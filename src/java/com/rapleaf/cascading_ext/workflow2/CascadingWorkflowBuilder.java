@@ -14,9 +14,16 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.rapleaf.cascading_ext.HRap;
+import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.msj_tap.MSJTap;
+import com.rapleaf.cascading_ext.msj_tap.MergingScheme;
+import com.rapleaf.cascading_ext.msj_tap.ThriftMergingScheme;
+import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
+import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.workflow2.action.CascadingAction;
 import com.rapleaf.cascading_ext.workflow2.action.CascadingActionBuilder;
 import org.apache.log4j.Logger;
@@ -45,7 +52,7 @@ public class CascadingWorkflowBuilder {
   }
 
   public CascadingWorkflowBuilder(String workingDir, Map<Object, Object> flowProperties) {
-    this.dsBuilder = new DataStoreBuilder(workingDir+"/temp-stores");
+    this.dsBuilder = new DataStoreBuilder(workingDir + "/temp-stores");
     this.flowProperties = Maps.newHashMap(flowProperties);
     this.pipenameToParentStep = HashMultimap.create();
     this.pipenameToSourceStore = HashMultimap.create();
@@ -73,7 +80,53 @@ public class CascadingWorkflowBuilder {
     return new Pipe(name);
   }
 
-  //  force a persistent checkpoint
+  //  MSJ 1+ stores as the input to a flow
+  public <T extends Comparable> Pipe bindMSJ(String name, List<SourceMSJBinding<T>> bindings, TOutputMultiJoiner<T, ?> joiner) {
+
+    List<String> sources = Lists.newArrayList();
+    List<Extractor<T>> extractors = Lists.newArrayList();
+
+    for (SourceMSJBinding<T> binding : bindings) {
+      BucketDataStore store = binding.getStore();
+      sources.add(store.getPath());
+      extractors.add(binding.getExtractor());
+
+      pipenameToSourceStore.put(name, store);
+    }
+
+
+    pipenameToTap.put(name, new MSJTap<T>(new MergingScheme<T>(ThriftBucketScheme.getFieldName(joiner.getOutputType()), null, joiner), sources, extractors));
+
+    return new Pipe(name);
+  }
+
+  public <T extends Comparable> Pipe msj(String name, List<FlowMSJBinding<T>> bindings, TOutputMultiJoiner<T, ?> joiner) throws IOException {
+
+    // take all pipes and sink them to a data store
+
+    List<SourceMSJBinding<T>> sourceMSJBindings = Lists.newArrayList();
+    for (FlowMSJBinding<T> binding : bindings) {
+      String stepName = getNextStepName();
+      BucketDataStore checkpointStore = dsBuilder.getBucketDataStore(stepName+"-sink", binding.getRecordType());
+      Step step = completeFlows(stepName, Lists.newArrayList(new SinkBinding(binding.getPipe(), checkpointStore)), new EmptyListener());
+
+      sourceMSJBindings.add(new SourceMSJBinding<T>(binding.getExtractor(), checkpointStore));
+
+      subSteps.add(step);
+      pipenameToParentStep.put(name, step);
+
+    }
+
+    //  call bindMSJ
+
+    return bindMSJ(name,sourceMSJBindings, joiner);
+  }
+
+  //  TODO if a pipe has nothing done to it, just attach it to the subsequent MSJ (to allow MSJing a store which has
+  //  just been sorted with a previously MSJ compatible datastore in a single flow.  Likewise, if a MSJ is the last step
+  //  in a flow, just sink directly and don't create an empty cascading step
+
+    //  checkpoints
 
   public Pipe addCheckpoint(Pipe endPipe, Fields fields) throws IOException {
     return addCheckpoint(endPipe, getNextStepName(), fields, new EmptyListener());
@@ -149,8 +202,8 @@ public class CascadingWorkflowBuilder {
 
   //  internal stuff
 
-  private String getNextStepName(){
-    return "step-"+(checkpointCount++);
+  private String getNextStepName() {
+    return "step-" + (checkpointCount++);
   }
 
   private Step completeFlows(String name, List<SinkBinding> sinkBindings, FlowListener flowListener) {
@@ -169,8 +222,8 @@ public class CascadingWorkflowBuilder {
       Pipe[] heads = pipe.getHeads();
 
       String pipeName = pipe.getName();
-      if(sinks.containsKey(pipeName)){
-        throw new RuntimeException("Pipe with name "+ pipeName +" already exists!");
+      if (sinks.containsKey(pipeName)) {
+        throw new RuntimeException("Pipe with name " + pipeName + " already exists!");
       }
 
       sinks.put(pipeName, dataStore.getTap());

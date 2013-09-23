@@ -75,6 +75,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     }
   }
 
+  @Test
   public void testIt() throws IOException {
 
     TupleDataStore input = builder().getTupleDataStore("input", new Fields("field"));
@@ -89,6 +90,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     assertCollectionEquivalent(data, HRap.getAllTuples(output.getTap()));
   }
 
+  @Test
   public void testTwoSink() throws IOException {
 
     TupleDataStore input = builder().getTupleDataStore("input", new Fields("field"));
