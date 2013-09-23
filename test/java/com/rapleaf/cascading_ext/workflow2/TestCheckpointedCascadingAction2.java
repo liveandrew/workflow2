@@ -101,12 +101,12 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
                            BucketDataStore<DustinInternalEquiv> store1,
                            BucketDataStore<IdentitySumm> store2,
                            BucketDataStore<IdentitySumm> output,
-                           Map<Object, Object> flowProperties) {
+                           Map<Object, Object> flowProperties) throws IOException {
       super(checkpointToken, tmpRoot, flowProperties);
 
-      Pipe input = bindMSJ("msj-source", Lists.newArrayList(
-          new SourceMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, store1),
-          new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)),
+      Pipe input = msj("msj-source", new ListBuilder<MSJBinding<BytesWritable>>()
+          .add(new SourceMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, store1))
+          .add(new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
           new ExampleMultiJoiner());
 
       input = new Increment(input, "COUNTER", "INCREMENT");
@@ -138,7 +138,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
           new Fields("identity-summ", "eid"));
       pipe2 = new GroupBy(pipe2, new Fields("eid"));
 
-      Pipe summ = msj("msj-step", new ListBuilder<FlowMSJBinding<BytesWritable>>()
+      Pipe summ = msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
           .add(new FlowMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, pipe1, "die", DustinInternalEquiv.class))
           .add(new FlowMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity-summ", IdentitySumm.class)).get(),
           new ExampleMultiJoiner());

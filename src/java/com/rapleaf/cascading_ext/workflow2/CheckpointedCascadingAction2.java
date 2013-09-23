@@ -50,11 +50,7 @@ public class CheckpointedCascadingAction2 extends MultiStepAction {
     return workflowHelper.bindSource(name, inputs);
   }
 
-  protected <T extends Comparable, O extends TBase> Pipe bindMSJ(String name, List<SourceMSJBinding<T>> bindings, TOutputMultiJoiner<T, O> joiner){
-    return workflowHelper.bindMSJ(name, bindings, joiner);
-  }
-
-  protected <T extends Comparable> Pipe msj(String name, List<FlowMSJBinding<T>> bindings, TOutputMultiJoiner<T, ?> joiner) throws IOException {
+  protected <T extends Comparable, O extends TBase> Pipe msj(String name, List<MSJBinding<T>> bindings, TOutputMultiJoiner<T, O> joiner) throws IOException {
     return workflowHelper.msj(name, bindings, joiner);
   }
 

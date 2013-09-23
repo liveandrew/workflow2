@@ -21,7 +21,6 @@ import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
 import com.rapleaf.cascading_ext.msj_tap.MSJTap;
 import com.rapleaf.cascading_ext.msj_tap.MergingScheme;
-import com.rapleaf.cascading_ext.msj_tap.ThriftMergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.workflow2.action.CascadingAction;
@@ -80,13 +79,42 @@ public class CascadingWorkflowBuilder {
     return new Pipe(name);
   }
 
-  //  MSJ 1+ stores as the input to a flow
-  public <T extends Comparable> Pipe bindMSJ(String name, List<SourceMSJBinding<T>> bindings, TOutputMultiJoiner<T, ?> joiner) {
+  public <T extends Comparable> Pipe msj(String name, List<MSJBinding<T>> bindings, TOutputMultiJoiner<T, ?> joiner) throws IOException {
+
+    //  don't really love the instanceof stuff, but we'll just call it a TODO --ben
+    List<SourceMSJBinding<T>> sourceMSJBindings = Lists.newArrayList();
+    for (MSJBinding<T> binding : bindings) {
+
+      //  if the MSJ is coming from a cascading flow, bind it to a datastore so the MSJ can read it
+      if(binding instanceof FlowMSJBinding){
+        FlowMSJBinding<T> flowBinding = (FlowMSJBinding<T>) binding;
+
+        String stepName = getNextStepName();
+        BucketDataStore checkpointStore = dsBuilder.getBucketDataStore(stepName+"-sink", flowBinding.getRecordType());
+        Step step = completeFlows(stepName, Lists.newArrayList(new SinkBinding(flowBinding.getPipe(), checkpointStore)), new EmptyListener());
+
+        sourceMSJBindings.add(new SourceMSJBinding<T>(binding.getExtractor(), checkpointStore));
+
+        subSteps.add(step);
+        pipenameToParentStep.put(name, step);
+      }
+
+      //  otherwise we can read it directly
+      else if (binding instanceof SourceMSJBinding) {
+        sourceMSJBindings.add((SourceMSJBinding<T>) binding);
+      }
+
+      //  no idea
+      else{
+        throw new RuntimeException("Unrecognized binding class: "+binding.getClass());
+      }
+
+    }
 
     List<String> sources = Lists.newArrayList();
     List<Extractor<T>> extractors = Lists.newArrayList();
 
-    for (SourceMSJBinding<T> binding : bindings) {
+    for (SourceMSJBinding<T> binding : sourceMSJBindings) {
       BucketDataStore store = binding.getStore();
       sources.add(store.getPath());
       extractors.add(binding.getExtractor());
@@ -94,32 +122,9 @@ public class CascadingWorkflowBuilder {
       pipenameToSourceStore.put(name, store);
     }
 
-
     pipenameToTap.put(name, new MSJTap<T>(new MergingScheme<T>(ThriftBucketScheme.getFieldName(joiner.getOutputType()), null, joiner), sources, extractors));
 
     return new Pipe(name);
-  }
-
-  public <T extends Comparable> Pipe msj(String name, List<FlowMSJBinding<T>> bindings, TOutputMultiJoiner<T, ?> joiner) throws IOException {
-
-    // take all pipes and sink them to a data store
-
-    List<SourceMSJBinding<T>> sourceMSJBindings = Lists.newArrayList();
-    for (FlowMSJBinding<T> binding : bindings) {
-      String stepName = getNextStepName();
-      BucketDataStore checkpointStore = dsBuilder.getBucketDataStore(stepName+"-sink", binding.getRecordType());
-      Step step = completeFlows(stepName, Lists.newArrayList(new SinkBinding(binding.getPipe(), checkpointStore)), new EmptyListener());
-
-      sourceMSJBindings.add(new SourceMSJBinding<T>(binding.getExtractor(), checkpointStore));
-
-      subSteps.add(step);
-      pipenameToParentStep.put(name, step);
-
-    }
-
-    //  call bindMSJ
-
-    return bindMSJ(name,sourceMSJBindings, joiner);
   }
 
   //  TODO if a pipe has nothing done to it, just attach it to the subsequent MSJ (to allow MSJing a store which has
