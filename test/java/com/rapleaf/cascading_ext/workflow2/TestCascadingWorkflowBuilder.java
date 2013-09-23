@@ -9,7 +9,6 @@ import cascading.pipe.assembly.Retain;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.liveramp.cascading_ext.assembly.BloomJoin;
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.liveramp.collections.list.ListBuilder;
@@ -28,8 +27,6 @@ import com.rapleaf.cascading_ext.map_side_join.multijoins.ChooseNewest;
 import com.rapleaf.cascading_ext.msj_tap.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.ThriftMergingScheme;
-import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
-import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
@@ -49,9 +46,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static junit.framework.Assert.assertTrue;
@@ -361,31 +356,4 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
   }
 
-  //  add pins to summ
-  private static class ExampleMultiJoiner implements TOutputMultiJoiner<BytesWritable, IdentitySumm> {
-
-    @Override
-    public Object join(MSJGroup<BytesWritable> group) {
-
-      Iterator<DustinInternalEquiv> thriftIterator = group.getThriftIterator(0, new DustinInternalEquiv());
-      Iterator<IdentitySumm> summIterator = group.getThriftIterator(1, new IdentitySumm());
-
-      Set<PIN> toAdd = Sets.newHashSet();
-      while (thriftIterator.hasNext()) {
-        toAdd.add(thriftIterator.next().get_pin());
-      }
-
-      IdentitySumm summ = summIterator.next();
-      for (PIN pin : toAdd) {
-        summ.add_to_pin_and_owners(new PINAndOwners(pin));
-      }
-
-      return summ;
-    }
-
-    @Override
-    public Class<IdentitySumm> getOutputType() {
-      return IdentitySumm.class;
-    }
-  }
 }

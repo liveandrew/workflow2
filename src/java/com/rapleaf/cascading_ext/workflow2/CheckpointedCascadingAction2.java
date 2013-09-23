@@ -5,6 +5,8 @@ import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
+import org.apache.thrift.TBase;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,6 +48,10 @@ public class CheckpointedCascadingAction2 extends MultiStepAction {
 
   protected Pipe bindSource(String name, List<DataStore> inputs){
     return workflowHelper.bindSource(name, inputs);
+  }
+
+  protected <T extends Comparable, O extends TBase> Pipe bindMSJ(String name, List<SourceMSJBinding<T>> bindings, TOutputMultiJoiner<T, O> joiner){
+    return workflowHelper.bindMSJ(name, bindings, joiner);
   }
 
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException {

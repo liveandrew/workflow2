@@ -11,19 +11,56 @@ import com.google.common.collect.Maps;
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
+import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
+import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
+import com.rapleaf.cascading_ext.test.TExtractorComparator;
+import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
+import com.rapleaf.types.new_person_data.DustinInternalEquiv;
+import com.rapleaf.types.new_person_data.IdentitySumm;
+import com.rapleaf.types.new_person_data.PIN;
+import com.rapleaf.types.new_person_data.PINAndOwners;
+import org.apache.hadoop.io.BytesWritable;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
 
 public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
+
+  private static final TByteArrayExtractor DIE_EID_EXTRACTOR =
+      new TByteArrayExtractor(DustinInternalEquiv._Fields.EID);
+
+  private static final TExtractorComparator<DustinInternalEquiv, BytesWritable> DIE_EID_COMPARATOR =
+      new TExtractorComparator<DustinInternalEquiv, BytesWritable>(DIE_EID_EXTRACTOR);
+
+  private static final TByteArrayExtractor ID_SUMM_EID_EXTRACTOR =
+      new TByteArrayExtractor(IdentitySumm._Fields.EID);
+
+  private static final TExtractorComparator<IdentitySumm, BytesWritable> ID_SUMM_EID_COMPARATOR =
+      new TExtractorComparator<IdentitySumm, BytesWritable>(ID_SUMM_EID_EXTRACTOR);
+
+  private static final PIN PIN1 = PIN.email("ben@gmail.com");
+  private static final PIN PIN2 = PIN.email("ben@liveramp.com");
+  private static final PIN PIN3 = PIN.email("ben@yahoo.com");
+
+  private static final DustinInternalEquiv die1 = new DustinInternalEquiv(ByteBuffer.wrap("1".getBytes()), PIN1, 0);
+  private static final DustinInternalEquiv die2 = new DustinInternalEquiv(ByteBuffer.wrap("2".getBytes()), PIN2, 0);
+  private static final DustinInternalEquiv die3 = new DustinInternalEquiv(ByteBuffer.wrap("1".getBytes()), PIN3, 0);
+
+  private static final IdentitySumm SUMM = new IdentitySumm(ByteBuffer.wrap("1".getBytes()), Lists.<PINAndOwners>newArrayList());
+  private static final IdentitySumm SUMM_AFTER = new IdentitySumm(ByteBuffer.wrap("1".getBytes()), Lists.<PINAndOwners>newArrayList(
+      new PINAndOwners(PIN1),
+      new PINAndOwners(PIN3)
+  ));
 
   public static class SimpleExampleCheckpointedAction extends CheckpointedCascadingAction2 {
     public SimpleExampleCheckpointedAction(String checkpointToken, String tmpRoot,
@@ -56,10 +93,30 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     }
   }
 
+  public static class SimpleMSJAction extends CheckpointedCascadingAction2 {
+
+    public SimpleMSJAction(String checkpointToken, String tmpRoot,
+                           BucketDataStore<DustinInternalEquiv> store1,
+                           BucketDataStore<IdentitySumm> store2,
+                           BucketDataStore<IdentitySumm> output,
+                           Map<Object, Object> flowProperties) {
+      super(checkpointToken, tmpRoot, flowProperties);
+
+      Pipe input = bindMSJ("msj-source", Lists.newArrayList(
+          new SourceMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, store1),
+          new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)),
+        new ExampleMultiJoiner());
+
+      input = new Increment(input, "COUNTER", "INCREMENT");
+
+      complete("mjs-plus-cascading", input, output);
+    }
+  }
+
   public static class Fail1 extends CheckpointedCascadingAction2 {
 
     public Fail1(String checkpointToken, String tmpRoot,
-                                           DataStore input, DataStore output1, DataStore output2) throws IOException {
+                 DataStore input, DataStore output1, DataStore output2) throws IOException {
       super(checkpointToken, tmpRoot, Maps.newHashMap());
 
       Pipe source = bindSource("source", input);
@@ -125,5 +182,22 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     });
 
     assertEquals("Pipe with name source already exists!", token.getMessage());
+  }
+
+  @Test
+  public void testMSJ() throws Exception {
+
+    BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
+    BucketDataStore<IdentitySumm> store2   = builder().getBucketDataStore("delta", IdentitySumm.class);
+    BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
+
+    ThriftBucketHelper.writeToBucketAndSort(store1.getBucket(), DIE_EID_COMPARATOR, die1, die3);
+    ThriftBucketHelper.writeToBucketAndSort(store2.getBucket(), ID_SUMM_EID_COMPARATOR, SUMM);
+
+    WorkflowRunner token = executeWorkflow(new SimpleMSJAction("token", getTestRoot() + "/tmp", store1, store2, output, Collections.emptyMap()));
+
+    assertEquals(new Long(1l), token.getCounterMap().get("COUNTER").get("INCREMENT"));
+    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+
   }
 }
