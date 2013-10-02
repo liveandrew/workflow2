@@ -16,7 +16,7 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.function.ExpandThrift;
-import com.rapleaf.cascading_ext.msj_tap.MSJFixtures;
+import com.rapleaf.cascading_ext.msj_tap.tap.MSJFixtures;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;

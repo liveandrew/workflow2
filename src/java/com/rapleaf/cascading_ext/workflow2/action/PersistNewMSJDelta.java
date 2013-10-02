@@ -1,7 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
-import com.rapleaf.cascading_ext.msj_tap.MSJDataStore;
+import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
 public class PersistNewMSJDelta<RecordType, KeyType extends Comparable> extends Action {
