@@ -1,9 +1,14 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import java.io.IOException;
+import java.util.Map;
+
+import com.google.common.collect.Maps;
+
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
-import com.google.common.collect.Maps;
+
 import com.liveramp.hank.cascading.CascadingDomainBuilder;
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.coordinator.Coordinator;
@@ -16,15 +21,13 @@ import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
-import java.io.IOException;
-import java.util.Map;
-
 public abstract class HankDomainBuilderAction extends Action {
 
   protected final Map<Object, Object> properties;
 
   private final HankDataStore output;
   protected HankVersionType versionType;
+  private boolean shouldPartitionAndSortInput = true;
   private final CoordinatorConfigurator configurator;
   private Integer partitionToBuild = null;
   private Integer domainVersionNumber = null;
@@ -40,10 +43,19 @@ public abstract class HankDomainBuilderAction extends Action {
   public HankDomainBuilderAction(
       String checkpointToken,
       HankVersionType versionType,
+      boolean shouldPartitionAndSortInput,
+      CoordinatorConfigurator configurator,
+      HankDataStore output) {
+    this(checkpointToken, null, versionType, shouldPartitionAndSortInput, configurator, output, Maps.newHashMap());
+  }
+
+  public HankDomainBuilderAction(
+      String checkpointToken,
+      HankVersionType versionType,
       CoordinatorConfigurator configurator,
       HankDataStore output,
       Map<Object, Object> properties) {
-    this(checkpointToken, null, versionType, configurator, output, properties);
+    this(checkpointToken, null, versionType, true, configurator, output, properties);
   }
 
   public HankDomainBuilderAction(String checkpointToken,
@@ -51,17 +63,19 @@ public abstract class HankDomainBuilderAction extends Action {
                                  HankVersionType versionType,
                                  CoordinatorConfigurator configurator,
                                  HankDataStore output) {
-    this(checkpointToken, tmpRoot, versionType, configurator, output, Maps.newHashMap());
+    this(checkpointToken, tmpRoot, versionType, true, configurator, output, Maps.newHashMap());
   }
 
   public HankDomainBuilderAction(String checkpointToken,
                                  String tmpRoot,
                                  HankVersionType versionType,
+                                 boolean shouldPartitionAndSortInput,
                                  CoordinatorConfigurator configurator,
                                  HankDataStore output,
                                  Map<Object, Object> properties) {
     super(checkpointToken, tmpRoot);
     this.versionType = versionType;
+    this.shouldPartitionAndSortInput = shouldPartitionAndSortInput;
     this.configurator = configurator;
     this.output = output;
     this.properties = properties;
@@ -92,8 +106,12 @@ public abstract class HankDomainBuilderAction extends Action {
       throw new IllegalStateException("Must set a version type before executing the domain builder!");
     }
 
-    final DomainBuilderProperties domainBuilderProperties = new DomainBuilderProperties(
-        output.getDomainName(), configurator).setOutputPath(output.getPath());
+    final DomainBuilderProperties domainBuilderProperties =
+        new DomainBuilderProperties(
+            output.getDomainName(),
+            configurator)
+            .setOutputPath(output.getPath())
+            .setShouldPartitionAndSortInput(shouldPartitionAndSortInput);
 
     final IncrementalDomainVersionProperties domainVersionProperties;
     switch (versionType) {
