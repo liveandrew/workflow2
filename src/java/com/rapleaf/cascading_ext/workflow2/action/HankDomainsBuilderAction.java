@@ -1,21 +1,22 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
-import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.datastore.HankDataStore;
-import com.rapleaf.cascading_ext.workflow2.Action;
+
 import com.liveramp.hank.cascading.CascadingDomainBuilder;
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.coordinator.RunWithCoordinator;
 import com.liveramp.hank.hadoop.DomainBuilderProperties;
 import com.liveramp.hank.storage.incremental.IncrementalDomainVersionProperties;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import com.rapleaf.cascading_ext.CascadingHelper;
+import com.rapleaf.cascading_ext.datastore.HankDataStore;
+import com.rapleaf.cascading_ext.workflow2.Action;
 
 public abstract class HankDomainsBuilderAction extends Action {
 
@@ -97,7 +98,7 @@ public abstract class HankDomainsBuilderAction extends Action {
     }
 
     final DomainBuilderProperties domainBuilderProperties = new DomainBuilderProperties(
-        output.getDomainName(), configurator, output.getPath());
+        output.getDomainName(), configurator).setOutputPath(output.getPath());
 
     final IncrementalDomainVersionProperties domainVersionProperties;
     switch (versionType) {

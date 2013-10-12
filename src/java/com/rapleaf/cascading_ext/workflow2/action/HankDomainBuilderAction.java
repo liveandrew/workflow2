@@ -93,7 +93,7 @@ public abstract class HankDomainBuilderAction extends Action {
     }
 
     final DomainBuilderProperties domainBuilderProperties = new DomainBuilderProperties(
-        output.getDomainName(), configurator, output.getPath());
+        output.getDomainName(), configurator).setOutputPath(output.getPath());
 
     final IncrementalDomainVersionProperties domainVersionProperties;
     switch (versionType) {
