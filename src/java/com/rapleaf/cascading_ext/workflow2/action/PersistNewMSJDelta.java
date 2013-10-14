@@ -21,6 +21,6 @@ public class PersistNewMSJDelta<RecordType, KeyType extends Comparable> extends 
 
   @Override
   protected void execute() throws Exception {
-    store.persistNewDelta(versionToPersist.getPath());
+    store.commitNewDelta(versionToPersist.getPath());
   }
 }

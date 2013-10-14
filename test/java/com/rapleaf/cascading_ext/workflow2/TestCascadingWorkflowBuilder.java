@@ -238,8 +238,8 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
     MSJDataStore msjStore = new TMSJDataStore<DustinInternalEquiv>(getTestRoot() + "/msj_store", DustinInternalEquiv.class, MSJFixtures.DIE_EID_EXTRACTOR, 100.0);
 
-    msjStore.persistNewBase(baseStore.getPath());
-    msjStore.persistNewDelta(deltaStore.getPath());
+    msjStore.commitNewBase(baseStore.getPath());
+    msjStore.commitNewDelta(deltaStore.getPath());
 
 
     //  run workflow
