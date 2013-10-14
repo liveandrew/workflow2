@@ -22,11 +22,9 @@ import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.function.ExpandThrift;
-import com.rapleaf.cascading_ext.map_side_join.multijoins.ChooseNewest;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
+import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJFixtures;
-import com.rapleaf.cascading_ext.msj_tap.tap.MergingScheme;
-import com.rapleaf.cascading_ext.msj_tap.tap.ThriftMergingScheme;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.support.test.NPDH;
@@ -238,8 +236,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
         MSJFixtures.die2
     );
 
-    MergingScheme<BytesWritable> scheme = ThriftMergingScheme.of(MSJFixtures.DIE_EID_EXTRACTOR, new ChooseNewest(), DustinInternalEquiv.class);
-    MSJDataStore msjStore = new MSJDataStore<BytesWritable>(getTestRoot() + "/msj_store", DustinInternalEquiv.class, scheme, 100.0);
+    MSJDataStore msjStore = new TMSJDataStore<DustinInternalEquiv>(getTestRoot() + "/msj_store", DustinInternalEquiv.class, MSJFixtures.DIE_EID_EXTRACTOR, 100.0);
 
     msjStore.persistNewBase(baseStore.getPath());
     msjStore.persistNewDelta(deltaStore.getPath());
