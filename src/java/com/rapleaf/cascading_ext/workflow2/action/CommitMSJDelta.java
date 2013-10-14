@@ -4,11 +4,11 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
-public class CommitNewMSJDelta<RecordType, KeyType extends Comparable> extends Action {
+public class CommitMSJDelta<RecordType, KeyType extends Comparable> extends Action {
   private final BucketDataStore<RecordType> versionToCommit;
   private final MSJDataStore<KeyType> store;
 
-  public CommitNewMSJDelta(String checkpointToken, BucketDataStore<RecordType> versionToCommit, MSJDataStore<KeyType> store) {
+  public CommitMSJDelta(String checkpointToken, BucketDataStore<RecordType> versionToCommit, MSJDataStore<KeyType> store) {
     super(checkpointToken);
 
     this.versionToCommit = versionToCommit;
@@ -20,6 +20,6 @@ public class CommitNewMSJDelta<RecordType, KeyType extends Comparable> extends A
 
   @Override
   protected void execute() throws Exception {
-    store.commitNewDelta(versionToCommit.getPath());
+    store.commitDelta(versionToCommit.getPath());
   }
 }
