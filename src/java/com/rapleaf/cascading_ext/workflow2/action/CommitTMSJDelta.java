@@ -5,8 +5,8 @@ import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.thrift.TBase;
 
-public class PersistTMSJDelta<T extends TBase<?, ?>> extends PersistNewMSJDelta<T, BytesWritable> {
-  public PersistTMSJDelta(String checkpointToken, BucketDataStore<T> versionToPersist, TMSJDataStore<T> store) {
+public class CommitTMSJDelta<T extends TBase<?, ?>> extends CommitMSJDelta<T, BytesWritable> {
+  public CommitTMSJDelta(String checkpointToken, BucketDataStore<T> versionToPersist, TMSJDataStore<T> store) {
     super(checkpointToken, versionToPersist, store);
   }
 }
