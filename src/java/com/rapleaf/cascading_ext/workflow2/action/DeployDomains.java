@@ -1,8 +1,16 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.log4j.Logger;
+
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.config.InvalidConfigurationException;
 import com.liveramp.hank.config.yaml.YamlClientConfigurator;
@@ -15,13 +23,6 @@ import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
-import org.apache.log4j.Logger;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class DeployDomains extends Action {
 
@@ -92,6 +93,6 @@ public class DeployDomains extends Action {
     );
 
     Step step = new Step(deployAction);
-    new WorkflowRunner("Test Deployer", "/data/pwestling/testDeployer/checkpoints", 1, 0, step).run();
+    new WorkflowRunner("Test Deployer", "/data/pwestling/testDeployer/checkpoints", step).run();
   }
 }
