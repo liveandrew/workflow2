@@ -113,7 +113,7 @@ public class HadoopOperation implements ActionOperation {
       }
     }
 
-    if(runningJob != null ){
+    if (runningJob != null) {
       stepTimer.addChild(new FixedTimedEvent(runningJob.getJobName(), startTime, finishTime));
     }
   }
