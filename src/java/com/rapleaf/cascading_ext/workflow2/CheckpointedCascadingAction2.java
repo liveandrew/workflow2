@@ -2,7 +2,6 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
-import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
@@ -38,7 +37,7 @@ public class CheckpointedCascadingAction2 extends MultiStepAction {
     setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore));
   }
 
-  protected Pipe bindSource(String name, DataStore input, Tap sourceTap){
+  protected Pipe bindSource(String name, DataStore input, TapFactory sourceTap){
     return workflowHelper.bindSource(name, input, sourceTap);
   }
 

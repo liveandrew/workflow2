@@ -8,7 +8,11 @@ import cascading.stats.FlowStepStats;
 import cascading.stats.hadoop.HadoopStepStats;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
-import com.google.common.collect.*;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -18,8 +22,9 @@ import com.rapleaf.cascading_ext.map_side_join.Extractor;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
+import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
 import com.rapleaf.cascading_ext.workflow2.action.CascadingAction;
-import com.rapleaf.cascading_ext.workflow2.action.CascadingActionBuilder;
+import com.rapleaf.cascading_ext.workflow2.action.FutureCascadingAction;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -34,7 +39,7 @@ public class CascadingWorkflowBuilder {
   private DataStoreBuilder dsBuilder;
   private Set<Step> subSteps = Sets.newHashSet();
 
-  private Map<String, Tap> pipenameToTap;                     //  tap which provides input
+  private Map<String, TapFactory> pipenameToTap;                     //  tap which provides input
   private Multimap<String, DataStore> pipenameToSourceStore;  //  stores which are the source for the pipe
   private Multimap<String, Step> pipenameToParentStep;        //  what step(s) does the pipe depend on
 
@@ -57,24 +62,29 @@ public class CascadingWorkflowBuilder {
   //  create the necessary actions
 
   public Pipe bindSource(String name, DataStore source) {
-    return bindSource(name, Lists.newArrayList(source), source.getTap());
+    return bindSource(name, Lists.newArrayList(source), new SimpleFactory(source));
   }
 
-  public Pipe bindSource(String name, Collection<DataStore> inputs) {
-    return bindSource(name, inputs, HRap.getMultiTap(inputs));
+  public Pipe bindSource(String name, final Collection<DataStore> inputs) {
+    return bindSource(name, inputs, new TapFactory() {
+      @Override
+      public Tap createTap() {
+        return HRap.getMultiTap(inputs);
+      }
+    });
   }
 
-  public Pipe bindSource(String name, DataStore source, Tap tap) {
+  public Pipe bindSource(String name, DataStore source, TapFactory tap) {
     return bindSource(name, Lists.newArrayList(source), tap);
   }
 
-  public Pipe bindSource(String name, Collection<DataStore> sources, Tap tap) {
+  public Pipe bindSource(String name, Collection<DataStore> sources, TapFactory tap) {
     pipenameToSourceStore.putAll(name, sources);
     pipenameToTap.put(name, tap);
     return new Pipe(name);
   }
 
-  public <T extends Comparable> Pipe msj(String name, List<MSJBinding<T>> bindings, TOutputMultiJoiner<T, ?> joiner) throws IOException {
+  public <T extends Comparable> Pipe msj(String name, List<MSJBinding<T>> bindings, final TOutputMultiJoiner<T, ?> joiner) throws IOException {
 
     //  don't really love the instanceof stuff, but we'll just call it a TODO --ben
     List<SourceMSJBinding<T>> sourceMSJBindings = Lists.newArrayList();
@@ -106,8 +116,8 @@ public class CascadingWorkflowBuilder {
 
     }
 
-    List<String> sources = Lists.newArrayList();
-    List<Extractor<T>> extractors = Lists.newArrayList();
+    final List<String> sources = Lists.newArrayList();
+    final List<Extractor<T>> extractors = Lists.newArrayList();
 
     for (SourceMSJBinding<T> binding : sourceMSJBindings) {
       BucketDataStore store = binding.getStore();
@@ -117,7 +127,12 @@ public class CascadingWorkflowBuilder {
       pipenameToSourceStore.put(name, store);
     }
 
-    pipenameToTap.put(name, MSJTap.of(MergingScheme.of(joiner), sources, extractors));
+    pipenameToTap.put(name, new TapFactory() {
+      @Override
+      public Tap createTap() throws IOException {
+        return MSJTap.of(MergingScheme.of(joiner), sources, extractors);
+      }
+    });
 
     return new Pipe(name);
   }
@@ -167,7 +182,7 @@ public class CascadingWorkflowBuilder {
     subSteps.add(step);
     pipenameToParentStep.put(nextPipeName, step);
     pipenameToSourceStore.put(nextPipeName, checkpointStore);
-    pipenameToTap.put(nextPipeName, checkpointStore.getTap());
+    pipenameToTap.put(nextPipeName, new SimpleFactory(checkpointStore));
 
     return new Pipe(nextPipeName);
   }
@@ -207,9 +222,8 @@ public class CascadingWorkflowBuilder {
   }
 
   private Step completeFlows(String name, List<SinkBinding> sinkBindings, FlowListener flowListener) {
-    CascadingActionBuilder builder = new CascadingActionBuilder();
-    Map<String, Tap> sources = Maps.newHashMap();
-    Map<String, Tap> sinks = Maps.newHashMap();
+    Map<String, TapFactory> sources = Maps.newHashMap();
+    Map<String, TapFactory> sinks = Maps.newHashMap();
     List<DataStore> sinkStores = Lists.newArrayList();
 
     Set<DataStore> inputs = Sets.newHashSet();
@@ -226,7 +240,7 @@ public class CascadingWorkflowBuilder {
         throw new RuntimeException("Pipe with name " + pipeName + " already exists!");
       }
 
-      sinks.put(pipeName, dataStore.getTap());
+      sinks.put(pipeName, new SimpleFactory(dataStore));
 
       sources.putAll(createSourceMap(heads));
       inputs.addAll(getInputStores(heads));
@@ -236,16 +250,16 @@ public class CascadingWorkflowBuilder {
       pipes.add(pipe);
     }
 
-    CascadingAction action = builder.setName(name)
-        .setCheckpoint(name)
-        .addInputStores(Lists.newArrayList(inputs))
-        .addOutputStores(Lists.newArrayList(sinkStores))
-        .setSources(sources)
-        .setSinks(sinks)
-        .addTails(pipes.toArray(new Pipe[pipes.size()]))
-        .addFlowProperties(flowProperties)
-        .setFlowListener(flowListener)
-        .build();
+    FutureCascadingAction action = new FutureCascadingAction(
+        name,
+        sources,
+        sinks,
+        pipes,
+        inputs,
+        sinkStores,
+        flowProperties,
+        flowListener
+    );
 
     return new Step(action, previousSteps);
   }
@@ -289,8 +303,8 @@ public class CascadingWorkflowBuilder {
     return output;
   }
 
-  private Map<String, Tap> createSourceMap(Pipe[] heads) {
-    Map<String, Tap> output = Maps.newHashMap();
+  private Map<String, TapFactory> createSourceMap(Pipe[] heads) {
+    Map<String, TapFactory> output = Maps.newHashMap();
     for (Pipe head : heads) {
       if (pipenameToTap.containsKey(head.getName())) {
         output.put(head.getName(), pipenameToTap.get(head.getName()));
@@ -301,16 +315,16 @@ public class CascadingWorkflowBuilder {
     return output;
   }
 
-  private Fields determineOutputFields(Pipe tail) {
+  private Fields determineOutputFields(Pipe tail) throws IOException {
     return getScope(tail).getIncomingTapFields();
   }
 
-  private Scope getScope(Pipe tail) {
+  private Scope getScope(Pipe tail) throws IOException {
     Pipe[] previousPipes = tail.getPrevious();
     if (previousPipes.length == 0) {
       Fields sourceFields;
       if (pipenameToTap.containsKey(tail.getName())) {
-        sourceFields = pipenameToTap.get(tail.getName()).getSourceFields();
+        sourceFields = pipenameToTap.get(tail.getName()).createTap().getSourceFields();
       } else {
         throw new RuntimeException("Cannot find head pipe name " + tail.getName() + " in any source map during field resolution");
       }

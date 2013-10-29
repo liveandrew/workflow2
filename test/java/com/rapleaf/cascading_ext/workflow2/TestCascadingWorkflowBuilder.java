@@ -6,6 +6,7 @@ import cascading.pipe.Each;
 import cascading.pipe.GroupBy;
 import cascading.pipe.Pipe;
 import cascading.pipe.assembly.Retain;
+import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import com.google.common.collect.Lists;
@@ -20,6 +21,8 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
+import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
+import com.rapleaf.cascading_ext.datastore.VersionedThriftBucketDataStoreHelper;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.function.ExpandThrift;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
@@ -32,6 +35,7 @@ import com.rapleaf.types.new_person_data.DataUnit;
 import com.rapleaf.types.new_person_data.DataUnitValueUnion._Fields;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
+import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.person_data.GenderType;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.thrift.TException;
@@ -152,7 +156,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
   @Test
   public void testTapVsDs() throws IOException, TException {
 
-    SplitBucketDataStore<DataUnit, _Fields> inputSplit =
+    final SplitBucketDataStore<DataUnit, _Fields> inputSplit =
         builder().getSplitBucketDataStore("split_store", DataUnit.class);
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("dataunit"));
 
@@ -167,7 +171,12 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
     CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");
 
-    Pipe pipe1 = workflow.bindSource("pipe1", inputSplit, inputSplit.getTap(EnumSet.of(_Fields.GENDER)));
+    Pipe pipe1 = workflow.bindSource("pipe1", inputSplit, new TapFactory() {
+      @Override
+      public Tap createTap() throws IOException {
+        return inputSplit.getTap(EnumSet.of(_Fields.GENDER));
+      }
+    });
 
     executeWorkflow(workflow.buildTail(pipe1, output));
 
@@ -257,6 +266,28 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     assertCollectionEquivalent(Lists.newArrayList(MSJFixtures.die1, MSJFixtures.die2),
         HRap.<DustinInternalEquiv>getValuesFromBucket(output));
 
+  }
+
+  @Test
+  public void testDelayedTapCreation() throws Exception {
+    BucketDataStore output = builder().getBucketDataStore("output", PIN.class);
+    PIN email = PIN.email("ben@gmail.com");
+
+    //  empty version
+    VersionedBucketDataStore store = builder().getVersionedBucketDataStore("store", PIN.class);
+    VersionedThriftBucketDataStoreHelper.writeToNewVersion(store);
+
+    //  put together workflow
+    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp");
+    Pipe source = builder.bindSource("source", store);
+    Step tail = builder.buildTail("tail", source, output);
+
+    //  actual version
+    VersionedThriftBucketDataStoreHelper.writeToNewVersion(store, email);
+
+    executeWorkflow(tail);
+
+    assertCollectionEquivalent(Lists.newArrayList(email), HRap.<PIN>getValuesFromBucket(output));
   }
 
   @Test
