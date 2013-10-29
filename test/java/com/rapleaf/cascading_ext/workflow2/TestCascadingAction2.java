@@ -17,6 +17,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.function.ExpandThrift;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJFixtures;
+import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
@@ -32,7 +33,7 @@ import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
+public class TestCascadingAction2 extends CascadingExtTestCase {
 
   public static class SimpleExampleAction extends CascadingAction2 {
     public SimpleExampleAction(String checkpointToken, String tmpRoot,
@@ -60,8 +61,8 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
       Pipe sink2 = new Pipe("sink2", source);
 
       complete("tail-step", Lists.newArrayList(
-          new SinkBinding(sink1, output1),
-          new SinkBinding(sink2, output2)));
+          new DSSink(sink1, output1),
+          new DSSink(sink2, output2)));
     }
   }
 
@@ -133,8 +134,8 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
       Pipe sink2 = new Each(source, new Identity());
 
       complete("tail-step", Lists.newArrayList(
-          new SinkBinding(sink1, output1),
-          new SinkBinding(sink2, output2)));
+          new DSSink(sink1, output1),
+          new DSSink(sink2, output2)));
     }
   }
 

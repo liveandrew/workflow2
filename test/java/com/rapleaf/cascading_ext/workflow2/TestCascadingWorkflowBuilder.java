@@ -28,6 +28,7 @@ import com.rapleaf.cascading_ext.function.ExpandThrift;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJFixtures;
+import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.support.test.NPDH;
@@ -124,7 +125,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     pipe3 = new Increment(pipe3, "Test", "Tuples5");
 
     Step step = workflow.buildTail("last-step",
-        Lists.newArrayList(new SinkBinding(pipe3, store1), new SinkBinding(pipe2, store2)));
+        Lists.newArrayList(new DSSink(pipe3, store1), new DSSink(pipe2, store2)));
 
     executeWorkflow(step);
 

@@ -26,11 +26,11 @@ public class CascadingAction2 extends MultiStepAction {
     workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), flowProperties);
   }
 
-  protected void complete(String stepName, List<SinkBinding> sinkBindings){
+  protected void complete(String stepName, List<? extends SinkBinding> sinkBindings){
     setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, new EmptyListener()));
   }
 
-  protected void complete(String stepName, List<SinkBinding> sinkBindings, FlowListener listener){
+  protected void complete(String stepName, List<? extends SinkBinding> sinkBindings, FlowListener listener){
     setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, listener));
   }
 
