@@ -11,11 +11,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class CheckpointedCascadingAction2 extends MultiStepAction {
+public class CascadingAction2 extends MultiStepAction {
 
   private CascadingWorkflowBuilder workflowHelper;
 
-  public CheckpointedCascadingAction2(String checkpointToken, String tmpRoot, Map<Object, Object> flowProperties) {
+  public CascadingAction2(String checkpointToken, String tmpRoot, Map<Object, Object> flowProperties) {
     super(checkpointToken, tmpRoot);
 
     workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), flowProperties);

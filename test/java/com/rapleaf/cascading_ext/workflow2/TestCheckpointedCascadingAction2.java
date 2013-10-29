@@ -34,9 +34,9 @@ import static org.junit.Assert.assertEquals;
 
 public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
 
-  public static class SimpleExampleCheckpointedAction extends CheckpointedCascadingAction2 {
-    public SimpleExampleCheckpointedAction(String checkpointToken, String tmpRoot,
-                                           DataStore input, DataStore output) throws IOException {
+  public static class SimpleExampleAction extends CascadingAction2 {
+    public SimpleExampleAction(String checkpointToken, String tmpRoot,
+                               DataStore input, DataStore output) throws IOException {
       super(checkpointToken, tmpRoot, Maps.newHashMap());
 
       Pipe source = bindSource("source", input);
@@ -46,9 +46,9 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     }
   }
 
-  public static class SimpleTwoSinkCheckpointedAction extends CheckpointedCascadingAction2 {
-    public SimpleTwoSinkCheckpointedAction(String checkpointToken, String tmpRoot,
-                                           DataStore input, DataStore output1, DataStore output2) throws IOException {
+  public static class SimpleTwoSinkAction extends CascadingAction2 {
+    public SimpleTwoSinkAction(String checkpointToken, String tmpRoot,
+                               DataStore input, DataStore output1, DataStore output2) throws IOException {
       super(checkpointToken, tmpRoot, Maps.newHashMap());
 
       Pipe source = bindSource("source", input);
@@ -65,7 +65,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     }
   }
 
-  public static class SimpleMSJAction extends CheckpointedCascadingAction2 {
+  public static class SimpleMSJAction extends CascadingAction2 {
 
     public SimpleMSJAction(String checkpointToken, String tmpRoot,
                            BucketDataStore<DustinInternalEquiv> store1,
@@ -85,7 +85,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     }
   }
 
-  public static class MidMSJAction extends CheckpointedCascadingAction2 {
+  public static class MidMSJAction extends CascadingAction2 {
 
     public MidMSJAction(String checkpointToken,
                         BucketDataStore store1,
@@ -119,7 +119,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     }
   }
 
-  public static class Fail1 extends CheckpointedCascadingAction2 {
+  public static class Fail1 extends CascadingAction2 {
 
     public Fail1(String checkpointToken, String tmpRoot,
                  DataStore input, DataStore output1, DataStore output2) throws IOException {
@@ -147,7 +147,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     List<Tuple> data = Lists.<Tuple>newArrayList(new Tuple("data"));
     TupleDataStoreHelper.writeToStore(input, data);
 
-    executeWorkflow(new SimpleExampleCheckpointedAction("token", getTestRoot() + "/tmp", input, output));
+    executeWorkflow(new SimpleExampleAction("token", getTestRoot() + "/tmp", input, output));
 
     assertCollectionEquivalent(data, HRap.getAllTuples(input.getTap()));
     assertCollectionEquivalent(data, HRap.getAllTuples(output.getTap()));
@@ -163,7 +163,7 @@ public class TestCheckpointedCascadingAction2 extends CascadingExtTestCase {
     List<Tuple> data = Lists.<Tuple>newArrayList(new Tuple("data"));
     TupleDataStoreHelper.writeToStore(input, data);
 
-    WorkflowRunner token = executeWorkflow(new SimpleTwoSinkCheckpointedAction("token", getTestRoot() + "/tmp", input, output, output1));
+    WorkflowRunner token = executeWorkflow(new SimpleTwoSinkAction("token", getTestRoot() + "/tmp", input, output, output1));
 
     //  make sure counter only got incremented once
     assertEquals(Collections.<String, Long>singletonMap("Counter", 1l), token.getCounterMap().get("Group"));
