@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tuple.Fields;
+import com.google.common.collect.Maps;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
 import org.apache.thrift.TBase;
@@ -14,6 +15,10 @@ import java.util.Map;
 public class CascadingAction2 extends MultiStepAction {
 
   private CascadingWorkflowBuilder workflowHelper;
+
+  public CascadingAction2(String checkpointToken, String tmpRoot) {
+    this(checkpointToken, tmpRoot, Maps.<Object, Object>newHashMap());
+  }
 
   public CascadingAction2(String checkpointToken, String tmpRoot, Map<Object, Object> flowProperties) {
     super(checkpointToken, tmpRoot);
