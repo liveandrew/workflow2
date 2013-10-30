@@ -1,5 +1,16 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import cascading.flow.Flow;
+import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
+import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -10,19 +21,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.liveramp.cascading_ext.fs.TrashHelper;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
-
-import cascading.flow.Flow;
-
-import com.liveramp.cascading_ext.FileSystemHelper;
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
-import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
@@ -147,6 +145,9 @@ public abstract class Action {
   }
 
   public String getTmpRoot() {
+    if(tmpRoot == null){
+      throw new RuntimeException("Temp root not set!");
+    }
     return tmpRoot;
   }
 
