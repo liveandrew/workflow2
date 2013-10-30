@@ -1,11 +1,8 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import cascading.flow.Flow;
 import cascading.flow.FlowListener;
 import cascading.flow.planner.Scope;
 import cascading.pipe.Pipe;
-import cascading.stats.FlowStepStats;
-import cascading.stats.hadoop.HadoopStepStats;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import com.google.common.collect.HashMultimap;
@@ -24,7 +21,6 @@ import com.rapleaf.cascading_ext.msj_tap.scheme.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
-import com.rapleaf.cascading_ext.workflow2.action.CascadingAction;
 import com.rapleaf.cascading_ext.workflow2.action.FutureCascadingAction;
 import org.apache.log4j.Logger;
 
@@ -211,7 +207,6 @@ public class CascadingWorkflowBuilder {
 
     List<Step> steps = Lists.newArrayList(subSteps);
     steps.add(tail);
-    analyze(steps);
 
     return tail;
   }
@@ -267,35 +262,6 @@ public class CascadingWorkflowBuilder {
     );
 
     return new Step(action, previousSteps);
-  }
-
-  private static void analyze(List<Step> steps) {
-
-    StringBuilder logMessage = new StringBuilder("\n==================================\n");
-    logMessage.append("Your workflow will require ").append(steps.size()).append(" actions\n");
-    int numSteps = 0;
-    int maps = 0;
-    int reduces = 0;
-
-    for (Step subStep : steps) {
-      if (subStep.getAction() instanceof CascadingAction) {
-        Flow flow = ((CascadingAction) subStep.getAction()).getFlow();
-        numSteps += flow.getFlowStats().getStepsCount();
-        for (FlowStepStats flowStepStats : flow.getFlowStats().getFlowStepStats()) {
-          if (flowStepStats instanceof HadoopStepStats) {
-            maps += ((HadoopStepStats) flowStepStats).getNumMapTasks();
-            reduces += ((HadoopStepStats) flowStepStats).getNumReduceTasks();
-          }
-        }
-      }
-    }
-
-    logMessage.append("Your workflow will require ").append(numSteps).append(" mapreduce jobs\n");
-    logMessage.append("Your workflow will require ").append(maps).append(" map tasks\n");
-    logMessage.append("Your workflow will require ").append(reduces).append(" reduce tasks\n");
-
-    logMessage.append("==================================");
-    LOG.info(logMessage.toString());
   }
 
   private List<Step> getPreviousSteps(Pipe[] heads) {
