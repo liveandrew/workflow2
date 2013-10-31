@@ -62,6 +62,7 @@ public class FutureCascadingAction extends Action {
     }
 
     Flow f = CascadingHelper.get().getFlowConnector(properties).connect(
+        getClass().getSimpleName(),
         sourceTaps,
         sinkTaps,
         tails.toArray(new Pipe[tails.size()]));
