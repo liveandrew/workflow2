@@ -33,8 +33,9 @@ import java.util.Set;
 public class CascadingWorkflowBuilder {
   private static final Logger LOG = Logger.getLogger(CascadingWorkflowBuilder.class);
 
-  private DataStoreBuilder dsBuilder;
-  private Set<Step> subSteps = Sets.newHashSet();
+  private final String flowName;
+  private final DataStoreBuilder dsBuilder;
+  private final Set<Step> subSteps = Sets.newHashSet();
 
   private Map<String, TapFactory> pipenameToTap;                     //  tap which provides input
   private Multimap<String, DataStore> pipenameToSourceStore;  //  stores which are the source for the pipe
@@ -43,12 +44,13 @@ public class CascadingWorkflowBuilder {
   private Map<Object, Object> flowProperties;
   private int checkpointCount = 0;
 
-  public CascadingWorkflowBuilder(String workingDir) {
-    this(workingDir, Maps.newHashMap());
+  public CascadingWorkflowBuilder(String workingDir, String flowName) {
+    this(workingDir, flowName, Maps.newHashMap());
   }
 
-  public CascadingWorkflowBuilder(String workingDir, Map<Object, Object> flowProperties) {
+  public CascadingWorkflowBuilder(String workingDir, String flowName, Map<Object, Object> flowProperties) {
     this.dsBuilder = new DataStoreBuilder(workingDir + "/temp-stores");
+    this.flowName = flowName;
     this.flowProperties = Maps.newHashMap(flowProperties);
     this.pipenameToParentStep = HashMultimap.create();
     this.pipenameToSourceStore = HashMultimap.create();
@@ -217,7 +219,7 @@ public class CascadingWorkflowBuilder {
     return "step-" + (checkpointCount++);
   }
 
-  private Step completeFlows(String name, List<? extends SinkBinding> sinkBindings, FlowListener flowListener) {
+  private Step completeFlows(String checkpointName, List<? extends SinkBinding> sinkBindings, FlowListener flowListener) {
     Map<String, TapFactory> sources = Maps.newHashMap();
     Map<String, TapFactory> sinks = Maps.newHashMap();
     List<DataStore> sinkStores = Lists.newArrayList();
@@ -251,7 +253,8 @@ public class CascadingWorkflowBuilder {
     }
 
     FutureCascadingAction action = new FutureCascadingAction(
-        name,
+        checkpointName,
+        flowName,
         sources,
         sinks,
         pipes,

@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 
 public class FutureCascadingAction extends Action {
 
+  private final String flowName;
   private final Map<String, TapFactory> sourceTaps;
   private final Map<String, TapFactory> sinkTaps;
   private final List<Pipe> tails;
@@ -24,6 +25,7 @@ public class FutureCascadingAction extends Action {
   private final FlowListener listener;
 
   public FutureCascadingAction(String checkpointToken,
+                               String flowName,
                                Map<String, TapFactory> sourceTapFactories,
                                Map<String, TapFactory> sinkTapFactories,
                                List<Pipe> tails,
@@ -33,6 +35,7 @@ public class FutureCascadingAction extends Action {
                                FlowListener listener) {
     super(checkpointToken);
 
+    this.flowName = flowName;
     this.sourceTaps = sourceTapFactories;
     this.sinkTaps = sinkTapFactories;
     this.tails = tails;
@@ -62,7 +65,7 @@ public class FutureCascadingAction extends Action {
     }
 
     Flow f = CascadingHelper.get().getFlowConnector(properties).connect(
-        getClass().getSimpleName(),
+        flowName+": "+getCheckpointToken(),
         sourceTaps,
         sinkTaps,
         tails.toArray(new Pipe[tails.size()]));

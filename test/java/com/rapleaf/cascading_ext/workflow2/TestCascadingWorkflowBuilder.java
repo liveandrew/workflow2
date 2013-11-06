@@ -101,7 +101,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     TupleDataStoreHelper.writeToStore(store1, new Tuple("test tuple", 80085l));
     TupleDataStoreHelper.writeToStore(store2, new Tuple("test tuple", 80085l));
 
-    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");
+    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
     Pipe pipe = workflow.bindSource("pipe", input);
 
@@ -170,7 +170,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(_Fields.GENDER.getThriftFieldId()),
         keepDU);
 
-    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");
+    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
     Pipe pipe1 = workflow.bindSource("pipe1", inputSplit, new TapFactory() {
       @Override
@@ -193,7 +193,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
   @Test
   public void testCallback() throws IOException {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1", "field2"));
-    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");
+    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
     Pipe pipe1 = workflow.bindSource("pipe1", input);
 
@@ -210,7 +210,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
   }
 
   private Step buildComplex(DataStore output) throws IOException {
-    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow");
+    CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
     Pipe pipe = workflow.bindSource("pipe1", input);
     Pipe pipe2 = workflow.bindSource("pipe2", input2);
@@ -253,7 +253,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
 
     //  run workflow
-    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp");
+    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
 
     Pipe pipe = builder.bindSource("pipe", msjStore);
 
@@ -279,7 +279,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     VersionedThriftBucketDataStoreHelper.writeToNewVersion(store);
 
     //  put together workflow
-    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp");
+    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
     Pipe source = builder.bindSource("source", store);
     Step tail = builder.buildTail("tail", source, output);
 
@@ -307,7 +307,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
         MSJFixtures.SUMM
     );
 
-    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp");
+    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
 
     Pipe pipe1 = builder.msj("pipe1", new ListBuilder<MSJBinding<BytesWritable>>()
         .add(new SourceMSJBinding<BytesWritable>(MSJFixtures.DIE_EID_EXTRACTOR, store1))
@@ -339,7 +339,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
         MSJFixtures.SUMM
     );
 
-    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp");
+    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
 
     Pipe pipe1 = builder.bindSource("pipe1", store1);
     pipe1 = new Increment(pipe1, "DIES", "COUNT");
@@ -386,7 +386,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
         MSJFixtures.SUMM
     );
 
-    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp");
+    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
 
     Pipe pipe1 = builder.bindSource("pipe1", store1);
     pipe1 = new Increment(pipe1, "DIES", "COUNT");

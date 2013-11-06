@@ -22,8 +22,7 @@ public class CascadingAction2 extends MultiStepAction {
 
   public CascadingAction2(String checkpointToken, String tmpRoot, Map<Object, Object> flowProperties) {
     super(checkpointToken, tmpRoot);
-
-    workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), flowProperties);
+    workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), getClass().getSimpleName(), flowProperties);
   }
 
   protected void complete(String stepName, List<? extends SinkBinding> sinkBindings){
