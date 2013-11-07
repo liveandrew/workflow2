@@ -6,7 +6,13 @@ import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEvent;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class Step {
 
@@ -122,6 +128,14 @@ public final class Step {
   }
 
   public void run() {
+    this.run(Lists.<StepStatsRecorder>newArrayList());
+  }
+
+  public void run(StepStatsRecorder recorder) {
+    this.run(Lists.newArrayList(recorder));
+  }
+
+  public void run(List<StepStatsRecorder> recorders) {
     if (conditionsNotMet()) {
       return;
     }
@@ -134,6 +148,10 @@ public final class Step {
       }
 
       timer.stop();
+
+      for (StepStatsRecorder recorder : recorders) {
+        recorder.recordStats(this, timer);
+      }
     }
   }
 

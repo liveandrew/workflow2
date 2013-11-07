@@ -10,6 +10,8 @@ public class WorkflowRunnerOptions {
   private List<String> notificationRecipients;
   private WorkflowRunnerNotificationSet enabledNotifications;
   private boolean enableWebUiServer;
+  private int statsDPort;
+  private String statsDHost;
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
@@ -17,6 +19,8 @@ public class WorkflowRunnerOptions {
     notificationRecipients = null;
     enabledNotifications = WorkflowRunnerNotificationSet.all();
     enableWebUiServer = true;
+    statsDPort = 8125;
+    statsDHost = "pglibertyc6";
   }
 
   public int getMaxConcurrentSteps() {
@@ -52,7 +56,7 @@ public class WorkflowRunnerOptions {
   }
 
   public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
-                                                       WorkflowRunnerNotification... enabledNotifications) {
+      WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = WorkflowRunnerNotificationSet.only(enabledNotification, enabledNotifications);
     return this;
   }
@@ -63,7 +67,7 @@ public class WorkflowRunnerOptions {
   }
 
   public WorkflowRunnerOptions setEnabledNotificationsExcept(WorkflowRunnerNotification enabledNotification,
-                                                             WorkflowRunnerNotification... enabledNotifications) {
+      WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = WorkflowRunnerNotificationSet.except(enabledNotification, enabledNotifications);
     return this;
   }
@@ -79,5 +83,21 @@ public class WorkflowRunnerOptions {
   public WorkflowRunnerOptions setEnableWebUiServer(boolean enableWebUiServer) {
     this.enableWebUiServer = enableWebUiServer;
     return this;
+  }
+
+  public int getStatsDPort() {
+    return statsDPort;
+  }
+
+  public void setStatsDPort(int statsDPort) {
+    this.statsDPort = statsDPort;
+  }
+
+  public String getStatsDHost() {
+    return statsDHost;
+  }
+
+  public void setStatsDHost(String statsDHost) {
+    this.statsDHost = statsDHost;
   }
 }
