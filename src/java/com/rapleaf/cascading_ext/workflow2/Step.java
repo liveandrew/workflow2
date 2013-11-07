@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.support.Rap;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEvent;
 
@@ -149,8 +150,10 @@ public final class Step {
 
       timer.stop();
 
-      for (StepStatsRecorder recorder : recorders) {
-        recorder.recordStats(this, timer);
+      if (!Rap.getTestMode()) {
+        for (StepStatsRecorder recorder : recorders) {
+          recorder.recordStats(this, timer);
+        }
       }
     }
   }
