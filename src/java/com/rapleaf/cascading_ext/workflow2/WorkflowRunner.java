@@ -20,6 +20,7 @@ import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.MailerHelper;
+import com.rapleaf.support.Rap;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
 import com.timgroup.statsd.NonBlockingStatsDClient;
@@ -254,6 +255,17 @@ public final class WorkflowRunner {
         tailSteps);
   }
 
+  private StepStatsRecorder getRecorder(WorkflowRunnerOptions options){
+    if(Rap.getTestMode()){
+      try {
+        return new StatsDRecorder(new NonBlockingStatsDClient("workflow." + workflowName, options.getStatsDHost(), options.getStatsDPort()));
+      } catch (Exception e) {
+        //  whatever
+      }
+    }
+    return new MockStatsRecorder();
+  }
+
   public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowRunnerOptions options, Set<Step> tailSteps) {
     this.workflowName = workflowName;
     this.persistence = persistence;
@@ -263,18 +275,8 @@ public final class WorkflowRunner {
     } else {
       this.webUiPort = options.getWebUiPort();
     }
-    NonBlockingStatsDClient client;
-    try {
-      client = new NonBlockingStatsDClient("workflow." + workflowName, options.getStatsDHost(), options.getStatsDPort());
-    } catch (Exception e) {
-      client = null;
-    }
-    if (client != null) {
-      this.statsRecorder = new StatsDRecorder(client);
-    } else {
-      this.statsRecorder = new MockStatsRecorder();
-    }
 
+    this.statsRecorder = getRecorder(options);
     this.enableWebUiServer = options.getEnableWebUiServer();
     this.notificationRecipients = options.getNotificationRecipients();
     this.enabledNotifications = options.getEnabledNotifications().get();
