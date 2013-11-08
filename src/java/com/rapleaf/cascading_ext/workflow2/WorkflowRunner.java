@@ -565,6 +565,15 @@ public final class WorkflowRunner {
     // case someone failed.
     clearFinishedSteps();
 
+
+    if(statsRecorder != null){
+      try{
+      statsRecorder.stop();
+      }catch(Exception e){
+        //  don't want to interrupt the rest
+      }
+    }
+
     // if there are any failures, then the workflow failed. throw an exception.
     if (isFailPending()) {
       String failureMessage = buildStepsFailureMessage();

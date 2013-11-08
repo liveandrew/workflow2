@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 public interface StepStatsRecorder {
 
   public void recordStats(Step step, Step.StepTimer timer);
+
+  public void stop();
 }
 
 class StatsDRecorder implements StepStatsRecorder {
@@ -32,6 +34,11 @@ class StatsDRecorder implements StepStatsRecorder {
 
   public StatsDRecorder(StatsDClient client) {
     this.client = client;
+  }
+
+  @Override
+  public void stop() {
+    client.stop();
   }
 
   @Override
@@ -82,5 +89,10 @@ class MockStatsRecorder implements StepStatsRecorder {
     for (NestedCounter nestedCounter : step.getCounters()) {
       LOG.info(nestedCounter.getCounter().getGroup() + " : " + nestedCounter.getCounter().getName() + " : " + nestedCounter.getCounter().getValue());
     }
+  }
+
+  @Override
+  public void stop() {
+    //  empty
   }
 }
