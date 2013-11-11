@@ -31,6 +31,17 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
 
   public HankModalDomainBuilderAction(
       String checkpointToken,
+      HankVersionType versionType,
+      boolean shouldPartitionAndSortInput,
+      CoordinatorConfigurator configurator,
+      HankDataStore output,
+      double ratio) {
+    super(checkpointToken,versionType, shouldPartitionAndSortInput, configurator, output);
+    this.domainDeltaRatio = ratio;
+  }
+
+  public HankModalDomainBuilderAction(
+      String checkpointToken,
       CoordinatorConfigurator configurator,
       HankDataStore output,
       double ratio) {
