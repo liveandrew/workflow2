@@ -1,17 +1,18 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.rapleaf.cascading_ext.workflow2.Action;
 import com.liveramp.hank.coordinator.Coordinator;
 import com.liveramp.hank.coordinator.RingGroup;
 import com.liveramp.hank.coordinator.RingGroups;
+import com.rapleaf.cascading_ext.workflow2.Action;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class WaitForHankDeploy extends Action {
 
@@ -53,8 +54,20 @@ public class WaitForHankDeploy extends Action {
         if (ringGroup == null || RingGroups.isServingOnlyUpToDate(ringGroup)) {
           itr.remove();
         }
+
       }
       firstIteration = false;
+
+      LOG.info("Waiting for ring groups to finish deploying: "+ Collections2.transform(ringsToWaitFor, new Function<RingGroup, String>() {
+        @Override
+        public String apply( RingGroup ringGroup) {
+          if(ringGroup != null){
+            LOG.info("\t"+ringGroup.getName());
+          }
+          return null;
+        }
+      }));
+
     }
     LOG.info("Checking for deploy complete!");
   }
