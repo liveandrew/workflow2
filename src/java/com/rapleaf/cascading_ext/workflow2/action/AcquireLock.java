@@ -13,7 +13,7 @@ public class AcquireLock extends Action {
 
   @Override
   protected void execute() throws Exception {
-    if (lock.lock()) {
+    if (!lock.lock()) {
       throw new RuntimeException("Could not acquire lock for: " + lock);
     }
   }
