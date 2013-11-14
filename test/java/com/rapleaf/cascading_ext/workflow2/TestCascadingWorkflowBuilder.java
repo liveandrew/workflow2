@@ -12,7 +12,7 @@ import cascading.tuple.Tuple;
 import com.google.common.collect.Lists;
 import com.liveramp.cascading_ext.assembly.BloomJoin;
 import com.liveramp.cascading_ext.assembly.Increment;
-import com.liveramp.collections.list.ListBuilder;
+import com.liveramp.commons.collections.list.ListBuilder;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.assembly.Distinct;
