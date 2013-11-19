@@ -144,7 +144,7 @@ public abstract class Action {
     return checkpointToken;
   }
 
-  public String getTmpRoot() {
+  public final String getTmpRoot() {
     if(tmpRoot == null){
       throw new RuntimeException("Temp root not set!");
     }
