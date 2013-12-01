@@ -260,8 +260,8 @@ public final class WorkflowRunner {
       try {
         return new StatsDRecorder(new NonBlockingStatsDClient("workflow." + workflowName, options.getStatsDHost(), options.getStatsDPort()));
       } catch (Exception e) {
-        e.printStackTrace();
         //  whatever
+        LOG.info("Exception creating stats recorder", e);
       }
     }
     return new MockStatsRecorder();
