@@ -256,7 +256,7 @@ public final class WorkflowRunner {
   }
 
   private StepStatsRecorder getRecorder(WorkflowRunnerOptions options){
-    if(Rap.getTestMode()){
+    if(!Rap.getTestMode()){
       try {
         return new StatsDRecorder(new NonBlockingStatsDClient("workflow." + workflowName, options.getStatsDHost(), options.getStatsDPort()));
       } catch (Exception e) {
