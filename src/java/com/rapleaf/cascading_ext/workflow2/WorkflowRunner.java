@@ -1,33 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.liveramp.cascading_ext.counters.Counter;
-import com.liveramp.workflow_service.generated.ActiveState;
-import com.liveramp.workflow_service.generated.ActiveStatus;
-import com.liveramp.workflow_service.generated.CompleteMeta;
-import com.liveramp.workflow_service.generated.ExecuteStatus;
-import com.liveramp.workflow_service.generated.FailMeta;
-import com.liveramp.workflow_service.generated.ShutdownMeta;
-import com.liveramp.workflow_service.generated.StepCompletedMeta;
-import com.liveramp.workflow_service.generated.StepExecuteStatus;
-import com.liveramp.workflow_service.generated.StepFailedMeta;
-import com.liveramp.workflow_service.generated.StepRunningMeta;
-import com.liveramp.workflow_service.generated.StepSkippedMeta;
-import com.liveramp.workflow_service.generated.WorkflowException;
-import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
-import com.rapleaf.support.MailerHelper;
-import com.rapleaf.support.Rap;
-import com.rapleaf.support.event_timer.EventTimer;
-import com.rapleaf.support.event_timer.TimedEventHelper;
-import com.timgroup.statsd.NonBlockingStatsDClient;
-import org.apache.log4j.Logger;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,6 +23,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+
+import com.timgroup.statsd.NonBlockingStatsDClient;
+import org.apache.log4j.Logger;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+
+import com.liveramp.cascading_ext.counters.Counter;
+import com.liveramp.workflow_service.generated.ActiveState;
+import com.liveramp.workflow_service.generated.ActiveStatus;
+import com.liveramp.workflow_service.generated.CompleteMeta;
+import com.liveramp.workflow_service.generated.ExecuteStatus;
+import com.liveramp.workflow_service.generated.FailMeta;
+import com.liveramp.workflow_service.generated.ShutdownMeta;
+import com.liveramp.workflow_service.generated.StepCompletedMeta;
+import com.liveramp.workflow_service.generated.StepExecuteStatus;
+import com.liveramp.workflow_service.generated.StepFailedMeta;
+import com.liveramp.workflow_service.generated.StepRunningMeta;
+import com.liveramp.workflow_service.generated.StepSkippedMeta;
+import com.liveramp.workflow_service.generated.WorkflowException;
+import com.rapleaf.cascading_ext.CascadingHelper;
+import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
+import com.rapleaf.support.MailerHelper;
+import com.rapleaf.support.Rap;
+import com.rapleaf.support.event_timer.EventTimer;
+import com.rapleaf.support.event_timer.TimedEventHelper;
 
 public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
@@ -255,8 +256,8 @@ public final class WorkflowRunner {
         tailSteps);
   }
 
-  private StepStatsRecorder getRecorder(WorkflowRunnerOptions options){
-    if(!Rap.getTestMode()){
+  private StepStatsRecorder getRecorder(WorkflowRunnerOptions options) {
+    if (!Rap.getTestMode()) {
       try {
         return new StatsDRecorder(new NonBlockingStatsDClient("workflow." + workflowName, options.getStatsDHost(), options.getStatsDPort()));
       } catch (Exception e) {
@@ -368,8 +369,8 @@ public final class WorkflowRunner {
     try {
       String host = InetAddress.getLocalHost().getHostName();
       Set<String> productionHosts = new HashSet<String>(Arrays.asList(
-          "ds-jobs.rapleaf.com",
-          "s2s-master.rapleaf.com"
+          "ds-jobs.liveramp.net",
+          "s2s-master.liveramp.net"
       ));
       if (productionHosts.contains(host)) {
         outputPath = WORKFLOW_DOCS_PATH;
@@ -567,10 +568,10 @@ public final class WorkflowRunner {
     clearFinishedSteps();
 
 
-    if(statsRecorder != null){
-      try{
-      statsRecorder.stop();
-      }catch(Exception e){
+    if (statsRecorder != null) {
+      try {
+        statsRecorder.stop();
+      } catch (Exception e) {
         //  don't want to interrupt the rest
       }
     }
