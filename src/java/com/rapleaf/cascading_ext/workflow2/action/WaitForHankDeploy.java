@@ -51,18 +51,22 @@ public class WaitForHankDeploy extends Action {
       Iterator<RingGroup> itr = ringsToWaitFor.iterator();
       while (itr.hasNext()) {
         RingGroup ringGroup = itr.next();
-        if (ringGroup == null || RingGroups.isServingOnlyUpToDate(ringGroup)) {
+
+        if(ringGroup == null){
+          itr.remove();
+        } else if (RingGroups.isServingOnlyUpToDate(ringGroup)) {
+          LOG.info("Noting domain as up-to-date: "+ringGroup.getName());
           itr.remove();
         }
-
       }
+
       firstIteration = false;
 
       LOG.info("Waiting for ring groups to finish deploying: "+ Collections2.transform(ringsToWaitFor, new Function<RingGroup, String>() {
         @Override
         public String apply( RingGroup ringGroup) {
           if(ringGroup != null){
-            LOG.info("\t"+ringGroup.getName());
+            return ringGroup.getName();
           }
           return null;
         }
