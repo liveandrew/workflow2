@@ -20,7 +20,9 @@ public class CommitMSJBase <RecordType, KeyType extends Comparable> extends Acti
 
   @Override
   protected void execute() throws Exception {
-    store.getStore().acquireBaseCreationAttempt();
+    if(store.getStore().hasBase()){
+      store.getStore().acquireBaseCreationAttempt();
+    }
     store.commitBase(baseToCommit.getPath());
   }
 }
