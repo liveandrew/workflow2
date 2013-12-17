@@ -6,6 +6,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
 import com.rapleaf.cascading_ext.map_side_join.Joiner;
 import com.rapleaf.cascading_ext.map_side_join.MapSideJoin;
+import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 
@@ -15,24 +16,25 @@ import java.util.Map;
 
 public abstract class MapSideJoinAction<T extends Comparable> extends Action {
 
-  private final List<BucketDataStore> inputStores = new ArrayList<BucketDataStore>();
+  private final List<MapSideJoinableDataStore> inputStores = new ArrayList<MapSideJoinableDataStore>();
   private final BucketDataStore outputStore;
   private List<Extractor<T>> extractors = new ArrayList<Extractor<T>>();
   private Joiner<T> joiner = null;
   private final Map<Object, Object> properties = Maps.newHashMap();
 
   public MapSideJoinAction(String checkpointToken,
-                           List<? extends BucketDataStore> inputStores,
+                           List<? extends MapSideJoinableDataStore> inputStores,
                            BucketDataStore outputStore) {
     super(checkpointToken);
 
     this.inputStores.addAll(inputStores);
     this.outputStore = outputStore;
 
-    for(DataStore ds: inputStores){
-      readsFrom(ds);
+    for (MapSideJoinableDataStore store : inputStores) {
+      if(store instanceof DataStore){
+        readsFrom((DataStore) store);
+      }
     }
-
     creates(outputStore);
 
   }
