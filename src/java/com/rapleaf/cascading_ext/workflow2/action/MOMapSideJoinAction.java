@@ -11,6 +11,7 @@ import com.rapleaf.cascading_ext.map_side_join.MOMapSideJoin;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.Counters;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,6 +59,9 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
   protected void setUp() {
   }
 
+  protected void tearDown(Counters counters) {
+  }
+
   protected void addExtractors(List<Extractor<T>> extractors) {
     this.extractors.addAll(extractors);
   }
@@ -85,5 +89,7 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
                                                        categoryToOutputBucket);
 
     completeWithProgress(new HadoopOperation(join));
+
+    tearDown(join.getJobCounters());
   }
 }
