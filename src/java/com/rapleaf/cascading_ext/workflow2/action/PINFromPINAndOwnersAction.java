@@ -1,11 +1,11 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
-import com.rapleaf.cascading_ext.map_side_join.Extractor;
 import com.rapleaf.cascading_ext.map_side_join.Joiner;
 import com.rapleaf.cascading_ext.map_side_join.MSJUtil;
 import com.rapleaf.cascading_ext.map_side_join.MapSideJoin;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TBinaryExtractor;
+import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwners;
@@ -16,19 +16,18 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 public class PINFromPINAndOwnersAction extends Action {
-  BucketDataStore pinAndOwnerSets;
+  MapSideJoinableDataStore pinAndOwnerSets;
   BucketDataStore pins;
 
   public PINFromPINAndOwnersAction(
       String checkpointToken,
       String tmpRoot,
-      BucketDataStore pinAndOwnerSets,
+      MapSideJoinableDataStore pinAndOwnerSets,
       BucketDataStore pins) {
     super(checkpointToken, tmpRoot);
     this.pinAndOwnerSets = pinAndOwnerSets;
     this.pins = pins;
 
-    readsFrom(pinAndOwnerSets);
     creates(pins);
   }
 
