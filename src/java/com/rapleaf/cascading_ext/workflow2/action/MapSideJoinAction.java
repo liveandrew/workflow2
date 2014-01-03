@@ -1,6 +1,8 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import com.google.common.collect.Maps;
+import org.apache.hadoop.mapred.Counters;
+
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
@@ -55,6 +57,9 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
     this.properties.putAll(properties);
   }
 
+  protected void tearDown(Counters counters) {
+  }
+
   @Override
   protected void execute() throws Exception {
     MapSideJoin<T> join = new MapSideJoin<T>(this.getClass().getSimpleName(),
@@ -65,5 +70,6 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
     join.addProperties(this.properties);
 
     completeWithProgress(new HadoopOperation(join));
+    tearDown(join.getJobCounters());
   }
 }
