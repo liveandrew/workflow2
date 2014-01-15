@@ -69,7 +69,7 @@ class StatsDRecorder implements StepStatsRecorder {
       if (groupName.equals(nestedCounter.getCounter().getGroup()) &&
           counterName.equals(nestedCounter.getCounter().getName())) {
         int value = value(nestedCounter);
-        client.recordGaugeValue(bucket + "." + counterName, value);
+        client.count(bucket + "." + counterName, value);
         LOG.info("Recording " + groupName + ":" + counterName + "  :  " + value);
         return;
       }
