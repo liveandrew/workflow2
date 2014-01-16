@@ -53,9 +53,9 @@ class StatsDRecorder implements StepStatsRecorder {
 
       .put("CPU_MILLISECONDS", TIME_MS_SCALE)
       .put("SLOTS_MILLIS_MAPS", TIME_MS_SCALE)
-      .put("SLOTS_MILLIS_REDUCE", TIME_MS_SCALE)
+      .put("SLOTS_MILLIS_REDUCES", TIME_MS_SCALE)
       .put("FALLOW_SLOTS_MILLIS_MAPS", TIME_MS_SCALE)
-      .put("FALLOW_SLOTS_MILLIS_REDUCE", TIME_MS_SCALE)
+      .put("FALLOW_SLOTS_MILLIS_REDUCES", TIME_MS_SCALE)
       .build();
 
   public StatsDRecorder(StatsDClient client) {
