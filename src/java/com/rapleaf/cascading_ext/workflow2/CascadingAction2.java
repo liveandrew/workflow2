@@ -49,7 +49,7 @@ public class CascadingAction2 extends MultiStepAction {
     return workflowHelper.bindSource(name, input);
   }
 
-  protected Pipe bindSource(String name, List<DataStore> inputs){
+  protected Pipe bindSource(String name, List<? extends DataStore> inputs){
     return workflowHelper.bindSource(name, inputs);
   }
 

@@ -64,7 +64,7 @@ public class CascadingWorkflowBuilder {
     return bindSource(name, Lists.newArrayList(source), new SimpleFactory(source));
   }
 
-  public Pipe bindSource(String name, final Collection<DataStore> inputs) {
+  public Pipe bindSource(String name, final Collection<? extends DataStore> inputs) {
     return bindSource(name, inputs, new TapFactory() {
       @Override
       public Tap createTap() {
@@ -77,7 +77,7 @@ public class CascadingWorkflowBuilder {
     return bindSource(name, Lists.newArrayList(source), tap);
   }
 
-  public Pipe bindSource(String name, Collection<DataStore> sources, TapFactory tap) {
+  public Pipe bindSource(String name, Collection<? extends DataStore> sources, TapFactory tap) {
     pipenameToSourceStore.putAll(name, sources);
     pipenameToTap.put(name, tap);
     return new Pipe(name);
