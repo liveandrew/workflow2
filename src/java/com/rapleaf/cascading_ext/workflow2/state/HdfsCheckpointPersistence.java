@@ -1,17 +1,26 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
+import java.io.IOException;
+import java.util.Map;
+
 import com.google.common.collect.Maps;
-import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.workflow_service.generated.*;
-import com.rapleaf.cascading_ext.workflow2.Step;
-import com.liveramp.cascading_ext.fs.TrashHelper;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.util.Map;
+import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.liveramp.workflow_service.generated.ActiveState;
+import com.liveramp.workflow_service.generated.ActiveStatus;
+import com.liveramp.workflow_service.generated.ExecuteStatus;
+import com.liveramp.workflow_service.generated.FailMeta;
+import com.liveramp.workflow_service.generated.RunningMeta;
+import com.liveramp.workflow_service.generated.StepExecuteStatus;
+import com.liveramp.workflow_service.generated.StepSkippedMeta;
+import com.liveramp.workflow_service.generated.StepWaitingMeta;
+import com.liveramp.workflow_service.generated.WorkflowDefinition;
+import com.rapleaf.cascading_ext.workflow2.Step;
 
 public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = Logger.getLogger(HdfsCheckpointPersistence.class);
@@ -70,14 +79,14 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   public void updateStatus(Step step, StepExecuteStatus status) throws IOException {
     LOG.info("Noting new status for step " + step.getCheckpointToken() + ": " + status);
 
-    if (status.isSetCompleted()) {
+    if (status.is_set_completed()) {
       LOG.info("Writing out checkpoint token for " + step.getCheckpointToken());
       String tokenPath = checkpointDir + "/" + step.getCheckpointToken();
       if (!fs.createNewFile(new Path(tokenPath))) {
         throw new IOException("Couldn't create checkpoint file " + tokenPath);
       }
       LOG.debug("Done writing checkpoint token for " + step.getCheckpointToken());
-    } else if (status.isSetFailed()) {
+    } else if (status.is_set_failed()) {
       currentStatus = ExecuteStatus.active(new ActiveState(ActiveStatus.failPending(new FailMeta())));
     }
 
@@ -93,7 +102,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   @Override
   public void setStatus(ExecuteStatus status) {
     currentStatus = status;
-    if (status.isSetComplete()) {
+    if (status.is_set_complete()) {
       try {
         if (deleteCheckpointsOnSuccess) {
           LOG.debug("Deleting checkpoint dir " + checkpointDir);

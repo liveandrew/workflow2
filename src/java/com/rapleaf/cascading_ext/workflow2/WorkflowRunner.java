@@ -116,9 +116,9 @@ public final class WorkflowRunner {
               update(StepExecuteStatus.failed(new StepFailedMeta(exception)));
 
               //  mark the flow as failed if nothing else has already
-              if (!persistence.getFlowStatus().isSetFailed()) {
+              if (!persistence.getFlowStatus().is_set_failed()) {
                 ExecuteStatus status = persistence.getFlowStatus();
-                status.getActive().setStatus(ActiveStatus.failPending(new FailMeta()));
+                status.get_active().set_status(ActiveStatus.failPending(new FailMeta()));
                 persistence.setStatus(status);
               }
             } catch (Exception e2) {
@@ -405,8 +405,8 @@ public final class WorkflowRunner {
     if (liveWorkflow) {
       String liverWorkflowDef = "liveworkflow = true;\n";
       ExecuteStatus status = persistence.getFlowStatus();
-      if (status.isSetActive() && status.getActive().getStatus().isSetShutdownPending()) {
-        liverWorkflowDef += "shutdown_reason = \"" + status.getActive().getStatus().getShutdownPending().getCause() + "\"\n";
+      if (status.is_set_active() && status.get_active().get_status().is_set_shutdownPending()) {
+        liverWorkflowDef += "shutdown_reason = \"" + status.get_active().get_status().get_shutdownPending().get_cause() + "\"\n";
       }
       templateFields.put("${live_workflow_def}", liverWorkflowDef);
     } else {
@@ -600,18 +600,18 @@ public final class WorkflowRunner {
 
     int numFailed = 0;
     for (Map.Entry<String, StepExecuteStatus> status : persistence.getAllStepStatuses().entrySet()) {
-      if (status.getValue().isSetFailed()) {
+      if (status.getValue().is_set_failed()) {
         numFailed++;
       }
     }
 
     for (Map.Entry<String, StepExecuteStatus> status : persistence.getAllStepStatuses().entrySet()) {
-      if (status.getValue().isSetFailed()) {
-        StepFailedMeta meta = status.getValue().getFailed();
+      if (status.getValue().is_set_failed()) {
+        StepFailedMeta meta = status.getValue().get_failed();
         pw.println("(" + n + "/" + numFailed + ") Step "
             + status.getKey() + " failed with exception: "
-            + meta.getCause().getCause());
-        pw.println(meta.getCause().getStacktrace());
+            + meta.get_cause().get_cause());
+        pw.println(meta.get_cause().get_stacktrace());
         n++;
       }
     }
@@ -678,12 +678,12 @@ public final class WorkflowRunner {
 
   public boolean isFailPending() {
     ExecuteStatus flowStatus = persistence.getFlowStatus();
-    return flowStatus.isSetActive() && flowStatus.getActive().getStatus().isSetFailPending();
+    return flowStatus.is_set_active() && flowStatus.get_active().get_status().is_set_failPending();
   }
 
   public boolean isShutdownPending() {
     ExecuteStatus flowStatus = persistence.getFlowStatus();
-    return flowStatus.isSetActive() && flowStatus.getActive().getStatus().isSetShutdownPending();
+    return flowStatus.is_set_active() && flowStatus.get_active().get_status().is_set_shutdownPending();
   }
 
   public void disableNotification(WorkflowRunnerNotification workflowRunnerNotification) {
@@ -704,14 +704,14 @@ public final class WorkflowRunner {
       reasonForShutdown = reason;
     }
 
-    ActiveState state = persistence.getFlowStatus().getActive();
-    state.setStatus(ActiveStatus.shutdownPending(new ShutdownMeta(reasonForShutdown)));
+    ActiveState state = persistence.getFlowStatus().get_active();
+    state.set_status(ActiveStatus.shutdownPending(new ShutdownMeta(reasonForShutdown)));
     ExecuteStatus newStatus = ExecuteStatus.active(state);
     persistence.setStatus(newStatus);
   }
 
   public String getReasonForShutdownRequest() {
-    return persistence.getFlowStatus().getActive().getStatus().getShutdownPending().getCause();
+    return persistence.getFlowStatus().get_active().get_status().get_shutdownPending().get_cause();
   }
 
   private void clearFinishedSteps() {
