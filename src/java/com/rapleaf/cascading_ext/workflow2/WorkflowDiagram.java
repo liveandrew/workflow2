@@ -433,7 +433,7 @@ public class WorkflowDiagram {
     for (DefaultEdge edge : dependencyGraph.edgeSet()) {
       Step source = dependencyGraph.getEdgeSource(edge);
       Step target = dependencyGraph.getEdgeTarget(edge);
-      steps.get(source.getCheckpointToken()).addToRequiredCheckpoints(target.getCheckpointToken());
+      steps.get(source.getCheckpointToken()).add_to_requiredCheckpoints(target.getCheckpointToken());
     }
 
     return new WorkflowDefinition(workflowRunner.getWorkflowName(), steps);
