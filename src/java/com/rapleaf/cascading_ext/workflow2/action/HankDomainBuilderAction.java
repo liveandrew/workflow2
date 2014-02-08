@@ -71,6 +71,15 @@ public abstract class HankDomainBuilderAction extends Action {
                                  HankVersionType versionType,
                                  boolean shouldPartitionAndSortInput,
                                  CoordinatorConfigurator configurator,
+                                 HankDataStore output) {
+    this(checkpointToken, tmpRoot, versionType, shouldPartitionAndSortInput, configurator, output, Maps.newHashMap());
+  }
+
+  public HankDomainBuilderAction(String checkpointToken,
+                                 String tmpRoot,
+                                 HankVersionType versionType,
+                                 boolean shouldPartitionAndSortInput,
+                                 CoordinatorConfigurator configurator,
                                  HankDataStore output,
                                  Map<Object, Object> properties) {
     super(checkpointToken, tmpRoot);
