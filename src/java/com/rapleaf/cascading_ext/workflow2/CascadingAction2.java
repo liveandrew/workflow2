@@ -53,6 +53,10 @@ public class CascadingAction2 extends MultiStepAction {
     return workflowHelper.bindSource(name, inputs);
   }
 
+  protected Pipe bindSource(String name, List<? extends DataStore> inputs, TapFactory sourceTap){
+    return workflowHelper.bindSource(name, inputs);
+  }
+
   protected <T extends Comparable, O extends TBase> Pipe msj(String name, List<MSJBinding<T>> bindings, TOutputMultiJoiner<T, O> joiner) throws IOException {
     return workflowHelper.msj(name, bindings, joiner);
   }
