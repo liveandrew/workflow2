@@ -1,6 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
+import java.util.List;
+
+import com.rapleaf.cascading_ext.counters.NestedCounter;
 
 //because workflowRunner is a final class, can't be mocked
 // make a workflowRunable for mockery test
@@ -18,5 +21,9 @@ public class WorkflowRunnable implements Runnable {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  public List<NestedCounter> getCounter(){
+    return runner.getCounters();
   }
 }
