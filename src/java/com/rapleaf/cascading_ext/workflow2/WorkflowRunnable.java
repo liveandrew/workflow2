@@ -19,11 +19,11 @@ public class WorkflowRunnable implements Runnable {
     try {
       runner.run();
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
-  public List<NestedCounter> getCounter(){
+  public List<NestedCounter> getCounter() {
     return runner.getCounters();
   }
 }
