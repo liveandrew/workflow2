@@ -149,6 +149,10 @@ public abstract class HankDomainBuilderAction extends Action {
     domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {
+
+      //  record stats
+      runningFlow(flow);
+
       postProcessFlow(flow);
     }
   }
