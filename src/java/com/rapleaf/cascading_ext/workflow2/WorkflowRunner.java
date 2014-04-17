@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import com.liveramp.cascading_ext.clockwork.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.workflow_service.generated.ActiveState;
 import com.liveramp.workflow_service.generated.ActiveStatus;
@@ -71,6 +72,7 @@ public final class WorkflowRunner {
   public static final String WORKFLOW_DOCS_PATH = "/var/nfs/mounts/files/flowdoc/";
 
   private final WorkflowStatePersistence persistence;
+  private final StoreReaderLockProvider lockProvider;
 
   /**
    * StepRunner keeps track of some extra state for each component, as
@@ -285,9 +287,11 @@ public final class WorkflowRunner {
     this.semaphore = new Semaphore(maxConcurrentSteps);
     this.tailSteps = tailSteps;
     this.timer = new EventTimer(workflowName);
+    this.lockProvider = options.getLockProvider();
     dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
 
     removeRedundantEdges(dependencyGraph);
+    setLockProvider(dependencyGraph);
 
     // TODO: verify datasources satisfied
 
@@ -296,6 +300,12 @@ public final class WorkflowRunner {
       StepRunner runner = new StepRunner(step, persistence);
       stepTokenToRunner.put(step.getCheckpointToken(), runner);
       pendingSteps.add(runner);
+    }
+  }
+
+  private void setLockProvider(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
+    for (Step step : dependencyGraph.vertexSet()) {
+      step.getAction().setLockProvider(this.lockProvider);
     }
   }
 

@@ -3,6 +3,8 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.util.Arrays;
 import java.util.List;
 
+import com.liveramp.cascading_ext.clockwork.StoreReaderLockProvider;
+
 public class WorkflowRunnerOptions {
 
   private int maxConcurrentSteps;
@@ -12,6 +14,7 @@ public class WorkflowRunnerOptions {
   private boolean enableWebUiServer;
   private int statsDPort;
   private String statsDHost;
+  private StoreReaderLockProvider lockProvider;
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
@@ -21,6 +24,7 @@ public class WorkflowRunnerOptions {
     enableWebUiServer = true;
     statsDPort = 8125;
     statsDHost = "pglibertyc6";
+    lockProvider = null;
   }
 
   public int getMaxConcurrentSteps() {
@@ -89,15 +93,26 @@ public class WorkflowRunnerOptions {
     return statsDPort;
   }
 
-  public void setStatsDPort(int statsDPort) {
+  public WorkflowRunnerOptions  setStatsDPort(int statsDPort) {
     this.statsDPort = statsDPort;
+    return this;
   }
 
   public String getStatsDHost() {
     return statsDHost;
   }
 
-  public void setStatsDHost(String statsDHost) {
+  public WorkflowRunnerOptions  setStatsDHost(String statsDHost) {
     this.statsDHost = statsDHost;
+    return this;
+  }
+
+  public StoreReaderLockProvider getLockProvider() {
+    return lockProvider;
+  }
+
+  public WorkflowRunnerOptions  setLockProvider(StoreReaderLockProvider lockProvider) {
+    this.lockProvider = lockProvider;
+    return this;
   }
 }

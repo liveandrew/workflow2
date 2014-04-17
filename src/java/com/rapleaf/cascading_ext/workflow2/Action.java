@@ -1,16 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import cascading.flow.Flow;
-import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.cascading_ext.fs.TrashHelper;
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
-import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -22,6 +11,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Lists;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Logger;
+
+import cascading.flow.Flow;
+
+import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.clockwork.ResourceSemaphore;
+import com.liveramp.cascading_ext.clockwork.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
+import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
+
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
 
@@ -32,6 +37,8 @@ public abstract class Action {
   private final Set<DataStore> createsDatastores = new HashSet<DataStore>();
   private final Set<DataStore> createsTemporaryDatastores = new HashSet<DataStore>();
   private final Set<DataStore> writesToDatastores = new HashSet<DataStore>();
+
+  private StoreReaderLockProvider lockProvider;
 
   private String lastStatusMessage = "";
 
@@ -100,16 +107,33 @@ public abstract class Action {
   }
 
   protected final void internalExecute() {
+    List<ResourceSemaphore> locks = Lists.newArrayList();
     try {
       startTimestamp = System.currentTimeMillis();
       prepDirs();
+      locks = lockReadsFromStores();
       execute();
     } catch (Throwable t) {
       LOG.fatal("Action " + checkpointToken + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
     } finally {
       endTimestamp = System.currentTimeMillis();
+      for (ResourceSemaphore lock : locks) {
+        lock.release();
+      }
     }
+  }
+
+  private List<ResourceSemaphore> lockReadsFromStores() {
+    List<ResourceSemaphore> locks = Lists.newArrayList();
+    if (lockProvider != null) {
+      for (DataStore readsFromDatastore : readsFromDatastores) {
+        ResourceSemaphore lock = lockProvider.createLock(readsFromDatastore);
+        lock.lock();
+        locks.add(lock);
+      }
+    }
+    return locks;
   }
 
   public static RuntimeException wrapRuntimeException(Throwable t) {
@@ -145,7 +169,7 @@ public abstract class Action {
   }
 
   public final String getTmpRoot() {
-    if(tmpRoot == null){
+    if (tmpRoot == null) {
       throw new RuntimeException("Temp root not set!");
     }
     return tmpRoot;
@@ -275,6 +299,15 @@ public abstract class Action {
       throw new RuntimeException(e);
     }
   }
+
+  public void setLockProvider(StoreReaderLockProvider lockProvider) {
+    this.lockProvider = lockProvider;
+  }
+
+  protected StoreReaderLockProvider getLockProvider() {
+    return lockProvider;
+  }
+
 
   private class OperationProgressMonitor extends Thread {
     private boolean _keepRunning;
