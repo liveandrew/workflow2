@@ -112,6 +112,8 @@ public abstract class Action {
       startTimestamp = System.currentTimeMillis();
       prepDirs();
       locks = lockReadsFromStores();
+      LOG.info("Aquired locks for " + readsFromDatastores);
+      LOG.info("Locks " + locks);
       execute();
     } catch (Throwable t) {
       LOG.fatal("Action " + checkpointToken + " failed due to Throwable", t);
