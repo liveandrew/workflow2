@@ -2,7 +2,6 @@ package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.util.Arrays;
 
-import com.liveramp.cascading_ext.clockwork.StoreReaderLockProvider;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 

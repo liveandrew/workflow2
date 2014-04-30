@@ -3,7 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.util.Arrays;
 import java.util.List;
 
-import com.liveramp.cascading_ext.clockwork.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 
 public class WorkflowRunnerOptions {
 

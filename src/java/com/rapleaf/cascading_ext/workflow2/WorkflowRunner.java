@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import com.liveramp.cascading_ext.clockwork.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.workflow_service.generated.ActiveState;
 import com.liveramp.workflow_service.generated.ActiveStatus;

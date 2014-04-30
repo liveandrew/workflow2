@@ -19,8 +19,8 @@ import org.apache.log4j.Logger;
 import cascading.flow.Flow;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.cascading_ext.clockwork.ResourceSemaphore;
-import com.liveramp.cascading_ext.clockwork.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
+import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
