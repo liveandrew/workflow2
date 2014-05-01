@@ -32,6 +32,8 @@ public abstract class HankDomainBuilderAction extends Action {
   private Integer partitionToBuild = null;
   private Integer domainVersionNumber = null;
 
+  private DomainVersionStorage domainVersionStorage = null;
+
   public HankDomainBuilderAction(
       String checkpointToken,
       HankVersionType versionType,
@@ -154,7 +156,19 @@ public abstract class HankDomainBuilderAction extends Action {
       runningFlow(flow);
 
       postProcessFlow(flow);
+
+      if (domainVersionStorage != null) {
+        domainVersionStorage.store(getDomainName(), getDomainVersionNumber());
+      }
     }
+  }
+  public HankDomainBuilderAction setDomainVersionStorage(DomainVersionStorage domainVersionStorage) {
+    this.domainVersionStorage = domainVersionStorage;
+    return this;
+  }
+
+  public String getDomainName() {
+    return output.getDomainName();
   }
 
   public Integer getDomainVersionNumber() {
@@ -191,5 +205,13 @@ public abstract class HankDomainBuilderAction extends Action {
 
   protected void prepare() {
     // Default is no-op
+  }
+
+  public static interface DomainVersionStorage {
+
+    public void store(String domainName, Integer version);
+
+    public Map<String, Integer> read();
+
   }
 }
