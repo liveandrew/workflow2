@@ -23,7 +23,7 @@ public class CleanUpOlderVersions extends Action {
   @Override
   protected void execute() throws Exception {
     for (VersionedBucketDataStore versionedDataStore : versionedDataStores) {
-      versionedDataStore.getVersionedStore().deleteOlderVersions(numVersionsToKeep, this.getLockProvider());
+      versionedDataStore.getVersionedStore().deleteOlderVersions(numVersionsToKeep, this.getLockProvider(), true);
     }
   }
 }
