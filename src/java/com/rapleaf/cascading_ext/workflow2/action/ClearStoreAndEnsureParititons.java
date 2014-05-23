@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.BucketUtil;
 
@@ -14,8 +15,8 @@ public class ClearStoreAndEnsureParititons extends Action {
     this.store = store;
     this.numParititons = numParititons;
 
-    if (!store.getClass().equals(BucketDataStore.class)) {
-      throw new IllegalArgumentException("This procedure is invalid for subclasses of BucketDataStore");
+    if (store instanceof VersionedBucketDataStore) {
+      throw new IllegalArgumentException("This procedure is invalid for versioned stores");
     }
 
     creates(store);
