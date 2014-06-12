@@ -1,25 +1,19 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.thrift.TBase;
 
 import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
 
-import com.liveramp.cascading_ext.counters.Counter;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
-import com.rapleaf.formats.test.TupleDataStoreHelper;
 
 public class CascadingAction2 extends MultiStepAction {
 
@@ -51,32 +45,7 @@ public class CascadingAction2 extends MultiStepAction {
   }
 
   protected void complete(String stepName, Pipe output, DataStore outputStore, TupleDataStore persistStatsStore) throws IOException {
-    Step tail = workflowHelper.buildTail(stepName, output, outputStore);
-    Step persistStats = new Step(new PersistStats("persist_stats", persistStatsStore, tail.getCounters()), tail);
-    setSubStepsFromTail(persistStats);
-  }
-
-  private class PersistStats extends Action {
-    private TupleDataStore outputStats;
-    private List<NestedCounter> counters;
-
-    public PersistStats(String checkpointToken, TupleDataStore outputStats, List<NestedCounter> counters) {
-      super(checkpointToken);
-      this.outputStats = outputStats;
-      this.counters = counters;
-    }
-
-    @Override
-    protected void execute() throws Exception {
-      List<Tuple> tuples = Lists.newArrayList();
-      Iterator<NestedCounter> it = counters.iterator();
-      while (it.hasNext()) {
-        Counter counter = it.next().getCounter();
-        Tuple tuple = new Tuple(counter.getGroup(), counter.getName(), counter.getValue().toString());
-        tuples.add(tuple);
-      }
-      TupleDataStoreHelper.writeToStore(outputStats, tuples);
-    }
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore, persistStatsStore));
   }
 
   protected Pipe bindSource(String name, DataStore input, TapFactory sourceTap) {
