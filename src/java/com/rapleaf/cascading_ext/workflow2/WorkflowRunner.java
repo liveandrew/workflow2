@@ -48,7 +48,6 @@ import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.workflow2.webui.WorkflowWebServer;
 import com.rapleaf.support.MailerHelper;
 import com.rapleaf.support.Rap;
 import com.rapleaf.support.event_timer.EventTimer;

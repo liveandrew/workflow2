@@ -3,15 +3,13 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 import java.util.Arrays;
 
-import com.rapleaf.cascading_ext.datastore.BytesDataStore;
-import org.apache.hadoop.fs.Path;
+import org.junit.Test;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
-import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
+import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import org.junit.Ignore;
 
-@Ignore
+//@Ignore
 public class LongRunningWorkflow extends CascadingExtTestCase {
 
   private final String LONG_RUNNING_WORKFLOW_PATH = getTestRoot() + "/LongRunningHadoopWorkflow";
@@ -127,6 +125,7 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
     return s7;
   }
 
+  @Test
   public void testIt() throws IOException {
     Step tail = getTailStep();
     WorkflowRunner wfr = new WorkflowRunner("Long Running Test Workflow",

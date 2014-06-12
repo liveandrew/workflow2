@@ -1,12 +1,11 @@
-package com.rapleaf.cascading_ext.workflow2.webui;
+package com.rapleaf.cascading_ext.workflow2;
 
 import java.net.URL;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
-
-import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 
 public class WorkflowWebServer {
   private static final Logger LOG = Logger.getLogger(WorkflowWebServer.class);
@@ -48,12 +47,15 @@ public class WorkflowWebServer {
     server = new Server(port);
     final URL warUrl = getClass().getClassLoader().getResource(
       "com/rapleaf/cascading_ext/workflow2/webui");
+
     LOG.info("Workflow WebServer war url: " + warUrl);
     final String warUrlString = warUrl.toExternalForm();
     LOG.info("War url external form: " + warUrlString);
 
     WebAppContext webAppContext = new WebAppContext(warUrlString, "/");
     webAppContext.setAttribute("workflowRunner", workflowRunner);
+    webAppContext.addServlet(new ServletHolder(new WorkflowStateServlet(new WorkflowDiagram(workflowRunner))), "/state");
+
     server.setHandler(webAppContext);
 
     webServerThread = new WebServerThread(server);

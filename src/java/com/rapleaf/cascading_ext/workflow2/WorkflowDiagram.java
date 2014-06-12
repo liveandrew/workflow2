@@ -1,5 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -20,6 +22,9 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.liveramp.workflow_service.generated.StepDefinition;
 import com.liveramp.workflow_service.generated.StepExecuteStatus;
@@ -416,6 +421,32 @@ public class WorkflowDiagram {
     DirectedGraph<Vertex, DefaultEdge> diagramGraph = wrapVertices(dependencyGraph);
     removeRedundantEdges(diagramGraph);
     return diagramGraph;
+  }
+
+  public JSONObject getJSONState() throws JSONException, UnknownHostException {
+
+    DirectedGraph<Vertex, DefaultEdge> graph = getDiagramGraph();
+
+    JSONArray steps = new JSONArray();
+
+    for (Vertex vertex : graph.vertexSet()) {
+      steps.put(new JSONObject()
+        .put("id", vertex.getId())
+        .put("name", vertex.getName())
+        .put("status", vertex.getStatus())
+        .put("start_timestamp", vertex.getStartTimestamp())
+        .put("end_timestamp", vertex.getEndTimestamp())
+        .put("percent_complete", vertex.getPercentageComplete())
+        .put("message", vertex.getMessage())
+        .put("action_name", vertex.getActionName())
+        .put("job_tracker_links", vertex.getJobTrackerLinks()));
+    }
+
+    return new JSONObject()
+        .put("name", workflowRunner.getWorkflowName())
+        .put("host", InetAddress.getLocalHost().getHostName())
+        .put("username", System.getProperty("user.name"))
+        .put("steps", steps);
   }
 
   public WorkflowDefinition getDefinition() {
