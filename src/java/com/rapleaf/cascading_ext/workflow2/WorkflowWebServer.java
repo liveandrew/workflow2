@@ -58,7 +58,11 @@ public class WorkflowWebServer {
 
     WebAppContext webAppContext = new WebAppContext(warUrlString, "/");
     webAppContext.setAttribute("workflowRunner", workflowRunner);
-    webAppContext.addServlet(new ServletHolder(new WorkflowStateServlet(new WorkflowDiagram(workflowRunner))), "/state");
+
+    WorkflowDiagram diagram = new WorkflowDiagram(workflowRunner);
+    diagram.expandAllMultistepVertices();
+
+    webAppContext.addServlet(new ServletHolder(new WorkflowStateServlet(diagram)), "/state");
 
     server.setHandler(webAppContext);
 
