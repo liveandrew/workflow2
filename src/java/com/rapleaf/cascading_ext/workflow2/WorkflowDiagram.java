@@ -24,6 +24,7 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -435,21 +436,25 @@ public class WorkflowDiagram {
     Map<String, Integer> stepIdToNum = Maps.newHashMap();
     Multimap<String, String> allEdges = HashMultimap.create();
 
-    for (Vertex vertex : graph.vertexSet()) {
+    TopologicalOrderIterator<Vertex, DefaultEdge> iter = new TopologicalOrderIterator<Vertex, DefaultEdge>(graph);
+
+    while(iter.hasNext()){
+      Vertex vertex = iter.next();
+
       int nodeIndex = stepIdToNum.size();
       stepIdToNum.put(vertex.getId(), nodeIndex);
 
       steps.put(new JSONObject()
-        .put("id", vertex.getId())
-        .put("index", nodeIndex)
-        .put("name", vertex.getName())
-        .put("status", vertex.getStatus())
-        .put("start_timestamp", vertex.getStartTimestamp())
-        .put("end_timestamp", vertex.getEndTimestamp())
-        .put("percent_complete", vertex.getPercentageComplete())
-        .put("message", vertex.getMessage())
-        .put("action_name", vertex.getActionName())
-        .put("job_tracker_links", vertex.getJobTrackerLinks()));
+          .put("id", vertex.getId())
+          .put("index", nodeIndex)
+          .put("name", vertex.getName())
+          .put("status", vertex.getStatus())
+          .put("start_timestamp", vertex.getStartTimestamp())
+          .put("end_timestamp", vertex.getEndTimestamp())
+          .put("percent_complete", vertex.getPercentageComplete())
+          .put("message", vertex.getMessage())
+          .put("action_name", vertex.getActionName())
+          .put("job_tracker_links", vertex.getJobTrackerLinks()));
 
       for (DefaultEdge inEdge : graph.incomingEdgesOf(vertex)) {
         Vertex source = graph.getEdgeSource(inEdge);
