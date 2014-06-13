@@ -436,10 +436,12 @@ public class WorkflowDiagram {
     Multimap<String, String> allEdges = HashMultimap.create();
 
     for (Vertex vertex : graph.vertexSet()) {
-      stepIdToNum.put(vertex.getId(), stepIdToNum.size());
+      int nodeIndex = stepIdToNum.size();
+      stepIdToNum.put(vertex.getId(), nodeIndex);
 
       steps.put(new JSONObject()
         .put("id", vertex.getId())
+        .put("index", nodeIndex)
         .put("name", vertex.getName())
         .put("status", vertex.getStatus())
         .put("start_timestamp", vertex.getStartTimestamp())
