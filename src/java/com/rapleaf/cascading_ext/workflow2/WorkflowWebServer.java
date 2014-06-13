@@ -74,7 +74,7 @@ public class WorkflowWebServer {
         }
       });
       
-    }catch(InterruptedException e){
+    }catch(Exception e){
       LOG.info("Failed to bind UI server to a real port!", e);
     }
   }
