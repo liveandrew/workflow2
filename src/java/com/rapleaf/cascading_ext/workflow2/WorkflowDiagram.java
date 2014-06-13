@@ -426,6 +426,7 @@ public class WorkflowDiagram {
 
   public JSONObject getJSONState() throws JSONException, UnknownHostException {
 
+    expandAllMultistepVertices();
     DirectedGraph<Vertex, DefaultEdge> graph = getDiagramGraph();
 
     JSONArray steps = new JSONArray();
