@@ -514,13 +514,15 @@ public final class WorkflowRunner {
 
   private void deregisterUI() {
     if(!Rap.getTestMode()){
-      if(liveWorkflowMap != null) {
-        try{
+      try{
+        if(liveWorkflowMap != null) {
           liveWorkflowMap.shutdown();
-          framework.close();
-        }catch(Exception e){
-          LOG.info("Failed to shutdown map!", e);
         }
+        if(framework != null) {
+          framework.close();
+        }
+      }catch(Exception e){
+        LOG.info("Failed to shutdown map!", e);
       }
     }
   }
