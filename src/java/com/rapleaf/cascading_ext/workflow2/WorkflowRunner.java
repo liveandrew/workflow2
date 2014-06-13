@@ -495,6 +495,7 @@ public final class WorkflowRunner {
             LiverampQueues.TEN_SECONDS,
             new RetryNTimes(3, 100)
         );
+        framework.start();
 
         liveWorkflowMap = new ThriftMapCache<LiveWorkflowMeta>(
             framework,
