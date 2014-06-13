@@ -457,8 +457,8 @@ public class WorkflowDiagram {
 
     for (Map.Entry<String, String> edge : allEdges.entries()) {
       edges.put(new JSONObject()
-        .put("souce", edge.getKey())
-        .put("target", edge.getValue()));
+        .put("souce", stepIdToNum.get(edge.getKey()))
+        .put("target", stepIdToNum.get(edge.getValue())));
     }
 
     LiveWorkflowMeta meta = getMeta();
