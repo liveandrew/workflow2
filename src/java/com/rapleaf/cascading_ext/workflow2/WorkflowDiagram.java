@@ -459,7 +459,7 @@ public class WorkflowDiagram {
 
     for (Map.Entry<String, String> edge : allEdges.entries()) {
       edges.put(new JSONObject()
-        .put("souce", stepIdToNum.get(edge.getKey()))
+        .put("source", stepIdToNum.get(edge.getKey()))
         .put("target", stepIdToNum.get(edge.getValue())));
     }
 
