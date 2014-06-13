@@ -34,6 +34,7 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.java_support.constants.ZkConstants;
 import com.liveramp.mugatu.core.curated.ThriftMapCache;
 import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.liveramp.workflow_service.generated.ActiveState;
@@ -68,15 +69,13 @@ public final class WorkflowRunner {
   );
 
   /**
-   * Specify this and the system will pick any free port.
+   * Specify this and the system will pick any free port.j
    */
   public static final Integer ANY_FREE_PORT = 0;
   private static final String WORKFLOW_EMAIL_SUBJECT_PREFIX = "[WORKFLOW] ";
 
   private static final String DOC_FILES_ROOT = "com/rapleaf/cascading_ext/workflow2/webui";
   public static final String WORKFLOW_DOCS_PATH = "/var/nfs/mounts/files/flowdoc/";
-
-  public static final String PRODUCTION_ZK_WORKFLOW_REGISTRY = "/workflow/live_flows";
 
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;
@@ -489,7 +488,7 @@ public final class WorkflowRunner {
 
         liveWorkflowMap = new ThriftMapCache<LiveWorkflowMeta>(
             framework,
-            PRODUCTION_ZK_WORKFLOW_REGISTRY,
+            ZkConstants.PRODUCTION_ZK_WORKFLOW_REGISTRY,
             new LiveWorkflowMeta(),
             true
         );
