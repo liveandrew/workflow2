@@ -20,6 +20,7 @@ public class WorkflowStateServlet extends HttpServlet {
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     try {
       JSONObject state = diagram.getJSONState();
+      resp.addHeader("Access-Control-Allow-Origin", "*");
       resp.getWriter().append(state.toString());
     }catch(Exception e){
       throw new RuntimeException(e);
