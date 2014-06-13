@@ -3,9 +3,13 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.net.URL;
 
 import org.apache.log4j.Logger;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
+
+import com.liveramp.hank.util.Condition;
+import com.liveramp.hank.util.WaitUntil;
 
 public class WorkflowWebServer {
   private static final Logger LOG = Logger.getLogger(WorkflowWebServer.class);
@@ -61,6 +65,25 @@ public class WorkflowWebServer {
     webServerThread = new WebServerThread(server);
 
     webServerThread.start();
+
+    try {
+      WaitUntil.orDie(new Condition() {
+        @Override
+        public boolean test() {
+          return getBoundPort() != -1;
+        }
+      });
+      
+    }catch(InterruptedException e){
+      LOG.info("Failed to bind UI server to a real port!", e);
+    }
+  }
+
+  public int getBoundPort(){
+    for (Connector connector : server.getConnectors()) {
+      return connector.getLocalPort();
+    }
+    return -1;
   }
 
   public void stop() {

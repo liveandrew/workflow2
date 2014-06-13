@@ -22,15 +22,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
 import com.timgroup.statsd.NonBlockingStatsDClient;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.counters.Counter;
+import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.mugatu.core.curated.ThriftMapCache;
+import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.liveramp.workflow_service.generated.ActiveState;
 import com.liveramp.workflow_service.generated.ActiveStatus;
 import com.liveramp.workflow_service.generated.CompleteMeta;
@@ -46,6 +51,7 @@ import com.liveramp.workflow_service.generated.WorkflowException;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.queues.LiverampQueues;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.support.MailerHelper;
@@ -69,6 +75,8 @@ public final class WorkflowRunner {
 
   private static final String DOC_FILES_ROOT = "com/rapleaf/cascading_ext/workflow2/webui";
   public static final String WORKFLOW_DOCS_PATH = "/var/nfs/mounts/files/flowdoc/";
+
+  public static final String PRODUCTION_ZK_WORKFLOW_REGISTRY = "/workflow/live_flows";
 
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;
@@ -150,6 +158,9 @@ public final class WorkflowRunner {
   }
 
   private final String workflowName;
+
+  private final String workflowUUID;
+
   /**
    * how many components will we allow to execute simultaneously?
    */
@@ -270,6 +281,7 @@ public final class WorkflowRunner {
   }
 
   public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowRunnerOptions options, Set<Step> tailSteps) {
+    this.workflowUUID =  Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID()));
     this.workflowName = workflowName;
     this.persistence = persistence;
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
@@ -466,6 +478,42 @@ public final class WorkflowRunner {
     }
   }
 
+  private ThriftMapCache<LiveWorkflowMeta> liveWorkflowMap;
+
+  private void notifyUIServer(WorkflowDiagram diagram)  {
+    if(!Rap.getTestMode()){
+      try {
+
+        CuratorFramework framework = LiverampQueues.getProduction().getFramework();
+        LiveWorkflowMeta metadata = diagram.getMeta();
+
+        liveWorkflowMap = new ThriftMapCache<LiveWorkflowMeta>(
+            framework,
+            PRODUCTION_ZK_WORKFLOW_REGISTRY,
+            new LiveWorkflowMeta(),
+            true
+        );
+
+        liveWorkflowMap.put(workflowUUID, metadata);
+
+      }catch(Exception e){
+        LOG.info("Failed to create live workflow node!", e);
+      }
+    }
+  }
+
+  private void deregisterUI() {
+    if(!Rap.getTestMode()){
+      if(liveWorkflowMap != null) {
+        try{
+          liveWorkflowMap.shutdown();
+        }catch(Exception e){
+          LOG.info("Failed to shutdown map!", e);
+        }
+      }
+    }
+  }
+
   /**
    * Execute the workflow.
    *
@@ -492,8 +540,10 @@ public final class WorkflowRunner {
       // Notify
       LOG.info(getStartMessage());
       startWebServer();
+      notifyUIServer(diagram);
       // Note: start email after web server so that UI is functional
       sendStartEmail();
+
 
       // Run internal
       runInternal();
@@ -504,6 +554,7 @@ public final class WorkflowRunner {
       LOG.info(getSuccessMessage());
     } finally {
       shutdownWebServer();
+      deregisterUI();
       timer.stop();
       LOG.info("Timing statistics:\n" + TimedEventHelper.toTextSummary(timer));
     }
@@ -683,6 +734,10 @@ public final class WorkflowRunner {
         throw e;
       }
     }
+  }
+
+  protected WorkflowWebServer getWebServer() {
+    return webServer;
   }
 
   public boolean isFailPending() {

@@ -26,6 +26,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.liveramp.workflow_service.generated.StepDefinition;
 import com.liveramp.workflow_service.generated.StepExecuteStatus;
 import com.liveramp.workflow_service.generated.WorkflowDefinition;
@@ -442,11 +443,21 @@ public class WorkflowDiagram {
         .put("job_tracker_links", vertex.getJobTrackerLinks()));
     }
 
+    LiveWorkflowMeta meta = getMeta();
+
     return new JSONObject()
-        .put("name", workflowRunner.getWorkflowName())
-        .put("host", InetAddress.getLocalHost().getHostName())
-        .put("username", System.getProperty("user.name"))
+        .put("name", meta.get_name())
+        .put("host", meta.get_host())
+        .put("username", meta.get_username())
         .put("steps", steps);
+  }
+
+  public LiveWorkflowMeta getMeta() throws UnknownHostException {
+    return new LiveWorkflowMeta()
+        .set_name(workflowRunner.getWorkflowName())
+        .set_host(InetAddress.getLocalHost().getHostName())
+        .set_port(workflowRunner.getWebServer().getBoundPort())
+        .set_username(System.getProperty("user.name"));
   }
 
   public WorkflowDefinition getDefinition() {
