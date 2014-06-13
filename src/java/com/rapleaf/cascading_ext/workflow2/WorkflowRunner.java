@@ -28,6 +28,8 @@ import java.util.concurrent.Semaphore;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryNTimes;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -313,6 +315,10 @@ public final class WorkflowRunner {
     }
   }
 
+  public String getWorkflowUUID() {
+    return workflowUUID;
+  }
+
   private void setLockProvider(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
     for (Step step : dependencyGraph.vertexSet()) {
       step.getAction().setLockProvider(this.lockProvider);
@@ -478,13 +484,17 @@ public final class WorkflowRunner {
   }
 
   private ThriftMapCache<LiveWorkflowMeta> liveWorkflowMap;
+  private CuratorFramework framework;
 
   private void notifyUIServer(WorkflowDiagram diagram)  {
     if(!Rap.getTestMode()){
       try {
 
-        CuratorFramework framework = LiverampQueues.getProduction().getFramework();
-        LiveWorkflowMeta metadata = diagram.getMeta();
+        framework = CuratorFrameworkFactory.newClient(ZkConstants.LIVERAMP_ZK_CONNECT_STRING,
+            6 * LiverampQueues.TEN_SECONDS,
+            LiverampQueues.TEN_SECONDS,
+            new RetryNTimes(3, 100)
+        );
 
         liveWorkflowMap = new ThriftMapCache<LiveWorkflowMeta>(
             framework,
@@ -493,7 +503,7 @@ public final class WorkflowRunner {
             true
         );
 
-        liveWorkflowMap.put(workflowUUID, metadata);
+        liveWorkflowMap.put(workflowUUID, diagram.getMeta());
 
       }catch(Exception e){
         LOG.info("Failed to create live workflow node!", e);
@@ -506,6 +516,7 @@ public final class WorkflowRunner {
       if(liveWorkflowMap != null) {
         try{
           liveWorkflowMap.shutdown();
+          framework.close();
         }catch(Exception e){
           LOG.info("Failed to shutdown map!", e);
         }

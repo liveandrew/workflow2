@@ -448,6 +448,7 @@ public class WorkflowDiagram {
     return new JSONObject()
         .put("name", meta.get_name())
         .put("host", meta.get_host())
+        .put("id", workflowRunner.getWorkflowUUID())
         .put("username", meta.get_username())
         .put("steps", steps);
   }
