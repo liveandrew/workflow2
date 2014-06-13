@@ -15,8 +15,10 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang.StringUtils;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -428,8 +430,14 @@ public class WorkflowDiagram {
     DirectedGraph<Vertex, DefaultEdge> graph = getDiagramGraph();
 
     JSONArray steps = new JSONArray();
+    JSONArray edges = new JSONArray();
+
+    Map<String, Integer> stepIdToNum = Maps.newHashMap();
+    Multimap<String, String> allEdges = HashMultimap.create();
 
     for (Vertex vertex : graph.vertexSet()) {
+      stepIdToNum.put(vertex.getId(), stepIdToNum.size());
+
       steps.put(new JSONObject()
         .put("id", vertex.getId())
         .put("name", vertex.getName())
@@ -440,6 +448,17 @@ public class WorkflowDiagram {
         .put("message", vertex.getMessage())
         .put("action_name", vertex.getActionName())
         .put("job_tracker_links", vertex.getJobTrackerLinks()));
+
+      for (DefaultEdge inEdge : graph.incomingEdgesOf(vertex)) {
+        Vertex source = graph.getEdgeSource(inEdge);
+        allEdges.put(source.getId(), vertex.getId());
+      }
+    }
+
+    for (Map.Entry<String, String> edge : allEdges.entries()) {
+      edges.put(new JSONObject()
+        .put("souce", edge.getKey())
+        .put("target", edge.getValue()));
     }
 
     LiveWorkflowMeta meta = getMeta();
@@ -450,6 +469,7 @@ public class WorkflowDiagram {
         .put("id", workflowRunner.getWorkflowUUID())
         .put("username", meta.get_username())
         .put("status", getStatus())
+        .put("edges", edges)
         .put("steps", steps);
   }
 
