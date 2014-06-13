@@ -449,7 +449,18 @@ public class WorkflowDiagram {
         .put("host", meta.get_host())
         .put("id", workflowRunner.getWorkflowUUID())
         .put("username", meta.get_username())
+        .put("status", getStatus())
         .put("steps", steps);
+  }
+
+  private String getStatus(){
+    if(workflowRunner.isFailPending()){
+      return "failPending";
+    }
+    if(workflowRunner.isShutdownPending()){
+      return "shutdownPending";
+    }
+    return "running";
   }
 
   public LiveWorkflowMeta getMeta() throws UnknownHostException {
