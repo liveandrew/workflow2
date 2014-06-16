@@ -9,7 +9,7 @@ public class MSJDataStoreCompactionAction extends Action {
   private final MSJDataStore store;
 
   public MSJDataStoreCompactionAction(MSJDataStore store) {
-    super("compact_" + store.getPath());
+    super("compact_" + store.getPath().replaceAll("/", "_"));
     this.store = store;
   }
 
