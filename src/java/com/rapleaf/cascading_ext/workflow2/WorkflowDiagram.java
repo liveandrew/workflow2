@@ -494,6 +494,7 @@ public class WorkflowDiagram {
   public LiveWorkflowMeta getMeta() throws UnknownHostException {
 
     return new LiveWorkflowMeta()
+        .set_uuid(workflowRunner.getWorkflowUUID())
         .set_name(workflowRunner.getWorkflowName())
         .set_host(InetAddress.getLocalHost().getHostName())
         .set_port(workflowRunner.getWebServer().getBoundPort())
