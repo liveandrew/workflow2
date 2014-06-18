@@ -29,7 +29,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.liveramp.java_support.util.JarUtils;
+import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.liveramp.workflow_service.generated.StepDefinition;
 import com.liveramp.workflow_service.generated.StepExecuteStatus;
@@ -500,7 +500,7 @@ public class WorkflowDiagram {
         .set_port(workflowRunner.getWebServer().getBoundPort())
         .set_username(System.getProperty("user.name"))
         .set_working_dir(System.getProperty("user.dir"))
-        .set_jar(JarUtils.getMainJarName())
+        .set_jar(HadoopJarUtil.getLanuchJarName())
         .set_start_time(workflowRunner.getTimer().getEventStartTime());
   }
 
