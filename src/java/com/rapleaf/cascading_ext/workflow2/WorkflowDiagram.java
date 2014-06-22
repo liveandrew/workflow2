@@ -476,6 +476,7 @@ public class WorkflowDiagram {
         .put("host", meta.get_host())
         .put("id", workflowRunner.getWorkflowUUID())
         .put("username", meta.get_username())
+        .put("shutdown_reason", workflowRunner.getReasonForShutdownRequest())
         .put("status", getStatus())
         .put("edges", edges)
         .put("steps", steps);

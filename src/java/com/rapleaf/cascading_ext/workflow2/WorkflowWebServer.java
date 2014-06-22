@@ -63,6 +63,7 @@ public class WorkflowWebServer {
     diagram.expandAllMultistepVertices();
 
     webAppContext.addServlet(new ServletHolder(new WorkflowStateServlet(diagram)), "/state");
+    webAppContext.addServlet(new ServletHolder(new WorkflowCommandServlet(workflowRunner)), "/command");
 
     server.setHandler(webAppContext);
 
