@@ -788,7 +788,12 @@ public final class WorkflowRunner {
   }
 
   public String getReasonForShutdownRequest() {
-    return persistence.getFlowStatus().get_active().get_status().get_shutdownPending().get_cause();
+    if(persistence.getFlowStatus().is_set_active()){
+      if(persistence.getFlowStatus().get_active().get_status().is_set_shutdownPending()){
+        return persistence.getFlowStatus().get_active().get_status().get_shutdownPending().get_cause();
+      }
+    }
+    return null;
   }
 
   private void clearFinishedSteps() {
