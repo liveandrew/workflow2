@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -417,8 +418,11 @@ public class WorkflowDiagram {
     return vertexIdToParentVertexId.containsKey(vertexId);
   }
 
-  public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph() {
-    DirectedGraph<Step, DefaultEdge> graph = dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand);
+  public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph(){
+    return getDiagramGraph(dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand));
+  }
+
+  public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph(DirectedGraph<Step, DefaultEdge> graph) {
     if (peekIsolated() != null) {
       isolateStep(graph, peekIsolated());
     }
@@ -428,8 +432,36 @@ public class WorkflowDiagram {
     return diagramGraph;
   }
 
+  private Integer getIndex(DataStore ds, Map<DataStore, Integer> dsToIndex){
+
+
+
+    return dsToIndex.get(ds);
+  }
+
+  private void addDatastoreConnections(Step step,
+                                       String type,
+                                       Map<String, Integer> stepIdToNum,
+                                       JSONArray dsConnections, Set<DataStore> stores,
+                                       Map<DataStore, Integer> dsToIndex) throws JSONException {
+
+    for (DataStore ds : stores) {
+      if(!dsToIndex.containsKey(ds)){
+        dsToIndex.put(ds, dsToIndex.size());
+      }
+
+      dsConnections.put(new JSONObject()
+          .put("step", stepIdToNum.get(step.getCheckpointToken()))
+          .put("datastore", getIndex(ds, dsToIndex))
+          .put("connection", type));
+    }
+
+  }
+
   public JSONObject getJSONState() throws JSONException, UnknownHostException {
-    DirectedGraph<Vertex, DefaultEdge> graph = getDiagramGraph();
+
+    DirectedGraph<Step, DefaultEdge> stepGraph = dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand);
+    DirectedGraph<Vertex, DefaultEdge> graph = getDiagramGraph(stepGraph);
 
     JSONArray steps = new JSONArray();
     JSONArray edges = new JSONArray();
@@ -463,6 +495,67 @@ public class WorkflowDiagram {
       }
     }
 
+
+    Map<DataStore, Integer> dataStoresToIndex = Maps.newHashMap();
+
+    JSONArray dsConnections = new JSONArray();
+
+    for (Step step : stepGraph.vertexSet()) {
+
+      addDatastoreConnections(step,
+          "reads_from",
+          stepIdToNum,
+          dsConnections,
+          step.getAction().getReadsFromDatastores(),
+          dataStoresToIndex
+      );
+
+      addDatastoreConnections(step,
+          "creates",
+          stepIdToNum,
+          dsConnections,
+          step.getAction().getCreatesDatastores(),
+          dataStoresToIndex
+      );
+
+      addDatastoreConnections(step,
+          "creates_temporary",
+          stepIdToNum,
+          dsConnections,
+          step.getAction().getCreatesTemporaryDatastores(),
+          dataStoresToIndex
+      );
+
+      addDatastoreConnections(step,
+          "writes_to",
+          stepIdToNum,
+          dsConnections,
+          step.getAction().getWritesToDatastores(),
+          dataStoresToIndex
+      );
+
+    }
+
+    JSONArray stores = new JSONArray();
+
+    List<Map.Entry<DataStore, Integer>> storesById = Lists.newArrayList(dataStoresToIndex.entrySet());
+    Collections.sort(storesById, new Comparator<Map.Entry<DataStore, Integer>>() {
+      @Override
+      public int compare(Map.Entry<DataStore, Integer> o1, Map.Entry<DataStore, Integer> o2) {
+        return o1.getValue() - o2.getValue();
+      }
+    });
+
+    for (Map.Entry<DataStore, Integer> entry : storesById) {
+      DataStore store = entry.getKey();
+      stores.put(new JSONObject()
+          .put("index", entry.getValue())
+          .put("name", store.getName())
+          .put("path", store.getPath())
+          .put("type", store.getClass().getName()));
+
+    }
+
     for (Map.Entry<String, String> edge : allEdges.entries()) {
       edges.put(new JSONObject()
         .put("source", stepIdToNum.get(edge.getKey()))
@@ -479,6 +572,8 @@ public class WorkflowDiagram {
         .put("shutdown_reason", workflowRunner.getReasonForShutdownRequest())
         .put("status", getStatus())
         .put("edges", edges)
+        .put("datastore_uses", dsConnections)
+        .put("datastores", stores)
         .put("steps", steps);
   }
 
