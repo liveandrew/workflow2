@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapred.Counters;
 
@@ -22,6 +23,7 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
   private final BucketDataStore outputStore;
   private List<Extractor<T>> extractors = new ArrayList<Extractor<T>>();
   private Joiner<T> joiner = null;
+  private ImmutableSet<String> partitionsConfinedTo = null;
   private final Map<Object, Object> properties = Maps.newHashMap();
 
   public MapSideJoinAction(String checkpointToken,
@@ -53,6 +55,13 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
     this.joiner = joiner;
   }
 
+  protected void setPartitionsConfinedTo(Iterable<String> partitionsConfinedTo) {
+    if (this.partitionsConfinedTo != null) {
+      throw new RuntimeException("partitionsConfinedTo already set");
+    }
+    this.partitionsConfinedTo = ImmutableSet.copyOf(partitionsConfinedTo);
+  }
+
   protected void addProperties(Map<Object, Object> properties){
     this.properties.putAll(properties);
   }
@@ -66,7 +75,8 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
         extractors,
         joiner,
         inputStores,
-        outputStore);
+        outputStore,
+        partitionsConfinedTo);
     join.addProperties(this.properties);
 
     completeWithProgress(new HadoopOperation(join));
