@@ -2,13 +2,10 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +33,6 @@ import com.liveramp.workflow_service.generated.StepDefinition;
 import com.liveramp.workflow_service.generated.StepExecuteStatus;
 import com.liveramp.workflow_service.generated.WorkflowDefinition;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.support.StringHelper;
 import com.rapleaf.support.event_timer.EventTimer;
 
 
@@ -199,128 +195,6 @@ public class WorkflowDiagram {
     }
   }
 
-  /**
-   * Returns a JS definition of the workflow. Everything needed to render the workflow
-   * diagram is provided here so that it can be done entirely client-side with javascript.
-   * @return
-   */
-  public String getJSWorkflowDefinition(boolean liveWorkflow) {
-    StringBuilder sb = new StringBuilder("var workflowSteps = [\n");
-    Queue<Step> toProcess = new LinkedList<Step>(workflowRunner.getTailSteps());
-    Set<Step> processed = new HashSet<Step>();
-    Map<Step, Integer> stepToId = new HashMap<Step, Integer>();
-    Map<String, DataStore> allDataStores = new HashMap<String, DataStore>();
-
-    int i = 0;
-    boolean first = true;
-    while (!toProcess.isEmpty()) {
-      Step step = toProcess.poll();
-      if (processed.contains(step)) {
-        continue;
-      }
-      if (!stepToId.containsKey(step)) {
-        stepToId.put(step, i++);
-      }
-      if (first) {
-        first = false;
-      } else {
-        sb.append(",\n\n");
-      }
-      sb.append("new Wfd.Step(\n");
-      sb.append(stepToId.get(step) + ",\n");
-      sb.append("\"" + step.getAction().getCheckpointToken() + "\",\n");
-      sb.append("\"" + step.getAction().getClass().getName() + "\",\n");
-      if (liveWorkflow) {
-        sb.append("\"" + getStepStatus(step).name().toLowerCase() + "\",\n");
-        sb.append("" + step.getTimer().getEventStartTime() + ",\n");
-        sb.append("" + step.getTimer().getEventEndTime() + ",\n");
-        sb.append("" + step.getAction().getPercentComplete() + ",\n");
-      } else {
-        sb.append("\"node\",\n");
-        sb.append("0,\n");
-        sb.append("0,\n");
-        sb.append("0,\n");
-      }
-
-      // Dependencies
-      sb.append("[");
-      List<String> depencencyIds = new ArrayList<String>();
-      for (Step dependency : step.getDependencies()) {
-        if (!stepToId.containsKey(dependency)) {
-          stepToId.put(dependency, i++);
-        }
-        depencencyIds.add(String.valueOf(stepToId.get(dependency)));
-        if (!processed.contains(dependency)) {
-          toProcess.add(dependency);
-        }
-      }
-      sb.append(StringHelper.join(depencencyIds, ", "));
-      sb.append("],\n");
-
-      // Substeps
-      sb.append("[");
-      if (step.getAction() instanceof MultiStepAction) {
-        MultiStepAction msa = (MultiStepAction)step.getAction();
-        List<String> subStepIds = new ArrayList<String>();
-        for (Step subStep : msa.getSubSteps()) {
-          if (!stepToId.containsKey(subStep)) {
-            stepToId.put(subStep, i++);
-          }
-          subStepIds.add(String.valueOf(stepToId.get(subStep)));
-          if (!processed.contains(subStep)) {
-            toProcess.add(subStep);
-          }
-        }
-        sb.append(StringHelper.join(subStepIds, ", "));
-      }
-      sb.append("],\n");
-
-      // Input datastores
-      sb.append("[");
-      List<String> datastores = new ArrayList<String>();
-      for (DataStore dataStore : step.getAction().getReadsFromDatastores()) {
-        allDataStores.put(dataStore.getPath(), dataStore);
-        datastores.add("\"" + dataStore.getName().replaceAll("\\s", "-") + "\"");
-      }
-      sb.append(StringHelper.join(datastores, ", "));
-      sb.append("],\n");
-
-
-      // Output datastores
-      sb.append("[");
-      datastores = new ArrayList<String>();
-      Set<DataStore> outputDatastores = new HashSet<DataStore>(step.getAction().getCreatesDatastores());
-      outputDatastores.addAll(step.getAction().getWritesToDatastores());
-      for (DataStore dataStore : outputDatastores) {
-        allDataStores.put(dataStore.getPath(), dataStore);
-        datastores.add("\"" + dataStore.getName().replaceAll("\\s", "-") + "\"");
-      }
-      sb.append(StringHelper.join(datastores, ", "));
-
-
-      sb.append("])");
-
-      processed.add(step);
-    }
-    sb.append("\n];\n");
-
-    sb.append("var workflowDatastores = [\n");
-    first = true;
-    for (DataStore dataStore : allDataStores.values()) {
-      if (first) {
-        first = false;
-      } else {
-        sb.append(",\n\n");
-      }
-      sb.append("new Wfd.Datastore(\n");
-      sb.append("\"" + dataStore.getName().replaceAll("\\s", "-") + "\",\n");
-      sb.append("\"" + dataStore.getClass().getSimpleName() + "\",\n");
-      sb.append("\"" + dataStore.getPath() + "\",\n");
-      sb.append("\"" + dataStore.getRelPath() + "\")");
-    }
-    sb.append("\n];\n");
-    return sb.toString();
-  }
 
   private void adjustTokenStrsOfChildren(Step step) {
     MultiStepAction msa = (MultiStepAction)step.getAction();
@@ -329,93 +203,22 @@ public class WorkflowDiagram {
     }
   }
 
-  public void reduceIsolation(String id) {
-    while (!isolated.empty()) {
-      isolated.pop();
-      String current = isolated.empty() ? null : isolated.peek().getCheckpointToken();
-      if (id.equals(current)) {
-        break;
-      }
-    }
-  }
-
-  public void isolateVertex(String vertexId) {
-    Step step = vertexIdToStep.get(vertexId);
-    if (!isolated.contains(step)) {
-      String parent = vertexIdToParentVertexId.get(vertexId);
-      Stack<String> toAdd = new Stack<String>();
-      while (parent != null) {
-        toAdd.push(parent);
-        parent = vertexIdToParentVertexId.get(parent);
-      }
-      while (!toAdd.empty()) {
-        isolated.push(vertexIdToStep.get(toAdd.pop()));
-      }
-      isolated.push(step);
-    }
-  }
 
   private Step peekIsolated() {
     return isolated.empty() ? null : isolated.peek();
   }
 
-  public List<String> getIsolated() {
-    List<String> ret = new ArrayList<String>();
-    if (!isolated.empty()) {
-      ret.add("Entire Workflow");
-      Enumeration<Step> steps = isolated.elements();
-      while (steps.hasMoreElements()) {
-        ret.add(steps.nextElement().getCheckpointToken());
-      }
-    }
-    return ret;
-  }
+
 
   public void expandMultistepVertex(String vertexId) {
     Step multiStep = vertexIdToStep.get(vertexId);
     multiStepsToExpand.add(multiStep);
   }
 
-  public void collapseMultistepVertex(String vertexId) {
-    Step multiStep = vertexIdToStep.get(vertexId);
-    multiStepsToExpand.remove(multiStep);
-  }
 
-  public void collapseParentOfVertex(String vertexId) {
-    String parentId = vertexIdToParentVertexId.get(vertexId);
-    if (parentId != null) {
-      multiStepsToExpand.remove(vertexIdToStep.get(parentId));
-    }
-  }
-
-  public void collapseAllMultistepVertices() {
-    if (isolated.empty()) {
-      multiStepsToExpand.clear();
-    } else {
-      Iterator<Step> it = multiStepsToExpand.iterator();
-      while (it.hasNext()) {
-        Step step = it.next();
-        if (!isolated.contains(step) || isolated.peek().equals(step)) {
-          it.remove();
-        }
-      }
-    }
-  }
 
   public void expandAllMultistepVertices() {
     multiStepsToExpand = new HashSet<Step>(vertexIdToStep.values());
-  }
-
-  public boolean isExpandable(String vertexId) {
-    return multiStepsIds.contains(vertexId);
-  }
-
-  public boolean isExpanded(String vertexId) {
-    return multiStepsToExpand.contains(vertexIdToStep.get(vertexId));
-  }
-
-  public boolean hasParent(String vertexId) {
-    return vertexIdToParentVertexId.containsKey(vertexId);
   }
 
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph(){
@@ -641,114 +444,6 @@ public class WorkflowDiagram {
     return resultGraph;
   }
 
-  public DirectedGraph<Vertex, DefaultEdge> getDiagramGraphWithDataStores() {
-
-    DirectedGraph<Step, DefaultEdge> graph = dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand);
-    if (peekIsolated() != null) {
-      isolateStep(graph, peekIsolated());
-    }
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph(graph);
-
-    DirectedGraph<Vertex, DefaultEdge> diagramGraph =
-      new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
-
-
-    addVerticesAndInputDSDependenciesToDiagramGraph(dependencyGraph, diagramGraph);
-    addOriginalEdgesToDiagramGraph(dependencyGraph, diagramGraph);
-    Set<Vertex> dsCreatingCycles = getDatastoresThatCreateCycles(dependencyGraph, diagramGraph);
-    addOutputDSDependenciesToDiagramGraph(dependencyGraph, diagramGraph);
-    removeCycles(dsCreatingCycles, diagramGraph);
-    removeRedundantEdges(diagramGraph);
-    Set<Vertex> toDelete = getInternalDatastores(dependencyGraph, diagramGraph);
-    diagramGraph.removeAllVertices(toDelete);
-
-    return diagramGraph;
-  }
-
-  private void addVerticesAndInputDSDependenciesToDiagramGraph(DirectedGraph<Step, DefaultEdge> dependencyGraph,
-                                                               DirectedGraph<Vertex, DefaultEdge> diagramGraph) {
-    stepToVertex =
-      new HashMap<Step, Vertex>();
-    dsToVertex =
-      new HashMap<DataStore, Vertex>();
-    for (Step step : dependencyGraph.vertexSet()) {
-      Vertex stepVertex = createVertexFromStep(step);
-      stepToVertex.put(step, stepVertex);
-      diagramGraph.addVertex(stepVertex);
-      Set<DataStore> inputDSs = step.getAction().getReadsFromDatastores();
-      for (DataStore ds : inputDSs) {
-        Vertex dsVertex = getAndCashDSVertex(dsToVertex, ds);
-        diagramGraph.addVertex(dsVertex);
-        diagramGraph.addEdge(dsVertex, stepVertex);
-      }
-    }
-  }
-
-  private void addOriginalEdgesToDiagramGraph(DirectedGraph<Step, DefaultEdge> dependencyGraph,
-                                              DirectedGraph<Vertex, DefaultEdge> diagramGraph) {
-    for (DefaultEdge edge : dependencyGraph.edgeSet()) {
-      Vertex source = stepToVertex.get(dependencyGraph.getEdgeSource(edge));
-      Vertex target = stepToVertex.get(dependencyGraph.getEdgeTarget(edge));
-      diagramGraph.addEdge(source, target);
-    }
-  }
-
-  private Set<Vertex> getDatastoresThatCreateCycles(DirectedGraph<Step, DefaultEdge> dependencyGraph,
-                                                    DirectedGraph<Vertex, DefaultEdge> diagramGraph) {
-    Set<Vertex> dsCreatingCycles = new HashSet<Vertex>();
-    for (Step step : dependencyGraph.vertexSet()) {
-      Vertex stepVertex = stepToVertex.get(step);
-      Set<Vertex> invDeps = new HashSet<Vertex>();
-      getIncomingVerticesRecursive(stepVertex, invDeps, diagramGraph);
-      Set<DataStore> outputDSs = getOutputDSsFromStep(step);
-      outputDSs.addAll(step.getAction().getWritesToDatastores());
-      for (DataStore ds : outputDSs) {
-        Vertex dsVertex = getAndCashDSVertex(dsToVertex, ds);
-        diagramGraph.addVertex(dsVertex);
-        if (invDeps.contains(dsVertex)) {
-          dsCreatingCycles.add(dsVertex);
-        }
-      }
-    }
-    return dsCreatingCycles;
-  }
-
-  private void addOutputDSDependenciesToDiagramGraph(DirectedGraph<Step, DefaultEdge> dependencyGraph,
-                                                     DirectedGraph<Vertex, DefaultEdge> diagramGraph) {
-    for (Step step : dependencyGraph.vertexSet()) {
-      Vertex stepVertex = stepToVertex.get(step);
-      Set<DataStore> outputDSs = getOutputDSsFromStep(step);
-      for (DataStore ds : outputDSs) {
-        Vertex dsVertex = getAndCashDSVertex(dsToVertex, ds);
-        diagramGraph.addEdge(stepVertex, dsVertex);
-      }
-    }
-  }
-
-  private Set<Vertex> getInternalDatastores(DirectedGraph<Step, DefaultEdge> dependencyGraph,
-                                            DirectedGraph<Vertex, DefaultEdge> resultGraph) {
-    Set<Vertex> toDelete = new HashSet<Vertex>();
-    for (Step step : dependencyGraph.vertexSet()) {
-      if (step.getAction() instanceof MultiStepAction) {
-        Set<DefaultEdge> edges = resultGraph.outgoingEdgesOf(stepToVertex.get(step));
-        for (DefaultEdge edge : edges) {
-          Vertex target = resultGraph.getEdgeTarget(edge);
-          if (target.getStatus().equals("datastore") && resultGraph.outgoingEdgesOf(target).isEmpty()) {
-            toDelete.add(target);
-          }
-        }
-      }
-    }
-    return toDelete;
-  }
-
-  private Set<DataStore> getOutputDSsFromStep(Step step) {
-    Set<DataStore> outputDSs =
-      new HashSet<DataStore>(step.getAction().getCreatesDatastores());
-    outputDSs.addAll(step.getAction().getWritesToDatastores());
-    return outputDSs;
-  }
-
   private Vertex createVertexFromStep(Step step) {
     return new Vertex(step, getStepStatus(step));
   }
@@ -776,58 +471,6 @@ public class WorkflowDiagram {
     }
   }
 
-  private Vertex getAndCashDSVertex(Map<DataStore, Vertex> dsToVertex, DataStore ds) {
-    if (dsToVertex.containsKey(ds)) {
-      return dsToVertex.get(ds);
-    } else {
-      Vertex wrapper = new Vertex(ds);
-      dsToVertex.put(ds, wrapper);
-      return wrapper;
-    }
-  }
-
-  private void removeCycles(Set<Vertex> dsCreatingCycles, DirectedGraph<Vertex, DefaultEdge> graph) {
-    for (Vertex vertex : dsCreatingCycles) {
-      createVirtualDatastoresRecursively(graph, vertex, vertex, null, new HashSet<String>());
-    }
-  }
-
-  private void createVirtualDatastoresRecursively(DirectedGraph<Vertex, DefaultEdge> graph,
-                                                  Vertex origVertex, Vertex currVertex, Vertex replacement, Set<String> visitedComb) {
-
-    String replacementStr = replacement == null ? "" : replacement.getId();
-    String comb = currVertex.getId() + replacementStr;
-    if (!visitedComb.contains(comb)) {
-      visitedComb.add(comb);
-    } else { // Prevent potential infinite recursion
-      return;
-    }
-
-    Set<Vertex> outgoingVertices = getOutgoingVertices(currVertex, graph);
-
-    for (Vertex outgoingVertex : outgoingVertices) {
-      Set<Vertex> outgoingVertices2ndDegree = getOutgoingVertices(outgoingVertex, graph);
-      Vertex virtualVertex = null;
-      if (outgoingVertices2ndDegree.contains(origVertex)) {
-        virtualVertex = new Vertex(origVertex.getId() + "__" + outgoingVertex.getId(), origVertex.getName(), "datastore");
-        graph.addVertex(virtualVertex);
-        graph.addEdge(outgoingVertex, virtualVertex);
-        graph.removeEdge(outgoingVertex, origVertex);
-      }
-
-      if (replacement != null) {
-        Set<Vertex> deps = getIncomingVertices(outgoingVertex, graph);
-
-        if (deps.contains(origVertex)) {
-          graph.removeEdge(origVertex, outgoingVertex);
-          graph.addEdge(replacement, outgoingVertex);
-        }
-      }
-
-      Vertex newReplacement = virtualVertex != null ? virtualVertex : replacement;
-      createVirtualDatastoresRecursively(graph, origVertex, outgoingVertex, newReplacement, visitedComb);
-    }
-  }
 
   private void removeRedundantEdges(DirectedGraph<Vertex, DefaultEdge> graph) {
     for (Vertex vertex : graph.vertexSet()) {
@@ -856,31 +499,6 @@ public class WorkflowDiagram {
       getOutgoingVerticesRecursive(s, results, graph);
     }
   }
-
-  private void getIncomingVerticesRecursive(Vertex vertex, Set<Vertex> results, DirectedGraph<Vertex, DefaultEdge> graph) {
-    for (DefaultEdge edge : graph.incomingEdgesOf(vertex)) {
-      Vertex s = graph.getEdgeSource(edge);
-      results.add(s);
-      getIncomingVerticesRecursive(s, results, graph);
-    }
-  }
-
-  private Set<Vertex> getIncomingVertices(Vertex vertex, DirectedGraph<Vertex, DefaultEdge> graph) {
-    Set<Vertex> deps = new HashSet<Vertex>();
-    for (DefaultEdge edge : graph.incomingEdgesOf(vertex)) {
-      deps.add(graph.getEdgeSource(edge));
-    }
-    return deps;
-  }
-
-  private Set<Vertex> getOutgoingVertices(Vertex vertex, DirectedGraph<Vertex, DefaultEdge> graph) {
-    Set<Vertex> deps = new HashSet<Vertex>();
-    for (DefaultEdge edge : graph.outgoingEdgesOf(vertex)) {
-      deps.add(graph.getEdgeTarget(edge));
-    }
-    return deps;
-  }
-
 
   protected static DirectedGraph<Step, DefaultEdge> flatDependencyGraphFromTailSteps(Set<Step> tailSteps,
                                                                                      EventTimer workflowTimer) {

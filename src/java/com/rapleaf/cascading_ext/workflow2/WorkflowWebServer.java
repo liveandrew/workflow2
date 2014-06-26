@@ -50,7 +50,7 @@ public class WorkflowWebServer {
   public void start() {
     server = new Server(port);
     final URL warUrl = getClass().getClassLoader().getResource(
-      "com/rapleaf/cascading_ext/workflow2/webui");
+      "com/rapleaf/cascading_ext/workflow2/www");
 
     LOG.info("Workflow WebServer war url: " + warUrl);
     final String warUrlString = warUrl.toExternalForm();

@@ -1,17 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,9 +67,6 @@ public final class WorkflowRunner {
    */
   public static final Integer ANY_FREE_PORT = 0;
   private static final String WORKFLOW_EMAIL_SUBJECT_PREFIX = "[WORKFLOW] ";
-
-  private static final String DOC_FILES_ROOT = "com/rapleaf/cascading_ext/workflow2/webui";
-  public static final String WORKFLOW_DOCS_PATH = "/var/nfs/mounts/files/flowdoc/";
 
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;
@@ -390,99 +379,6 @@ public final class WorkflowRunner {
     }
   }
 
-  public void generateDocs(WorkflowDiagram diagram) {
-    String outputPath = "/tmp/flowdoc";
-    try {
-      String host = InetAddress.getLocalHost().getHostName();
-      Set<String> productionHosts = new HashSet<String>(Arrays.asList(
-          "ds-jobs.liveramp.net",
-          "s2s-master.liveramp.net"
-      ));
-      if (productionHosts.contains(host)) {
-        outputPath = WORKFLOW_DOCS_PATH;
-      }
-    } catch (UnknownHostException e) {
-    }
-    generateDocs(diagram, outputPath);
-  }
-
-  /**
-   * Generate HTML docs with the workflow diagram and details about processes and datastores;
-   */
-  public void generateDocs(WorkflowDiagram wfd, String outputPath) {
-    try {
-
-      new File(outputPath).mkdirs();
-      File outputFile = new File(outputPath + "/" + workflowName.replaceAll("\\s", "-") + ".html");
-      FileWriter fw = new FileWriter(outputFile);
-      fw.write(getDocsHtml(wfd, false));
-      fw.close();
-
-      copyResources(outputPath);
-    } catch (Exception e) {
-      LOG.warn("Error generating workflow docs", e);
-    }
-  }
-
-  public String getDocsHtml(WorkflowDiagram wfd, boolean liveWorkflow) throws IOException {
-    Map<String, String> templateFields = new HashMap<String, String>();
-    templateFields.put("${workflow_name}", workflowName);
-    templateFields.put("${workflow_def}", wfd.getJSWorkflowDefinition(liveWorkflow));
-    if (liveWorkflow) {
-      String liverWorkflowDef = "liveworkflow = true;\n";
-      ExecuteStatus status = persistence.getFlowStatus();
-      if (status.is_set_active() && status.get_active().get_status().is_set_shutdownPending()) {
-        liverWorkflowDef += "shutdown_reason = \"" + status.get_active().get_status().get_shutdownPending().get_cause() + "\"\n";
-      }
-      templateFields.put("${live_workflow_def}", liverWorkflowDef);
-    } else {
-      templateFields.put("${live_workflow_def}", "");
-    }
-
-    StringBuilder sb = new StringBuilder();
-    InputStream is = this.getClass().getClassLoader().getResourceAsStream(DOC_FILES_ROOT + "/workflow_template.html");
-    BufferedReader br = new BufferedReader(new InputStreamReader(is));
-    String line;
-    while ((line = br.readLine()) != null) {
-      sb.append(replaceTemplateFields(templateFields, line) + "\n");
-    }
-    return sb.toString();
-  }
-
-  private String replaceTemplateFields(Map<String, String> templateFields, String line) {
-    for (Map.Entry<String, String> entry : templateFields.entrySet()) {
-      if (line.contains(entry.getKey())) {
-        line = line.replace(entry.getKey(), entry.getValue());
-      }
-    }
-    return line;
-  }
-
-  private void copyResources(String outputPath) throws IOException {
-    InputStream is;
-    new File(outputPath + "/js").mkdirs();
-    new File(outputPath + "/css").mkdirs();
-    new File(outputPath + "/img").mkdirs();
-    String[] files = new String[]{
-        "js/bootstrap.min.js", "js/dag_layout.js", "js/diagrams2.js", "js/graph.js", "js/jquery.min.js",
-        "js/raphael-min.js", "js/workflow_diagram.js",
-        "css/bootstrap-responsive.min.css", "css/bootstrap.min.css", "css/workflow_diagram.css",
-        "img/glyphicons-halflings-white.png", "img/glyphicons-halflings.png"
-    };
-
-    for (String file : files) {
-      is = getClass().getClassLoader().getResourceAsStream(DOC_FILES_ROOT + "/" + file);
-      OutputStream os = new FileOutputStream(outputPath + "/" + file);
-      byte[] buffer = new byte[4096];
-      int length;
-      while ((length = is.read(buffer)) > 0) {
-        os.write(buffer, 0, length);
-      }
-      os.close();
-      is.close();
-    }
-  }
-
   private ThriftMapCache<LiveWorkflowMeta> liveWorkflowMap;
   private CuratorFramework framework;
 
@@ -544,7 +440,6 @@ public final class WorkflowRunner {
 
       LOG.info("Generating workflow docs");
       WorkflowDiagram diagram = new WorkflowDiagram(this);
-      generateDocs(diagram);
 
       LOG.info("Preparing workflow state");
 
