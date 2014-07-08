@@ -1,26 +1,28 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.collect.Maps;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.Counters;
+
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.CategoryBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
 import com.rapleaf.cascading_ext.map_side_join.MOJoiner;
 import com.rapleaf.cascading_ext.map_side_join.MOMapSideJoin;
+import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.Counters;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E>> extends Action {
 
-  private final List<BucketDataStore> inputStores = new ArrayList<BucketDataStore>();
+  private final List<MapSideJoinableDataStore> inputStores = new ArrayList<MapSideJoinableDataStore>();
   private final CategoryBucketDataStore outputStore;
   private final Map<E, Path> categoryToPath;
   private List<Extractor<T>> extractors = new ArrayList<Extractor<T>>();
@@ -29,7 +31,7 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
 
   public MOMapSideJoinAction(String checkpointToken,
                              String tmpRoot,
-                             List<? extends BucketDataStore> inputStores,
+                             List<? extends MapSideJoinableDataStore> inputStores,
                              Map<E, BucketDataStore> categoryToOutputBucket) {
     super(checkpointToken, tmpRoot);
     this.categoryToPath = Maps.newHashMap();
@@ -44,8 +46,10 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
     this.outputStore = builder().getBinaryCategoryBucketDataStore("temporary_output");
     createsTemporary(outputStore);
 
-    for (DataStore ds : inputStores) {
-      readsFrom(ds);
+    for (MapSideJoinableDataStore ds : inputStores) {
+      if (ds instanceof DataStore) {
+        readsFrom((DataStore)ds);
+      }
     }
 
     for (BucketDataStore outputBucket : categoryToOutputBucket.values()) {
@@ -77,16 +81,16 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
   protected void execute() throws Exception {
 
     Map<E, Class<?>> categoryToRecordType = new HashMap<E, Class<?>>();
-    for(Map.Entry<E, BucketDataStore> categoryEntry : categoryToOutputBucket.entrySet()) {
+    for (Map.Entry<E, BucketDataStore> categoryEntry : categoryToOutputBucket.entrySet()) {
       categoryToRecordType.put(categoryEntry.getKey(), categoryEntry.getValue().getRecordsType());
     }
 
 
     MOMapSideJoin<T, E> join = new MOMapSideJoin<T, E>(this.getClass().getSimpleName(),
-                                                       extractors,
-                                                       joiner,
-                                                       inputStores,
-                                                       categoryToOutputBucket);
+        extractors,
+        joiner,
+        inputStores,
+        categoryToOutputBucket);
 
     completeWithProgress(new HadoopOperation(join));
 
