@@ -28,6 +28,7 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
   private List<Extractor<T>> extractors = new ArrayList<Extractor<T>>();
   private MOJoiner<T, E> joiner = null;
   private final Map<E, BucketDataStore> categoryToOutputBucket;
+  private final Map<Object, Object> properties = Maps.newHashMap();
 
   public MOMapSideJoinAction(String checkpointToken,
                              String tmpRoot,
@@ -77,6 +78,10 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
     this.joiner = joiner;
   }
 
+  protected void addProperties(Map<Object, Object> properties){
+    this.properties.putAll(properties);
+  }
+
   @Override
   protected void execute() throws Exception {
 
@@ -91,6 +96,7 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
         joiner,
         inputStores,
         categoryToOutputBucket);
+    join.addProperties(properties);
 
     completeWithProgress(new HadoopOperation(join));
 
