@@ -66,7 +66,8 @@ public final class WorkflowRunner {
    * Specify this and the system will pick any free port.j
    */
   public static final Integer ANY_FREE_PORT = 0;
-  private static final String WORKFLOW_EMAIL_SUBJECT_PREFIX = "[WORKFLOW] ";
+  private static final String WORKFLOW_EMAIL_SUBJECT_TAG = "WORKFLOW";
+  public static final String ERROR_EMAIL_SUBJECT_TAG = "ERROR";
 
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;
@@ -271,7 +272,7 @@ public final class WorkflowRunner {
   }
 
   public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowRunnerOptions options, Set<Step> tailSteps) {
-    this.workflowUUID =  Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID()));
+    this.workflowUUID = Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID()));
     this.workflowName = workflowName;
     this.persistence = persistence;
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
@@ -382,8 +383,8 @@ public final class WorkflowRunner {
   private ThriftMapCache<LiveWorkflowMeta> liveWorkflowMap;
   private CuratorFramework framework;
 
-  private void notifyUIServer(WorkflowDiagram diagram)  {
-    if(!Rap.getTestMode()){
+  private void notifyUIServer(WorkflowDiagram diagram) {
+    if (!Rap.getTestMode()) {
       try {
 
         framework = CuratorFrameworkFactory.newClient(ZkConstants.LIVERAMP_ZK_CONNECT_STRING,
@@ -402,22 +403,22 @@ public final class WorkflowRunner {
 
         liveWorkflowMap.put(workflowUUID, diagram.getMeta());
 
-      }catch(Exception e){
+      } catch (Exception e) {
         LOG.info("Failed to create live workflow node!", e);
       }
     }
   }
 
   private void deregisterUI() {
-    if(!Rap.getTestMode()){
-      try{
-        if(liveWorkflowMap != null) {
+    if (!Rap.getTestMode()) {
+      try {
+        if (liveWorkflowMap != null) {
           liveWorkflowMap.shutdown();
         }
-        if(framework != null) {
+        if (framework != null) {
           framework.close();
         }
-      }catch(Exception e){
+      } catch (Exception e) {
         LOG.info("Failed to shutdown map!", e);
       }
     }
@@ -619,7 +620,7 @@ public final class WorkflowRunner {
   }
 
   private String getFailureMessage() {
-    return "Failed: " + getWorkflowName();
+    return "[" + ERROR_EMAIL_SUBJECT_TAG + "]" + "Failed: " + getWorkflowName();
   }
 
   private String getShutdownMessage(String reason) {
@@ -632,9 +633,9 @@ public final class WorkflowRunner {
 
   private void mail(String subject, String body) throws IOException {
     if (notificationRecipients != null) {
-      subject = WORKFLOW_EMAIL_SUBJECT_PREFIX + subject;
       try {
-        MailerHelper.mail(new MailerHelper.MailOptions(notificationRecipients, subject, body));
+        MailerHelper.mail(new MailerHelper.MailOptions(notificationRecipients, subject, body,
+            WORKFLOW_EMAIL_SUBJECT_TAG));
       } catch (IOException e) {
         LOG.error("Could not send notification email to: " + notificationRecipients
             + ", subject: " + subject
@@ -683,8 +684,8 @@ public final class WorkflowRunner {
   }
 
   public String getReasonForShutdownRequest() {
-    if(persistence.getFlowStatus().is_set_active()){
-      if(persistence.getFlowStatus().get_active().get_status().is_set_shutdownPending()){
+    if (persistence.getFlowStatus().is_set_active()) {
+      if (persistence.getFlowStatus().get_active().get_status().is_set_shutdownPending()) {
         return persistence.getFlowStatus().get_active().get_status().get_shutdownPending().get_cause();
       }
     }
