@@ -69,9 +69,13 @@ public abstract class MapSideJoinAction<T extends Comparable> extends Action {
   protected void tearDown(Counters counters) {
   }
 
+  protected String getJobName() {
+    return this.getClass().getSimpleName();
+  }
+
   @Override
   protected void execute() throws Exception {
-    MapSideJoin<T> join = new MapSideJoin<T>(this.getClass().getSimpleName(),
+    MapSideJoin<T> join = new MapSideJoin<T>(getJobName(),
         extractors,
         joiner,
         inputStores,
