@@ -453,7 +453,6 @@ public final class WorkflowRunner {
       // Note: start email after web server so that UI is functional
       sendStartEmail();
 
-
       // Run internal
       runInternal();
 
@@ -620,7 +619,7 @@ public final class WorkflowRunner {
   }
 
   private String getFailureMessage() {
-    return "[" + ERROR_EMAIL_SUBJECT_TAG + "]" + "Failed: " + getWorkflowName();
+    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + getWorkflowName();
   }
 
   private String getShutdownMessage(String reason) {
