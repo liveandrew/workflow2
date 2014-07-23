@@ -43,7 +43,7 @@ public class CleanUpMsjStores extends MultiStepAction {
     private final MSJDataStore store;
 
     private DeleteOldVersions(MSJDataStore store, int numVersionsToKeep) {
-      super("compact_" + store.getPath().replaceAll("/", "_"));
+      super("delete_old_versions_" + store.getPath().replaceAll("/", "_"));
       this.numVersionsToKeep = numVersionsToKeep;
       this.store = store;
       if (numVersionsToKeep < 1) {
