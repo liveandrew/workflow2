@@ -11,6 +11,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.rapleaf.cascading_ext.msj_tap.compaction.Compactor;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
@@ -63,8 +64,8 @@ public class CleanUpMsjStores extends MultiStepAction {
       Iterator<Integer> iterator = versions.iterator();
       for (int i = 0; i < versions.size() - numVersionsToKeep; i++) {
         Integer version = iterator.next();
-        fs.delete(new Path(store.getPath() + "/base_" + version), true);
-        fs.delete(new Path(store.getPath() + "/mailbox_" + version), true);
+        TrashHelper.deleteUsingTrashIfEnabled(fs, new Path(store.getPath() + "/base_" + version));
+        TrashHelper.deleteUsingTrashIfEnabled(fs, new Path(store.getPath() + "/mailbox_" + version));
       }
     }
   }
