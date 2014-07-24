@@ -159,7 +159,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
     final SplitBucketDataStore<DataUnit, _Fields> inputSplit =
         builder().getSplitBucketDataStore("split_store", DataUnit.class);
-    TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("dataunit"));
+    TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("data_unit"));
 
     DataUnit prevDU = NPDH.getAgeDataUnit((byte) 12);
     DataUnit keepDU = NPDH.getGenderDataUnit(GenderType.MALE);
@@ -343,21 +343,21 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
     Pipe pipe1 = builder.bindSource("pipe1", store1);
     pipe1 = new Increment(pipe1, "DIES", "COUNT");
-    pipe1 = new Each(pipe1, new Fields("die"),
+    pipe1 = new Each(pipe1, new Fields("dustin_internal_equiv"),
         new ExpandThrift(DustinInternalEquiv.class),
-        new Fields("die", "eid"));
+        new Fields("dustin_internal_equiv", "eid"));
     pipe1 = new GroupBy(pipe1, new Fields("eid"));
 
     Pipe pipe2 = builder.bindSource("pipe2", store2);
     pipe2 = new Increment(pipe2, "SUMMS", "COUNT");
-    pipe2 = new Each(pipe2, new Fields("identity-summ"),
+    pipe2 = new Each(pipe2, new Fields("identity_summ"),
         new ExpandThrift(IdentitySumm.class),
-        new Fields("identity-summ", "eid"));
+        new Fields("identity_summ", "eid"));
     pipe2 = new GroupBy(pipe2, new Fields("eid"));
 
     Pipe die = builder.msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.DIE_EID_EXTRACTOR, pipe1, "die", DustinInternalEquiv.class))
-        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.ID_SUMM_EID_EXTRACTOR, pipe2, "identity-summ", IdentitySumm.class)).get(),
+        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
+        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
         new ExampleMultiJoiner());
     die = new Increment(die, "AFTER", "COUNT");
 
@@ -390,13 +390,13 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
     Pipe pipe1 = builder.bindSource("pipe1", store1);
     pipe1 = new Increment(pipe1, "DIES", "COUNT");
-    pipe1 = new Each(pipe1, new Fields("die"),
+    pipe1 = new Each(pipe1, new Fields("dustin_internal_equiv"),
         new ExpandThrift(DustinInternalEquiv.class),
-        new Fields("die", "eid"));
+        new Fields("dustin_internal_equiv", "eid"));
     pipe1 = new GroupBy(pipe1, new Fields("eid"));
 
     Pipe die = builder.msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.DIE_EID_EXTRACTOR, pipe1, "die", DustinInternalEquiv.class))
+        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
         .add(new SourceMSJBinding<BytesWritable>(MSJFixtures.ID_SUMM_EID_EXTRACTOR, store2)).get(),
         new ExampleMultiJoiner());
     die = new Increment(die, "AFTER", "COUNT");

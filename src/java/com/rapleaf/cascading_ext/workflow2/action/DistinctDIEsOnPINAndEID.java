@@ -30,7 +30,7 @@ public class DistinctDIEsOnPINAndEID extends Action {
   protected void execute() throws Exception {
 
     Pipe merged = new Pipe("to-distinct");
-    merged = new Each(merged, new Fields("die"), new ExpandThrift(DustinInternalEquiv.class), new Fields("die", "eid", "pin"));
+    merged = new Each(merged, new Fields("dustin_internal_equiv"), new ExpandThrift(DustinInternalEquiv.class), new Fields("dustin_internal_equiv", "eid", "pin"));
     merged = new Distinct(merged, new Fields("eid", "pin"));
 
     completeWithProgress(CascadingHelper.get().getFlowConnector().connect(indistinctDIEs.getTap(),
