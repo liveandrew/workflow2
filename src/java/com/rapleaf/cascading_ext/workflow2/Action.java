@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +19,9 @@ import org.apache.log4j.Logger;
 import cascading.flow.Flow;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
-import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
@@ -253,7 +253,7 @@ public abstract class Action {
 
   public List<String> getJobTrackerLinks() {
     List<String> links = new LinkedList<String>();
-    Map<String, String> idToName = new HashMap<String, String>();
+    Map<String, String> idToName = new LinkedHashMap<String, String>();
 
     int operationsCount = 1;
 
