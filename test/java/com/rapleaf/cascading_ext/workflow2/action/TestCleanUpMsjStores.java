@@ -18,6 +18,7 @@ import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestCleanUpMsjStores extends CascadingExtTestCase {
 
@@ -44,11 +45,16 @@ public class TestCleanUpMsjStores extends CascadingExtTestCase {
   private void runAndVerify(int numToKeep, int[] expectedRemaining) throws IOException {
     executeWorkflow(new CleanUpMsjStores("checkpoint", numToKeep, false, store));
     FileStatus[] statuses = getFS().listStatus(new Path(store.getPath()));
-    Set<String> remaining = Sets.newHashSet();
+    Set<String> remainingPaths = Sets.newHashSet();
+    Set<Integer> remainingVersions = Sets.newHashSet();
     for (FileStatus status : statuses) {
-      remaining.add(status.getPath().getName());
+      remainingPaths.add(status.getPath().getName());
+      remainingVersions.add(Integer.parseInt(status.getPath().getName().split("_")[1]));
     }
-    assertEquals("Total bases and mailboxes should match expected values", 2 * expectedRemaining.length, remaining.size());
+    assertEquals("Total bases and mailboxes should match expected values", 2 * expectedRemaining.length, remainingPaths.size());
+    for (int version : expectedRemaining) {
+      assertTrue(remainingVersions.contains(version));
+    }
   }
 
   private void writeNewVersions(int numVersions) throws IOException, org.apache.thrift.TException {
