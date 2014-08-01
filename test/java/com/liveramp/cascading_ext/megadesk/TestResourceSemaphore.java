@@ -37,7 +37,7 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
 
   @Before
   public void setUp() throws Exception {
-    TestingCluster cluster = new TestingCluster(3);
+    cluster = new TestingCluster(3);
     cluster.start();
 
     framework = CuratorFrameworkFactory.newClient(cluster.getConnectString(), new RetryNTimes(3, 100));
