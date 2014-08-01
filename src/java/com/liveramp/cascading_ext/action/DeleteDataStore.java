@@ -22,6 +22,8 @@ public class DeleteDataStore extends Action {
 
     this.fs = fs;
     this.dataStore = dataStore;
+
+    readsFrom(dataStore);
   }
 
   public DeleteDataStore(String checkpointToken, DataStore dataStore) {
