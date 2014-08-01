@@ -8,6 +8,8 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.curator.test.TestingCluster;
 import org.apache.thrift.TBase;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.liveramp.cascading_ext.mockery.Mockery;
@@ -32,10 +34,22 @@ import static org.junit.Assert.assertTrue;
 
 public class TestResourceSemaphore extends CascadingExtTestCase {
 
-  @Test
-  public void testSemaphore() throws Exception {
+  private TestingCluster cluster;
+
+  @Before
+  public void setUp() throws Exception {
     TestingCluster cluster = new TestingCluster(3);
     cluster.start();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    cluster.close();
+    cluster.stop();
+  }
+
+  @Test
+  public void testSemaphore() throws Exception {
 
     CuratorFramework framework = CuratorFrameworkFactory.newClient(cluster.getConnectString(), new RetryNTimes(3, 100));
     framework.start();
@@ -55,15 +69,12 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
     assertFalse(lock2.hasReaders());
 
     framework.close();
-    cluster.stop();
-    cluster.close();
     System.out.println("Done");
 
   }
 
   @Test
   public void testWorkflowInterop() throws Exception {
-    TestingCluster cluster = new TestingCluster(3);
 
     LiverampQueues test = LiverampQueues.get(new TestFrameworkProvider(cluster));
 
@@ -110,8 +121,7 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
     assertEquals(1, versionedStore.getAllCompleteVersions().length);
 
     framework.close();
-    cluster.close();
-    cluster.stop();
+
     System.out.println("Done");
   }
 
