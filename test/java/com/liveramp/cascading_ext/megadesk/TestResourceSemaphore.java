@@ -42,15 +42,12 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
 
     framework = CuratorFrameworkFactory.newClient(cluster.getConnectString(), new RetryNTimes(3, 100));
     framework.start();
-
   }
 
   @After
   public void tearDown() throws Exception {
-    cluster.close();
-    cluster.stop();
-
     framework.close();
+    cluster.close();
   }
 
   @Test
