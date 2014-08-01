@@ -10,10 +10,6 @@ import org.apache.curator.test.TestingCluster;
 import org.apache.thrift.TBase;
 import org.junit.Test;
 
-import com.liveramp.cascading_ext.megadesk.CuratorStoreReaderLockProvider;
-import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
-import com.liveramp.cascading_ext.megadesk.ResourceSemaphoreImpl;
-import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.mockery.Mockery;
 import com.liveramp.util.generated.StringOrNone;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
@@ -21,6 +17,7 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedThriftBucketDataStoreHelper;
 import com.rapleaf.cascading_ext.queues.LiverampQueues;
+import com.rapleaf.cascading_ext.queues.TestFrameworkProvider;
 import com.rapleaf.cascading_ext.serialization.ThriftRawComparator;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -66,8 +63,10 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
 
   @Test
   public void testWorkflowInterop() throws Exception {
-    TestingCluster testingCluster = LiverampQueues.getTestingCluster();
-    LiverampQueues test = LiverampQueues.getTest(testingCluster);
+    TestingCluster cluster = new TestingCluster(3);
+
+    LiverampQueues test = LiverampQueues.get(new TestFrameworkProvider(cluster));
+
     CuratorFramework framework = test.getFramework();
 
     VersionedBucketDataStore<StringOrNone> versionedStore =
@@ -111,8 +110,8 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
     assertEquals(1, versionedStore.getAllCompleteVersions().length);
 
     framework.close();
-    testingCluster.stop();
-    testingCluster.close();
+    cluster.close();
+    cluster.stop();
     System.out.println("Done");
   }
 
