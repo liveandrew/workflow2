@@ -15,6 +15,11 @@ public class DeleteDataStore extends Action {
 
   public DeleteDataStore(String checkpointToken, FileSystem fs, DataStore dataStore) {
     super(checkpointToken);
+
+    if (!dataStore.getPath().startsWith("/tmp/")) {
+      throw new IllegalArgumentException("DeleteDataStore should only be used for temporary stores");
+    }
+
     this.fs = fs;
     this.dataStore = dataStore;
   }
