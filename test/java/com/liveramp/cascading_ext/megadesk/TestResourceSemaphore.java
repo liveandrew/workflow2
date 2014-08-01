@@ -18,8 +18,6 @@ import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedThriftBucketDataStoreHelper;
-import com.rapleaf.cascading_ext.queues.LiverampQueues;
-import com.rapleaf.cascading_ext.queues.TestFrameworkProvider;
 import com.rapleaf.cascading_ext.serialization.ThriftRawComparator;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -34,25 +32,29 @@ import static org.junit.Assert.assertTrue;
 
 public class TestResourceSemaphore extends CascadingExtTestCase {
 
+  private CuratorFramework framework;
   private TestingCluster cluster;
 
   @Before
   public void setUp() throws Exception {
     TestingCluster cluster = new TestingCluster(3);
     cluster.start();
+
+    CuratorFramework framework = CuratorFrameworkFactory.newClient(cluster.getConnectString(), new RetryNTimes(3, 100));
+    framework.start();
+
   }
 
   @After
   public void tearDown() throws Exception {
     cluster.close();
     cluster.stop();
+
+    framework.close();
   }
 
   @Test
   public void testSemaphore() throws Exception {
-
-    CuratorFramework framework = CuratorFrameworkFactory.newClient(cluster.getConnectString(), new RetryNTimes(3, 100));
-    framework.start();
 
     ResourceSemaphore lock1 = new ResourceSemaphoreImpl(framework, "resource1", "name1");
     ResourceSemaphore lock2 = new ResourceSemaphoreImpl(framework, "resource1", "name1");
@@ -68,17 +70,12 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
     lock1.release();
     assertFalse(lock2.hasReaders());
 
-    framework.close();
     System.out.println("Done");
 
   }
 
   @Test
   public void testWorkflowInterop() throws Exception {
-
-    LiverampQueues test = LiverampQueues.get(new TestFrameworkProvider(cluster));
-
-    CuratorFramework framework = test.getFramework();
 
     VersionedBucketDataStore<StringOrNone> versionedStore =
         Mockery.versionBucket(getTestRoot() + "/store", StringOrNone.string_value("version1"));
@@ -119,8 +116,6 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
     attemptToClean(versionedStore, options);
 
     assertEquals(1, versionedStore.getAllCompleteVersions().length);
-
-    framework.close();
 
     System.out.println("Done");
   }
