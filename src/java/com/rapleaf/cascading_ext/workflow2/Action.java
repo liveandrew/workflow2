@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -248,39 +247,14 @@ public abstract class Action {
     return this.pctComplete;
   }
 
-  private final static String DEFAULT_JOB_TRACKER = "ds-jt";
-  private String JOB_TRACKER = null;
-
-  public List<String> getJobTrackerLinks() {
-    List<String> links = new LinkedList<String>();
-    Map<String, String> idToName = new LinkedHashMap<String, String>();
-
-    int operationsCount = 1;
+  public Map<String, String> getStatusLinks() {
+    Map<String, String> linkToName = new LinkedHashMap<String, String>();
 
     for (ActionOperation operation : operations) {
-      initJobTracker(operation);
-      idToName.putAll(operation.getSubStepIdToName(operationsCount));
-      operationsCount++;
+      linkToName.putAll(operation.getSubStepStatusLinks());
     }
 
-    for (Map.Entry<String, String> entry : idToName.entrySet()) {
-      links.add("<a href=\"" + JOB_TRACKER + "/jobdetails.jsp?jobid=" + entry.getKey() + "&refresh=30\">[" + entry.getValue() + "]</a><br>");
-    }
-
-    return links;
-  }
-
-  protected void initJobTracker(ActionOperation operation) {
-    if (JOB_TRACKER == null) {
-      JOB_TRACKER = operation.getProperty("mapred.job.tracker");
-
-      if (JOB_TRACKER != null && !"".equals(JOB_TRACKER) && JOB_TRACKER.split(":").length > 0) {
-        String[] parts = JOB_TRACKER.split(":");
-        JOB_TRACKER = "http://" + parts[0];
-      } else {
-        JOB_TRACKER = "http://" + DEFAULT_JOB_TRACKER;
-      }
-    }
+    return linkToName;
   }
 
   /**

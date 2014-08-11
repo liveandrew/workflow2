@@ -1,19 +1,22 @@
 package com.rapleaf.cascading_ext.workflow2.action_operations;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.hadoop.mapred.RunningJob;
+
 import cascading.flow.Flow;
 import cascading.stats.FlowStats;
 import cascading.stats.FlowStepStats;
 import cascading.stats.hadoop.HadoopStepStats;
+
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.counters.Counters;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.support.event_timer.FixedTimedEvent;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class FlowOperation implements ActionOperation {
   private final Flow flow;
@@ -49,7 +52,7 @@ public class FlowOperation implements ActionOperation {
       }
     }
 
-    return (int) ((double) numComplete / flowstats.getStepsCount() * maxPct);
+    return (int)((double)numComplete / flowstats.getStepsCount() * maxPct);
   }
 
   @Override
@@ -58,25 +61,20 @@ public class FlowOperation implements ActionOperation {
   }
 
   @Override
-  public Map<String, String> getSubStepIdToName(int operationIndex) {
-    Map<String, String> subStepIdToName = new HashMap<String, String>();
+  public Map<String, String> getSubStepStatusLinks() {
+    Map<String, String> subSteps = new LinkedHashMap<String, String>();
 
-    int count = 1;
-    for (FlowStepStats st : flow.getFlowStats().getFlowStepStats()) {
-      HadoopStepStats hdStepStats = (HadoopStepStats) st;
-
-      try {
-        String stepId = hdStepStats.getJobID();
-        String name = "Flow " + Integer.toString(operationIndex) + " (" + count + "/" + flow.getFlowStats().getFlowStepStats().size() + ")";
-        subStepIdToName.put(stepId, name);
-      } catch (NullPointerException e) {
-        // getJobID on occasion throws a null pointer exception, ignore it
+    try {
+      for (FlowStepStats st : flow.getFlowStats().getFlowStepStats()) {
+        HadoopStepStats hdStepStats = (HadoopStepStats)st;
+        RunningJob job = hdStepStats.getRunningJob();
+        subSteps.put(hdStepStats.getStatusURL(), job.getJobName());
       }
-
-      count++;
+    } catch (NullPointerException e) {
+      // getJobID on occasion throws a null pointer exception, ignore it
     }
 
-    return subStepIdToName;
+    return subSteps;
   }
 
   @Override

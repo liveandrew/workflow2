@@ -1,9 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.rapleaf.cascading_ext.counters.NestedCounter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
+import com.rapleaf.cascading_ext.counters.NestedCounter;
 
 public interface ActionOperation {
 
@@ -17,8 +18,7 @@ public interface ActionOperation {
 
   public String getName();
 
-  // TODO: switch this to return tracking links
-  public Map<String, String> getSubStepIdToName(int operationIndex);
+  public Map<String, String> getSubStepStatusLinks();
 
   public void timeOperation(Step.StepTimer stepTimer, String checkpointToken, List<NestedCounter> nestedCounters);
 }

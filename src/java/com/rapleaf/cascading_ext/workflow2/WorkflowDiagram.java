@@ -17,7 +17,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import org.apache.commons.lang.StringUtils;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
@@ -47,20 +46,14 @@ public class WorkflowDiagram {
     private int percentageComplete;
     private String message;
     private String actionName;
-    private String jobTrackerLinks;
-
-    public Vertex(String id, String name, String status) {
-      this.id = id;
-      this.name = name;
-      this.status = status;
-    }
+    private Map<String, String> statusLinks;
 
     public Vertex(Step step, StepExecuteStatus._Fields status) {
       this.id = step.getCheckpointToken();
       this.name = step.getSimpleCheckpointToken();
       this.status = status.name().toLowerCase();
 
-      jobTrackerLinks = StringUtils.join(step.getAction().getJobTrackerLinks().toArray(new String[0]));
+      statusLinks = step.getAction().getStatusLinks();
 
       Action action = step.getAction();
       actionName = action.getClass().getSimpleName();
@@ -144,8 +137,8 @@ public class WorkflowDiagram {
       return message;
     }
 
-    public String getJobTrackerLinks() {
-      return jobTrackerLinks;
+    public Map<String, String> getStatusLinks() {
+      return statusLinks;
     }
 
     public String getActionName() {
@@ -209,19 +202,17 @@ public class WorkflowDiagram {
   }
 
 
-
   public void expandMultistepVertex(String vertexId) {
     Step multiStep = vertexIdToStep.get(vertexId);
     multiStepsToExpand.add(multiStep);
   }
 
 
-
   public void expandAllMultistepVertices() {
     multiStepsToExpand = new HashSet<Step>(vertexIdToStep.values());
   }
 
-  public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph(){
+  public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph() {
     return getDiagramGraph(dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand));
   }
 
@@ -235,8 +226,7 @@ public class WorkflowDiagram {
     return diagramGraph;
   }
 
-  private Integer getIndex(DataStore ds, Map<DataStore, Integer> dsToIndex){
-
+  private Integer getIndex(DataStore ds, Map<DataStore, Integer> dsToIndex) {
 
 
     return dsToIndex.get(ds);
@@ -249,7 +239,7 @@ public class WorkflowDiagram {
                                        Map<DataStore, Integer> dsToIndex) throws JSONException {
 
     for (DataStore ds : stores) {
-      if(!dsToIndex.containsKey(ds)){
+      if (!dsToIndex.containsKey(ds)) {
         dsToIndex.put(ds, dsToIndex.size());
       }
 
@@ -274,23 +264,24 @@ public class WorkflowDiagram {
 
     TopologicalOrderIterator<Vertex, DefaultEdge> iter = new TopologicalOrderIterator<Vertex, DefaultEdge>(graph);
 
-    while(iter.hasNext()){
+    while (iter.hasNext()) {
       Vertex vertex = iter.next();
 
       int nodeIndex = stepIdToNum.size();
       stepIdToNum.put(vertex.getId(), nodeIndex);
 
       steps.put(new JSONObject()
-          .put("id", vertex.getId())
-          .put("index", nodeIndex)
-          .put("name", vertex.getName())
-          .put("status", vertex.getStatus())
-          .put("start_timestamp", vertex.getStartTimestamp())
-          .put("end_timestamp", vertex.getEndTimestamp())
-          .put("percent_complete", vertex.getPercentageComplete())
-          .put("message", vertex.getMessage())
-          .put("action_name", vertex.getActionName())
-          .put("job_tracker_links", vertex.getJobTrackerLinks()));
+              .put("id", vertex.getId())
+              .put("index", nodeIndex)
+              .put("name", vertex.getName())
+              .put("status", vertex.getStatus())
+              .put("start_timestamp", vertex.getStartTimestamp())
+              .put("end_timestamp", vertex.getEndTimestamp())
+              .put("percent_complete", vertex.getPercentageComplete())
+              .put("message", vertex.getMessage())
+              .put("action_name", vertex.getActionName())
+              .put("status_links", vertex.getStatusLinks())
+      );
 
       for (DefaultEdge inEdge : graph.incomingEdgesOf(vertex)) {
         Vertex source = graph.getEdgeSource(inEdge);
@@ -361,8 +352,8 @@ public class WorkflowDiagram {
 
     for (Map.Entry<String, String> edge : allEdges.entries()) {
       edges.put(new JSONObject()
-        .put("source", stepIdToNum.get(edge.getKey()))
-        .put("target", stepIdToNum.get(edge.getValue())));
+          .put("source", stepIdToNum.get(edge.getKey()))
+          .put("target", stepIdToNum.get(edge.getValue())));
     }
 
     LiveWorkflowMeta meta = getMeta();
@@ -380,11 +371,11 @@ public class WorkflowDiagram {
         .put("steps", steps);
   }
 
-  private String getStatus(){
-    if(workflowRunner.isFailPending()){
+  private String getStatus() {
+    if (workflowRunner.isFailPending()) {
       return "failPending";
     }
-    if(workflowRunner.isShutdownPending()){
+    if (workflowRunner.isShutdownPending()) {
       return "shutdownPending";
     }
     return "running";
@@ -405,7 +396,7 @@ public class WorkflowDiagram {
 
   public WorkflowDefinition getDefinition() {
     DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph<Step, DefaultEdge>(
-      flatDependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null));
+        flatDependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null));
 
     //  TODO remove redundant edges
 
@@ -426,7 +417,7 @@ public class WorkflowDiagram {
 
   private DirectedGraph<Vertex, DefaultEdge> wrapVertices(DirectedGraph<Step, DefaultEdge> graph) {
     DirectedGraph<Vertex, DefaultEdge> resultGraph =
-      new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
+        new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
 
     Map<Step, Vertex> stepToVertex = new HashMap<Step, Vertex>();
     for (Step step : graph.vertexSet()) {
@@ -534,7 +525,7 @@ public class WorkflowDiagram {
         MultiStepAction msa = (MultiStepAction)s.getAction();
 
         pullUpSubstepsAndAdjustCheckpointTokens(dependencyGraph, multiSteps, s,
-          msa, multiStepsToExpand);
+            msa, multiStepsToExpand);
 
         // now that the dep graph contains the unwrapped multistep *and* the
         // original multistep, let's move the edges to the unwrapped stuff so that
@@ -710,8 +701,8 @@ public class WorkflowDiagram {
   }
 
   private static void pullUpSubstepsAndAdjustCheckpointTokens(
-    DirectedGraph<Step, DefaultEdge> dependencyGraph, Queue<Step> multiSteps,
-    Step s, MultiStepAction msa, Set<Step> multiStepsToExpand) {
+      DirectedGraph<Step, DefaultEdge> dependencyGraph, Queue<Step> multiSteps,
+      Step s, MultiStepAction msa, Set<Step> multiStepsToExpand) {
     // take all the substeps out of the multistep and put them into the top
     // level dependency graph, making sure to add their dependencies.
     // this is certain to visit some vertices repeatedly, and could probably

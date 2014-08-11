@@ -1,26 +1,26 @@
 package com.rapleaf.cascading_ext.workflow2.action_operations;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.collect.Maps;
-import com.liveramp.cascading_ext.counters.Counter;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.cascading_ext.workflow2.ActionOperation;
-import com.rapleaf.cascading_ext.workflow2.RunnableJob;
-import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.support.event_timer.FixedTimedEvent;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import com.liveramp.cascading_ext.counters.Counter;
+import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.cascading_ext.workflow2.ActionOperation;
+import com.rapleaf.cascading_ext.workflow2.RunnableJob;
+import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.support.event_timer.FixedTimedEvent;
 
 public class HadoopOperation implements ActionOperation {
   private static Logger LOG = Logger.getLogger(HadoopOperation.class);
 
-  public static final String SINGLE_JOB_NAME = "Job 1/1";
   private final RunnableJob runnableJob;
 
   private JobConf conf = null;
@@ -78,11 +78,11 @@ public class HadoopOperation implements ActionOperation {
   }
 
   @Override
-  public Map<String, String> getSubStepIdToName(int operationIndex) {
+  public Map<String, String> getSubStepStatusLinks() {
     Map<String, String> subStepIdToName = Maps.newHashMap();
 
     try {
-      subStepIdToName.put(runningJob.getID().toString(), SINGLE_JOB_NAME);
+      subStepIdToName.put(runningJob.getTrackingURL(), runningJob.getJobName());
     } catch (NullPointerException npe) {
       // getID on occasion throws a null pointer exception, ignore it
     }
