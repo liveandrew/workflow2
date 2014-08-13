@@ -183,8 +183,6 @@ public final class WorkflowRunner {
   private final EventTimer timer;
 
   private boolean alreadyRun;
-  private Integer webUiPort;
-  private final boolean enableWebUiServer;
   private final List<String> notificationRecipients;
   private final Set<WorkflowRunnerNotification> enabledNotifications;
   private String sandboxDir;
@@ -220,42 +218,42 @@ public final class WorkflowRunner {
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, final Step first, Step... rest) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, final Step first, Step... rest) {
     this(workflowName,
         checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps),
         combine(first, rest));
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps) {
     this(workflowName,
         checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps),
         tailSteps);
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationRecipients) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps, String notificationRecipients) {
     this(workflowName,
         checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationRecipients(notificationRecipients),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setNotificationRecipients(notificationRecipients),
         tailSteps);
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, List<String> notificationRecipients) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps, List<String> notificationRecipients) {
     this(workflowName,
         checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationRecipients(notificationRecipients),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setNotificationRecipients(notificationRecipients),
         tailSteps);
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Integer webUiPort, Set<Step> tailSteps, String notificationRecipients, boolean deleteCheckpointsOnSuccess) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps, String notificationRecipients, boolean deleteCheckpointsOnSuccess) {
     this(workflowName,
         new HdfsCheckpointPersistence(checkpointDir, deleteCheckpointsOnSuccess),
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setWebUiPort(webUiPort).setNotificationRecipients(notificationRecipients),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setNotificationRecipients(notificationRecipients),
         tailSteps);
   }
 
@@ -276,14 +274,7 @@ public final class WorkflowRunner {
     this.workflowName = workflowName;
     this.persistence = persistence;
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
-    if (options.getWebUiPort() == null) {
-      this.webUiPort = ANY_FREE_PORT;
-    } else {
-      this.webUiPort = options.getWebUiPort();
-    }
-
     this.statsRecorder = getRecorder(options);
-    this.enableWebUiServer = options.getEnableWebUiServer();
     this.notificationRecipients = options.getNotificationRecipients();
     this.enabledNotifications = options.getEnabledNotifications().get();
     this.semaphore = new Semaphore(maxConcurrentSteps);
@@ -733,10 +724,8 @@ public final class WorkflowRunner {
   }
 
   private void startWebServer() {
-    if (enableWebUiServer && webUiPort != null) {
-      webServer = new WorkflowWebServer(this, webUiPort);
-      webServer.start();
-    }
+    webServer = new WorkflowWebServer(this, ANY_FREE_PORT);
+    webServer.start();
   }
 
   public StepExecuteStatus getStepStatus(Step step) {

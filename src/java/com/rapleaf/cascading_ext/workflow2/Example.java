@@ -61,6 +61,6 @@ public class Example {
     s = new Step(new ComplexAction(), s);
     s = new Step(new PrintAction("last"), s);
     
-    new WorkflowRunner("workflow", "/tmp/checkpoint_dir", 2, 12345, new HashSet<Step>(Arrays.asList(s))).run();
+    new WorkflowRunner("workflow", "/tmp/checkpoint_dir", 2, new HashSet<Step>(Arrays.asList(s))).run();
   }
 }

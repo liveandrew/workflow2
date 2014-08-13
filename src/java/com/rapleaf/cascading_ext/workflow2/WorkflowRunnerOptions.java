@@ -8,20 +8,16 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 public class WorkflowRunnerOptions {
 
   private int maxConcurrentSteps;
-  private Integer webUiPort;
   private List<String> notificationRecipients;
   private WorkflowRunnerNotificationSet enabledNotifications;
-  private boolean enableWebUiServer;
   private int statsDPort;
   private String statsDHost;
   private StoreReaderLockProvider lockProvider;
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
-    webUiPort = null;
     notificationRecipients = null;
     enabledNotifications = WorkflowRunnerNotificationSet.all();
-    enableWebUiServer = true;
     statsDPort = 8125;
     statsDHost = "pglibertyc6";
     lockProvider = null;
@@ -33,15 +29,6 @@ public class WorkflowRunnerOptions {
 
   public WorkflowRunnerOptions setMaxConcurrentSteps(int maxConcurrentSteps) {
     this.maxConcurrentSteps = maxConcurrentSteps;
-    return this;
-  }
-
-  public Integer getWebUiPort() {
-    return webUiPort;
-  }
-
-  public WorkflowRunnerOptions setWebUiPort(Integer webUiPort) {
-    this.webUiPort = webUiPort;
     return this;
   }
 
@@ -78,15 +65,6 @@ public class WorkflowRunnerOptions {
 
   public WorkflowRunnerNotificationSet getEnabledNotifications() {
     return enabledNotifications;
-  }
-
-  public boolean getEnableWebUiServer() {
-    return enableWebUiServer;
-  }
-
-  public WorkflowRunnerOptions setEnableWebUiServer(boolean enableWebUiServer) {
-    this.enableWebUiServer = enableWebUiServer;
-    return this;
   }
 
   public int getStatsDPort() {
