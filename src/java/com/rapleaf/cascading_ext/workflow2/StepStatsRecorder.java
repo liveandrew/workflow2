@@ -1,19 +1,21 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import cascading.flow.SliceCounters;
-import cascading.flow.StepCounters;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.support.Rap;
 import com.timgroup.statsd.StatsDClient;
 import org.apache.hadoop.mapreduce.JobCounter;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.log4j.Logger;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import cascading.flow.SliceCounters;
+import cascading.flow.StepCounters;
+
+import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.support.Rap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -92,15 +94,20 @@ class StatsDRecorder implements StepStatsRecorder {
   }
 
   private void record(Step step, String bucket, String groupName, String counterName) {
+
+    int valToCommit = 0;
     for (NestedCounter nestedCounter : step.getCounters()) {
       if (groupName.equals(nestedCounter.getCounter().getGroup()) &&
           counterName.equals(nestedCounter.getCounter().getName())) {
-        int value = value(nestedCounter, counterName);
-        client.count(bucket + "." + counterName, value);
-        LOG.info("Recording " + groupName + ":" + counterName + "  :  " + value);
-        return;
+        valToCommit += value(nestedCounter, counterName);
       }
     }
+
+    if(valToCommit != 0) {
+      client.count(bucket + "." + counterName, valToCommit);
+      LOG.info("Recording " + groupName + ":" + counterName + "  :  " + valToCommit);
+    }
+
   }
 
   private int value(NestedCounter nestedCounter, String counterName) {
