@@ -3,13 +3,14 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
-//@Ignore
+@Ignore
 public class LongRunningWorkflow extends CascadingExtTestCase {
 
   private final String LONG_RUNNING_WORKFLOW_PATH = getTestRoot() + "/LongRunningHadoopWorkflow";
