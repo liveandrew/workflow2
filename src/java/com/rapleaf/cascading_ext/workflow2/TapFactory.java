@@ -1,10 +1,11 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
+
 import cascading.tap.Tap;
+
 import com.liveramp.cascading_ext.tap.NullTap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-
-import java.io.IOException;
 
 public interface TapFactory {
 
