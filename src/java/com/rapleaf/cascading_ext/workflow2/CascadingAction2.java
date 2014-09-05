@@ -11,6 +11,7 @@ import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tuple.Fields;
 
+import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
@@ -42,6 +43,10 @@ public class CascadingAction2 extends MultiStepAction {
 
   protected void complete(String stepName, Pipe output, DataStore outputStore) {
     setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore));
+  }
+
+  protected void completePartitioned(String stepName, Pipe output, BucketDataStore outputStore){
+    setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore));
   }
 
   protected void complete(String stepName, Pipe output, DataStore outputStore, TupleDataStore persistStatsStore) throws IOException {
