@@ -17,31 +17,19 @@ import com.rapleaf.formats.bucket.Bucket;
 public class PersistNewPartitionedVersion<T extends TBase> extends Action {
 
   private final PartitionedDataStore destinationStore;
-  private final Map<Long, Integer> audienceIdToVersion;
-  private final String newVersionsRoot;
+  private final PartitionedDataStore sourceStore;
   private final Class klass;
 
-  public PersistNewPartitionedVersion(String checkpointToken, String newVersionsRoot, Class klass, PartitionedDataStore<T> destinationStore, Map<Long, Integer> audienceIdToVersion) throws IOException {
-    super(checkpointToken);
+  public PersistNewPartitionedVersion(String checkpointToken, String tmpRoot, Class klass, PartitionedDataStore<T> sourceStore, PartitionedDataStore<T> destinationStore) throws IOException {
+    super(checkpointToken, tmpRoot);
 
     this.destinationStore = destinationStore;
-    this.audienceIdToVersion = audienceIdToVersion;
-    this.newVersionsRoot = newVersionsRoot;
+    this.sourceStore = sourceStore;
     this.klass = klass;
   }
 
   @Override
   protected void execute() throws Exception {
-    Map<AudienceAndVersion, BucketDataStore<T>> versionsToPersist = new HashMap<AudienceAndVersion, BucketDataStore<T>>();
-
-    for (Map.Entry<Long, Integer> entry : audienceIdToVersion.entrySet()) {
-      Long audienceId = entry.getKey();
-      Integer audienceVersion = entry.getValue();
-      String path = newVersionsRoot + "/" + audienceId.toString();
-      BucketDataStore<T> sourceBucket = new BucketDataStoreImpl<T>(path, klass);
-      versionsToPersist.put(new AudienceAndVersion(audienceId, audienceVersion), sourceBucket);
-    }
-
-    destinationStore.persistNewAudienceVersions(versionsToPersist);
+    destinationStore.persistFrom(sourceStore);
   }
 }
