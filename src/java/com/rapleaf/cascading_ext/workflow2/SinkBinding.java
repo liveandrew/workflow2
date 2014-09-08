@@ -19,7 +19,11 @@ public interface SinkBinding {
 
   public TapFactory getTapFactory();
 
-  public class DSSink implements SinkBinding {
+  interface DataStoreSink {
+    public DataStore getOutputStore();
+  }
+
+  public class DSSink implements SinkBinding, DataStoreSink {
     private final Pipe pipe;
     private final DataStore outputStore;
 
@@ -69,7 +73,7 @@ public interface SinkBinding {
     }
   }
 
-  public class PartitionedSink implements SinkBinding {
+  public class PartitionedSink implements SinkBinding, DataStoreSink {
 
     private final Pipe pipe;
     private final BucketDataStore store;
@@ -94,6 +98,11 @@ public interface SinkBinding {
           return store.getPartitionedSinkTap();
         }
       };
+    }
+
+    @Override
+    public DataStore getOutputStore() {
+      return store;
     }
   }
 

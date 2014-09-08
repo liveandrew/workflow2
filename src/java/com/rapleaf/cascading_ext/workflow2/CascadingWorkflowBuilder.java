@@ -283,8 +283,8 @@ public class CascadingWorkflowBuilder {
       sinks.put(pipeName, sinkBinding.getTapFactory());
 
       //  if it's a dssink, mark as creates
-      if(sinkBinding instanceof DSSink){
-        DSSink sink = (DSSink) sinkBinding;
+      if(sinkBinding instanceof SinkBinding.DataStoreSink){
+        SinkBinding.DataStoreSink sink = (SinkBinding.DataStoreSink) sinkBinding;
         sinkStores.add(sink.getOutputStore());
       }
 
