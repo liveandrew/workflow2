@@ -29,8 +29,6 @@ public class PINFromPINAndOwnersAction extends MSJTapAction<BytesWritable> {
         new PINExtractorJoiner(),
         pins
     );
-
-    creates(pins);
   }
 
   private static class PINExtractorJoiner extends MSJFunction<BytesWritable> {
