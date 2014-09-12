@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
@@ -23,14 +24,23 @@ import com.rapleaf.cascading_ext.workflow2.TapFactory;
 public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
 
   public MSJTapAction(String checkpointToken, String tmpRoot,
+                      ExtractorsList<K> inputs,
+                      MSJFunction<K> function,
+                      BucketDataStore output) {
+    this(checkpointToken, tmpRoot, Maps.newHashMap(),
+        inputs, function, output);
+  }
+
+  public MSJTapAction(String checkpointToken, String tmpRoot,
                       Map<Object, Object> properties,
-                      final List<StoreExtractor<K>> inputs,
+                      final ExtractorsList<K> inputs,
                       MSJFunction<K> function,
                       BucketDataStore output) {
     super(checkpointToken, tmpRoot, properties);
+    final List<StoreExtractor<K>> asList = inputs.get();
 
     List<DataStore> dsStores = Lists.newArrayList();
-    for (StoreExtractor input : inputs) {
+    for (StoreExtractor input : asList) {
       MapSideJoinableDataStore store = input.getStore();
       if(store instanceof DataStore){
         dsStores.add((DataStore) store);
@@ -40,7 +50,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
     Pipe pipe = bindSource("msj-tap", dsStores, new TapFactory() {
       @Override
       public Tap createTap() throws IOException {
-        return new MSJTap<K>(getConfs(inputs), new MSJScheme<K>());
+        return new MSJTap<K>(getConfs(asList), new MSJScheme<K>());
       }
     });
 
