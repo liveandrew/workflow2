@@ -24,7 +24,7 @@ public class PersistNewVersion<T> extends Action {
   @Override
   protected void execute() throws Exception {
     Bucket newVersion = store.getBucketVersionedStore().openNewVersion();
-    newVersion.absorb(versionToPersist.getBucket());
+    newVersion.absorbIntoEmpty(versionToPersist.getBucket());
 
     store.getBucketVersionedStore().completeVersion(newVersion);
   }
