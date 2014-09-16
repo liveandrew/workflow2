@@ -2,15 +2,12 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 
-import cascading.operation.Insert;
-import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
-import cascading.tuple.Fields;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.tap.bucket2.PartitionedThriftBucketScheme;
+import com.rapleaf.cascading_ext.msj_tap.InsertEmptySplit;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.NullTapFactory;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
 
@@ -85,9 +82,7 @@ public interface SinkBinding {
 
     @Override
     public Pipe getPipe() {
-      return new Each(pipe,
-          new Insert(new Fields(PartitionedThriftBucketScheme.SPLIT_FIELD), ""),
-          Fields.ALL);
+      return new InsertEmptySplit(pipe);
     }
 
     @Override
