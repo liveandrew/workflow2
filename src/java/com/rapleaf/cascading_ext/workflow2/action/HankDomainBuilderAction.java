@@ -197,7 +197,7 @@ public abstract class HankDomainBuilderAction extends Action {
 
   protected abstract String getValueFieldName();
 
-  protected abstract Map<String, Tap> getSources();
+  protected abstract Map<String, Tap> getSources() throws IOException;
 
   protected void postProcessFlow(Flow flow) {
     // Default is no-op
