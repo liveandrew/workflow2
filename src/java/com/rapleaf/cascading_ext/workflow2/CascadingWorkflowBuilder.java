@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.log4j.Logger;
 
 import cascading.flow.FlowListener;
@@ -27,8 +28,9 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
+import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
@@ -89,10 +91,10 @@ public class CascadingWorkflowBuilder {
     return new Pipe(name);
   }
 
-  public <T extends Comparable> Pipe msj(String name, List<MSJBinding<T>> bindings, final TOutputMultiJoiner<T, ?> joiner) throws IOException {
+  public <T extends Comparable> Pipe msj(final String name, List<MSJBinding<T>> bindings, final TOutputMultiJoiner<T, ?> joiner) throws IOException {
 
     //  don't really love the instanceof stuff, but we'll just call it a TODO --ben
-    List<SourceMSJBinding<T>> sourceMSJBindings = Lists.newArrayList();
+    final List<SourceMSJBinding<T>> sourceMSJBindings = Lists.newArrayList();
     for (MSJBinding<T> binding : bindings) {
 
       //  if the MSJ is coming from a cascading flow, bind it to a datastore so the MSJ can read it
@@ -121,21 +123,21 @@ public class CascadingWorkflowBuilder {
 
     }
 
-    final List<String> sources = Lists.newArrayList();
-    final List<Extractor<T>> extractors = Lists.newArrayList();
-
     for (SourceMSJBinding<T> binding : sourceMSJBindings) {
-      BucketDataStore store = binding.getStore();
-      sources.add(store.getPath());
-      extractors.add(binding.getExtractor());
-
-      pipenameToSourceStore.put(name, store);
+      pipenameToSourceStore.put(name, binding.getStore());
     }
 
     pipenameToTap.put(name, new TapFactory() {
       @Override
       public Tap createTap() throws IOException {
-        return MSJTap.of(MergingScheme.of(joiner), sources, extractors);
+
+        final List<InputConf<BytesWritable>> confs = Lists.newArrayList();
+        for (SourceMSJBinding<T> binding : sourceMSJBindings) {
+          BucketDataStore store = binding.getStore();
+          confs.add(store.getInputConf(binding.getExtractor()));
+        }
+
+        return new MSJTap<BytesWritable>(confs, (MSJScheme<BytesWritable>) MergingScheme.of(joiner));
       }
     });
 

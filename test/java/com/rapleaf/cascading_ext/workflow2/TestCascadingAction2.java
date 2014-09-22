@@ -1,13 +1,23 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.apache.hadoop.io.BytesWritable;
+import org.junit.Test;
+
 import cascading.operation.Identity;
 import cascading.pipe.Each;
 import cascading.pipe.GroupBy;
 import cascading.pipe.Pipe;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.liveramp.commons.collections.list.ListBuilder;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
@@ -22,14 +32,6 @@ import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
-import org.apache.hadoop.io.BytesWritable;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
 
@@ -167,7 +169,7 @@ public class TestCascadingAction2 extends CascadingExtTestCase {
     WorkflowRunner token = executeWorkflow(new SimpleTwoSinkAction("token", getTestRoot() + "/tmp", input, output, output1));
 
     //  make sure counter only got incremented once
-    assertEquals(Collections.<String, Long>singletonMap("Counter", 1l), token.getCounterMap().get("Group"));
+    assertEquals(Collections.singletonMap("Counter", 1l), token.getCounterMap().get("Group"));
 
     assertCollectionEquivalent(data, HRap.getAllTuples(output.getTap()));
     assertCollectionEquivalent(data, HRap.getAllTuples(output1.getTap()));
@@ -210,7 +212,7 @@ public class TestCascadingAction2 extends CascadingExtTestCase {
     WorkflowRunner token = executeWorkflow(new SimpleMSJAction("token", getTestRoot() + "/tmp", store1, store2, output, Collections.emptyMap()));
 
     assertEquals(new Long(1l), token.getCounterMap().get("COUNTER").get("INCREMENT"));
-    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(MSJFixtures.SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertCollectionEquivalent(Lists.newArrayList(MSJFixtures.SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
 
   }
 
@@ -236,6 +238,8 @@ public class TestCascadingAction2 extends CascadingExtTestCase {
     assertEquals(new Long(1), output1.getCounterMap().get("SUMMS").get("COUNT"));
     assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
 
-    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(MSJFixtures.SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertCollectionEquivalent(Lists.newArrayList(MSJFixtures.SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
   }
+
+
 }
