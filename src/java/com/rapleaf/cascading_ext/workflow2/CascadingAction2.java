@@ -45,6 +45,10 @@ public class CascadingAction2 extends MultiStepAction {
     setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore));
   }
 
+  protected void completeToNull(Pipe output) {
+    setSubStepsFromTail(workflowHelper.buildNullTail(output));
+  }
+
   protected void completePartitioned(String stepName, Pipe output, BucketDataStore outputStore){
     setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore));
   }

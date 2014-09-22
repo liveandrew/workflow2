@@ -1,5 +1,16 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.google.common.collect.Lists;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.thrift.TException;
+import org.junit.Before;
+import org.junit.Test;
+
 import cascading.flow.Flow;
 import cascading.operation.Insert;
 import cascading.pipe.Each;
@@ -9,7 +20,7 @@ import cascading.pipe.assembly.Retain;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
-import com.google.common.collect.Lists;
+
 import com.liveramp.cascading_ext.assembly.BloomJoin;
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.liveramp.commons.collections.list.ListBuilder;
@@ -38,15 +49,6 @@ import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
 import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.person_data.GenderType;
-import org.apache.hadoop.io.BytesWritable;
-import org.apache.thrift.TException;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -407,5 +409,25 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
 
     assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(MSJFixtures.SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+  }
+
+  @Test
+  public void testNullSink() throws Exception {
+
+    BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
+
+    ThriftBucketHelper.writeToBucket(store1.getBucket(),
+        MSJFixtures.die1,
+        MSJFixtures.die3
+    );
+
+    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
+
+    Pipe pipe1 = builder.bindSource("pipe1", store1);
+    pipe1 = new Increment(pipe1, "DIES", "COUNT");
+
+    WorkflowRunner output1 = executeWorkflow(builder.buildNullTail(pipe1));
+    assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
+
   }
 }
