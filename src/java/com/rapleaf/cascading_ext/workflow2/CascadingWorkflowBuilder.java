@@ -245,6 +245,8 @@ public class CascadingWorkflowBuilder {
       super(checkpointToken);
       this.outputStats = outputStats;
       this.counters = counters;
+
+      creates(outputStats);
     }
 
     @Override
