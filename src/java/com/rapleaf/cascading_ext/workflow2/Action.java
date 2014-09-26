@@ -119,9 +119,13 @@ public abstract class Action {
       throw wrapRuntimeException(t);
     } finally {
       endTimestamp = System.currentTimeMillis();
-      for (ResourceSemaphore lock : locks) {
-        lock.release();
-      }
+      unlock(locks);
+    }
+  }
+
+  private void unlock(List<ResourceSemaphore> locks) {
+    for (ResourceSemaphore lock : locks) {
+      lock.release();
     }
   }
 
