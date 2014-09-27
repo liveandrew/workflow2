@@ -59,7 +59,9 @@ public class CleanUpMsjStores extends MultiStepAction {
       SortedSet<Integer> versions = Sets.newTreeSet();
       for (FileStatus status : statuses) {
         String dirName = status.getPath().getName();
-        versions.add(Integer.parseInt(dirName.split("_")[1]));
+        if (!dirName.equals("msj.meta")) {
+          versions.add(Integer.parseInt(dirName.split("_")[1]));
+        }
       }
       Iterator<Integer> iterator = versions.iterator();
       for (int i = 0; i < versions.size() - numVersionsToKeep; i++) {
