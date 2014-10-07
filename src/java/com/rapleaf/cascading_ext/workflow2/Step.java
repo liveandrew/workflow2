@@ -1,19 +1,22 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.support.Rap;
-import com.rapleaf.support.event_timer.EventTimer;
-import com.rapleaf.support.event_timer.TimedEvent;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
+import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.support.Rap;
+import com.rapleaf.support.event_timer.EventTimer;
+import com.rapleaf.support.event_timer.TimedEvent;
 
 public final class Step {
 
@@ -128,21 +131,19 @@ public final class Step {
     return nestedCounters;
   }
 
+  @Deprecated
+  //  if you are calling this method, you are wrong
   public void run() {
-    this.run(Lists.<StepStatsRecorder>newArrayList());
+    this.run(Lists.<StepStatsRecorder>newArrayList(), Maps.newHashMap());
   }
 
-  public void run(StepStatsRecorder recorder) {
-    this.run(Lists.newArrayList(recorder));
-  }
-
-  public void run(List<StepStatsRecorder> recorders) {
+  public void run(List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
     if (conditionsNotMet()) {
       return;
     }
     timer.start();
     try {
-      action.internalExecute();
+      action.internalExecute(properties);
     } finally {
       for (ActionOperation operation : action.getRunFlows()) {
         operation.timeOperation(timer, getCheckpointToken(), nestedCounters);

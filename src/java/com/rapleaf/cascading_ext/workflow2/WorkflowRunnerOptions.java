@@ -2,6 +2,9 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
+import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 
@@ -9,6 +12,7 @@ public class WorkflowRunnerOptions {
 
   private int maxConcurrentSteps;
   private List<String> notificationRecipients;
+  private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
   private WorkflowRunnerNotificationSet enabledNotifications;
   private int statsDPort;
   private String statsDHost;
@@ -52,6 +56,11 @@ public class WorkflowRunnerOptions {
     return this;
   }
 
+  public WorkflowRunnerOptions setWorkflowJobProperties(Map<Object, Object> properties){
+    this.workflowJobProperties = properties;
+    return this;
+  }
+
   public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
     this.enabledNotifications = enabledNotifications;
     return this;
@@ -69,6 +78,10 @@ public class WorkflowRunnerOptions {
 
   public int getStatsDPort() {
     return statsDPort;
+  }
+
+  public Map<Object, Object> getWorkflowJobProperties() {
+    return workflowJobProperties;
   }
 
   public WorkflowRunnerOptions  setStatsDPort(int statsDPort) {

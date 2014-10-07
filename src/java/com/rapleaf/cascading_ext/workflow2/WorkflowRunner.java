@@ -17,11 +17,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
+import org.apache.hadoop.mapred.JobPriority;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -69,8 +72,13 @@ public final class WorkflowRunner {
   private static final String WORKFLOW_EMAIL_SUBJECT_TAG = "WORKFLOW";
   public static final String ERROR_EMAIL_SUBJECT_TAG = "ERROR";
 
+  private static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
+  private static final String JOB_POOL_PARAM = "mapred.queue.name";
+
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;
+
+  private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
 
   /**
    * StepRunner keeps track of some extra state for each component, as
@@ -100,7 +108,7 @@ public final class WorkflowRunner {
             } else {
               update(StepExecuteStatus.running(new StepRunningMeta()));
               LOG.info("Executing step " + step.getCheckpointToken());
-              step.run(statsRecorder);
+              step.run(Lists.newArrayList(statsRecorder), workflowJobProperties);
               update(StepExecuteStatus.completed(new StepCompletedMeta()));
             }
           } catch (Throwable e) {
@@ -281,6 +289,7 @@ public final class WorkflowRunner {
     this.tailSteps = tailSteps;
     this.timer = new EventTimer(workflowName);
     this.lockProvider = options.getLockProvider();
+    this.workflowJobProperties = options.getWorkflowJobProperties();
     dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
 
     removeRedundantEdges(dependencyGraph);
@@ -672,6 +681,30 @@ public final class WorkflowRunner {
     ExecuteStatus newStatus = ExecuteStatus.active(state);
     persistence.setStatus(newStatus);
   }
+
+  public void setPriority(String priority){
+    LOG.info("Setting new default priority: "+priority);
+
+    //  just so we fail loudly if not valid
+    JobPriority.valueOf(priority);
+
+    workflowJobProperties.put(JOB_PRIORITY_PARAM, priority);
+  }
+
+  public void setPool(String pool){
+    LOG.info("Setting new pool: "+pool);
+
+    workflowJobProperties.put(JOB_POOL_PARAM, pool);
+  }
+
+  public String getPriority(){
+    return (String) workflowJobProperties.get(JOB_PRIORITY_PARAM);
+  }
+
+  public String getPool(){
+    return (String) workflowJobProperties.get(JOB_POOL_PARAM);
+  }
+
 
   public String getReasonForShutdownRequest() {
     if (persistence.getFlowStatus().is_set_active()) {

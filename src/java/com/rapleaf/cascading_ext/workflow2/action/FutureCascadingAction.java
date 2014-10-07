@@ -1,19 +1,20 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import cascading.flow.Flow;
-import cascading.flow.FlowListener;
-import cascading.pipe.Pipe;
-import cascading.tap.Tap;
-import com.google.common.collect.Maps;
-import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.cascading_ext.workflow2.TapFactory;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import com.google.common.collect.Maps;
+
+import cascading.flow.FlowListener;
+import cascading.pipe.Pipe;
+import cascading.tap.Tap;
+
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.Action;
+import com.rapleaf.cascading_ext.workflow2.FlowBuilder;
+import com.rapleaf.cascading_ext.workflow2.TapFactory;
 
 public class FutureCascadingAction extends Action {
 
@@ -21,7 +22,6 @@ public class FutureCascadingAction extends Action {
   private final Map<String, TapFactory> sourceTaps;
   private final Map<String, TapFactory> sinkTaps;
   private final List<Pipe> tails;
-  private final Map<Object, Object> properties;
   private final FlowListener listener;
 
   public FutureCascadingAction(String checkpointToken,
@@ -33,13 +33,12 @@ public class FutureCascadingAction extends Action {
                                Collection<DataStore> createStores,
                                Map<Object, Object> properties,
                                FlowListener listener) {
-    super(checkpointToken);
+    super(checkpointToken, properties);
 
     this.flowName = flowName;
     this.sourceTaps = sourceTapFactories;
     this.sinkTaps = sinkTapFactories;
     this.tails = tails;
-    this.properties = properties;
     this.listener = listener;
 
     for (DataStore readStore : readStores) {
@@ -64,8 +63,8 @@ public class FutureCascadingAction extends Action {
       sinkTaps.put(entry.getKey(), entry.getValue().createTap());
     }
 
-    Flow f = CascadingHelper.get().getFlowConnector(properties).connect(
-        flowName+": "+getCheckpointToken(),
+    FlowBuilder.FlowClosure f = buildFlow().connect(
+        flowName + ": " + getCheckpointToken(),
         sourceTaps,
         sinkTaps,
         tails.toArray(new Pipe[tails.size()]));

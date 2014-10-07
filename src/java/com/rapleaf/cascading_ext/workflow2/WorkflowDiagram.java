@@ -70,12 +70,6 @@ public class WorkflowDiagram {
       }
     }
 
-    public Vertex(DataStore datastore) {
-      this.id = datastore.getName();
-      this.name = datastore.getName();
-      this.status = "datastore";
-    }
-
     private long computeStartTimestamp(MultiStepAction action) {
       long best = Long.MAX_VALUE;
       for (Step substep : action.getSubSteps()) {
@@ -151,8 +145,6 @@ public class WorkflowDiagram {
   private Map<String, Step> vertexIdToStep;
   private Map<String, String> vertexIdToParentVertexId;
 
-  private Map<Step, Vertex> stepToVertex = new HashMap<Step, Vertex>();
-  private Map<DataStore, Vertex> dsToVertex = new HashMap<DataStore, Vertex>();
   private Set<Step> multiStepsToExpand;
   private Stack<Step> isolated = new Stack<Step>();
 
@@ -364,6 +356,8 @@ public class WorkflowDiagram {
         .put("id", workflowRunner.getWorkflowUUID())
         .put("username", meta.get_username())
         .put("shutdown_reason", workflowRunner.getReasonForShutdownRequest())
+        .put("priority", workflowRunner.getPriority())
+        .put("pool", workflowRunner.getPool())
         .put("status", getStatus())
         .put("edges", edges)
         .put("datastore_uses", dsConnections)

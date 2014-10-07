@@ -9,18 +9,26 @@ import java.io.IOException;
 public class WorkflowCommandServlet extends HttpServlet {
 
   private final WorkflowRunner runner;
+
   public WorkflowCommandServlet(WorkflowRunner runner) {
     this.runner = runner;
   }
+
+  private static final Object lock = new Object();
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     String command = req.getParameter("command");
 
-    if(command.equals("shutdown")){
-      String reason = req.getParameter("reason");
-      runner.requestShutdown(reason);
+    synchronized (lock) {
+      if (command.equals("shutdown")) {
+        runner.requestShutdown(req.getParameter("reason"));
+      } else if (command.equals("set_pool")) {
+        runner.setPool(req.getParameter("pool"));
+      } else if (command.equals("set_priority")) {
+        runner.setPriority(req.getParameter("priority"));
+      }
     }
-
+    
   }
 }

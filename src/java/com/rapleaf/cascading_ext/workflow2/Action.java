@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
@@ -21,6 +22,7 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
@@ -45,6 +47,7 @@ public abstract class Action {
 
   private long startTimestamp;
   private long endTimestamp;
+  private Map<Object, Object> stepProperties;
 
   private List<ActionOperation> operations = new ArrayList<ActionOperation>();
 
@@ -53,15 +56,26 @@ public abstract class Action {
   private DataStoreBuilder builder = null;
 
   public Action(String checkpointToken) {
-    this.checkpointToken = checkpointToken;
-    this.tmpRoot = null;
+    this(checkpointToken, Maps.newHashMap());
   }
 
-  public Action(String checkpointToken, String tmpRoot) {
+  public Action(String checkpointToken, Map<Object, Object> properties) {
+    this.checkpointToken = checkpointToken;
+    this.tmpRoot = null;
+    this.stepProperties = properties;
+  }
+
+    public Action(String checkpointToken, String tmpRoot) {
+    this(checkpointToken, tmpRoot, Maps.newHashMap());
+  }
+
+  public Action(String checkpointToken, String tmpRoot, Map<Object, Object> properties) {
     this.checkpointToken = checkpointToken;
     this.tmpRoot = tmpRoot + "/" + checkpointToken + "-tmp-stores";
     this.builder = new DataStoreBuilder(getTmpRoot());
+    this.stepProperties = properties;
   }
+
 
   protected FileSystem getFS() throws IOException {
     if (fs == null) {
@@ -105,10 +119,18 @@ public abstract class Action {
     return builder;
   }
 
-  protected final void internalExecute() {
+  protected final void internalExecute(Map<Object, Object> properties) {
     List<ResourceSemaphore> locks = Lists.newArrayList();
     try {
       startTimestamp = System.currentTimeMillis();
+
+      //  only set properties not explicitly set by the step
+      for (Object prop : properties.keySet()) {
+        if(!stepProperties.containsKey(prop)){
+          stepProperties.put(prop, properties.get(prop));
+        }
+      }
+
       prepDirs();
       locks = lockReadsFromStores();
       LOG.info("Aquired locks for " + readsFromDatastores);
@@ -322,6 +344,10 @@ public abstract class Action {
     }
   }
 
+  protected FlowBuilder buildFlow(){
+    return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties));
+  }
+
   /**
    * Complete the provided operation while monitoring and reporting its progress.
    * This method will call setPercentComplete with values between 0 and 100
@@ -343,6 +369,10 @@ public abstract class Action {
 
   protected void completeWithProgress(RunnableJob job) {
     completeWithProgress(new HadoopOperation(job));
+  }
+
+  protected void completeWithProgress(FlowBuilder.FlowClosure flow){
+    completeWithProgress(flow.buildFlow());
   }
 
   /**

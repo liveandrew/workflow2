@@ -1,11 +1,13 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
-import com.rapleaf.cascading_ext.datastore.BytesDataStore;
+import java.io.IOException;
+
+import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
-import java.io.IOException;
+import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -33,7 +35,7 @@ public class TestAction extends CascadingExtTestCase {
     Path dir3Path = new Path(getTestRoot() + "/dir3");
     getFS().mkdirs(dir3Path);
 
-    new ExampleAction().internalExecute();
+    new ExampleAction().internalExecute(Maps.newHashMap());
 
     assertFalse("dir2 should be deleted", getFS().exists(dir2Path));
     assertTrue("dir3 should exist", getFS().exists(dir3Path));
