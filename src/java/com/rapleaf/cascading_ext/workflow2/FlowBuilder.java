@@ -139,7 +139,11 @@ public class FlowBuilder {
     }
 
     protected Flow buildFlow() {
-      return connector.connect(name, sources, sinks, traps, tails);
+      Flow connect = connector.connect(name, sources, sinks, traps, tails);
+      for (FlowListener listener : listeners) {
+        connect.addListener(listener);
+      }
+      return connect;
     }
 
   }
