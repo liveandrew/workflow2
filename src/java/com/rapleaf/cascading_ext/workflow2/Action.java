@@ -344,6 +344,16 @@ public abstract class Action {
     }
   }
 
+  protected FlowBuilder buildFlow(Map<Object, Object> properties){
+
+    Map<Object, Object> allProps = Maps.newHashMap(stepProperties);
+    for (Map.Entry<Object, Object> property : properties.entrySet()) {
+      allProps.put(property.getKey(), property.getValue());
+    }
+
+    return new FlowBuilder(CascadingHelper.get().getFlowConnector(allProps));
+  }
+
   protected FlowBuilder buildFlow(){
     return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties));
   }
