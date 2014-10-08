@@ -18,6 +18,7 @@ import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
+import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.CascadingAction2;
 import com.rapleaf.cascading_ext.workflow2.TapFactory;
 
@@ -26,16 +27,18 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
   public MSJTapAction(String checkpointToken, String tmpRoot,
                       ExtractorsList<K> inputs,
                       MSJFunction<K> function,
-                      BucketDataStore output) {
+                      BucketDataStore output,
+                      PartitionStructure outputSructure) {
     this(checkpointToken, tmpRoot, Maps.newHashMap(),
-        inputs, function, output);
+        inputs, function, output, outputSructure);
   }
 
   public MSJTapAction(String checkpointToken, String tmpRoot,
                       Map<Object, Object> properties,
                       final ExtractorsList<K> inputs,
                       MSJFunction<K> function,
-                      BucketDataStore output) {
+                      BucketDataStore output,
+                      PartitionStructure outputStructure) {
     super(checkpointToken, tmpRoot, properties);
     final List<StoreExtractor<K>> asList = inputs.get();
 
@@ -58,7 +61,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
         function
     );
 
-    completePartitioned("msj-tap", pipe, output);
+    completePartitioned("msj-tap", pipe, output, outputStructure);
 
   }
 

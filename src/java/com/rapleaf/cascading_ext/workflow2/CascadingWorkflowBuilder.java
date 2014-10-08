@@ -33,6 +33,7 @@ import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
+import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
 import com.rapleaf.cascading_ext.workflow2.action.FutureCascadingAction;
@@ -208,8 +209,8 @@ public class CascadingWorkflowBuilder {
     return buildTail(tailStepName, Lists.newArrayList(new DSSink(output, outputStore)), new EmptyListener());
   }
 
-  public Step buildPartitionedTail(String tailStepName, Pipe output, BucketDataStore outputStore) {
-    return buildTail(tailStepName, Lists.newArrayList(new SinkBinding.PartitionedSink(output, outputStore)), new EmptyListener());
+  public Step buildPartitionedTail(String tailStepName, Pipe output, BucketDataStore outputStore, PartitionStructure structure) {
+    return buildTail(tailStepName, Lists.newArrayList(new SinkBinding.PartitionedSink(output, outputStore, structure)), new EmptyListener());
   }
 
   public Step buildTail(String tailStepName, Pipe output, DataStore outputStore, FlowListener listener) {
