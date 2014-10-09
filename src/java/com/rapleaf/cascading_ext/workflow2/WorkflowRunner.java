@@ -24,6 +24,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobPriority;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
@@ -697,12 +698,43 @@ public final class WorkflowRunner {
     workflowJobProperties.put(JOB_POOL_PARAM, pool);
   }
 
+  public static class ConfigValue {
+    private final String value;
+    private final boolean isFinal;
+
+    public ConfigValue(String value, boolean isFinal) {
+      this.value = value;
+      this.isFinal = isFinal;
+    }
+  }
+
   public String getPriority(){
-    return (String) workflowJobProperties.get(JOB_PRIORITY_PARAM);
+    return (String) getProperty(JOB_PRIORITY_PARAM);
   }
 
   public String getPool(){
-    return (String) workflowJobProperties.get(JOB_POOL_PARAM);
+    return (String) getProperty(JOB_POOL_PARAM);
+  }
+
+  private Object getProperty(String property){
+
+    //  fall back to static jobconf props if not set elsewhere
+    JobConf jobconf = CascadingHelper.get().getJobConf();
+
+//    jobconf
+//
+//    if()
+
+    if(workflowJobProperties.containsKey(property)){
+      return workflowJobProperties.get(property);
+    }
+
+    Map<Object, Object> defaultProps = CascadingHelper.get().getDefaultProperties();
+    if(defaultProps.containsKey(property)){
+      return defaultProps.get(property);
+    }
+
+    return jobconf.get(property);
   }
 
 
