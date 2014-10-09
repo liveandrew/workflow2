@@ -698,16 +698,6 @@ public final class WorkflowRunner {
     workflowJobProperties.put(JOB_POOL_PARAM, pool);
   }
 
-  public static class ConfigValue {
-    private final String value;
-    private final boolean isFinal;
-
-    public ConfigValue(String value, boolean isFinal) {
-      this.value = value;
-      this.isFinal = isFinal;
-    }
-  }
-
   public String getPriority(){
     return (String) getProperty(JOB_PRIORITY_PARAM);
   }
@@ -720,10 +710,6 @@ public final class WorkflowRunner {
 
     //  fall back to static jobconf props if not set elsewhere
     JobConf jobconf = CascadingHelper.get().getJobConf();
-
-//    jobconf
-//
-//    if()
 
     if(workflowJobProperties.containsKey(property)){
       return workflowJobProperties.get(property);
