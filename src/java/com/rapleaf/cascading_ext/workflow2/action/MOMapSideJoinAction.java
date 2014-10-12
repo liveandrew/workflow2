@@ -18,7 +18,6 @@ import com.rapleaf.cascading_ext.map_side_join.MOJoiner;
 import com.rapleaf.cascading_ext.map_side_join.MOMapSideJoin;
 import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 
 public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E>> extends Action {
 
@@ -98,7 +97,7 @@ public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E
         categoryToOutputBucket);
     join.addProperties(properties);
 
-    completeWithProgress(new HadoopOperation(join));
+    completeWithProgress(join);
 
     tearDown(join.getJobCounters());
   }

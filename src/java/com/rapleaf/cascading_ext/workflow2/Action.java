@@ -358,23 +358,14 @@ public abstract class Action {
     return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties));
   }
 
-  /**
-   * Complete the provided operation while monitoring and reporting its progress.
-   * This method will call setPercentComplete with values between 0 and 100
-   * incrementally based on the completion of the operation's steps.
-   *
-   * @param operation
-   */
-  protected void completeWithProgress(ActionOperation operation) {
+  private void completeWithProgress(ActionOperation operation) {
     completeWithProgress(operation, 0, 100);
   }
 
+  @Deprecated
+  //  call buildFlow() instead of CascadingHelper.get().getFlowConnector
   protected void completeWithProgress(Flow flow) {
     completeWithProgress(new FlowOperation(flow));
-  }
-
-  protected void completeWithProgress(Flow flow, int startPct, int maxPct) {
-    completeWithProgress(new FlowOperation(flow), startPct, maxPct);
   }
 
   protected void completeWithProgress(RunnableJob job) {
@@ -382,7 +373,7 @@ public abstract class Action {
   }
 
   protected void completeWithProgress(FlowBuilder.FlowClosure flow){
-    completeWithProgress(flow.buildFlow());
+    completeWithProgress(new FlowOperation(flow.buildFlow()));
   }
 
   /**
