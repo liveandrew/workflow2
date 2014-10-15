@@ -30,7 +30,7 @@ public class PersistSpecificDatedVersion<T> extends Action {
   protected void execute() throws Exception {
     String version = versionedStore.openNewVersion(new DayOfYear(this.version));
     Bucket versionBucket = Bucket.create(getFS(), version, newVersion.getRecordsType());
-    versionBucket.absorb(newVersion.getBucket());
+    versionBucket.absorbIntoEmpty(newVersion.getBucket());
     if (newVersion.getBucket().isImmutable()) {
       versionBucket.markAsImmutable();
     }
