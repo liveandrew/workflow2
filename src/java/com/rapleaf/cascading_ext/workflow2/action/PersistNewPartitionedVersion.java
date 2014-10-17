@@ -13,21 +13,20 @@ public class PersistNewPartitionedVersion<T extends TBase> extends Action {
 
   private final PartitionedDataStore destinationStore;
   private final PartitionedDataStore sourceStore;
-  private final Class klass;
   private final ListMultimap<Long, Integer> persistedVersions;
 
   public PersistNewPartitionedVersion(String checkpointToken,
-                                      String tmpRoot,
-                                      Class klass,
                                       PartitionedDataStore<? extends T> sourceStore,
                                       PartitionedDataStore<? extends T> destinationStore,
                                       ListMultimap<Long, Integer> persistedVersions) throws IOException {
-    super(checkpointToken, tmpRoot);
+    super(checkpointToken);
 
     this.destinationStore = destinationStore;
     this.sourceStore = sourceStore;
-    this.klass = klass;
     this.persistedVersions = persistedVersions;
+
+    readsFrom(sourceStore);
+    writesTo(destinationStore);
   }
 
   @Override
