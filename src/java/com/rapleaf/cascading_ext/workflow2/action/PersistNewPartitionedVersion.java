@@ -5,19 +5,18 @@ import java.io.IOException;
 import com.google.common.collect.ListMultimap;
 import org.apache.thrift.TBase;
 
-import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
+import com.rapleaf.cascading_ext.datastore.PersistableDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
 
-public class PersistNewPartitionedVersion<T extends TBase> extends Action {
-
-  private final PartitionedDataStore destinationStore;
-  private final PartitionedDataStore sourceStore;
+public class PersistNewPartitionedVersion<S extends PersistableDataStore<S, T>, T extends TBase> extends Action {
+  private final S destinationStore;
+  private final S sourceStore;
   private final ListMultimap<Long, Integer> persistedVersions;
 
   public PersistNewPartitionedVersion(String checkpointToken,
-                                      PartitionedDataStore<? extends T> sourceStore,
-                                      PartitionedDataStore<? extends T> destinationStore,
+                                      S sourceStore,
+                                      S destinationStore,
                                       ListMultimap<Long, Integer> persistedVersions) throws IOException {
     super(checkpointToken);
 
