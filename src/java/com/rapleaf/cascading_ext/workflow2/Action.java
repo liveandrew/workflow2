@@ -372,8 +372,10 @@ public abstract class Action {
     completeWithProgress(new HadoopOperation(job));
   }
 
-  protected void completeWithProgress(FlowBuilder.FlowClosure flow){
-    completeWithProgress(new FlowOperation(flow.buildFlow()));
+  protected Flow completeWithProgress(FlowBuilder.FlowClosure flowc){
+    Flow flow = flowc.buildFlow();
+    completeWithProgress(new FlowOperation(flow));
+    return flow;
   }
 
   /**
