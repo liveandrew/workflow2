@@ -2,6 +2,8 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.net.URL;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -10,6 +12,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.liveramp.hank.util.Condition;
 import com.liveramp.hank.util.WaitUntil;
+import com.rapleaf.support.collections.Accessors;
 
 public class WorkflowWebServer {
   private static final Logger LOG = Logger.getLogger(WorkflowWebServer.class);
@@ -85,10 +88,12 @@ public class WorkflowWebServer {
   }
 
   public int getBoundPort(){
-    for (Connector connector : server.getConnectors()) {
-      return connector.getLocalPort();
+    Optional<Connector> connector = Accessors.firstOrAbsent(Lists.newArrayList(server.getConnectors()));
+    if (connector.isPresent()) {
+      return connector.get().getLocalPort();
+    } else {
+      return -1;
     }
-    return -1;
   }
 
   public void stop() {
