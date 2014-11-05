@@ -50,6 +50,7 @@ public class WorkflowWebServer {
     this.port = port;
   }
 
+  @SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation")
   public void start() {
     server = new Server(port);
     final URL warUrl = getClass().getClassLoader().getResource(
