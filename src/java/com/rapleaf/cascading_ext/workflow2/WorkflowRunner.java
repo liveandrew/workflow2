@@ -345,8 +345,10 @@ public final class WorkflowRunner {
   private void getDepsRecursive(Step step, Set<Step> deps, DirectedGraph<Step, DefaultEdge> graph) {
     for (DefaultEdge edge : graph.outgoingEdgesOf(step)) {
       Step s = graph.getEdgeTarget(edge);
-      deps.add(s);
-      getDepsRecursive(s, deps, graph);
+      boolean isNew = deps.add(s);
+      if (isNew) {
+        getDepsRecursive(s, deps, graph);
+      }
     }
   }
 
