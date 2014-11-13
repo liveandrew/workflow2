@@ -376,8 +376,8 @@ public final class WorkflowRunner {
       for (Step step : steps) {
         Action stepAction = step.getAction();
         if (stepAction != null) { // TODO: check if this check is necessary, it shouldn't be
-          checkStepsSandboxViolation(stepAction.getCreatesDatastores());
-          checkStepsSandboxViolation(stepAction.getCreatesTemporaryDatastores());
+          checkStepsSandboxViolation(stepAction.getDatastores(Action.DSAction.CREATES));
+          checkStepsSandboxViolation(stepAction.getDatastores(Action.DSAction.CREATES_TEMPORARY));
         }
       }
     }

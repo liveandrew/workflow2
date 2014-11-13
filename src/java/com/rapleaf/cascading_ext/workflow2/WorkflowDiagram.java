@@ -225,21 +225,26 @@ public class WorkflowDiagram {
   }
 
   private void addDatastoreConnections(Step step,
-                                       String type,
                                        Map<String, Integer> stepIdToNum,
-                                       JSONArray dsConnections, Set<DataStore> stores,
+                                       JSONArray dsConnections,
+                                       Multimap<Action.DSAction, DataStore> stores,
                                        Map<DataStore, Integer> dsToIndex) throws JSONException {
 
-    for (DataStore ds : stores) {
-      if (!dsToIndex.containsKey(ds)) {
-        dsToIndex.put(ds, dsToIndex.size());
-      }
+    for (Action.DSAction action : stores.keySet()) {
+      String type = action.toString().toLowerCase();
 
-      dsConnections.put(new JSONObject()
-          .put("step", stepIdToNum.get(step.getCheckpointToken()))
-          .put("datastore", getIndex(ds, dsToIndex))
-          .put("connection", type));
+      for (DataStore ds : stores.get(action)) {
+        if (!dsToIndex.containsKey(ds)) {
+          dsToIndex.put(ds, dsToIndex.size());
+        }
+
+        dsConnections.put(new JSONObject()
+            .put("step", stepIdToNum.get(step.getCheckpointToken()))
+            .put("datastore", getIndex(ds, dsToIndex))
+            .put("connection", type));
+      }
     }
+
 
   }
 
@@ -289,34 +294,9 @@ public class WorkflowDiagram {
     for (Step step : stepGraph.vertexSet()) {
 
       addDatastoreConnections(step,
-          "reads_from",
           stepIdToNum,
           dsConnections,
-          step.getAction().getReadsFromDatastores(),
-          dataStoresToIndex
-      );
-
-      addDatastoreConnections(step,
-          "creates",
-          stepIdToNum,
-          dsConnections,
-          step.getAction().getCreatesDatastores(),
-          dataStoresToIndex
-      );
-
-      addDatastoreConnections(step,
-          "creates_temporary",
-          stepIdToNum,
-          dsConnections,
-          step.getAction().getCreatesTemporaryDatastores(),
-          dataStoresToIndex
-      );
-
-      addDatastoreConnections(step,
-          "writes_to",
-          stepIdToNum,
-          dsConnections,
-          step.getAction().getWritesToDatastores(),
+          step.getAction().getAllDatastores(),
           dataStoresToIndex
       );
 

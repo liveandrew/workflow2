@@ -3,15 +3,16 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
@@ -34,10 +35,24 @@ public abstract class Action {
   private final String checkpointToken;
   private final String tmpRoot;
 
-  private final Set<DataStore> readsFromDatastores = new HashSet<DataStore>();
-  private final Set<DataStore> createsDatastores = new HashSet<DataStore>();
-  private final Set<DataStore> createsTemporaryDatastores = new HashSet<DataStore>();
-  private final Set<DataStore> writesToDatastores = new HashSet<DataStore>();
+  public static enum DSAction {
+
+    //  input
+    READS_FROM,
+    CONSUMES,
+
+    //  output
+    CREATES,
+    CREATES_TEMPORARY,
+    WRITES_TO;
+
+    @Override
+    public String toString() {
+      return super.toString().toLowerCase();
+    }
+  }
+
+  private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
 
   private StoreReaderLockProvider lockProvider;
 
@@ -65,7 +80,7 @@ public abstract class Action {
     this.stepProperties = properties;
   }
 
-    public Action(String checkpointToken, String tmpRoot) {
+  public Action(String checkpointToken, String tmpRoot) {
     this(checkpointToken, tmpRoot, Maps.newHashMap());
   }
 
@@ -98,19 +113,23 @@ public abstract class Action {
   }
 
   protected void readsFrom(DataStore store) {
-    readsFromDatastores.add(store);
+    datastores.put(DSAction.READS_FROM, store);
   }
 
   protected void creates(DataStore store) {
-    createsDatastores.add(store);
+    datastores.put(DSAction.CREATES, store);
   }
 
   protected void createsTemporary(DataStore store) {
-    createsTemporaryDatastores.add(store);
+    datastores.put(DSAction.CREATES_TEMPORARY, store);
   }
 
   protected void writesTo(DataStore store) {
-    writesToDatastores.add(store);
+    datastores.put(DSAction.WRITES_TO, store);
+  }
+
+  protected void consumes(DataStore store) {
+    datastores.put(DSAction.CONSUMES, store);
   }
 
   protected abstract void execute() throws Exception;
@@ -126,14 +145,14 @@ public abstract class Action {
 
       //  only set properties not explicitly set by the step
       for (Object prop : properties.keySet()) {
-        if(!stepProperties.containsKey(prop)){
+        if (!stepProperties.containsKey(prop)) {
           stepProperties.put(prop, properties.get(prop));
         }
       }
 
       prepDirs();
       locks = lockReadsFromStores();
-      LOG.info("Aquired locks for " + readsFromDatastores);
+      LOG.info("Aquired locks for " + getDatastores(DSAction.READS_FROM));
       LOG.info("Locks " + locks);
       execute();
     } catch (Throwable t) {
@@ -154,7 +173,7 @@ public abstract class Action {
   private List<ResourceSemaphore> lockReadsFromStores() {
     List<ResourceSemaphore> locks = Lists.newArrayList();
     if (lockProvider != null) {
-      for (DataStore readsFromDatastore : readsFromDatastores) {
+      for (DataStore readsFromDatastore : getDatastores(DSAction.READS_FROM)) {
         ResourceSemaphore lock = lockProvider.createLock(readsFromDatastore);
         lock.lock();
         locks.add(lock);
@@ -167,25 +186,37 @@ public abstract class Action {
     return (t instanceof RuntimeException) ? (RuntimeException)t : new RuntimeException(t);
   }
 
+  public Set<DataStore> getDatastores(DSAction... actions) {
+    Set<DataStore> stores = Sets.newHashSet();
+
+    for (DSAction dsAction : actions) {
+      stores.addAll(datastores.get(dsAction));
+    }
+
+    return stores;
+  }
+
+  public Multimap<DSAction, DataStore> getAllDatastores() {
+    return datastores;
+  }
+
   @SuppressWarnings("PMD.BlacklistedMethods") //  temporary hopefully, until we get more cluster space
   private void prepDirs() throws Exception {
     FileSystem fs = FileSystemHelper.getFS();
-    for (Set<DataStore> datastores : Arrays.asList(createsDatastores, createsTemporaryDatastores)) {
-      for (DataStore datastore : datastores) {
-        String uri = new URI(datastore.getPath()).getPath();
-        Path path = new Path(datastore.getPath());
-        Boolean trashEnabled = TrashHelper.isEnabled();
+    for (DataStore ds : getDatastores(DSAction.CREATES, DSAction.CREATES_TEMPORARY)) {
+      String uri = new URI(ds.getPath()).getPath();
+      Path path = new Path(ds.getPath());
+      Boolean trashEnabled = TrashHelper.isEnabled();
 
-        if (fs.exists(path)) {
-          // delete if tmp store, or if no trash is enabled
-          if (uri.startsWith("/tmp/") || !trashEnabled) {
-            LOG.info("Deleting " + uri);
-            fs.delete(path, true);
-            // otherwise, move to trash
-          } else {
-            LOG.info("Moving to trash: " + uri);
-            TrashHelper.moveToTrash(fs, path);
-          }
+      if (fs.exists(path)) {
+        // delete if tmp store, or if no trash is enabled
+        if (uri.startsWith("/tmp/") || !trashEnabled) {
+          LOG.info("Deleting " + uri);
+          fs.delete(path, true);
+          // otherwise, move to trash
+        } else {
+          LOG.info("Moving to trash: " + uri);
+          TrashHelper.moveToTrash(fs, path);
         }
       }
     }
@@ -235,18 +266,6 @@ public abstract class Action {
       return false;
     }
     return true;
-  }
-
-  public Set<DataStore> getReadsFromDatastores() {
-    return readsFromDatastores;
-  }
-
-  public Set<DataStore> getCreatesDatastores() {
-    return createsDatastores;
-  }
-
-  public Set<DataStore> getWritesToDatastores() {
-    return writesToDatastores;
   }
 
   /**
@@ -344,7 +363,7 @@ public abstract class Action {
     }
   }
 
-  protected FlowBuilder buildFlow(Map<Object, Object> properties){
+  protected FlowBuilder buildFlow(Map<Object, Object> properties) {
 
     Map<Object, Object> allProps = Maps.newHashMap(stepProperties);
     for (Map.Entry<Object, Object> property : properties.entrySet()) {
@@ -354,7 +373,7 @@ public abstract class Action {
     return new FlowBuilder(CascadingHelper.get().getFlowConnector(allProps));
   }
 
-  protected FlowBuilder buildFlow(){
+  protected FlowBuilder buildFlow() {
     return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties));
   }
 
@@ -372,7 +391,7 @@ public abstract class Action {
     completeWithProgress(new HadoopOperation(job));
   }
 
-  protected Flow completeWithProgress(FlowBuilder.FlowClosure flowc){
+  protected Flow completeWithProgress(FlowBuilder.FlowClosure flowc) {
     Flow flow = flowc.buildFlow();
     completeWithProgress(new FlowOperation(flow));
     return flow;
@@ -406,7 +425,4 @@ public abstract class Action {
     return endTimestamp;
   }
 
-  public Set<DataStore> getCreatesTemporaryDatastores() {
-    return createsTemporaryDatastores;
-  }
 }

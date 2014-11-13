@@ -1,10 +1,18 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.google.common.collect.Sets;
+
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.support.event_timer.MultiTimedEvent;
-
-import java.util.*;
 
 public class MultiStepAction extends Action {
 
@@ -140,30 +148,15 @@ public class MultiStepAction extends Action {
   }
 
   @Override
-  public Set<DataStore> getReadsFromDatastores() {
-    Set<DataStore> datastores = new HashSet<DataStore>();
-    for (Step step : getHeadSteps()) {
-      datastores.addAll(step.getAction().getReadsFromDatastores());
-    }
-    return datastores;
-  }
+  public Set<DataStore> getDatastores(DSAction... actions) {
 
-  @Override
-  public Set<DataStore> getCreatesDatastores() {
-    Set<DataStore> datastores = new HashSet<DataStore>();
-    for (Step step : getSubSteps()) {
-      datastores.addAll(step.getAction().getCreatesDatastores());
-    }
-    return datastores;
-  }
+    Set<DataStore> combined = Sets.newHashSet();
 
-  @Override
-  public Set<DataStore> getWritesToDatastores() {
-    Set<DataStore> datastores = new HashSet<DataStore>();
     for (Step step : getSubSteps()) {
-      datastores.addAll(step.getAction().getWritesToDatastores());
+      combined.addAll(step.getAction().getDatastores(actions));
     }
-    return datastores;
+
+    return combined;
   }
 
   public MultiStepActionTimer getMultiStepActionTimer() {
