@@ -14,7 +14,7 @@ public class CommitMSJDelete<RecordType, KeyType extends Comparable> extends Act
     this.versionToCommit = versionToCommit;
     this.store = store;
 
-    readsFrom(versionToCommit);
+    consumes(versionToCommit);
     writesTo(store);
   }
 

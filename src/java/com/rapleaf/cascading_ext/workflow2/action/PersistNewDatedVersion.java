@@ -26,7 +26,7 @@ public class PersistNewDatedVersion<E extends Enum<E>, T> extends Action {
     this.state = state;
     this.versionField = versionField;
 
-    readsFrom(newVersion);
+    consumes(newVersion);
     writesTo(versionedStore);
   }
 

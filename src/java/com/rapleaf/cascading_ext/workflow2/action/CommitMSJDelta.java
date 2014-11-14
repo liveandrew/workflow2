@@ -14,7 +14,7 @@ public class CommitMSJDelta<RecordType, KeyType extends Comparable> extends Acti
     this.versionToCommit = versionToCommit;
     this.store = store;
 
-    readsFrom(versionToCommit);
+    consumes(versionToCommit);
     writesTo(store);
   }
 

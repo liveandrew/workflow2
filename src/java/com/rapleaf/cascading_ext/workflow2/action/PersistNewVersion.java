@@ -17,7 +17,7 @@ public class PersistNewVersion<T> extends Action {
     this.versionToPersist = versionToPersist;
     this.store = store;
 
-    readsFrom(versionToPersist);
+    consumes(versionToPersist);
     writesTo(store);
   }
 

@@ -14,7 +14,7 @@ public class CommitMSJBase <RecordType, KeyType extends Comparable> extends Acti
     this.baseToCommit = baseToCommit;
     this.store = store;
 
-    readsFrom(baseToCommit);
+    consumes(baseToCommit);
     writesTo(store);
   }
 
