@@ -43,7 +43,6 @@ public class WorkflowDiagram {
     private String status;
     private long startTimestamp;
     private long endTimestamp;
-    private int percentageComplete;
     private String message;
     private String actionName;
     private Map<String, String> statusLinks;
@@ -58,12 +57,10 @@ public class WorkflowDiagram {
       Action action = step.getAction();
       actionName = action.getClass().getSimpleName();
       if (action instanceof MultiStepAction) {
-        percentageComplete = -1;
         message = "";
         startTimestamp = computeStartTimestamp((MultiStepAction)action);
         endTimestamp = computeEndTimestamp((MultiStepAction)action);
       } else {
-        percentageComplete = action.getPercentComplete();
         message = action.getStatusMessage();
         startTimestamp = action.getStartTimestamp();
         endTimestamp = action.getEndTimestamp();
@@ -121,10 +118,6 @@ public class WorkflowDiagram {
 
     public long getEndTimestamp() {
       return endTimestamp;
-    }
-
-    public int getPercentageComplete() {
-      return percentageComplete;
     }
 
     public String getMessage() {
@@ -274,7 +267,6 @@ public class WorkflowDiagram {
               .put("status", vertex.getStatus())
               .put("start_timestamp", vertex.getStartTimestamp())
               .put("end_timestamp", vertex.getEndTimestamp())
-              .put("percent_complete", vertex.getPercentageComplete())
               .put("message", vertex.getMessage())
               .put("action_name", vertex.getActionName())
               .put("status_links", vertex.getStatusLinks())

@@ -72,7 +72,6 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
         } catch (InterruptedException e) {
         }
         setStatusMessage("Slept " + (i + 1) + " of " + seconds + " seconds");
-        setPercentComplete((int) ((double) i / seconds * 100));
       }
     }
   }

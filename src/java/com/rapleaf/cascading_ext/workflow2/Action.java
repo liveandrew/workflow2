@@ -58,8 +58,6 @@ public abstract class Action {
 
   private String lastStatusMessage = "";
 
-  private int pctComplete;
-
   private long startTimestamp;
   private long endTimestamp;
   private Map<Object, Object> stepProperties;
@@ -284,14 +282,6 @@ public abstract class Action {
     return lastStatusMessage;
   }
 
-  protected void setPercentComplete(int pctComplete) {
-    this.pctComplete = Math.min(Math.max(0, pctComplete), 100);
-  }
-
-  public int getPercentComplete() {
-    return this.pctComplete;
-  }
-
   public Map<String, String> getStatusLinks() {
     Map<String, String> linkToName = new LinkedHashMap<String, String>();
 
@@ -329,40 +319,6 @@ public abstract class Action {
     return lockProvider;
   }
 
-
-  private class OperationProgressMonitor extends Thread {
-    private boolean _keepRunning;
-    private final ActionOperation _operation;
-    private final int _startPct;
-    private final int _maxPct;
-
-    public OperationProgressMonitor(ActionOperation operation, int startPct, int maxPct) {
-      super("OperationProgressMonitor for " + operation.getName());
-      setDaemon(true);
-      _keepRunning = true;
-      _operation = operation;
-      _startPct = startPct;
-      _maxPct = maxPct;
-    }
-
-    @Override
-    public void run() {
-      while (_keepRunning) {
-        try {
-          setPercentComplete(_startPct + getActionProgress(_operation, _maxPct - _startPct));
-          sleep(15000);
-        } catch (InterruptedException e) {
-          // just want to stop sleeping and pay attention
-        }
-      }
-    }
-
-    public void stopAndInterrupt() {
-      _keepRunning = false;
-      interrupt();
-    }
-  }
-
   protected FlowBuilder buildFlow(Map<Object, Object> properties) {
 
     Map<Object, Object> allProps = Maps.newHashMap(stepProperties);
@@ -375,10 +331,6 @@ public abstract class Action {
 
   protected FlowBuilder buildFlow() {
     return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties));
-  }
-
-  private void completeWithProgress(ActionOperation operation) {
-    completeWithProgress(operation, 0, 100);
   }
 
   @Deprecated
@@ -403,18 +355,12 @@ public abstract class Action {
    * maxPct incrementally based on the completion of the ActionOperation's steps.
    *
    * @param operation
-   * @param startPct
-   * @param maxPct
    */
-  protected void completeWithProgress(ActionOperation operation, int startPct, int maxPct) {
+  protected void completeWithProgress(ActionOperation operation) {
     runningFlow(operation);
     operation.start();
 
-    OperationProgressMonitor fpm = new OperationProgressMonitor(operation, startPct, maxPct);
-    fpm.start();
-
     operation.complete();
-    fpm.stopAndInterrupt();
   }
 
   public long getStartTimestamp() {
