@@ -7,7 +7,6 @@ import java.util.Map;
 import org.apache.hadoop.mapred.RunningJob;
 
 import cascading.flow.Flow;
-import cascading.stats.FlowStats;
 import cascading.stats.FlowStepStats;
 import cascading.stats.hadoop.HadoopStepStats;
 
@@ -38,21 +37,6 @@ public class FlowOperation implements ActionOperation {
   @Override
   public String getProperty(String propertyName) {
     return flow.getProperty(propertyName);
-  }
-
-  @Override
-  public int getProgress(int maxPct) {
-    FlowStats flowstats = flow.getFlowStats();
-    int numComplete = 0;
-    List<FlowStepStats> stepStatsList = flowstats.getFlowStepStats();
-
-    for (FlowStepStats stepStats : stepStatsList) {
-      if (stepStats.isFinished()) {
-        numComplete++;
-      }
-    }
-
-    return (int)((double)numComplete / flowstats.getStepsCount() * maxPct);
   }
 
   @Override

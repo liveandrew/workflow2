@@ -291,26 +291,7 @@ public abstract class Action {
 
     return linkToName;
   }
-
-  /**
-   * Given a running Flow, compute what percent complete it is. The percent of
-   * completion is defined as the number of FlowSteps that have completed
-   * divided by the total number of FlowSteps times the maxPct value. This
-   * normalizes the percent complete to the max possible percent of the total
-   * component's work represented by this one Flow.
-   *
-   * @param operation
-   * @param maxPct
-   * @return
-   */
-  static int getActionProgress(ActionOperation operation, int maxPct) {
-    try {
-      return operation.getProgress(maxPct);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
+  
   public void setLockProvider(StoreReaderLockProvider lockProvider) {
     this.lockProvider = lockProvider;
   }

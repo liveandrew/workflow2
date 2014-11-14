@@ -67,12 +67,6 @@ public class HadoopOperation implements ActionOperation {
   }
 
   @Override
-  public int getProgress(int maxPct) throws IOException {
-    double isComplete = runningJob.isComplete() ? 1.0 : 0.0;
-    return (int) isComplete * maxPct;
-  }
-
-  @Override
   public String getName() {
     return conf.getJobName();
   }
