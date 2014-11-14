@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import com.rapleaf.cascading_ext.counters.NestedCounter;
@@ -129,12 +128,6 @@ public final class Step {
 
   public List<NestedCounter> getCounters() {
     return nestedCounters;
-  }
-
-  @Deprecated
-  //  if you are calling this method, you are wrong
-  public void run() {
-    this.run(Lists.<StepStatsRecorder>newArrayList(), Maps.newHashMap());
   }
 
   public void run(List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
