@@ -54,6 +54,16 @@ public abstract class Action {
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
 
+  //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
+  //  which actually make sense...
+  public static enum ResourceAction {
+    CREATES,
+    USES
+  }
+
+  private final Multimap<ResourceAction, Resource> resources = HashMultimap.create();
+
+
   private StoreReaderLockProvider lockProvider;
 
   private String lastStatusMessage = "";
@@ -67,6 +77,7 @@ public abstract class Action {
   private FileSystem fs;
 
   private DataStoreBuilder builder = null;
+  private ContextStorage storage;
 
   public Action(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
@@ -110,24 +121,44 @@ public abstract class Action {
     return operations;
   }
 
+  //  resource actions
+
+  protected void creates(Resource resource) {
+    mark(ResourceAction.CREATES, resource);
+  }
+
+  protected void uses(Resource resource) {
+    mark(ResourceAction.USES, resource);
+  }
+
+  private void mark(ResourceAction action, Resource resource) {
+    resources.put(action, resource);
+  }
+
+  //  datastore actions
+
   protected void readsFrom(DataStore store) {
-    datastores.put(DSAction.READS_FROM, store);
+    mark(DSAction.READS_FROM, store);
   }
 
   protected void creates(DataStore store) {
-    datastores.put(DSAction.CREATES, store);
+    mark(DSAction.CREATES, store);
   }
 
   protected void createsTemporary(DataStore store) {
-    datastores.put(DSAction.CREATES_TEMPORARY, store);
+    mark(DSAction.CREATES_TEMPORARY, store);
   }
 
   protected void writesTo(DataStore store) {
-    datastores.put(DSAction.WRITES_TO, store);
+    mark(DSAction.WRITES_TO, store);
   }
 
   protected void consumes(DataStore store) {
-    datastores.put(DSAction.CONSUMES, store);
+    mark(DSAction.CONSUMES, store);
+  }
+
+  private void mark(DSAction action, DataStore store) {
+    datastores.put(action, store);
   }
 
   protected abstract void execute() throws Exception;
@@ -136,10 +167,31 @@ public abstract class Action {
     return builder;
   }
 
-  protected final void internalExecute(Map<Object, Object> properties) {
+  protected <T> Resource<T> resource(String name) {
+    return new Resource<T>(checkpointToken + "__" + name);
+  }
+
+  protected <T> T get(Resource<T> resource) throws IOException, ClassNotFoundException {
+    if (!resources.get(ResourceAction.USES).contains(resource)) {
+      throw new RuntimeException("Cannot use resource without declaring it with uses()");
+    }
+
+    return storage.get(resource);
+  }
+
+  protected <T> void set(Resource<T> resource, T value) throws IOException {
+    if (!resources.get(ResourceAction.CREATES).contains(resource)) {
+      throw new RuntimeException("Cannot set resource without declaring it with creates()");
+    }
+
+    storage.set(resource, value);
+  }
+
+  protected final void internalExecute(ContextStorage storage, Map<Object, Object> properties) {
     List<ResourceSemaphore> locks = Lists.newArrayList();
     try {
-      startTimestamp = System.currentTimeMillis();
+      this.startTimestamp = System.currentTimeMillis();
+      this.storage = storage;
 
       //  only set properties not explicitly set by the step
       for (Object prop : properties.keySet()) {
@@ -291,7 +343,7 @@ public abstract class Action {
 
     return linkToName;
   }
-  
+
   public void setLockProvider(StoreReaderLockProvider lockProvider) {
     this.lockProvider = lockProvider;
   }

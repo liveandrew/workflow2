@@ -130,13 +130,13 @@ public final class Step {
     return nestedCounters;
   }
 
-  public void run(List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
+  public void run(ContextStorage storage, List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
     if (conditionsNotMet()) {
       return;
     }
     timer.start();
     try {
-      action.internalExecute(properties);
+      action.internalExecute(storage, properties);
     } finally {
       for (ActionOperation operation : action.getRunFlows()) {
         operation.timeOperation(timer, getCheckpointToken(), nestedCounters);

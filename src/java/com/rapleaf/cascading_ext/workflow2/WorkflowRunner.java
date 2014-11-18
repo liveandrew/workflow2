@@ -78,6 +78,7 @@ public final class WorkflowRunner {
 
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;
+  private final ContextStorage storage;
 
   private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
 
@@ -109,7 +110,7 @@ public final class WorkflowRunner {
             } else {
               update(StepExecuteStatus.running(new StepRunningMeta()));
               LOG.info("Executing step " + step.getCheckpointToken());
-              step.run(Lists.newArrayList(statsRecorder), workflowJobProperties);
+              step.run(storage, Lists.newArrayList(statsRecorder), workflowJobProperties);
               update(StepExecuteStatus.completed(new StepCompletedMeta()));
             }
           } catch (Throwable e) {
@@ -290,6 +291,7 @@ public final class WorkflowRunner {
     this.tailSteps = tailSteps;
     this.timer = new EventTimer(workflowName);
     this.lockProvider = options.getLockProvider();
+    this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
     dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
 

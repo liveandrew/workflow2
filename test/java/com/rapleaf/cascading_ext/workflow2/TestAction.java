@@ -2,7 +2,6 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 
-import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
@@ -35,7 +34,7 @@ public class TestAction extends CascadingExtTestCase {
     Path dir3Path = new Path(getTestRoot() + "/dir3");
     getFS().mkdirs(dir3Path);
 
-    new ExampleAction().internalExecute(Maps.newHashMap());
+    executeWorkflow(new ExampleAction());
 
     assertFalse("dir2 should be deleted", getFS().exists(dir2Path));
     assertTrue("dir3 should exist", getFS().exists(dir3Path));

@@ -17,6 +17,7 @@ public class WorkflowRunnerOptions {
   private int statsDPort;
   private String statsDHost;
   private StoreReaderLockProvider lockProvider;
+  private ContextStorage storage;
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
@@ -25,6 +26,7 @@ public class WorkflowRunnerOptions {
     statsDPort = 8125;
     statsDHost = "pglibertyc6";
     lockProvider = null;
+    this.storage = new ContextStorage.None();
   }
 
   public int getMaxConcurrentSteps() {
@@ -95,6 +97,15 @@ public class WorkflowRunnerOptions {
 
   public WorkflowRunnerOptions  setStatsDHost(String statsDHost) {
     this.statsDHost = statsDHost;
+    return this;
+  }
+
+  public ContextStorage getStorage() {
+    return storage;
+  }
+
+  public WorkflowRunnerOptions setStorage(ContextStorage storage) {
+    this.storage = storage;
     return this;
   }
 
