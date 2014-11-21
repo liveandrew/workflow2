@@ -251,22 +251,6 @@ public final class WorkflowRunner {
         tailSteps);
   }
 
-  @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps, List<String> notificationRecipients) {
-    this(workflowName,
-        checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setNotificationRecipients(notificationRecipients),
-        tailSteps);
-  }
-
-  @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps, String notificationRecipients, boolean deleteCheckpointsOnSuccess) {
-    this(workflowName,
-        new HdfsCheckpointPersistence(checkpointDir, deleteCheckpointsOnSuccess),
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setNotificationRecipients(notificationRecipients),
-        tailSteps);
-  }
-
   private StepStatsRecorder getRecorder(WorkflowRunnerOptions options) {
     if (!Rap.getTestMode()) {
       try {
