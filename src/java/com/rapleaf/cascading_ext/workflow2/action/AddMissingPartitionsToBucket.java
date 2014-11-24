@@ -6,12 +6,12 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.BucketUtil;
 
-public class AddMissingPartitionsToBucket extends Action {
+public class AddMissingPartitionsToBucket<T> extends Action {
   private final int numPartitions;
-  private final BucketDataStore dataStore;
-  private final Class recordClass;
+  private final BucketDataStore<T> dataStore;
+  private final Class<T> recordClass;
 
-  public AddMissingPartitionsToBucket(String checkpointToken, int numPartitions, BucketDataStore dataStore, Class recordClass) {
+  public AddMissingPartitionsToBucket(String checkpointToken, int numPartitions, BucketDataStore<T> dataStore, Class<T> recordClass) {
     super(checkpointToken);
     this.numPartitions = numPartitions;
     this.dataStore = dataStore;
@@ -27,6 +27,7 @@ public class AddMissingPartitionsToBucket extends Action {
     dataStore.getBucket().markAsImmutable();
   }
 
+  @SuppressWarnings("unchecked")
   public static void main(String[] args) throws Exception {
     String path = args[0];
     Class clazz = Class.forName(args[1]);
