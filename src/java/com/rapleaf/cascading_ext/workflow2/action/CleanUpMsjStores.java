@@ -12,6 +12,7 @@ import org.apache.hadoop.fs.Path;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.msj_tap.compaction.Compactor;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
@@ -24,15 +25,17 @@ public class CleanUpMsjStores extends MultiStepAction {
   public class MSJDataStoreCompactionAction extends Action {
 
     private final MSJDataStore store;
+    private final AlertsHandler alertsHandler;
 
-    public MSJDataStoreCompactionAction(MSJDataStore store) {
+    public MSJDataStoreCompactionAction(MSJDataStore store, AlertsHandler alertsHAndler) {
       super("compact_" + store.getPath().replaceAll("/", "_"));
       this.store = store;
+      this.alertsHandler = alertsHAndler;
     }
 
     @Override
     protected void execute() throws Exception {
-      Compactor compactor = new Compactor();
+      Compactor compactor = new Compactor(alertsHandler);
       compactor.add(store.getCompactionTask());
       compactor.run();
     }
@@ -72,13 +75,13 @@ public class CleanUpMsjStores extends MultiStepAction {
     }
   }
 
-  public CleanUpMsjStores(String checkpointToken, int numVersionsToKeep, boolean runCompaction, TMSJDataStore... stores) {
+  public CleanUpMsjStores(String checkpointToken, int numVersionsToKeep, boolean runCompaction, AlertsHandler alertsHandler, TMSJDataStore... stores) {
     super(checkpointToken);
 
     List<Step> steps = Lists.newArrayList();
     for (TMSJDataStore store : stores) {
       if (runCompaction) {
-        steps.add(new Step(new MSJDataStoreCompactionAction(store)));
+        steps.add(new Step(new MSJDataStoreCompactionAction(store, alertsHandler)));
       }
       steps.add(new Step(new DeleteOldVersions(store, numVersionsToKeep)));
     }

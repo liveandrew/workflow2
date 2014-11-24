@@ -10,6 +10,7 @@ import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.TMSJDataStoreHelper;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TBinaryExtractor;
@@ -19,10 +20,12 @@ import com.rapleaf.types.new_person_data.PIN;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class TestCleanUpMsjStores extends CascadingExtTestCase {
 
   private TMSJDataStore<DustinInternalEquiv> store;
+  private AlertsHandler alertsHandler;
 
   @Before
   public void setUp() throws Exception {
@@ -30,6 +33,7 @@ public class TestCleanUpMsjStores extends CascadingExtTestCase {
         DustinInternalEquiv.class,
         new TBinaryExtractor<PIN>(PIN.class, DustinInternalEquiv._Fields.PIN),
         0.5);
+    alertsHandler = mock(AlertsHandler.class);
   }
 
   @Test
@@ -43,7 +47,7 @@ public class TestCleanUpMsjStores extends CascadingExtTestCase {
   }
 
   private void runAndVerify(int numToKeep, int[] expectedRemaining) throws IOException {
-    executeWorkflow(new CleanUpMsjStores("checkpoint", numToKeep, false, store));
+    executeWorkflow(new CleanUpMsjStores("checkpoint", numToKeep, false, alertsHandler, store));
     FileStatus[] statuses = getFS().listStatus(new Path(store.getPath()));
     Set<String> remainingPaths = Sets.newHashSet();
     Set<Integer> remainingVersions = Sets.newHashSet();
