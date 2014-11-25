@@ -21,9 +21,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryNTimes;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobPriority;
 import org.apache.log4j.Logger;
@@ -32,9 +29,6 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
-import com.liveramp.java_support.constants.ZkConstants;
-import com.liveramp.mugatu.core.curated.ThriftMapCache;
-import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.liveramp.workflow_service.generated.ActiveState;
 import com.liveramp.workflow_service.generated.ActiveStatus;
 import com.liveramp.workflow_service.generated.CompleteMeta;
@@ -50,7 +44,6 @@ import com.liveramp.workflow_service.generated.WorkflowException;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.queues.LiverampQueues;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.support.MailerHelper;
@@ -79,6 +72,7 @@ public final class WorkflowRunner {
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;
   private final ContextStorage storage;
+  private final WorkflowRegistry registry;
 
   private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
 
@@ -277,6 +271,7 @@ public final class WorkflowRunner {
     this.lockProvider = options.getLockProvider();
     this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
+    this.registry = options.getRegistry();
     dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
 
     removeRedundantEdges(dependencyGraph);
@@ -369,50 +364,6 @@ public final class WorkflowRunner {
     }
   }
 
-  private ThriftMapCache<LiveWorkflowMeta> liveWorkflowMap;
-  private CuratorFramework framework;
-
-  private void notifyUIServer(WorkflowDiagram diagram) {
-    if (!Rap.getTestMode()) {
-      try {
-
-        framework = CuratorFrameworkFactory.newClient(ZkConstants.LIVERAMP_ZK_CONNECT_STRING,
-            6 * LiverampQueues.TEN_SECONDS,
-            LiverampQueues.TEN_SECONDS,
-            new RetryNTimes(3, 100)
-        );
-        framework.start();
-
-        liveWorkflowMap = new ThriftMapCache<LiveWorkflowMeta>(
-            framework,
-            ZkConstants.PRODUCTION_ZK_WORKFLOW_REGISTRY,
-            new LiveWorkflowMeta(),
-            true
-        );
-
-        liveWorkflowMap.put(workflowUUID, diagram.getMeta());
-
-      } catch (Exception e) {
-        LOG.info("Failed to create live workflow node!", e);
-      }
-    }
-  }
-
-  private void deregisterUI() {
-    if (!Rap.getTestMode()) {
-      try {
-        if (liveWorkflowMap != null) {
-          liveWorkflowMap.shutdown();
-        }
-        if (framework != null) {
-          framework.close();
-        }
-      } catch (Exception e) {
-        LOG.info("Failed to shutdown map!", e);
-      }
-    }
-  }
-
   /**
    * Execute the workflow.
    *
@@ -438,7 +389,7 @@ public final class WorkflowRunner {
       // Notify
       LOG.info(getStartMessage());
       startWebServer();
-      notifyUIServer(diagram);
+      registry.register(workflowUUID, diagram.getMeta());
       // Note: start email after web server so that UI is functional
       sendStartEmail();
 
@@ -451,7 +402,7 @@ public final class WorkflowRunner {
       LOG.info(getSuccessMessage());
     } finally {
       shutdownWebServer();
-      deregisterUI();
+      registry.deregister();
       timer.stop();
       LOG.info("Timing statistics:\n" + TimedEventHelper.toTextSummary(timer));
     }

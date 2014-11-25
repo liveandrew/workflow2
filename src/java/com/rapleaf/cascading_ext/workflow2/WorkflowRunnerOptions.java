@@ -18,6 +18,7 @@ public class WorkflowRunnerOptions {
   private String statsDHost;
   private StoreReaderLockProvider lockProvider;
   private ContextStorage storage;
+  private WorkflowRegistry registry;
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
@@ -27,6 +28,7 @@ public class WorkflowRunnerOptions {
     statsDHost = "pglibertyc6";
     lockProvider = null;
     this.storage = new ContextStorage.None();
+    this.registry = new ZkRegistry();
   }
 
   public int getMaxConcurrentSteps() {
@@ -45,6 +47,14 @@ public class WorkflowRunnerOptions {
   public WorkflowRunnerOptions setNotificationRecipients(String... notificationRecipients) {
     this.notificationRecipients = Arrays.asList(notificationRecipients);
     return this;
+  }
+
+  public WorkflowRegistry getRegistry() {
+    return registry;
+  }
+
+  public void setRegistry(WorkflowRegistry registry) {
+    this.registry = registry;
   }
 
   public WorkflowRunnerOptions setNotificationRecipients(List<String> notificationEmails) {
