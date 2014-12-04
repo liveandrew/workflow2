@@ -1,14 +1,14 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import java.util.concurrent.TimeUnit;
+
 import com.rapleaf.cascading_ext.state.HdfsLock;
 import com.rapleaf.cascading_ext.workflow2.Action;
-
-import java.util.concurrent.TimeUnit;
 
 public abstract class LockingAction extends Action {
 
   private final HdfsLock lock;
-  private final boolean blockOnAquireLock;
+  private final boolean blockOnAcquireLock;
   private final TimeUnit unit;
   private final Integer interval;
 
@@ -16,21 +16,21 @@ public abstract class LockingAction extends Action {
     this(checkpointToken, lockPath, false);
   }
 
-  protected LockingAction(String checkpointToken, String lockPath, boolean blockOnAquireLock) {
-    this(checkpointToken, lockPath, blockOnAquireLock, TimeUnit.MINUTES, 1);
+  protected LockingAction(String checkpointToken, String lockPath, boolean blockOnAcquireLock) {
+    this(checkpointToken, lockPath, blockOnAcquireLock, TimeUnit.MINUTES, 1);
   }
 
-  protected LockingAction(String checkpointToken, String lockPath, boolean blockOnAquireLock, TimeUnit unit, Integer interval) {
+  protected LockingAction(String checkpointToken, String lockPath, boolean blockOnAcquireLock, TimeUnit unit, Integer interval) {
     super(checkpointToken);
     this.lock = new HdfsLock(lockPath);
-    this.blockOnAquireLock = blockOnAquireLock;
+    this.blockOnAcquireLock = blockOnAcquireLock;
     this.unit = unit;
     this.interval = interval;
   }
 
   @Override
   protected void execute() throws Exception {
-    if (blockOnAquireLock) {
+    if (blockOnAcquireLock) {
       blockAndExecute();
     } else {
       executeIfUnlocked();
