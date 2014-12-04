@@ -26,6 +26,7 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 
@@ -404,4 +405,11 @@ public abstract class Action {
     return endTimestamp;
   }
 
+  public static Action optional(Action action, boolean isEnabled) {
+    if(isEnabled) {
+      return action;
+    } else {
+      return new NoOpAction("skip-" + action.getCheckpointToken());
+    }
+  }
 }
