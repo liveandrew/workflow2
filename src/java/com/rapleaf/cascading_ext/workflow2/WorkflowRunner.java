@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +30,11 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.java_support.alerts_handler.AlertMessages;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
+import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
+import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow_service.generated.ActiveState;
 import com.liveramp.workflow_service.generated.ActiveStatus;
 import com.liveramp.workflow_service.generated.CompleteMeta;
@@ -46,7 +52,6 @@ import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
-import com.rapleaf.support.MailerHelper;
 import com.rapleaf.support.Rap;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
@@ -187,7 +192,7 @@ public final class WorkflowRunner {
   private final EventTimer timer;
 
   private boolean alreadyRun;
-  private final List<String> notificationRecipients;
+  private final AlertsHandler alertsHandler;
   private final Set<WorkflowRunnerNotification> enabledNotifications;
   private String sandboxDir;
 
@@ -238,10 +243,10 @@ public final class WorkflowRunner {
   }
 
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps, String notificationRecipients) {
+  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps, AlertsHandler alertsHandler) {
     this(workflowName,
         checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setNotificationRecipients(notificationRecipients),
+        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setAlertsHandler(alertsHandler),
         tailSteps);
   }
 
@@ -263,7 +268,7 @@ public final class WorkflowRunner {
     this.persistence = persistence;
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.statsRecorder = getRecorder(options);
-    this.notificationRecipients = options.getNotificationRecipients();
+    this.alertsHandler = options.getAlertsHandler();
     this.enabledNotifications = options.getEnabledNotifications().get();
     this.semaphore = new Semaphore(maxConcurrentSteps);
     this.tailSteps = tailSteps;
@@ -528,25 +533,25 @@ public final class WorkflowRunner {
 
   private void sendStartEmail() throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.START)) {
-      mail(getStartMessage());
+      mail(getStartMessage(), AlertRecipients.engineering(AlertSeverity.INFO));
     }
   }
 
   private void sendSuccessEmail() throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.SUCCESS)) {
-      mail(getSuccessMessage());
+      mail(getSuccessMessage(), AlertRecipients.engineering(AlertSeverity.INFO));
     }
   }
 
   private void sendFailureEmail(String msg) throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.FAILURE)) {
-      mail(getFailureMessage(), msg);
+      mail(getFailureMessage(), msg, AlertRecipients.engineering(AlertSeverity.ERROR));
     }
   }
 
   private void sendShutdownEmail() throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.SHUTDOWN)) {
-      mail(getShutdownMessage(getReasonForShutdownRequest()));
+      mail(getShutdownMessage(getReasonForShutdownRequest()), AlertRecipients.engineering(AlertSeverity.INFO));
     }
   }
 
@@ -566,21 +571,19 @@ public final class WorkflowRunner {
     return "Shutdown requested: " + getWorkflowName() + ". Reason: " + reason;
   }
 
-  private void mail(String subject) throws IOException {
-    mail(subject, "");
+  private void mail(String subject, AlertRecipient recipient) throws IOException {
+    mail(subject, "", recipient);
   }
 
-  private void mail(String subject, String body) throws IOException {
-    if (notificationRecipients != null) {
-      try {
-        MailerHelper.mail(new MailerHelper.MailOptions(notificationRecipients, subject, body,
-            WORKFLOW_EMAIL_SUBJECT_TAG));
-      } catch (IOException e) {
-        LOG.error("Could not send notification email to: " + notificationRecipients
-            + ", subject: " + subject
-            + ", body: " + body);
-        throw e;
-      }
+  private void mail(String subject, String body, AlertRecipient recipient) throws IOException {
+    if (alertsHandler != null) {
+      alertsHandler.sendAlert(
+          AlertMessages.builder(subject)
+              .setBody(body)
+              .addToDefaultTags(WORKFLOW_EMAIL_SUBJECT_TAG)
+              .build(),
+          recipient
+      );
     }
   }
 

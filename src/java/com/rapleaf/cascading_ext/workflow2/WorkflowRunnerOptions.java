@@ -7,11 +7,12 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
 
 public class WorkflowRunnerOptions {
 
   private int maxConcurrentSteps;
-  private List<String> notificationRecipients;
+  private AlertsHandler alertsHandler;
   private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
   private WorkflowRunnerNotificationSet enabledNotifications;
   private int statsDPort;
@@ -22,7 +23,7 @@ public class WorkflowRunnerOptions {
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
-    notificationRecipients = null;
+    alertsHandler = null;
     enabledNotifications = WorkflowRunnerNotificationSet.all();
     statsDPort = 8125;
     statsDHost = "pglibertyc6";
@@ -40,12 +41,12 @@ public class WorkflowRunnerOptions {
     return this;
   }
 
-  public List<String> getNotificationRecipients() {
-    return notificationRecipients;
+  public AlertsHandler getAlertsHandler() {
+    return alertsHandler;
   }
 
-  public WorkflowRunnerOptions setNotificationRecipients(String... notificationRecipients) {
-    this.notificationRecipients = Arrays.asList(notificationRecipients);
+  public WorkflowRunnerOptions setAlertsHandler(AlertsHandler alertsHandler) {
+    this.alertsHandler = alertsHandler;
     return this;
   }
 
@@ -55,11 +56,6 @@ public class WorkflowRunnerOptions {
 
   public void setRegistry(WorkflowRegistry registry) {
     this.registry = registry;
-  }
-
-  public WorkflowRunnerOptions setNotificationRecipients(List<String> notificationEmails) {
-    this.notificationRecipients = notificationEmails;
-    return this;
   }
 
   public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
