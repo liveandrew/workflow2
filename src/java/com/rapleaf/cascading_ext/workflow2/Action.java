@@ -367,12 +367,6 @@ public abstract class Action {
     return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties));
   }
 
-  @Deprecated
-  //  call buildFlow() instead of CascadingHelper.get().getFlowConnector
-  protected void completeWithProgress(Flow flow) {
-    completeWithProgress(new FlowOperation(flow));
-  }
-
   protected void completeWithProgress(RunnableJob job) {
     completeWithProgress(new HadoopOperation(job));
   }
