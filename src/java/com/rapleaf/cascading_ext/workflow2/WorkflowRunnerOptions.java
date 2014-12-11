@@ -1,13 +1,12 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.alerts_handler.NoOpAlertsHandler;
 
 public class WorkflowRunnerOptions {
 
@@ -23,7 +22,7 @@ public class WorkflowRunnerOptions {
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
-    alertsHandler = null;
+    alertsHandler = new NoOpAlertsHandler();
     enabledNotifications = WorkflowRunnerNotificationSet.all();
     statsDPort = 8125;
     statsDHost = "pglibertyc6";

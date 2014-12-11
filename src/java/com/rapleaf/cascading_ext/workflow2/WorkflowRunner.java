@@ -576,15 +576,13 @@ public final class WorkflowRunner {
   }
 
   private void mail(String subject, String body, AlertRecipient recipient) throws IOException {
-    if (alertsHandler != null) {
-      alertsHandler.sendAlert(
-          AlertMessages.builder(subject)
-              .setBody(body)
-              .addToDefaultTags(WORKFLOW_EMAIL_SUBJECT_TAG)
-              .build(),
-          recipient
-      );
-    }
+    alertsHandler.sendAlert(
+        AlertMessages.builder(subject)
+            .setBody(body)
+            .addToDefaultTags(WORKFLOW_EMAIL_SUBJECT_TAG)
+            .build(),
+        recipient
+    );
   }
 
   protected WorkflowWebServer getWebServer() {
