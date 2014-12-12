@@ -1,7 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
@@ -107,18 +105,9 @@ public class WorkflowRunnerOptions {
     return this;
   }
 
-<<<<<<< HEAD
-    setMaxConcurrentSteps(Integer.MAX_VALUE);
-    setAlertsHandler(new LoggingAlertsHandler());
-    setEnabledNotifications(WorkflowRunnerNotificationSet.all());
-    setStatsRecorder(new RecorderFactory.StatsD());
-    setLockProvider(null);
-    setStorage(new ContextStorage.None());
-    setRegistry(new ZkRegistry());
-=======
+
   public ContextStorage getStorage() {
     return storage;
->>>>>>> parent of 87d02ec... Merge pull request #275 from MasterRepos/pull_out_options
   }
 
   public WorkflowRunnerOptions setStorage(ContextStorage storage) {
