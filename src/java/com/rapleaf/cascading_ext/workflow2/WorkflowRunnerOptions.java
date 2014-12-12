@@ -1,6 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.liveramp.java_support.alerts_handler.NoOpAlertsHandler;
+import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 
 import com.rapleaf.cascading_ext.workflow2.registry.ZkRegistry;
@@ -15,7 +15,7 @@ public class WorkflowRunnerOptions extends WorkflowOptions<WorkflowRunnerOptions
     Rap.assertProduction();
 
     setMaxConcurrentSteps(Integer.MAX_VALUE);
-    setAlertsHandler(new NoOpAlertsHandler());
+    setAlertsHandler(new LoggingAlertsHandler());
     setEnabledNotifications(WorkflowRunnerNotificationSet.all());
     setStatsRecorder(new RecorderFactory.StatsD());
     setLockProvider(null);
