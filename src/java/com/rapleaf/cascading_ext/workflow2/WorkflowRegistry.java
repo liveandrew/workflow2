@@ -1,4 +1,4 @@
-package com.rapleaf.cascading_ext.workflow2.registry;
+package com.rapleaf.cascading_ext.workflow2;
 
 import com.liveramp.types.workflow.LiveWorkflowMeta;
 
