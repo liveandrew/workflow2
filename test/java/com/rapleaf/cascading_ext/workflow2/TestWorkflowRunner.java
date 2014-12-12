@@ -1,16 +1,19 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import cascading.tap.Tap;
+import java.io.IOException;
+import java.util.Arrays;
+
 import com.google.common.collect.Sets;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.support.event_timer.TimedEvent;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.Arrays;
+import cascading.tap.Tap;
+
+import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.support.event_timer.TimedEvent;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
@@ -83,8 +86,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     getFS().createNewFile(new Path(checkpointDir + "/first"));
 
     new WorkflowRunner("test", checkpointDir,
-        new WorkflowRunnerOptions()
-            .setMaxConcurrentSteps(1),
+        new TestWorkflowOptions(),
         second).run();
 
     assertEquals(1, IncrementAction.counter);
@@ -179,7 +181,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Step top = new Step(new MultiStepAction("Tom's first test dude", Arrays.asList(multiMiddle, flatMiddle)));
 
     WorkflowRunner testWorkflow = new WorkflowRunner("", checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
+        new TestWorkflowOptions(),
         top);
     testWorkflow.run();
 
@@ -209,7 +211,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testSandboxDir() throws Exception {
     try {
       WorkflowRunner wfr = new WorkflowRunner("", checkpointDir,
-          new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
+          new TestWorkflowOptions(),
           fakeStep("a", "/fake/EVIL/../path"),
           fakeStep("b", "/path/of/fakeness"));
       wfr.setSandboxDir("//fake/path");
@@ -222,7 +224,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     try {
       WorkflowRunner wfr = new WorkflowRunner("", checkpointDir,
-          new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
+          new TestWorkflowOptions(),
           fakeStep("a", "/fake/EVIL/../path"),
           fakeStep("b", "/fake/./path"));
       wfr.setSandboxDir("//fake/path");

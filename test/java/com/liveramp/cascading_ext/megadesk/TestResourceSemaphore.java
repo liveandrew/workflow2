@@ -23,8 +23,9 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
-import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerOptions;
 import com.rapleaf.cascading_ext.workflow2.action.CleanUpOlderVersions;
+import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -86,7 +87,7 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
     Step action = new Step(new LongRunningAction("action", keepGoing, barrier, versionedStore));
 
     StoreReaderLockProvider lockProvider = new CuratorStoreReaderLockProvider(framework);
-    WorkflowRunnerOptions options = new WorkflowRunnerOptions().setLockProvider(lockProvider);
+    WorkflowOptions options = new TestWorkflowOptions().setLockProvider(lockProvider);
 
     WorkflowRunner runner = new WorkflowRunner("test", getTestRoot() + "/wf1", options, action);
     Thread thread = new Thread(new WorkflowRunnable(runner));
@@ -117,7 +118,7 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
     System.out.println("Done");
   }
 
-  private void attemptToClean(VersionedBucketDataStore<StringOrNone> versionedStore, WorkflowRunnerOptions options) throws IOException {
+  private void attemptToClean(VersionedBucketDataStore<StringOrNone> versionedStore, WorkflowOptions options) throws IOException {
     Step clean = new Step(new CleanUpOlderVersions("clean", getTestRoot(), 1, versionedStore));
     WorkflowRunner runner2 = new WorkflowRunner("test", getTestRoot() + "/wf2", options, clean);
     runner2.run();

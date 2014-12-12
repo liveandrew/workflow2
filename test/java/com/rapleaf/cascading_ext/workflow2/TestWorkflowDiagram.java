@@ -15,6 +15,7 @@ import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram.Vertex;
+import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
@@ -253,7 +254,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
 
   private WorkflowDiagram getWorkflowDiagramFromTails(Step first, Step... rest) {
     WorkflowRunner wfr = new WorkflowRunner("Test Workflow", getTestRoot() + "/test_workflow",
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(1),
+        new TestWorkflowOptions().setMaxConcurrentSteps(1),
         first, rest);
     return new WorkflowDiagram(wfr);
   }
