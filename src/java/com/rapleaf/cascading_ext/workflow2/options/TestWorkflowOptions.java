@@ -1,6 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
-import com.liveramp.java_support.alerts_handler.NoOpAlertsHandler;
+import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.registry.MockRegistry;
@@ -13,7 +13,7 @@ public class TestWorkflowOptions extends WorkflowOptions<TestWorkflowOptions> {
     Rap.assertTest();
 
     setMaxConcurrentSteps(1);
-    setAlertsHandler(new NoOpAlertsHandler());
+    setAlertsHandler(new LoggingAlertsHandler());
     setEnabledNotifications(WorkflowRunnerNotificationSet.all());
     setStatsRecorder(new RecorderFactory.Mock());
     setLockProvider(null);
