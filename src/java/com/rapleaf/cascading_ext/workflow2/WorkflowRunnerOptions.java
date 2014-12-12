@@ -6,7 +6,7 @@ import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.java_support.alerts_handler.NoOpAlertsHandler;
+import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 
 public class WorkflowRunnerOptions {
 
@@ -22,7 +22,7 @@ public class WorkflowRunnerOptions {
 
   public WorkflowRunnerOptions() {
     maxConcurrentSteps = Integer.MAX_VALUE;
-    alertsHandler = new NoOpAlertsHandler();
+    alertsHandler = new LoggingAlertsHandler();
     enabledNotifications = WorkflowRunnerNotificationSet.all();
     statsDPort = 8125;
     statsDHost = "pglibertyc6";
