@@ -68,7 +68,7 @@ public final class WorkflowRunner {
    * Specify this and the system will pick any free port.j
    */
   public static final Integer ANY_FREE_PORT = 0;
-  private static final String WORKFLOW_EMAIL_SUBJECT_TAG = "WORKFLOW";
+  public static final String WORKFLOW_EMAIL_SUBJECT_TAG = "WORKFLOW";
   public static final String ERROR_EMAIL_SUBJECT_TAG = "ERROR";
 
   private static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
