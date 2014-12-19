@@ -38,6 +38,13 @@ public class WaitForHankDeploy extends Action {
   protected void execute() throws Exception {
     Map<RingGroup, List<DomainAndVersion>> ringsToWaitFor = Maps.newHashMap();
     for (RingGroup ringGroup : coordinator.getRingGroups()) {
+
+      // Do not wait on liveramp-production ring group, it takes too long to deploy
+      // TODO: https://jira.liveramp.net/browse/OM-156
+      if (ringGroup.getName().equals("liveramp-production")) {
+        continue;
+      }
+
       Set<Domain> domainGroup = ringGroup.getDomainGroup().getDomains();
       List<DomainAndVersion> versions = getDomainsAndVersions(domainGroup);
       if (!versions.isEmpty()) {
