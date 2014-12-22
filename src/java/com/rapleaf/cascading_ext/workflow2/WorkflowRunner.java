@@ -235,22 +235,6 @@ public final class WorkflowRunner {
         combine(first, rest));
   }
 
-  @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps) {
-    this(workflowName,
-        checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps),
-        tailSteps);
-  }
-
-  @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, Set<Step> tailSteps, AlertsHandler alertsHandler) {
-    this(workflowName,
-        checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps).setAlertsHandler(alertsHandler),
-        tailSteps);
-  }
-
   public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowOptions options, Set<Step> tailSteps) {
     this.workflowUUID = Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID()));
     this.workflowName = workflowName;

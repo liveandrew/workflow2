@@ -11,8 +11,6 @@ public interface ActionOperation {
 
   public void complete();
 
-  public String getProperty(String propertyName);
-
   public String getName();
 
   public Map<String, String> getSubStepStatusLinks();

@@ -62,11 +62,6 @@ public class HadoopOperation implements ActionOperation {
   }
 
   @Override
-  public String getProperty(String propertyName) {
-    return conf.get(propertyName);
-  }
-
-  @Override
   public String getName() {
     return conf.getJobName();
   }

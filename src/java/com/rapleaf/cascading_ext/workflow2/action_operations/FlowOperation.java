@@ -35,11 +35,6 @@ public class FlowOperation implements ActionOperation {
   }
 
   @Override
-  public String getProperty(String propertyName) {
-    return flow.getProperty(propertyName);
-  }
-
-  @Override
   public String getName() {
     return flow.getName();
   }
