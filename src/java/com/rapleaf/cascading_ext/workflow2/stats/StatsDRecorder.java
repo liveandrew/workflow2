@@ -1,4 +1,4 @@
-package com.rapleaf.cascading_ext.workflow2;
+package com.rapleaf.cascading_ext.workflow2.stats;
 
 import java.util.List;
 import java.util.Map;
@@ -15,23 +15,10 @@ import cascading.flow.SliceCounters;
 import cascading.flow.StepCounters;
 
 import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.support.Rap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: pwestling
- * Date: 11/5/13
- * Time: 3:41 PM
- * To change this template use File | Settings | File Templates.
- */
-public interface StepStatsRecorder {
-
-  public void recordStats(Step step, Step.StepTimer timer);
-
-  public void stop();
-}
-
-class StatsDRecorder implements StepStatsRecorder {
+public class StatsDRecorder implements StepStatsRecorder {
 
   private StatsDClient client;
   private static final Logger LOG = Logger.getLogger(StatsDRecorder.class);
@@ -115,21 +102,5 @@ class StatsDRecorder implements StepStatsRecorder {
     final int scale = objScale == null ? 1 : objScale;
     final long value = nestedCounter.getCounter().getValue();
     return new Long(value / (long) scale).intValue();
-  }
-}
-
-class MockStatsRecorder implements StepStatsRecorder {
-  private static final Logger LOG = Logger.getLogger(MockStatsRecorder.class);
-
-  @Override
-  public void recordStats(Step step, Step.StepTimer timer) {
-    for (NestedCounter nestedCounter : step.getCounters()) {
-      LOG.info(nestedCounter.getCounter().getGroup() + " : " + nestedCounter.getCounter().getName() + " : " + nestedCounter.getCounter().getValue());
-    }
-  }
-
-  @Override
-  public void stop() {
-    //  empty
   }
 }

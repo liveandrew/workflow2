@@ -1,126 +1,43 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.util.Map;
+import org.apache.log4j.Logger;
 
-import com.google.common.collect.Maps;
-
-import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
-import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.registry.MockRegistry;
+import com.rapleaf.cascading_ext.workflow2.registry.ZkRegistry;
+import com.rapleaf.cascading_ext.workflow2.stats.RecorderFactory;
+import com.rapleaf.support.Rap;
 
-public class WorkflowRunnerOptions {
-
-  private int maxConcurrentSteps;
-  private AlertsHandler alertsHandler;
-  private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
-  private WorkflowRunnerNotificationSet enabledNotifications;
-  private int statsDPort;
-  private String statsDHost;
-  private StoreReaderLockProvider lockProvider;
-  private ContextStorage storage;
-  private WorkflowRegistry registry;
+//  TODO this should get renamed ProductionWorkflowOptions at some point.  Goal is that
+//  this is instantiated in only production
+public class WorkflowRunnerOptions extends WorkflowOptions<WorkflowRunnerOptions> {
+  private static final Logger LOG = Logger.getLogger(WorkflowRunnerOptions.class);
 
   public WorkflowRunnerOptions() {
-    maxConcurrentSteps = Integer.MAX_VALUE;
-    alertsHandler = new LoggingAlertsHandler();
-    enabledNotifications = WorkflowRunnerNotificationSet.all();
-    statsDPort = 8125;
-    statsDHost = "pglibertyc6";
-    lockProvider = null;
-    this.storage = new ContextStorage.None();
-    this.registry = new ZkRegistry();
+
+    //  TODO get rid of this block once we don't use this classs in test (few OL things still do
+    if(Rap.getTestMode()){
+      LOG.warn("Should not use WorkflowRunnerOptions in test!  Use TestWorkflowOptions");
+
+      setMaxConcurrentSteps(1);
+      setAlertsHandler(new LoggingAlertsHandler());
+      setEnabledNotifications(WorkflowRunnerNotificationSet.all());
+      setStatsRecorder(new RecorderFactory.Mock());
+      setLockProvider(null);
+      setStorage(new ContextStorage.None());
+      setRegistry(new MockRegistry());
+    }
+
+    else {
+      setMaxConcurrentSteps(Integer.MAX_VALUE);
+      setAlertsHandler(new LoggingAlertsHandler());
+      setEnabledNotifications(WorkflowRunnerNotificationSet.all());
+      setStatsRecorder(new RecorderFactory.StatsD());
+      setLockProvider(null);
+      setStorage(new ContextStorage.None());
+      setRegistry(new ZkRegistry());
+    }
   }
 
-  public int getMaxConcurrentSteps() {
-    return maxConcurrentSteps;
-  }
-
-  public WorkflowRunnerOptions setMaxConcurrentSteps(int maxConcurrentSteps) {
-    this.maxConcurrentSteps = maxConcurrentSteps;
-    return this;
-  }
-
-  public AlertsHandler getAlertsHandler() {
-    return alertsHandler;
-  }
-
-  public WorkflowRunnerOptions setAlertsHandler(AlertsHandler alertsHandler) {
-    this.alertsHandler = alertsHandler;
-    return this;
-  }
-
-  public WorkflowRegistry getRegistry() {
-    return registry;
-  }
-
-  public void setRegistry(WorkflowRegistry registry) {
-    this.registry = registry;
-  }
-
-  public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
-      WorkflowRunnerNotification... enabledNotifications) {
-    this.enabledNotifications = WorkflowRunnerNotificationSet.only(enabledNotification, enabledNotifications);
-    return this;
-  }
-
-  public WorkflowRunnerOptions setWorkflowJobProperties(Map<Object, Object> properties){
-    this.workflowJobProperties = properties;
-    return this;
-  }
-
-  public WorkflowRunnerOptions setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
-    this.enabledNotifications = enabledNotifications;
-    return this;
-  }
-
-  public WorkflowRunnerOptions setEnabledNotificationsExcept(WorkflowRunnerNotification enabledNotification,
-      WorkflowRunnerNotification... enabledNotifications) {
-    this.enabledNotifications = WorkflowRunnerNotificationSet.except(enabledNotification, enabledNotifications);
-    return this;
-  }
-
-  public WorkflowRunnerNotificationSet getEnabledNotifications() {
-    return enabledNotifications;
-  }
-
-  public int getStatsDPort() {
-    return statsDPort;
-  }
-
-  public Map<Object, Object> getWorkflowJobProperties() {
-    return workflowJobProperties;
-  }
-
-  public WorkflowRunnerOptions  setStatsDPort(int statsDPort) {
-    this.statsDPort = statsDPort;
-    return this;
-  }
-
-  public String getStatsDHost() {
-    return statsDHost;
-  }
-
-  public WorkflowRunnerOptions  setStatsDHost(String statsDHost) {
-    this.statsDHost = statsDHost;
-    return this;
-  }
-
-
-  public ContextStorage getStorage() {
-    return storage;
-  }
-
-  public WorkflowRunnerOptions setStorage(ContextStorage storage) {
-    this.storage = storage;
-    return this;
-  }
-
-  public StoreReaderLockProvider getLockProvider() {
-    return lockProvider;
-  }
-
-  public WorkflowRunnerOptions  setLockProvider(StoreReaderLockProvider lockProvider) {
-    this.lockProvider = lockProvider;
-    return this;
-  }
 }

@@ -7,7 +7,6 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +19,6 @@ import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.timgroup.statsd.NonBlockingStatsDClient;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobPriority;
@@ -50,8 +48,11 @@ import com.liveramp.workflow_service.generated.WorkflowException;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.support.Rap;
 import com.rapleaf.support.event_timer.EventTimer;
 import com.rapleaf.support.event_timer.TimedEventHelper;
@@ -214,7 +215,7 @@ public final class WorkflowRunner {
     this(workflowName, checkpointDir, new WorkflowRunnerOptions(), first, rest);
   }
 
-  public WorkflowRunner(String workflowName, String checkpointDir, WorkflowRunnerOptions options, Set<Step> tailSteps) {
+  public WorkflowRunner(String workflowName, String checkpointDir, WorkflowOptions options, Set<Step> tailSteps) {
     this(
         workflowName,
         new HdfsCheckpointPersistence(checkpointDir),
@@ -222,7 +223,7 @@ public final class WorkflowRunner {
         tailSteps);
   }
 
-  public WorkflowRunner(String workflowName, String checkpointDir, WorkflowRunnerOptions options, final Step first, Step... rest) {
+  public WorkflowRunner(String workflowName, String checkpointDir, WorkflowOptions options, final Step first, Step... rest) {
     this(workflowName, checkpointDir, options, combine(first, rest));
   }
 
@@ -250,24 +251,12 @@ public final class WorkflowRunner {
         tailSteps);
   }
 
-  private StepStatsRecorder getRecorder(WorkflowRunnerOptions options) {
-    if (!Rap.getTestMode()) {
-      try {
-        return new StatsDRecorder(new NonBlockingStatsDClient("workflow." + workflowName, options.getStatsDHost(), options.getStatsDPort()));
-      } catch (Exception e) {
-        //  whatever
-        LOG.info("Exception creating stats recorder", e);
-      }
-    }
-    return new MockStatsRecorder();
-  }
-
-  public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowRunnerOptions options, Set<Step> tailSteps) {
+  public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowOptions options, Set<Step> tailSteps) {
     this.workflowUUID = Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID()));
     this.workflowName = workflowName;
     this.persistence = persistence;
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
-    this.statsRecorder = getRecorder(options);
+    this.statsRecorder = options.getStatsRecorder().makeRecorder(workflowName);
     this.alertsHandler = options.getAlertsHandler();
     this.enabledNotifications = options.getEnabledNotifications().get();
     this.semaphore = new Semaphore(maxConcurrentSteps);
