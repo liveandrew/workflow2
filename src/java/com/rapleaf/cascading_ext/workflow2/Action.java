@@ -73,6 +73,7 @@ public abstract class Action {
   private long endTimestamp;
   private Map<Object, Object> stepProperties;
 
+
   private List<ActionOperation> operations = new ArrayList<ActionOperation>();
 
   private FileSystem fs;
@@ -368,6 +369,7 @@ public abstract class Action {
   }
 
   protected void completeWithProgress(RunnableJob job) {
+    job.addProperties(stepProperties);
     completeWithProgress(new HadoopOperation(job));
   }
 
@@ -384,7 +386,7 @@ public abstract class Action {
    *
    * @param operation
    */
-  protected void completeWithProgress(ActionOperation operation) {
+  private void completeWithProgress(ActionOperation operation) {
     runningFlow(operation);
     operation.start();
 
