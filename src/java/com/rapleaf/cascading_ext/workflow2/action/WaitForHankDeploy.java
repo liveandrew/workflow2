@@ -77,13 +77,10 @@ public class WaitForHankDeploy extends Action {
 
       firstIteration = false;
 
-      LOG.info("Waiting for ring groups to finish deploying: " + Collections2.transform(ringsToWaitFor.keySet(), new Function<RingGroup, String>() {
+      LOG.info("Waiting for ring groups to finish deploying: " + Collections2.transform(ringsToWaitFor.entrySet(), new Function<Map.Entry<RingGroup, List<DomainAndVersion>>, String>() {
         @Override
-        public String apply(RingGroup ringGroup) {
-          if (ringGroup != null) {
-            return ringGroup.getName();
-          }
-          return null;
+        public String apply(Map.Entry<RingGroup, List<DomainAndVersion>> entry) {
+          return (entry.getKey() != null) ? entry.getKey().getName() + ": " + entry.getValue() : null;
         }
       }));
 
