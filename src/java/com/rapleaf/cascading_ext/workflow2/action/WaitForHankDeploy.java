@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -21,7 +22,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 public class WaitForHankDeploy extends Action {
 
   private static final Logger LOG = Logger.getLogger(WaitForHankDeploy.class);
-  private static final long FIVE_MINUTES = 300000l;
+  public static final int MINUTES_BETWEEN_CHECKS = 5;
 
   private final Coordinator coordinator;
   private final Map<String, Integer> domainToVersion;
@@ -56,8 +57,8 @@ public class WaitForHankDeploy extends Action {
 
     while (!ringsToWaitFor.isEmpty()) {
       if (!firstIteration) {
-        LOG.info("Some RingGroups are still updating, sleeping for 5 minutes");
-        Thread.sleep(FIVE_MINUTES);
+        LOG.info("Some RingGroups are still updating, sleeping for " + MINUTES_BETWEEN_CHECKS + " minutes");
+        TimeUnit.MINUTES.sleep(MINUTES_BETWEEN_CHECKS);
       }
       LOG.info("Checking for deploy completeness...");
       Iterator<Map.Entry<RingGroup, List<DomainAndVersion>>> itr = ringsToWaitFor.entrySet().iterator();
