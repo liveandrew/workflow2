@@ -19,15 +19,17 @@ import cascading.tap.Tap;
 public class FlowBuilder {
 
   private final FlowConnector connector;
+  private final String userClassName;
 
-  protected FlowBuilder(FlowConnector connector) {
+  protected FlowBuilder(FlowConnector connector, Class userCodeClass) {
     this.connector = connector;
+    this.userClassName = userCodeClass.getSimpleName();
   }
 
   //  these methods wrap those found in FlowConnector
 
   public FlowClosure connect(Tap source, Tap sink, Pipe tail) {
-    return connect(null, source, sink, tail);
+    return connect(userClassName, source, sink, tail);
   }
 
   public FlowClosure connect(String name, Tap source, Tap sink, Pipe tail) {
@@ -45,7 +47,7 @@ public class FlowBuilder {
   }
 
   public FlowClosure connect(Map<String, Tap> sources, Tap sink, Pipe tail) {
-    return connect(null, sources, sink, tail);
+    return connect(userClassName, sources, sink, tail);
   }
 
   public FlowClosure connect(String name, Map<String, Tap> sources, Tap sink, Pipe tail) {
@@ -69,7 +71,7 @@ public class FlowBuilder {
   }
 
   public FlowClosure connect(Tap source, Map<String, Tap> sinks, Collection<Pipe> tails) {
-    return connect(null, source, sinks, tails.toArray(new Pipe[tails.size()]));
+    return connect(userClassName, source, sinks, tails.toArray(new Pipe[tails.size()]));
   }
 
   public FlowClosure connect(String name, Tap source, Map<String, Tap> sinks, Collection<Pipe> tails) {
@@ -77,7 +79,7 @@ public class FlowBuilder {
   }
 
   public FlowClosure connect(Tap source, Map<String, Tap> sinks, Pipe... tails) {
-    return connect(null, source, sinks, tails);
+    return connect(userClassName, source, sinks, tails);
   }
 
   public FlowClosure connect(String name, Tap source, Map<String, Tap> sinks, Pipe... tails) {
@@ -105,7 +107,7 @@ public class FlowBuilder {
   }
 
   public FlowClosure connect(Map<String, Tap> sources, Map<String, Tap> sinks, Pipe... tails) {
-    return connect(null, sources, sinks, tails);
+    return connect(userClassName, sources, sinks, tails);
   }
 
   public FlowClosure connect(String name, Map<String, Tap> sources, Map<String, Tap> sinks, Pipe... tails) {

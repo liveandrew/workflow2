@@ -361,11 +361,11 @@ public abstract class Action {
       allProps.put(property.getKey(), property.getValue());
     }
 
-    return new FlowBuilder(CascadingHelper.get().getFlowConnector(allProps));
+    return new FlowBuilder(CascadingHelper.get().getFlowConnector(allProps), getClass());
   }
 
   protected FlowBuilder buildFlow() {
-    return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties));
+    return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties), getClass());
   }
 
   protected void completeWithProgress(RunnableJob job) {
