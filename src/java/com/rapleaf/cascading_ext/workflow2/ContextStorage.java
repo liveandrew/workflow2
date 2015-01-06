@@ -13,12 +13,12 @@ public abstract class ContextStorage {
 
     @Override
     public <T> void set(Resource<T> ref, T value) {
-      throw new RuntimeException("Must set a real implementation in WorkflowRunnerOptions to use resources!");
+      throw new RuntimeException("Must set a real implementation in ProductionWorkflowOptions to use resources!");
     }
 
     @Override
     public <T> T get(Resource<T> ref) {
-      throw new RuntimeException("Must set a real implementation in WorkflowRunnerOptions to use resources!");
+      throw new RuntimeException("Must set a real implementation in ProductionWorkflowOptions to use resources!");
     }
 
   }

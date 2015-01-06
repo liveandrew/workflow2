@@ -10,10 +10,10 @@ import com.rapleaf.support.Rap;
 
 //  TODO this should get renamed ProductionWorkflowOptions at some point.  Goal is that
 //  this is instantiated in only production
-public class WorkflowRunnerOptions extends WorkflowOptions<WorkflowRunnerOptions> {
-  private static final Logger LOG = Logger.getLogger(WorkflowRunnerOptions.class);
+public class ProductionWorkflowOptions extends WorkflowOptions<ProductionWorkflowOptions> {
+  private static final Logger LOG = Logger.getLogger(ProductionWorkflowOptions.class);
 
-  public WorkflowRunnerOptions() {
+  public ProductionWorkflowOptions() {
 
     Rap.assertProduction();
 

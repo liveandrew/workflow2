@@ -208,11 +208,11 @@ public final class WorkflowRunner {
   private WorkflowWebServer webServer;
 
   public WorkflowRunner(String workflowName, String checkpointDir, Set<Step> tailSteps) {
-    this(workflowName, checkpointDir, new WorkflowRunnerOptions(), tailSteps);
+    this(workflowName, checkpointDir, new ProductionWorkflowOptions(), tailSteps);
   }
 
   public WorkflowRunner(String workflowName, String checkpointDir, final Step first, final Step... rest) {
-    this(workflowName, checkpointDir, new WorkflowRunnerOptions(), first, rest);
+    this(workflowName, checkpointDir, new ProductionWorkflowOptions(), first, rest);
   }
 
   public WorkflowRunner(String workflowName, String checkpointDir, WorkflowOptions options, Set<Step> tailSteps) {
@@ -231,7 +231,7 @@ public final class WorkflowRunner {
   public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, final Step first, Step... rest) {
     this(workflowName,
         checkpointDir,
-        new WorkflowRunnerOptions().setMaxConcurrentSteps(maxConcurrentSteps),
+        new ProductionWorkflowOptions().setMaxConcurrentSteps(maxConcurrentSteps),
         combine(first, rest));
   }
 
