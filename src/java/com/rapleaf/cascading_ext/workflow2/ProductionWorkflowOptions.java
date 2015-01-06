@@ -8,8 +8,6 @@ import com.rapleaf.cascading_ext.workflow2.registry.ZkRegistry;
 import com.rapleaf.cascading_ext.workflow2.stats.RecorderFactory;
 import com.rapleaf.support.Rap;
 
-//  TODO this should get renamed ProductionWorkflowOptions at some point.  Goal is that
-//  this is instantiated in only production
 public class ProductionWorkflowOptions extends WorkflowOptions<ProductionWorkflowOptions> {
   private static final Logger LOG = Logger.getLogger(ProductionWorkflowOptions.class);
 
