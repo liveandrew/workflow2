@@ -1,18 +1,51 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
-import com.liveramp.workflow_service.generated.ExecuteStatus;
+import java.io.IOException;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.liveramp.workflow_service.generated.StepExecuteStatus;
 import com.liveramp.workflow_service.generated.WorkflowDefinition;
-import com.rapleaf.cascading_ext.workflow2.Step;
-
-import java.io.IOException;
-import java.util.Map;
 
 public interface WorkflowStatePersistence {
-  public StepExecuteStatus getStatus(Step step);
-  public ExecuteStatus getFlowStatus();
-  public void updateStatus(Step step, StepExecuteStatus status) throws IOException;
-  public void prepare(WorkflowDefinition plannedFlow) throws IOException;
-  public Map<String, StepExecuteStatus> getAllStepStatuses();
-  public void setStatus(ExecuteStatus status);
+
+  public static final Set<StepExecuteStatus._Fields> NON_BLOCKING = EnumSet.of(
+      StepExecuteStatus._Fields.COMPLETED, StepExecuteStatus._Fields.SKIPPED
+  );
+
+
+  public StepExecuteStatus getStatus(String stepToken);
+  public WorkflowState getFlowStatus();
+
+  public void markStepRunning(String stepToken) throws IOException;
+  public void markStepFailed(String stepToken, Throwable t) throws IOException;
+  public void markStepSkipped(String stepToken) throws IOException;
+  public void markStepCompleted(String stepToken) throws IOException;
+
+  public void prepare(WorkflowDefinition plannedFlow);
+
+  public void markShutdownRequested(String reason);
+  public void markWorkflowStopped();
+
+  public static class WorkflowState {
+
+    private final Map<String, StepExecuteStatus> stepStatuses;
+    private final String shutdownRequest;
+
+    public WorkflowState(Map<String, StepExecuteStatus> stepStatuses, String shutdownRequest) {
+      this.stepStatuses = stepStatuses;
+      this.shutdownRequest = shutdownRequest;
+    }
+
+    public Map<String, StepExecuteStatus> getStepStatuses() {
+      return stepStatuses;
+    }
+
+    public String getShutdownRequest() {
+      return shutdownRequest;
+    }
+
+  }
+
 }

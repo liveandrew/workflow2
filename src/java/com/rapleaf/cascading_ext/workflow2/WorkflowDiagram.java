@@ -1,6 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,7 +25,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.liveramp.workflow_service.generated.StepDefinition;
 import com.liveramp.workflow_service.generated.StepExecuteStatus;
@@ -320,7 +318,7 @@ public class WorkflowDiagram {
           .put("target", stepIdToNum.get(edge.getValue())));
     }
 
-    LiveWorkflowMeta meta = getMeta();
+    LiveWorkflowMeta meta = workflowRunner.getMeta();
 
     return new JSONObject()
         .put("name", meta.get_name())
@@ -347,38 +345,23 @@ public class WorkflowDiagram {
     return "running";
   }
 
-  public LiveWorkflowMeta getMeta() throws UnknownHostException {
-
-    return new LiveWorkflowMeta()
-        .set_uuid(workflowRunner.getWorkflowUUID())
-        .set_name(workflowRunner.getWorkflowName())
-        .set_host(InetAddress.getLocalHost().getHostName())
-        .set_port(workflowRunner.getWebServer().getBoundPort())
-        .set_username(System.getProperty("user.name"))
-        .set_working_dir(System.getProperty("user.dir"))
-        .set_jar(HadoopJarUtil.getLanuchJarName())
-        .set_start_time(workflowRunner.getTimer().getEventStartTime());
-  }
-
-  public WorkflowDefinition getDefinition() {
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph<Step, DefaultEdge>(
-        flatDependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null));
+  public static WorkflowDefinition getDefinition(DirectedGraph<Step, DefaultEdge> flatGraph, String workflowName) {
 
     //  TODO remove redundant edges
 
     Map<String, StepDefinition> steps = Maps.newHashMap();
-    for (Step step : dependencyGraph.vertexSet()) {
+    for (Step step : flatGraph.vertexSet()) {
       StepDefinition def = new StepDefinition(step.getAction().getClass().getName(), step.getCheckpointToken(), Lists.<String>newArrayList());
       steps.put(step.getCheckpointToken(), def);
     }
 
-    for (DefaultEdge edge : dependencyGraph.edgeSet()) {
-      Step source = dependencyGraph.getEdgeSource(edge);
-      Step target = dependencyGraph.getEdgeTarget(edge);
+    for (DefaultEdge edge : flatGraph.edgeSet()) {
+      Step source = flatGraph.getEdgeSource(edge);
+      Step target = flatGraph.getEdgeTarget(edge);
       steps.get(source.getCheckpointToken()).add_to_requiredCheckpoints(target.getCheckpointToken());
     }
 
-    return new WorkflowDefinition(workflowRunner.getWorkflowName(), steps);
+    return new WorkflowDefinition(workflowName, steps);
   }
 
   private DirectedGraph<Vertex, DefaultEdge> wrapVertices(DirectedGraph<Step, DefaultEdge> graph) {

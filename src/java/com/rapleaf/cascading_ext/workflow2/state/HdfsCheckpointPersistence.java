@@ -1,6 +1,8 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
@@ -11,16 +13,14 @@ import org.apache.log4j.Logger;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
-import com.liveramp.workflow_service.generated.ActiveState;
-import com.liveramp.workflow_service.generated.ActiveStatus;
-import com.liveramp.workflow_service.generated.ExecuteStatus;
-import com.liveramp.workflow_service.generated.FailMeta;
-import com.liveramp.workflow_service.generated.RunningMeta;
+import com.liveramp.workflow_service.generated.StepCompletedMeta;
 import com.liveramp.workflow_service.generated.StepExecuteStatus;
+import com.liveramp.workflow_service.generated.StepFailedMeta;
+import com.liveramp.workflow_service.generated.StepRunningMeta;
 import com.liveramp.workflow_service.generated.StepSkippedMeta;
 import com.liveramp.workflow_service.generated.StepWaitingMeta;
 import com.liveramp.workflow_service.generated.WorkflowDefinition;
-import com.rapleaf.cascading_ext.workflow2.Step;
+import com.liveramp.workflow_service.generated.WorkflowException;
 
 public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = Logger.getLogger(HdfsCheckpointPersistence.class);
@@ -30,7 +30,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private final FileSystem fs;
 
   private final Map<String, StepExecuteStatus> statuses = Maps.newHashMap();
-  private ExecuteStatus currentStatus;
+  private String shutdownReason;
 
   public HdfsCheckpointPersistence(String checkpointDir) {
     this(checkpointDir, true);
@@ -40,69 +40,17 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     this.checkpointDir = checkpointDir;
     this.deleteCheckpointsOnSuccess = deleteOnSuccess;
     this.fs = FileSystemHelper.getFS();
-
-    try {
-      for (FileStatus status : FileSystemHelper.safeListStatus(fs, new Path(checkpointDir))) {
-        statuses.put(status.getPath().getName(), StepExecuteStatus.skipped(new StepSkippedMeta()));
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("Error reading from checkpoint directory!", e);
-    }
-
-    this.currentStatus = ExecuteStatus.active(new ActiveState(ActiveStatus.running(new RunningMeta())));
   }
 
   @Override
-  public Map<String, StepExecuteStatus> getAllStepStatuses() {
-    return statuses;
+  public void markShutdownRequested(String reason) {
+    shutdownReason = reason;
   }
 
   @Override
-  public StepExecuteStatus getStatus(Step step) {
-    String checkpoint = step.getCheckpointToken();
+  public void markWorkflowStopped() {
 
-    //  if we know the status, return it
-    if (!statuses.containsKey(checkpoint)) {
-      //  we haven't seen it before, it's waiting
-      statuses.put(checkpoint, StepExecuteStatus.waiting(new StepWaitingMeta()));
-    }
-
-    return statuses.get(checkpoint);
-  }
-
-  @Override
-  public ExecuteStatus getFlowStatus() {
-    return currentStatus;
-  }
-
-  @Override
-  public void updateStatus(Step step, StepExecuteStatus status) throws IOException {
-    LOG.info("Noting new status for step " + step.getCheckpointToken() + ": " + status);
-
-    if (status.is_set_completed()) {
-      LOG.info("Writing out checkpoint token for " + step.getCheckpointToken());
-      String tokenPath = checkpointDir + "/" + step.getCheckpointToken();
-      if (!fs.createNewFile(new Path(tokenPath))) {
-        throw new IOException("Couldn't create checkpoint file " + tokenPath);
-      }
-      LOG.debug("Done writing checkpoint token for " + step.getCheckpointToken());
-    } else if (status.is_set_failed()) {
-      currentStatus = ExecuteStatus.active(new ActiveState(ActiveStatus.failPending(new FailMeta())));
-    }
-
-    statuses.put(step.getCheckpointToken(), status);
-  }
-
-  @Override
-  public void prepare(WorkflowDefinition def) throws IOException {
-    LOG.info("Creating checkpoint dir " + checkpointDir);
-    fs.mkdirs(new Path(checkpointDir));
-  }
-
-  @Override
-  public void setStatus(ExecuteStatus status) {
-    currentStatus = status;
-    if (status.is_set_complete()) {
+    if (allStepsSucceeded() && shutdownReason == null) {
       try {
         if (deleteCheckpointsOnSuccess) {
           LOG.debug("Deleting checkpoint dir " + checkpointDir);
@@ -112,5 +60,99 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
         throw new RuntimeException(e);
       }
     }
+
   }
+
+  private boolean allStepsSucceeded() {
+
+    for (Map.Entry<String, StepExecuteStatus> stepStatuses : statuses.entrySet()) {
+      if (!NON_BLOCKING.contains(stepStatuses.getValue().getSetField())) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  @Override
+  public StepExecuteStatus getStatus(String stepToken) {
+
+    if (!statuses.containsKey(stepToken)) {
+      throw new RuntimeException("Unknown step " + stepToken + "!");
+    }
+
+    return statuses.get(stepToken);
+  }
+
+  @Override
+  public WorkflowState getFlowStatus() {
+    return new WorkflowState(statuses, shutdownReason);
+  }
+
+  @Override
+  public void markStepRunning(String stepToken) throws IOException {
+    updateStatus(stepToken, StepExecuteStatus.running(new StepRunningMeta()));
+  }
+
+  @Override
+  public void markStepFailed(String stepToken, Throwable e) throws IOException {
+
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+
+    updateStatus(stepToken, StepExecuteStatus.failed(new StepFailedMeta(new WorkflowException(e.getMessage(), sw.toString()))));
+  }
+
+  @Override
+  public void markStepSkipped(String stepToken) throws IOException {
+    updateStatus(stepToken, StepExecuteStatus.skipped(new StepSkippedMeta()));
+  }
+
+  @Override
+  public void markStepCompleted(String stepToken) throws IOException {
+    LOG.info("Writing out checkpoint token for " + stepToken);
+    String tokenPath = checkpointDir + "/" + stepToken;
+    if (!fs.createNewFile(new Path(tokenPath))) {
+      throw new IOException("Couldn't create checkpoint file " + tokenPath);
+    }
+    LOG.debug("Done writing checkpoint token for " + stepToken);
+
+    updateStatus(stepToken, StepExecuteStatus.completed(new StepCompletedMeta()));
+  }
+
+  private void updateStatus(String stepToken, StepExecuteStatus status) throws IOException {
+
+    if(!statuses.containsKey(stepToken)){
+      throw new RuntimeException(stepToken+"!");
+    }
+
+    LOG.info("Noting new status for step " + stepToken + ": " + status);
+    statuses.put(stepToken, status);
+  }
+
+  @Override
+  public void prepare(WorkflowDefinition def) {
+
+    try {
+      LOG.info("Creating checkpoint dir " + checkpointDir);
+      fs.mkdirs(new Path(checkpointDir));
+
+      for (FileStatus status : FileSystemHelper.safeListStatus(fs, new Path(checkpointDir))) {
+        statuses.put(status.getPath().getName(), StepExecuteStatus.skipped(new StepSkippedMeta()));
+      }
+
+      for (String val : def.get_steps().keySet()) {
+        //  if we know the status, return it
+        if (!statuses.containsKey(val)) {
+          //  we haven't seen it, it's waiting
+          statuses.put(val, StepExecuteStatus.waiting(new StepWaitingMeta()));
+        }
+      }
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 }
