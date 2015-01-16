@@ -20,7 +20,7 @@ import com.rapleaf.support.event_timer.TimedEvent;
 
 public final class Step {
 
-  private String checkpointTokenPrefix = "";
+  private String checkpointTokenPrefix;
   private final Action action;
   private final Set<Step> dependencies;
   private Set<Step> children;
@@ -88,6 +88,11 @@ public final class Step {
   }
 
   public String getCheckpointTokenPrefix() {
+
+    if(checkpointTokenPrefix == null){
+      throw new RuntimeException("Step prefix has not been set!");
+    }
+
     return checkpointTokenPrefix;
   }
 

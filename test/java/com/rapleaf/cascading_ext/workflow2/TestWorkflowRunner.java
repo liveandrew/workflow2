@@ -224,14 +224,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testFullRestart2() {
-
-
-
-
-  }
-
-  @Test
   public void testLoneMultiStepAction() throws Exception {
     // lone multi
     Step s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(

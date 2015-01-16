@@ -116,7 +116,6 @@ public class WorkflowDiagram {
 
       vertexIdToStep.put(step.getCheckpointToken(), step);
       if (step.getAction() instanceof MultiStepAction) {
-        adjustTokenStrsOfChildren(step);
         for (Step substep : ((MultiStepAction)step.getAction()).getSubSteps()) {
           toProcess.add(substep);
         }
@@ -125,13 +124,6 @@ public class WorkflowDiagram {
       for (Step dependency : step.getDependencies()) {
         toProcess.add(dependency);
       }
-    }
-  }
-
-  private void adjustTokenStrsOfChildren(Step step) {
-    MultiStepAction msa = (MultiStepAction)step.getAction();
-    for (Step substep : msa.getSubSteps()) {
-      substep.setCheckpointTokenPrefix(step.getCheckpointTokenPrefix() + msa.getCheckpointToken() + "__");
     }
   }
 
@@ -535,11 +527,6 @@ public class WorkflowDiagram {
           multiSteps.add(substep);
         }
       }
-
-      // adjust the checkpoint token prefix to include the checkpoint token of
-      // the multistep. this makes sure that, so long as token are unique in
-      // their subgraph, they will also be unique in the flattened graph.
-      substep.setCheckpointTokenPrefix(s.getCheckpointTokenPrefix() + msa.getCheckpointToken() + "__");
 
       addStepAndDependencies(dependencyGraph, substep);
     }

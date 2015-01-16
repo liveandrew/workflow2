@@ -229,7 +229,10 @@ public final class WorkflowRunner {
     this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.registry = options.getRegistry();
+
+    WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
+
 
     this.persistence.prepare(dependencyGraph);
 
