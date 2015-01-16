@@ -89,67 +89,6 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   }
 
   @Test
-  public void testComplexNestedAllContracted() throws Exception {
-    Step tail = getComplexNestedWorkflowTail();
-    WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
-    setupWorkflowGraph(wfd);
-
-    verifyNumVertices(7);
-    verifyVertexInGraph("s1");
-    verifyVertexInGraph("s2");
-    verifyVertexInGraph("s3");
-    verifyVertexInGraph("s4");
-    verifyVertexInGraph("s5");
-    verifyVertexInGraph("s6");
-    verifyVertexInGraph("s7");
-
-    verifyNumEdges(8);
-    verifyEdgeInGraph("s1", "s2");
-    verifyEdgeInGraph("s2", "s4");
-    verifyEdgeInGraph("s4", "s7");
-    verifyEdgeInGraph("s1", "s3");
-    verifyEdgeInGraph("s2", "s5");
-    verifyEdgeInGraph("s3", "s5");
-    verifyEdgeInGraph("s5", "s6");
-    verifyEdgeInGraph("s6", "s7");
-  }
-
-  @Test
-  public void testComplexNestedVertexS5Expanded() throws Exception {
-    Step tail = getComplexNestedWorkflowTail();
-    WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
-    wfd.expandMultistepVertex("s5");
-    setupWorkflowGraph(wfd);
-
-    verifyNumVertices(10);
-    verifyVertexInGraph("s1");
-    verifyVertexInGraph("s2");
-    verifyVertexInGraph("s3");
-    verifyVertexInGraph("s4");
-    verifyVertexInGraph("s5__1");
-    verifyVertexInGraph("s5__2");
-    verifyVertexInGraph("s5__3");
-    verifyVertexInGraph("s5__4");
-    verifyVertexInGraph("s6");
-    verifyVertexInGraph("s7");
-
-    verifyNumEdges(13);
-    verifyEdgeInGraph("s1", "s2");
-    verifyEdgeInGraph("s2", "s4");
-    verifyEdgeInGraph("s4", "s7");
-    verifyEdgeInGraph("s1", "s3");
-    verifyEdgeInGraph("s2", "s5__1");
-    verifyEdgeInGraph("s5__1", "s5__4");
-    verifyEdgeInGraph("s5__4", "s6");
-    verifyEdgeInGraph("s3", "s5__1");
-    verifyEdgeInGraph("s3", "s5__2");
-    verifyEdgeInGraph("s5__2", "s5__4");
-    verifyEdgeInGraph("s5__2", "s5__3");
-    verifyEdgeInGraph("s5__3", "s6");
-    verifyEdgeInGraph("s6", "s7");
-  }
-
-  @Test
   public void testComplexNestedAllExpanded() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
@@ -256,7 +195,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     WorkflowRunner wfr = new WorkflowRunner("Test Workflow", getTestRoot() + "/test_workflow",
         new TestWorkflowOptions().setMaxConcurrentSteps(1),
         first, rest);
-    return new WorkflowDiagram(wfr);
+    return new WorkflowDiagram(wfr, wfr.getPersistence());
   }
 
   private static DataStore getFakeDS(String name) throws Exception {

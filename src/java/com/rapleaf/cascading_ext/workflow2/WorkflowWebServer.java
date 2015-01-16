@@ -12,6 +12,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.liveramp.hank.util.Condition;
 import com.liveramp.hank.util.WaitUntil;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.support.collections.Accessors;
 
 public class WorkflowWebServer {
@@ -19,6 +20,7 @@ public class WorkflowWebServer {
 
   private final int port;
   private final WorkflowRunner workflowRunner;
+  private final WorkflowStatePersistence persistence;
 
   private Server server;
 
@@ -45,8 +47,9 @@ public class WorkflowWebServer {
     }
   }
 
-  public WorkflowWebServer(WorkflowRunner workflowRunner, int port) {
+  public WorkflowWebServer(WorkflowRunner workflowRunner, WorkflowStatePersistence persistence, int port) {
     this.workflowRunner = workflowRunner;
+    this.persistence = persistence;
     this.port = port;
   }
 
@@ -63,7 +66,7 @@ public class WorkflowWebServer {
     WebAppContext webAppContext = new WebAppContext(warUrlString, "/");
     webAppContext.setAttribute("workflowRunner", workflowRunner);
 
-    WorkflowDiagram diagram = new WorkflowDiagram(workflowRunner);
+    WorkflowDiagram diagram = new WorkflowDiagram(workflowRunner, persistence);
     diagram.expandAllMultistepVertices();
 
     webAppContext.addServlet(new ServletHolder(new WorkflowStateServlet(diagram)), "/state");

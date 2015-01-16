@@ -10,17 +10,13 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
-import com.liveramp.workflow_service.generated.StepCompletedMeta;
-import com.liveramp.workflow_service.generated.StepExecuteStatus;
-import com.liveramp.workflow_service.generated.StepFailedMeta;
-import com.liveramp.workflow_service.generated.StepRunningMeta;
-import com.liveramp.workflow_service.generated.StepSkippedMeta;
-import com.liveramp.workflow_service.generated.StepWaitingMeta;
-import com.liveramp.workflow_service.generated.WorkflowDefinition;
-import com.liveramp.workflow_service.generated.WorkflowException;
+import com.rapleaf.cascading_ext.workflow2.Action;
+import com.rapleaf.cascading_ext.workflow2.Step;
 
 public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = Logger.getLogger(HdfsCheckpointPersistence.class);
@@ -29,7 +25,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private final boolean deleteCheckpointsOnSuccess;
   private final FileSystem fs;
 
-  private final Map<String, StepExecuteStatus> statuses = Maps.newHashMap();
+  private final Map<String, StepState> statuses = Maps.newHashMap();
   private String shutdownReason;
 
   public HdfsCheckpointPersistence(String checkpointDir) {
@@ -65,8 +61,8 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
   private boolean allStepsSucceeded() {
 
-    for (Map.Entry<String, StepExecuteStatus> stepStatuses : statuses.entrySet()) {
-      if (!NON_BLOCKING.contains(stepStatuses.getValue().getSetField())) {
+    for (Map.Entry<String, StepState> stepStatuses : statuses.entrySet()) {
+      if (!NON_BLOCKING.contains(stepStatuses.getValue().getStatus())) {
         return false;
       }
     }
@@ -75,7 +71,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public StepExecuteStatus getStatus(String stepToken) {
+  public StepState getState(String stepToken) {
 
     if (!statuses.containsKey(stepToken)) {
       throw new RuntimeException("Unknown step " + stepToken + "!");
@@ -91,7 +87,8 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
   @Override
   public void markStepRunning(String stepToken) throws IOException {
-    updateStatus(stepToken, StepExecuteStatus.running(new StepRunningMeta()));
+    StepState state = getState(stepToken);
+    state.setStatus(StepStatus.RUNNING);
   }
 
   @Override
@@ -101,12 +98,16 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
 
-    updateStatus(stepToken, StepExecuteStatus.failed(new StepFailedMeta(new WorkflowException(e.getMessage(), sw.toString()))));
+    StepState state = getState(stepToken);
+    state.setStatus(StepStatus.FAILED);
+    state.setFailureMessage(e.getMessage());
+    state.setFailureTrace(sw.toString());
   }
 
   @Override
   public void markStepSkipped(String stepToken) throws IOException {
-    updateStatus(stepToken, StepExecuteStatus.skipped(new StepSkippedMeta()));
+    StepState state = getState(stepToken);
+    state.setStatus(StepStatus.SKIPPED);
   }
 
   @Override
@@ -118,35 +119,32 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     }
     LOG.debug("Done writing checkpoint token for " + stepToken);
 
-    updateStatus(stepToken, StepExecuteStatus.completed(new StepCompletedMeta()));
-  }
-
-  private void updateStatus(String stepToken, StepExecuteStatus status) throws IOException {
-
-    if(!statuses.containsKey(stepToken)){
-      throw new RuntimeException(stepToken+"!");
-    }
-
-    LOG.info("Noting new status for step " + stepToken + ": " + status);
-    statuses.put(stepToken, status);
+    StepState state = getState(stepToken);
+    state.setStatus(StepStatus.COMPLETED);
   }
 
   @Override
-  public void prepare(WorkflowDefinition def) {
+  public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps) {
 
     try {
       LOG.info("Creating checkpoint dir " + checkpointDir);
       fs.mkdirs(new Path(checkpointDir));
 
-      for (FileStatus status : FileSystemHelper.safeListStatus(fs, new Path(checkpointDir))) {
-        statuses.put(status.getPath().getName(), StepExecuteStatus.skipped(new StepSkippedMeta()));
+      for (Step val : flatSteps.vertexSet()) {
+        Action action = val.getAction();
+
+        statuses.put(val.getCheckpointToken(), new StepState(
+            StepStatus.WAITING,
+            action.getClass().getSimpleName()
+        ));
       }
 
-      for (String val : def.get_steps().keySet()) {
-        //  if we know the status, return it
-        if (!statuses.containsKey(val)) {
-          //  we haven't seen it, it's waiting
-          statuses.put(val, StepExecuteStatus.waiting(new StepWaitingMeta()));
+      for (FileStatus status : FileSystemHelper.safeListStatus(fs, new Path(checkpointDir))) {
+        String token = status.getPath().getName();
+        if (statuses.containsKey(token)) {
+          statuses.get(token).setStatus(StepStatus.SKIPPED);
+        } else {
+          LOG.info("Skipping obsolete token " + token);
         }
       }
 

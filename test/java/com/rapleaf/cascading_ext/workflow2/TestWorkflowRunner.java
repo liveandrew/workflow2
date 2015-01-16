@@ -18,6 +18,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
+import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.support.event_timer.TimedEvent;
 
@@ -310,9 +311,9 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     WorkflowStatePersistence.WorkflowState status = peristence.getFlowStatus();
     assertEquals("Shutdown Requested", status.getShutdownRequest());
     assertFalse(didExecute.get());
-    assertTrue(status.getStepStatuses().get("fail").is_set_failed());
-    assertTrue(status.getStepStatuses().get("unlock").is_set_completed());
-    assertTrue(status.getStepStatuses().get("after").is_set_waiting());
+    assertTrue(status.getStepStatuses().get("fail").getStatus() == StepStatus.FAILED);
+    assertTrue(status.getStepStatuses().get("unlock").getStatus() == StepStatus.COMPLETED);
+    assertTrue(status.getStepStatuses().get("after").getStatus() == StepStatus.WAITING);
 
   }
 
@@ -346,8 +347,8 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     WorkflowStatePersistence.WorkflowState status = peristence.getFlowStatus();
     assertEquals("Shutdown Requested", status.getShutdownRequest());
     assertFalse(didExecute.get());
-    assertTrue(status.getStepStatuses().get("fail").is_set_failed());
-    assertTrue(status.getStepStatuses().get("after").is_set_waiting());
+    assertTrue(status.getStepStatuses().get("fail").getStatus() == StepStatus.FAILED);
+    assertTrue(status.getStepStatuses().get("after").getStatus() == StepStatus.WAITING);
   }
 
   @Test
@@ -384,9 +385,9 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertEquals("Shutdown Requested", status.getShutdownRequest());
     assertEquals(1, preCounter.get());
     assertEquals(0, postConter.get());
-    assertTrue(status.getStepStatuses().get("pre").is_set_completed());
-    assertTrue(status.getStepStatuses().get("wait").is_set_completed());
-    assertTrue(status.getStepStatuses().get("after").is_set_waiting());
+    assertTrue(status.getStepStatuses().get("pre").getStatus() == StepStatus.COMPLETED);
+    assertTrue(status.getStepStatuses().get("wait").getStatus() == StepStatus.COMPLETED);
+    assertTrue(status.getStepStatuses().get("after").getStatus() == StepStatus.WAITING);
 
     //  restart
 
@@ -403,9 +404,9 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertEquals(null, status.getShutdownRequest());
     assertEquals(1, preCounter.get());
     assertEquals(1, postConter.get());
-    assertTrue(status.getStepStatuses().get("pre").is_set_skipped());
-    assertTrue(status.getStepStatuses().get("wait").is_set_skipped());
-    assertTrue(status.getStepStatuses().get("after").is_set_completed());
+    assertTrue(status.getStepStatuses().get("pre").getStatus() == StepStatus.SKIPPED);
+    assertTrue(status.getStepStatuses().get("wait").getStatus() == StepStatus.SKIPPED);
+    assertTrue(status.getStepStatuses().get("after").getStatus() == StepStatus.COMPLETED);
 
   }
 

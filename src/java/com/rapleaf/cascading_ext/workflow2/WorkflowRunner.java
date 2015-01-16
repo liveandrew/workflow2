@@ -36,14 +36,14 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.types.workflow.LiveWorkflowMeta;
-import com.liveramp.workflow_service.generated.StepExecuteStatus;
-import com.liveramp.workflow_service.generated.StepFailedMeta;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
+import com.rapleaf.cascading_ext.workflow2.state.StepState;
+import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.support.Rap;
@@ -93,7 +93,7 @@ public final class WorkflowRunner {
         public void run() {
           String stepToken = step.getCheckpointToken();
           try {
-            if (WorkflowStatePersistence.NON_BLOCKING.contains(state.getStatus(stepToken).getSetField())) {
+            if (WorkflowStatePersistence.NON_BLOCKING.contains(state.getState(stepToken).getStatus())) {
               LOG.info("Step " + stepToken +  " was executed successfully in a prior run. Skipping.");
               persistence.markStepSkipped(stepToken);
             } else {
@@ -131,7 +131,7 @@ public final class WorkflowRunner {
     public boolean allDependenciesCompleted() {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if (!WorkflowStatePersistence.NON_BLOCKING.contains(state.getStatus(dep.getCheckpointToken()).getSetField())) {
+        if (!WorkflowStatePersistence.NON_BLOCKING.contains(state.getState(dep.getCheckpointToken()).getStatus())) {
           return false;
         }
       }
@@ -231,7 +231,7 @@ public final class WorkflowRunner {
     this.registry = options.getRegistry();
     this.dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
 
-    this.persistence.prepare(WorkflowDiagram.getDefinition(dependencyGraph, workflowName));
+    this.persistence.prepare(dependencyGraph);
 
     removeRedundantEdges(dependencyGraph);
     setLockProvider(dependencyGraph);
@@ -297,6 +297,10 @@ public final class WorkflowRunner {
 
   private static boolean isSubPath(String parentPath, String childPath) throws IOException {
     return canonicalPath(childPath).startsWith(canonicalPath(parentPath));
+  }
+
+  public WorkflowStatePersistence getPersistence() {
+    return persistence;
   }
 
   private void checkStepsSandboxViolation(Set<DataStore> dataStores) throws IOException {
@@ -461,20 +465,20 @@ public final class WorkflowRunner {
     PrintWriter pw = new PrintWriter(sw);
 
     int numFailed = 0;
-    Map<String, StepExecuteStatus> statuses = persistence.getFlowStatus().getStepStatuses();
-    for (Map.Entry<String, StepExecuteStatus> status : statuses.entrySet()) {
-      if (status.getValue().is_set_failed()) {
+    Map<String, StepState> statuses = persistence.getFlowStatus().getStepStatuses();
+    for (Map.Entry<String, StepState> status : statuses.entrySet()) {
+      if (status.getValue().getStatus() == StepStatus.FAILED) {
         numFailed++;
       }
     }
 
-    for (Map.Entry<String, StepExecuteStatus> status : statuses.entrySet()) {
-      if (status.getValue().is_set_failed()) {
-        StepFailedMeta meta = status.getValue().get_failed();
+    for (Map.Entry<String, StepState> status : statuses.entrySet()) {
+      StepState value = status.getValue();
+      if (value.getStatus() == StepStatus.FAILED) {
         pw.println("(" + n + "/" + numFailed + ") Step "
             + status.getKey() + " failed with exception: "
-            + meta.get_cause().get_cause());
-        pw.println(meta.get_cause().get_stacktrace());
+            + value.getFailureMessage());
+        pw.println(value.getFailureTrace());
         n++;
       }
     }
@@ -555,8 +559,8 @@ public final class WorkflowRunner {
   public boolean isFailPending() {
     WorkflowStatePersistence.WorkflowState state = persistence.getFlowStatus();
 
-    for (Map.Entry<String, StepExecuteStatus> entry : state.getStepStatuses().entrySet()) {
-      if(entry.getValue().is_set_failed()){
+    for (Map.Entry<String, StepState> entry : state.getStepStatuses().entrySet()) {
+      if(entry.getValue().getStatus() == StepStatus.FAILED){
         return true;
       }
     }
@@ -639,7 +643,7 @@ public final class WorkflowRunner {
     while (iter.hasNext()) {
       StepRunner cr = iter.next();
       //LOG.info("Checking persistence for " + cr.step.getCheckpointToken());
-      switch (persistence.getStatus(cr.step.getCheckpointToken()).getSetField()) {
+      switch (persistence.getState(cr.step.getCheckpointToken()).getStatus()) {
         case COMPLETED:
         case SKIPPED:
           completedSteps.add(cr);
@@ -676,12 +680,12 @@ public final class WorkflowRunner {
   }
 
   private void startWebServer() {
-    webServer = new WorkflowWebServer(this, ANY_FREE_PORT);
+    webServer = new WorkflowWebServer(this, persistence, ANY_FREE_PORT);
     webServer.start();
   }
 
-  public StepExecuteStatus getStepStatus(Step step) {
-    return persistence.getStatus(step.getCheckpointToken());
+  public StepState getStepStatus(Step step) {
+    return persistence.getState(step.getCheckpointToken());
   }
 
   public String getWorkflowName() {
