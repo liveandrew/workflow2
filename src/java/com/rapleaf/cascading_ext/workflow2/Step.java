@@ -12,11 +12,11 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import com.liveramp.cascading_ext.event_timer.EventTimer;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.support.Rap;
-import com.liveramp.cascading_ext.event_timer.EventTimer;
-import com.liveramp.cascading_ext.event_timer.TimedEvent;
+import com.rapleaf.support.event_timer.TimedEvent;
 
 public final class Step {
 
