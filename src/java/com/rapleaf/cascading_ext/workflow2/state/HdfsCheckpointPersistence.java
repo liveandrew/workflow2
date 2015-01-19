@@ -62,7 +62,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private boolean allStepsSucceeded() {
 
     for (Map.Entry<String, StepState> stepStatuses : statuses.entrySet()) {
-      if (!NON_BLOCKING.contains(stepStatuses.getValue().getStatus())) {
+      if (!StepStatus.NON_BLOCKING.contains(stepStatuses.getValue().getStatus())) {
         return false;
       }
     }

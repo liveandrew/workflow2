@@ -19,6 +19,7 @@ import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowState;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.support.event_timer.TimedEvent;
 
@@ -300,7 +301,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Exception failure = exception.getVal();
     assertTrue(failure.getMessage().contains("(1/1) Step fail failed with exception: failed on purpose"));
 
-    WorkflowStatePersistence.WorkflowState status = peristence.getFlowStatus();
+    WorkflowState status = peristence.getFlowStatus();
     assertEquals("Shutdown Requested", status.getShutdownRequest());
     assertFalse(didExecute.get());
     assertTrue(status.getStepStatuses().get("fail").getStatus() == StepStatus.FAILED);
@@ -336,7 +337,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Exception failure = exception.getVal();
     assertTrue(failure.getMessage().contains("(1/1) Step fail failed with exception: failed on purpose"));
 
-    WorkflowStatePersistence.WorkflowState status = peristence.getFlowStatus();
+    WorkflowState status = peristence.getFlowStatus();
     assertEquals("Shutdown Requested", status.getShutdownRequest());
     assertFalse(didExecute.get());
     assertTrue(status.getStepStatuses().get("fail").getStatus() == StepStatus.FAILED);
@@ -373,7 +374,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     assertEquals("Shutdown requested: Test Workflow. Reason: Shutdown Requested", failure.getMessage());
 
-    WorkflowStatePersistence.WorkflowState status = peristence.getFlowStatus();
+    WorkflowState status = peristence.getFlowStatus();
     assertEquals("Shutdown Requested", status.getShutdownRequest());
     assertEquals(1, preCounter.get());
     assertEquals(0, postConter.get());

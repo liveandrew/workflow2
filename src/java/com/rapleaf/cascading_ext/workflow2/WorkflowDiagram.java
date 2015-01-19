@@ -97,12 +97,9 @@ public class WorkflowDiagram {
 
   private Map<String, Step> vertexIdToStep;
 
-  private Set<Step> multiStepsToExpand;
-
   public WorkflowDiagram(WorkflowRunner workflowRunner, WorkflowStatePersistence persistence) {
     this.workflowRunner = workflowRunner;
     this.persistence = persistence;
-    this.multiStepsToExpand = new HashSet<Step>();
     populateVertexMappings();
   }
 
@@ -127,12 +124,8 @@ public class WorkflowDiagram {
     }
   }
 
-  public void expandAllMultistepVertices() {
-    multiStepsToExpand = new HashSet<Step>(vertexIdToStep.values());
-  }
-
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph() {
-    return getDiagramGraph(dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand));
+    return getDiagramGraph(dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null));
   }
 
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph(DirectedGraph<Step, DefaultEdge> graph) {
@@ -172,7 +165,7 @@ public class WorkflowDiagram {
 
   public JSONObject getJSONState() throws JSONException, UnknownHostException {
 
-    DirectedGraph<Step, DefaultEdge> stepGraph = dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null, multiStepsToExpand);
+    DirectedGraph<Step, DefaultEdge> stepGraph = dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null);
     DirectedGraph<Vertex, DefaultEdge> graph = getDiagramGraph(stepGraph);
 
     JSONArray steps = new JSONArray();
@@ -329,17 +322,15 @@ public class WorkflowDiagram {
 
   protected static DirectedGraph<Step, DefaultEdge> flatDependencyGraphFromTailSteps(Set<Step> tailSteps,
                                                                                      EventTimer workflowTimer) {
-    return dependencyGraphFromTailSteps(tailSteps, workflowTimer, null);
+    return dependencyGraphFromTailSteps(tailSteps, workflowTimer);
   }
 
-  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer,
-                                                                               Set<Step> multiStepsToExpand) {
+  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer) {
     verifyNoOrphanedTailSteps(tailSteps);
-    return dependencyGraphFromTailStepsNoVerification(tailSteps, workflowTimer, multiStepsToExpand);
+    return dependencyGraphFromTailStepsNoVerification(tailSteps, workflowTimer);
   }
 
-  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailStepsNoVerification(Set<Step> tailSteps, EventTimer workflowTimer,
-                                                                                             Set<Step> multiStepsToExpand) {
+  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailStepsNoVerification(Set<Step> tailSteps, EventTimer workflowTimer) {
 
     Set<Step> tailsAndDependencies = addDependencies(tailSteps);
     addToWorkflowTimer(tailsAndDependencies, workflowTimer);
@@ -350,9 +341,7 @@ public class WorkflowDiagram {
     // now, proceed through each MultiStepAction node in the dependency graph,
     // recursively flattening it out and merging it into the current dependency
     // graph.
-    if (multiStepsToExpand != null) { // Control which multisteps should be flattened
-      multiSteps.retainAll(multiStepsToExpand);
-    }
+
     while (!multiSteps.isEmpty()) {
       Step s = multiSteps.poll();
       // If the dependency graph doesn't contain the vertex, then we've already
@@ -360,8 +349,7 @@ public class WorkflowDiagram {
       if (dependencyGraph.containsVertex(s)) {
         MultiStepAction msa = (MultiStepAction)s.getAction();
 
-        pullUpSubstepsAndAdjustCheckpointTokens(dependencyGraph, multiSteps, s,
-            msa, multiStepsToExpand);
+        pullUpSubstepsAndAdjustCheckpointTokens(dependencyGraph, multiSteps, s, msa);
 
         // now that the dep graph contains the unwrapped multistep *and* the
         // original multistep, let's move the edges to the unwrapped stuff so that
@@ -423,7 +411,7 @@ public class WorkflowDiagram {
       }
     }
 
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = dependencyGraphFromTailStepsNoVerification(tailSteps, null, multiStepsToExpand);
+    DirectedGraph<Step, DefaultEdge> dependencyGraph = dependencyGraphFromTailStepsNoVerification(tailSteps, null);
 
     return getOrphanedTailSteps(dependencyGraph, reachableSteps);
   }
@@ -514,7 +502,7 @@ public class WorkflowDiagram {
 
   private static void pullUpSubstepsAndAdjustCheckpointTokens(
       DirectedGraph<Step, DefaultEdge> dependencyGraph, Queue<Step> multiSteps,
-      Step s, MultiStepAction msa, Set<Step> multiStepsToExpand) {
+      Step s, MultiStepAction msa) {
     // take all the substeps out of the multistep and put them into the top
     // level dependency graph, making sure to add their dependencies.
     // this is certain to visit some vertices repeatedly, and could probably
@@ -523,9 +511,7 @@ public class WorkflowDiagram {
     for (Step substep : msa.getSubSteps()) {
       // if we encounter another multistep, put it on the queue to be expanded
       if (substep.getAction() instanceof MultiStepAction) {
-        if (multiStepsToExpand == null || multiStepsToExpand.contains(substep)) {
           multiSteps.add(substep);
-        }
       }
 
       addStepAndDependencies(dependencyGraph, substep);

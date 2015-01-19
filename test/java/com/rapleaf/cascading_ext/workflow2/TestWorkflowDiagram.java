@@ -92,7 +92,6 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   public void testComplexNestedAllExpanded() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
     WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
-    wfd.expandAllMultistepVertices();
     setupWorkflowGraph(wfd);
 
     verifyNumVertices(13);

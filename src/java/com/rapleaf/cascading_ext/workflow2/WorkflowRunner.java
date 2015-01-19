@@ -44,6 +44,7 @@ import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.StepState;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowState;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.support.Rap;
@@ -93,7 +94,7 @@ public final class WorkflowRunner {
         public void run() {
           String stepToken = step.getCheckpointToken();
           try {
-            if (WorkflowStatePersistence.NON_BLOCKING.contains(state.getState(stepToken).getStatus())) {
+            if (StepStatus.NON_BLOCKING.contains(state.getState(stepToken).getStatus())) {
               LOG.info("Step " + stepToken +  " was executed successfully in a prior run. Skipping.");
               persistence.markStepSkipped(stepToken);
             } else {
@@ -131,7 +132,7 @@ public final class WorkflowRunner {
     public boolean allDependenciesCompleted() {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if (!WorkflowStatePersistence.NON_BLOCKING.contains(state.getState(dep.getCheckpointToken()).getStatus())) {
+        if (!StepStatus.NON_BLOCKING.contains(state.getState(dep.getCheckpointToken()).getStatus())) {
           return false;
         }
       }
@@ -560,7 +561,7 @@ public final class WorkflowRunner {
   }
 
   public boolean isFailPending() {
-    WorkflowStatePersistence.WorkflowState state = persistence.getFlowStatus();
+    WorkflowState state = persistence.getFlowStatus();
 
     for (Map.Entry<String, StepState> entry : state.getStepStatuses().entrySet()) {
       if(entry.getValue().getStatus() == StepStatus.FAILED){
