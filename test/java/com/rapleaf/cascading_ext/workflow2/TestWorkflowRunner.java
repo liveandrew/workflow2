@@ -21,7 +21,7 @@ import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowState;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
-import com.rapleaf.support.event_timer.TimedEvent;
+import com.liveramp.cascading_ext.event_timer.TimedEvent;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;

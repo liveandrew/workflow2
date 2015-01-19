@@ -15,7 +15,7 @@ import com.liveramp.cascading_ext.counters.Counters;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.support.event_timer.FixedTimedEvent;
+import com.liveramp.cascading_ext.event_timer.FixedTimedEvent;
 
 public class FlowOperation implements ActionOperation {
   private final Flow flow;

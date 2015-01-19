@@ -16,7 +16,7 @@ import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
 import com.rapleaf.cascading_ext.workflow2.RunnableJob;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.support.event_timer.FixedTimedEvent;
+import com.liveramp.cascading_ext.event_timer.FixedTimedEvent;
 
 public class HadoopOperation implements ActionOperation {
   private static Logger LOG = Logger.getLogger(HadoopOperation.class);
