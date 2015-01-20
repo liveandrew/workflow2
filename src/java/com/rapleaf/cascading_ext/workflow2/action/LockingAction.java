@@ -45,7 +45,7 @@ public abstract class LockingAction extends Action {
         lock.clear();
       }
     } else {
-      throw new RuntimeException("Lock for action " + getCheckpointToken() + " is already held.");
+      throw new RuntimeException("Lock for action " + getActionId().resolve() + " is already held.");
     }
   }
 

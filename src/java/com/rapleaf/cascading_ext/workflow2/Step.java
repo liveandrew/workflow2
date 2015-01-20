@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 import com.liveramp.cascading_ext.event_timer.EventTimer;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
@@ -20,13 +17,11 @@ import com.rapleaf.support.event_timer.TimedEvent;
 
 public final class Step {
 
-  private String checkpointTokenPrefix;
   private final Action action;
   private final Set<Step> dependencies;
   private Set<Step> children;
   private final StepTimer timer = new StepTimer();
   private final List<NestedCounter> nestedCounters = new ArrayList<NestedCounter>();
-  private final Set<Conditional> conditions = Sets.newHashSet();
 
   public class StepTimer extends EventTimer {
 
@@ -44,11 +39,7 @@ public final class Step {
     this(action, Arrays.asList(dependencies));
   }
 
-  public Step(Action action, List<Step> dependencies) {
-    this(action, dependencies, Lists.<Conditional>newArrayList());
-  }
-
-  public Step(Action action, Collection<Step> dependencies, Collection<Conditional> conditions) {
+  public Step(Action action, Collection<Step> dependencies) {
     this.action = action;
     children = new HashSet<Step>();
     this.dependencies = new HashSet<Step>(dependencies);
@@ -57,10 +48,6 @@ public final class Step {
     }
     for (Step dependency : this.dependencies) {
       dependency.addChild(this);
-    }
-    this.conditions.addAll(conditions);
-    if (action instanceof MultiStepAction) {
-      ((MultiStepAction) action).setConditionsOnSubSteps(conditions);
     }
   }
 
@@ -83,30 +70,17 @@ public final class Step {
     return action;
   }
 
-  public void setCheckpointTokenPrefix(String checkpointTokenPrefix) {
-    this.checkpointTokenPrefix = checkpointTokenPrefix;
-  }
-
-  public String getCheckpointTokenPrefix() {
-
-    if(checkpointTokenPrefix == null){
-      throw new RuntimeException("Step prefix has not been set!");
-    }
-
-    return checkpointTokenPrefix;
-  }
-
   public String getCheckpointToken() {
-    return getCheckpointTokenPrefix() + getAction().getCheckpointToken();
+    return getAction().getActionId().resolve();
   }
 
   public String getSimpleCheckpointToken() {
-    return getAction().getCheckpointToken();
+    return getAction().getActionId().getRelativeName();
   }
 
   @Override
   public String toString() {
-    return "Step " + checkpointTokenPrefix + " " + action + " deps=" + dependencies;
+    return "Step " + getCheckpointToken() + " " + action + " deps=" + dependencies;
   }
 
   public TimedEvent getTimer() {
@@ -117,29 +91,12 @@ public final class Step {
     }
   }
 
-  public void addCondition(Conditional condition) {
-    addConditions(Sets.newHashSet(condition));
-  }
-
-  public void addConditions(Collection<Conditional> conditions) {
-    this.conditions.addAll(conditions);
-    if (getAction() instanceof MultiStepAction) {
-      ((MultiStepAction) getAction()).setConditionsOnSubSteps(conditions);
-    }
-  }
-
-  public Set<Conditional> getConditions() {
-    return conditions;
-  }
-
   public List<NestedCounter> getCounters() {
     return nestedCounters;
   }
 
   public void run(ContextStorage storage, List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
-    if (conditionsNotMet()) {
-      return;
-    }
+
     timer.start();
     try {
       action.internalExecute(storage, properties);
@@ -156,18 +113,5 @@ public final class Step {
         }
       }
     }
-  }
-
-  private boolean conditionsNotMet() {
-    for (Conditional condition : conditions) {
-      if (!condition.shouldRun()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public interface Conditional {
-    public boolean shouldRun();
   }
 }

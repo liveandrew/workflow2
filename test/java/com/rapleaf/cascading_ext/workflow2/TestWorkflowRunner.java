@@ -2,25 +2,35 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import junit.framework.Assert;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
 
 import cascading.tap.Tap;
+import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.TupleDataStore;
+import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
+import com.rapleaf.cascading_ext.workflow2.context.HdfsContextStorage;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowState;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.support.event_timer.TimedEvent;
 
 import static junit.framework.Assert.assertFalse;
@@ -257,7 +267,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     assertEquals(2, IncrementAction.counter);
   }
-
 
   private static Thread run(final WorkflowRunner runner, final Wrapper<Exception> exception) {
     return new Thread(new Runnable() {
@@ -559,5 +568,115 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     return new Step(action);
   }
 
+  @Test
+  public void testPathNesting() throws IOException, ClassNotFoundException {
+
+    String tmpRoot = getTestRoot() + "/tmp-dir";
+
+    Step step = new Step(new ParentResource("parent-step", tmpRoot));
+
+    HdfsContextStorage storage = new HdfsContextStorage(getTestRoot() + "/context");
+
+    TestWorkflowOptions options = new TestWorkflowOptions()
+        .setStorage(storage);
+
+    WorkflowStatePersistence persistence = new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints");
+
+    new WorkflowRunner(
+        "test workflow",
+        persistence,
+        options,
+        Sets.newHashSet(step)
+    ).run();
+
+    Resource<Integer> resMock1 = new Resource<Integer>("resource", new ActionId("parent-step")
+        .setParentPrefix(""));
+    Resource<Integer> resMock2 = new Resource<Integer>("output", new ActionId("consume-resource")
+        .setParentPrefix("parent-step__"));
+
+    assertEquals(1, storage.get(resMock1).intValue());
+    assertEquals(1, storage.get(resMock2).intValue());
+
+    Assert.assertEquals(StepStatus.COMPLETED, persistence.getState("parent-step__set-resource").getStatus());
+    Assert.assertEquals(StepStatus.COMPLETED, persistence.getState("parent-step__consume-resource").getStatus());
+
+    TupleDataStore store = new TupleDataStoreImpl("store", tmpRoot+"/parent-step-tmp-stores/consume-resource-tmp-stores/", "tup_out", new Fields("string"));
+    List<Tuple> tups = HRap.getAllTuples(store.getTap());
+
+    assertCollectionEquivalent(Sets.newHashSet(tups), Lists.<Tuple>newArrayList(new Tuple(1)));
+
+  }
+
+  public static class ParentResource extends MultiStepAction {
+
+    public ParentResource(String checkpointToken, String tmpRoot) throws IOException {
+      super(checkpointToken, tmpRoot);
+
+      Resource<Integer> res = resource("resource");
+
+      Step set = new Step(new SetResource(
+          "set-resource",
+          res
+      ));
+
+      Step get = new Step(new ConsumeResource(
+          "consume-resource",
+          getTmpRoot(),
+          res),
+          set
+      );
+
+      setSubStepsFromTail(get);
+
+    }
+
+  }
+
+  public static class SetResource extends Action {
+
+    private final Resource<Integer> res;
+
+    public SetResource(String checkpointToken,
+                       Resource<Integer> res1) {
+      super(checkpointToken);
+      this.res = res1;
+      creates(res1);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      set(res, 1);
+    }
+  }
+
+  public static class ConsumeResource extends Action {
+
+    private final Resource<Integer> res;
+
+    private final Resource<Integer> resOut;
+    private final TupleDataStore tupOut;
+
+    public ConsumeResource(String checkpointToken,
+                           String tmpRoot,
+                           Resource<Integer> res1) throws IOException {
+      super(checkpointToken, tmpRoot);
+      this.res = res1;
+      uses(res);
+
+      this.tupOut = builder().getTupleDataStore("tup_out", new Fields("string"));
+      this.resOut = resource("output");
+      creates(resOut);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      Integer val = get(res);
+      set(resOut, val);
+
+      TupleDataStoreHelper.writeToStore(tupOut,
+          new Tuple(val)
+      );
+    }
+  }
 
 }

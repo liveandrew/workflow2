@@ -62,7 +62,10 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     Step s1 = new Step(new FakeAction("s1", new DataStore[]{ds}, new DataStore[]{ds}));
     Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
     Step s3 = new Step(new FakeAction("s3", new DataStore[]{ds}, new DataStore[]{ds}), s2);
-    assertTrue(WorkflowDiagram.getOrphanedTailSteps(Collections.singleton(s3)).isEmpty());
+
+    Set<Step> tails = Collections.singleton(s3);
+    WorkflowUtil.setCheckpointPrefixes(tails);
+    assertTrue(WorkflowDiagram.getOrphanedTailSteps(tails).isEmpty());
   }
 
   @Test
@@ -73,7 +76,9 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
     Step s3 = new Step(new FakeMultistepAction("s3", new Step[]{}), s2);
     Step s4 = new Step(new FakeAction("s4", new DataStore[]{ds}, new DataStore[]{ds}), s3);
-    Set<Step> orphans = WorkflowDiagram.getOrphanedTailSteps(Collections.singleton(s4));
+    Set<Step> tails = Collections.singleton(s4);
+    WorkflowUtil.setCheckpointPrefixes(tails);
+    Set<Step> orphans = WorkflowDiagram.getOrphanedTailSteps(tails);
     assertTrue(orphans.isEmpty());
   }
 
@@ -84,7 +89,9 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     Step s1 = new Step(new FakeAction("s1", new DataStore[]{ds}, new DataStore[]{ds}));
     Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
     Step s3 = new Step(new FakeMultistepAction("s3", new Step[]{}), s2);
-    Set<Step> orphans = WorkflowDiagram.getOrphanedTailSteps(Collections.singleton(s3));
+    Set<Step> tails = Collections.singleton(s3);
+    WorkflowUtil.setCheckpointPrefixes(tails);
+    Set<Step> orphans = WorkflowDiagram.getOrphanedTailSteps(tails);
     assertTrue(orphans.isEmpty());
   }
 

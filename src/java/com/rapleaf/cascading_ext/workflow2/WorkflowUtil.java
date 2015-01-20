@@ -16,8 +16,10 @@ public class WorkflowUtil {
 
   private static void setCheckpointPrefixes(Step step, String prefix, Set<String> explored) {
 
-    step.setCheckpointTokenPrefix(prefix);
-    if (explored.contains(step.getCheckpointToken())) {
+    step.getAction().getActionId().setParentPrefix(prefix);
+    String resolved = step.getCheckpointToken();
+
+    if (explored.contains(resolved)) {
       return;
     }
 
@@ -25,7 +27,7 @@ public class WorkflowUtil {
       MultiStepAction msa = (MultiStepAction) step.getAction();
 
       for (Step tail : msa.getTailSteps()) {
-        setCheckpointPrefixes(tail, step.getCheckpointTokenPrefix() + msa.getCheckpointToken() + "__", explored);
+        setCheckpointPrefixes(tail, resolved + "__", explored);
       }
 
     }

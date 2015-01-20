@@ -26,14 +26,13 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
 
-  private final String checkpointToken;
+  private final ActionId actionId;
   private final String tmpRoot;
 
   public static enum DSAction {
@@ -86,7 +85,7 @@ public abstract class Action {
   }
 
   public Action(String checkpointToken, Map<Object, Object> properties) {
-    this.checkpointToken = checkpointToken;
+    this.actionId = new ActionId(checkpointToken);
     this.tmpRoot = null;
     this.stepProperties = properties;
   }
@@ -96,12 +95,15 @@ public abstract class Action {
   }
 
   public Action(String checkpointToken, String tmpRoot, Map<Object, Object> properties) {
-    this.checkpointToken = checkpointToken;
+    this.actionId = new ActionId(checkpointToken);
     this.tmpRoot = tmpRoot + "/" + checkpointToken + "-tmp-stores";
     this.builder = new DataStoreBuilder(getTmpRoot());
     this.stepProperties = properties;
   }
 
+  public ActionId getActionId() {
+    return actionId;
+  }
 
   protected FileSystem getFS() throws IOException {
     if (fs == null) {
@@ -170,7 +172,7 @@ public abstract class Action {
   }
 
   protected <T> Resource<T> resource(String name) {
-    return new Resource<T>(checkpointToken + "__" + name);
+    return new Resource<T>(name, actionId);
   }
 
   protected <T> T get(Resource<T> resource) throws IOException, ClassNotFoundException {
@@ -182,6 +184,7 @@ public abstract class Action {
   }
 
   protected <T> void set(Resource<T> resource, T value) throws IOException {
+
     if (!resources.get(ResourceAction.CREATES).contains(resource)) {
       throw new RuntimeException("Cannot set resource without declaring it with creates()");
     }
@@ -208,7 +211,7 @@ public abstract class Action {
       LOG.info("Locks " + locks);
       execute();
     } catch (Throwable t) {
-      LOG.fatal("Action " + checkpointToken + " failed due to Throwable", t);
+      LOG.fatal("Action " + actionId.resolve() + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
     } finally {
       endTimestamp = System.currentTimeMillis();
@@ -274,10 +277,6 @@ public abstract class Action {
     }
   }
 
-  public String getCheckpointToken() {
-    return checkpointToken;
-  }
-
   public final String getTmpRoot() {
     if (tmpRoot == null) {
       throw new RuntimeException("Temp root not set!");
@@ -287,37 +286,7 @@ public abstract class Action {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + " [checkpointToken=" + checkpointToken + "]";
-  }
-
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((checkpointToken == null) ? 0 : checkpointToken.hashCode());
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Action other = (Action)obj;
-    if (checkpointToken == null) {
-      if (other.checkpointToken != null) {
-        return false;
-      }
-    } else if (!checkpointToken.equals(other.checkpointToken)) {
-      return false;
-    }
-    return true;
+    return getClass().getSimpleName() + " [checkpointToken=" + getActionId().getRelativeName() + "]";
   }
 
   /**
@@ -399,13 +368,5 @@ public abstract class Action {
 
   public long getEndTimestamp() {
     return endTimestamp;
-  }
-
-  public static Action optional(Action action, boolean isEnabled) {
-    if(isEnabled) {
-      return action;
-    } else {
-      return new NoOpAction("skip-" + action.getCheckpointToken());
-    }
   }
 }

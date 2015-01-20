@@ -64,7 +64,7 @@ public class FutureCascadingAction extends Action {
     }
 
     FlowBuilder.FlowClosure f = buildFlow().connect(
-        flowName + ": " + getCheckpointToken(),
+        flowName + ": " + getActionId().getRelativeName(),
         sourceTaps,
         sinkTaps,
         tails.toArray(new Pipe[tails.size()]));

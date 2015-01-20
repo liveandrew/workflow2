@@ -25,11 +25,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.liveramp.cascading_ext.event_timer.EventTimer;
 import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.state.StepState;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
-import com.liveramp.cascading_ext.event_timer.EventTimer;
 
 
 public class WorkflowDiagram {
@@ -433,7 +433,7 @@ public class WorkflowDiagram {
   private static void verifyUniqueCheckpointTokens(Iterable<Step> steps) {
     Set<String> tokens = new HashSet<String>();
     for (Step step : steps) {
-      String token = step.getAction().getCheckpointToken();
+      String token = step.getCheckpointToken();
       if (tokens.contains(token)) {
         throw new IllegalArgumentException(step.toString() + " has a non-unique checkpoint token!");
       }

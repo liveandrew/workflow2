@@ -2,14 +2,28 @@ package com.rapleaf.cascading_ext.workflow2;
 
 public class Resource<T> {
 
-  private final String id;
+  private final String relativeId;
+  private final ActionId parent;
 
-  protected Resource(String id) {
-    this.id = id;
+  protected Resource(String relativeId, ActionId parent) {
+    this.relativeId = relativeId;
+    this.parent = parent;
   }
 
-  public String getId() {
-    return id;
+  public String getRelativeId() {
+    return relativeId;
+  }
+
+  public ActionId getParent() {
+    return parent;
+  }
+
+  @Override
+  public String toString() {
+    return "Resource{" +
+        "relativeId='" + relativeId + '\'' +
+        ", parent=" + parent +
+        '}';
   }
 
   @Override
@@ -21,17 +35,31 @@ public class Resource<T> {
       return false;
     }
 
+    System.out.println("asdfafafdafa");
+
     Resource resource = (Resource)o;
 
-    if (id != null ? !id.equals(resource.id) : resource.id != null) {
+    System.out.println("two");
+
+    if (parent != null ? !parent.equals(resource.parent) : resource.parent != null) {
       return false;
     }
+
+    System.out.println("confused");
+
+    if (relativeId != null ? !relativeId.equals(resource.relativeId) : resource.relativeId != null) {
+      return false;
+    }
+
+    System.out.println("whereeeeee");
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return id != null ? id.hashCode() : 0;
+    int result = relativeId != null ? relativeId.hashCode() : 0;
+    result = 31 * result + (parent != null ? parent.hashCode() : 0);
+    return result;
   }
 }

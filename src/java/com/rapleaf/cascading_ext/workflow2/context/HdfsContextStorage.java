@@ -29,21 +29,21 @@ public class HdfsContextStorage extends ContextStorage {
   private final org.apache.hadoop.fs.FileSystem fs;
   private final SerializationHandler handler;
 
-  public HdfsContextStorage(String root){
+  public HdfsContextStorage(String root) {
     this.fs = FileSystemHelper.getFS();
     this.handler = new JavaObjectSerializationHandler();
     this.root = root;
   }
 
-  private String getPath(Resource ref){
-    return root + "/" + ref.getId();
+  private String getPath(Resource ref) {
+    return root + "/" + ref.getParent().resolve() + "/" + ref.getRelativeId();
   }
 
   @Override
   public <T> void set(Resource<T> ref, T value) throws IOException {
 
     Path path = new Path(getPath(ref));
-    if(fs.exists(path)){
+    if (fs.exists(path)) {
       TrashHelper.deleteUsingTrashIfEnabled(fs, path);
     }
 
@@ -63,7 +63,7 @@ public class HdfsContextStorage extends ContextStorage {
     TupleEntryIterator read = hfs.openForRead(CascadingHelper.get().getFlowProcess());
     TupleEntry tup = read.next();
 
-    return (T) handler.deserialize(Bytes.getBytes((BytesWritable)tup.getObject("data")));
+    return (T)handler.deserialize(Bytes.getBytes((BytesWritable)tup.getObject("data")));
 
   }
 

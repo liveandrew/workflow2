@@ -26,8 +26,8 @@ public abstract class ContextStorage {
   /**
    * helper mainly for tests
    */
-  public <T> Resource<T> set(String resourceName, T value) throws IOException {
-    Resource<T> res = new Resource<T>(resourceName);
+  public <T> Resource<T> set(String resourceName, Action action, T value) throws IOException {
+    Resource<T> res = new Resource<T>(resourceName, action.getActionId());
     set(res, value);
     return res;
   }

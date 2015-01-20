@@ -10,9 +10,9 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+import com.liveramp.cascading_ext.event_timer.MultiTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.liveramp.cascading_ext.event_timer.MultiTimedEvent;
 
 public class MultiStepAction extends Action {
 
@@ -22,7 +22,7 @@ public class MultiStepAction extends Action {
   private class MultiStepActionTimer extends MultiTimedEvent {
 
     public MultiStepActionTimer() {
-      super(MultiStepAction.this.getCheckpointToken());
+      super(MultiStepAction.this.getActionId());
     }
   }
 
@@ -173,15 +173,5 @@ public class MultiStepAction extends Action {
       }
     }
     return counters;
-  }
-
-  public void setConditionsOnSubSteps(Collection<Step.Conditional> conditions) {
-    if(steps == null){
-      throw new RuntimeException("Sub steps in MSA '"+getCheckpointToken()+"' were never set!");
-    }
-
-    for (Step step : steps) {
-      step.addConditions(conditions);
-    }
   }
 }
