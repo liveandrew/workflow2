@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -126,6 +129,22 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   @Override
   public void markStepStatusMessage(String stepToken, String newMessage) {
     getState(stepToken).setStatusMessage(newMessage);
+  }
+
+  @Override
+  public void markStepRunningJob(String stepToken, RunningJob job) {
+
+    Set<String> knownJobs = Sets.newHashSet();
+    StepState stepState = getState(stepToken);
+
+    for (String jobId : stepState.getMrJobsByID().keySet()) {
+      knownJobs.add(jobId);
+    }
+
+    if (!knownJobs.contains(job.getID().toString())) {
+      stepState.addMrjob(new MapReduceJob(job.getID().toString(), job.getJobName(), job.getTrackingURL()));
+    }
+
   }
 
   @Override

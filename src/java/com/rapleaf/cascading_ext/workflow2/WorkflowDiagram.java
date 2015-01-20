@@ -28,6 +28,7 @@ import org.json.JSONObject;
 import com.liveramp.cascading_ext.event_timer.EventTimer;
 import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.state.MapReduceJob;
 import com.rapleaf.cascading_ext.workflow2.state.StepState;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 
@@ -56,8 +57,12 @@ public class WorkflowDiagram {
 
       this.actionName = state.getActionClass();
       this.status = state.getStatus().name().toLowerCase();
+      this.statusLinks = Maps.newTreeMap();
 
-      this.statusLinks = step.getAction().getStatusLinks();
+      for (Map.Entry<String, MapReduceJob> entry : state.getMrJobsByID().entrySet()) {
+        statusLinks.put(entry.getValue().getTrackingURL(), entry.getValue().getJobName());
+      }
+
       this.message = action.getStatusMessage();
       this.startTimestamp = action.getStartTimestamp();
       this.endTimestamp = action.getEndTimestamp();

@@ -1,9 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2.action_operations;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.mapred.RunningJob;
 
 import cascading.flow.Flow;
@@ -12,10 +12,10 @@ import cascading.stats.hadoop.HadoopStepStats;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.counters.Counters;
+import com.liveramp.cascading_ext.event_timer.FixedTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.liveramp.cascading_ext.event_timer.FixedTimedEvent;
 
 public class FlowOperation implements ActionOperation {
   private final Flow flow;
@@ -40,20 +40,21 @@ public class FlowOperation implements ActionOperation {
   }
 
   @Override
-  public Map<String, String> getSubStepStatusLinks() {
-    Map<String, String> subSteps = new LinkedHashMap<String, String>();
+  public List<RunningJob> listJobs() {
+
+    List<RunningJob> jobs = Lists.newArrayList();
 
     try {
       for (FlowStepStats st : flow.getFlowStats().getFlowStepStats()) {
         HadoopStepStats hdStepStats = (HadoopStepStats)st;
         RunningJob job = hdStepStats.getRunningJob();
-        subSteps.put(hdStepStats.getStatusURL(), job.getJobName());
+        jobs.add(job);
       }
     } catch (NullPointerException e) {
       // getJobID on occasion throws a null pointer exception, ignore it
     }
 
-    return subSteps;
+    return jobs;
   }
 
   @Override

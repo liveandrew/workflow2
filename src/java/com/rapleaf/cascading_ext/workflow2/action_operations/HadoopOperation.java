@@ -2,9 +2,8 @@ package com.rapleaf.cascading_ext.workflow2.action_operations;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
@@ -12,11 +11,11 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.log4j.Logger;
 
 import com.liveramp.cascading_ext.counters.Counter;
+import com.liveramp.cascading_ext.event_timer.FixedTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
 import com.rapleaf.cascading_ext.workflow2.RunnableJob;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.liveramp.cascading_ext.event_timer.FixedTimedEvent;
 
 public class HadoopOperation implements ActionOperation {
   private static Logger LOG = Logger.getLogger(HadoopOperation.class);
@@ -67,16 +66,14 @@ public class HadoopOperation implements ActionOperation {
   }
 
   @Override
-  public Map<String, String> getSubStepStatusLinks() {
-    Map<String, String> subStepIdToName = Maps.newHashMap();
+  public List<RunningJob> listJobs() {
 
-    try {
-      subStepIdToName.put(runningJob.getTrackingURL(), runningJob.getJobName());
-    } catch (NullPointerException npe) {
-      // getID on occasion throws a null pointer exception, ignore it
+    List<RunningJob> jobs = Lists.newArrayList();
+    if(runningJob != null){
+      jobs.add(runningJob);
     }
 
-    return subStepIdToName;
+    return jobs;
   }
 
   @Override

@@ -70,7 +70,7 @@ public final class Step {
   }
 
   public String getCheckpointToken() {
-    return getAction().getActionId().resolve();
+    return getAction().fullId();
   }
 
   public String getSimpleCheckpointToken() {

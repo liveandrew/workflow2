@@ -1,5 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
+import java.util.Map;
+
+import com.google.common.collect.Maps;
+
 public class StepState {
 
   //  immutable
@@ -12,6 +16,8 @@ public class StepState {
   private String failureMessage;
   private String failureTrace;
 
+  private Map<String, MapReduceJob> mrJobsByID = Maps.newHashMap();
+
   public StepState(StepStatus status, String actionClass) {
     this.status = status;
     this.actionClass = actionClass;
@@ -22,36 +28,37 @@ public class StepState {
     return status;
   }
 
-  public void setStatus(StepStatus status) {
+  protected void setStatus(StepStatus status) {
     this.status = status;
   }
-
-  public String getStatusMessage() {
-    return statusMessage;
-  }
-
-  public void setStatusMessage(String statusMessage) {
+  protected void setStatusMessage(String statusMessage) {
     this.statusMessage = statusMessage;
+  }
+  protected void setFailureMessage(String failureMessage) {
+    this.failureMessage = failureMessage;
+  }
+  protected void setFailureTrace(String failureTrace) {
+    this.failureTrace = failureTrace;
+  }
+  public void addMrjob(MapReduceJob job) {
+    this.mrJobsByID.put(job.getJobId(), job);
   }
 
   public String getFailureMessage() {
     return failureMessage;
   }
-
-  public void setFailureMessage(String failureMessage) {
-    this.failureMessage = failureMessage;
-  }
-
   public String getFailureTrace() {
     return failureTrace;
   }
-
-  public void setFailureTrace(String failureTrace) {
-    this.failureTrace = failureTrace;
+  public String getStatusMessage() {
+    return statusMessage;
   }
-
   public String getActionClass() {
     return actionClass;
   }
+  public Map<String, MapReduceJob> getMrJobsByID() {
+    return mrJobsByID;
+  }
+
 
 }

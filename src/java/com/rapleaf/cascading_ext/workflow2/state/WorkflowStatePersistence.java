@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
 
+import org.apache.hadoop.mapred.RunningJob;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
@@ -18,6 +19,7 @@ public interface WorkflowStatePersistence {
   public void markStepCompleted(String stepToken) throws IOException;
 
   public void markStepStatusMessage(String stepToken, String newMessage);
+  public void markStepRunningJob(String stepToken, RunningJob job);
 
   public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps);
 

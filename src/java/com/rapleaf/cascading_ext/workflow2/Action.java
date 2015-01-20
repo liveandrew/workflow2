@@ -3,7 +3,6 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,6 +139,7 @@ public abstract class Action {
     resources.put(action, resource);
   }
 
+
   //  datastore actions
 
   protected void readsFrom(DataStore store) {
@@ -193,9 +193,16 @@ public abstract class Action {
     storage.set(resource, value);
   }
 
+  public String fullId() {
+    return actionId.resolve();
+  }
+
   protected final void internalExecute(Map<Object, Object> properties) {
     List<ResourceSemaphore> locks = Lists.newArrayList();
+    JobPoller jobPoller = null;
+
     try {
+
       this.startTimestamp = System.currentTimeMillis();
 
       //  only set properties not explicitly set by the step
@@ -205,17 +212,26 @@ public abstract class Action {
         }
       }
 
+      jobPoller = new JobPoller(fullId(), operations, persistence);
+      jobPoller.start();
+
       prepDirs();
       locks = lockReadsFromStores();
       LOG.info("Aquired locks for " + getDatastores(DSAction.READS_FROM));
       LOG.info("Locks " + locks);
       execute();
+
+      jobPoller.shutdown();
+
     } catch (Throwable t) {
-      LOG.fatal("Action " + actionId.resolve() + " failed due to Throwable", t);
+      LOG.fatal("Action " + fullId() + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
     } finally {
       endTimestamp = System.currentTimeMillis();
       unlock(locks);
+      if(jobPoller != null) {
+        jobPoller.shutdown();
+      }
     }
   }
 
@@ -298,21 +314,11 @@ public abstract class Action {
    */
   protected void setStatusMessage(String statusMessage) {
     LOG.info("Status Message: " + statusMessage);
-    persistence.markStepStatusMessage(actionId.resolve(), statusMessage);
+    persistence.markStepStatusMessage(fullId(), statusMessage);
   }
 
   public String getStatusMessage() {
-    return persistence.getState(actionId.resolve()).getStatusMessage();
-  }
-
-  public Map<String, String> getStatusLinks() {
-    Map<String, String> linkToName = new LinkedHashMap<String, String>();
-
-    for (ActionOperation operation : operations) {
-      linkToName.putAll(operation.getSubStepStatusLinks());
-    }
-
-    return linkToName;
+    return persistence.getState(fullId()).getStatusMessage();
   }
 
   public void setOptionObjects(StoreReaderLockProvider lockProvider,
@@ -373,4 +379,5 @@ public abstract class Action {
   public long getEndTimestamp() {
     return endTimestamp;
   }
+
 }
