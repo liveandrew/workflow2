@@ -95,14 +95,14 @@ public final class WorkflowRunner {
           String stepToken = step.getCheckpointToken();
           try {
             if (StepStatus.NON_BLOCKING.contains(state.getState(stepToken).getStatus())) {
-              LOG.info("Step " + stepToken +  " was executed successfully in a prior run. Skipping.");
+              LOG.info("Step " + stepToken + " was executed successfully in a prior run. Skipping.");
               persistence.markStepSkipped(stepToken);
             } else {
 
               persistence.markStepRunning(stepToken);
 
               LOG.info("Executing step " + stepToken);
-              step.run(persistence, storage, Lists.newArrayList(statsRecorder), workflowJobProperties);
+              step.run(Lists.newArrayList(statsRecorder), workflowJobProperties);
 
               persistence.markStepCompleted(stepToken);
             }
@@ -238,7 +238,7 @@ public final class WorkflowRunner {
     this.persistence.prepare(dependencyGraph);
 
     removeRedundantEdges(dependencyGraph);
-    setLockProvider(dependencyGraph);
+    setStepContextObjects(dependencyGraph);
 
     // TODO: verify datasources satisfied
 
@@ -253,9 +253,13 @@ public final class WorkflowRunner {
     return workflowUUID;
   }
 
-  private void setLockProvider(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
+  private void setStepContextObjects(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
     for (Step step : dependencyGraph.vertexSet()) {
-      step.getAction().setLockProvider(this.lockProvider);
+      step.getAction().setOptionObjects(
+          this.lockProvider,
+          this.persistence,
+          this.storage
+      );
     }
   }
 
@@ -564,7 +568,7 @@ public final class WorkflowRunner {
     WorkflowState state = persistence.getFlowStatus();
 
     for (Map.Entry<String, StepState> entry : state.getStepStatuses().entrySet()) {
-      if(entry.getValue().getStatus() == StepStatus.FAILED){
+      if (entry.getValue().getStatus() == StepStatus.FAILED) {
         return true;
       }
     }
@@ -597,8 +601,8 @@ public final class WorkflowRunner {
     persistence.markShutdownRequested(reasonForShutdown);
   }
 
-  public void setPriority(String priority){
-    LOG.info("Setting new default priority: "+priority);
+  public void setPriority(String priority) {
+    LOG.info("Setting new default priority: " + priority);
 
     //  just so we fail loudly if not valid
     JobPriority.valueOf(priority);
@@ -606,31 +610,31 @@ public final class WorkflowRunner {
     workflowJobProperties.put(JOB_PRIORITY_PARAM, priority);
   }
 
-  public void setPool(String pool){
-    LOG.info("Setting new pool: "+pool);
+  public void setPool(String pool) {
+    LOG.info("Setting new pool: " + pool);
 
     workflowJobProperties.put(JOB_POOL_PARAM, pool);
   }
 
-  public String getPriority(){
-    return (String) getProperty(JOB_PRIORITY_PARAM);
+  public String getPriority() {
+    return (String)getProperty(JOB_PRIORITY_PARAM);
   }
 
-  public String getPool(){
-    return (String) getProperty(JOB_POOL_PARAM);
+  public String getPool() {
+    return (String)getProperty(JOB_POOL_PARAM);
   }
 
-  private Object getProperty(String property){
+  private Object getProperty(String property) {
 
     //  fall back to static jobconf props if not set elsewhere
     JobConf jobconf = CascadingHelper.get().getJobConf();
 
-    if(workflowJobProperties.containsKey(property)){
+    if (workflowJobProperties.containsKey(property)) {
       return workflowJobProperties.get(property);
     }
 
     Map<Object, Object> defaultProps = CascadingHelper.get().getDefaultProperties();
-    if(defaultProps.containsKey(property)){
+    if (defaultProps.containsKey(property)) {
       return defaultProps.get(property);
     }
 

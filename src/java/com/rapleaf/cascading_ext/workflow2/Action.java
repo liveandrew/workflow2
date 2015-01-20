@@ -193,14 +193,10 @@ public abstract class Action {
     storage.set(resource, value);
   }
 
-  protected final void internalExecute(WorkflowStatePersistence persistence,
-                                       ContextStorage storage,
-                                       Map<Object, Object> properties) {
+  protected final void internalExecute(Map<Object, Object> properties) {
     List<ResourceSemaphore> locks = Lists.newArrayList();
     try {
       this.startTimestamp = System.currentTimeMillis();
-      this.storage = storage;
-      this.persistence = persistence;
 
       //  only set properties not explicitly set by the step
       for (Object prop : properties.keySet()) {
@@ -319,8 +315,12 @@ public abstract class Action {
     return linkToName;
   }
 
-  public void setLockProvider(StoreReaderLockProvider lockProvider) {
+  public void setOptionObjects(StoreReaderLockProvider lockProvider,
+                               WorkflowStatePersistence persistence,
+                               ContextStorage storage) {
     this.lockProvider = lockProvider;
+    this.persistence = persistence;
+    this.storage = storage;
   }
 
   protected StoreReaderLockProvider getLockProvider() {

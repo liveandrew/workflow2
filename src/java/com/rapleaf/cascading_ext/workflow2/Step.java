@@ -11,7 +11,6 @@ import java.util.Set;
 
 import com.liveramp.cascading_ext.event_timer.EventTimer;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.support.event_timer.TimedEvent;
 
@@ -95,11 +94,11 @@ public final class Step {
     return nestedCounters;
   }
 
-  public void run(WorkflowStatePersistence persistence, ContextStorage storage, List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
+  public void run(List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
 
     timer.start();
     try {
-      action.internalExecute(persistence, storage, properties);
+      action.internalExecute(properties);
     } finally {
       for (ActionOperation operation : action.getRunFlows()) {
         operation.timeOperation(timer, getCheckpointToken(), nestedCounters);
