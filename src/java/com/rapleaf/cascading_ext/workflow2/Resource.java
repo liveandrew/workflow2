@@ -35,23 +35,15 @@ public class Resource<T> {
       return false;
     }
 
-    System.out.println("asdfafafdafa");
-
     Resource resource = (Resource)o;
-
-    System.out.println("two");
 
     if (parent != null ? !parent.equals(resource.parent) : resource.parent != null) {
       return false;
     }
 
-    System.out.println("confused");
-
     if (relativeId != null ? !relativeId.equals(resource.relativeId) : resource.relativeId != null) {
       return false;
     }
-
-    System.out.println("whereeeeee");
 
     return true;
   }
