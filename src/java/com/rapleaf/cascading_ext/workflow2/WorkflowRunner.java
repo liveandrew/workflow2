@@ -102,7 +102,7 @@ public final class WorkflowRunner {
               persistence.markStepRunning(stepToken);
 
               LOG.info("Executing step " + stepToken);
-              step.run(storage, Lists.newArrayList(statsRecorder), workflowJobProperties);
+              step.run(persistence, storage, Lists.newArrayList(statsRecorder), workflowJobProperties);
 
               persistence.markStepCompleted(stepToken);
             }

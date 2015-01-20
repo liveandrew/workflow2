@@ -124,6 +124,11 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
+  public void markStepStatusMessage(String stepToken, String newMessage) {
+    getState(stepToken).setStatusMessage(newMessage);
+  }
+
+  @Override
   public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps) {
 
     try {

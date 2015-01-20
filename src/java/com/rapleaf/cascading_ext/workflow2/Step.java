@@ -11,8 +11,8 @@ import java.util.Set;
 
 import com.liveramp.cascading_ext.event_timer.EventTimer;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
-import com.rapleaf.support.Rap;
 import com.rapleaf.support.event_timer.TimedEvent;
 
 public final class Step {
@@ -85,7 +85,7 @@ public final class Step {
 
   public TimedEvent getTimer() {
     if (action instanceof MultiStepAction) {
-      return ((MultiStepAction) action).getMultiStepActionTimer();
+      return ((MultiStepAction)action).getMultiStepActionTimer();
     } else {
       return timer;
     }
@@ -95,11 +95,11 @@ public final class Step {
     return nestedCounters;
   }
 
-  public void run(ContextStorage storage, List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
+  public void run(WorkflowStatePersistence persistence, ContextStorage storage, List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
 
     timer.start();
     try {
-      action.internalExecute(storage, properties);
+      action.internalExecute(persistence, storage, properties);
     } finally {
       for (ActionOperation operation : action.getRunFlows()) {
         operation.timeOperation(timer, getCheckpointToken(), nestedCounters);
@@ -107,10 +107,8 @@ public final class Step {
 
       timer.stop();
 
-      if (!Rap.getTestMode()) {
-        for (StepStatsRecorder recorder : recorders) {
-          recorder.recordStats(this, timer);
-        }
+      for (StepStatsRecorder recorder : recorders) {
+        recorder.recordStats(this, timer);
       }
     }
   }

@@ -28,6 +28,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
@@ -66,8 +67,6 @@ public abstract class Action {
 
   private StoreReaderLockProvider lockProvider;
 
-  private String lastStatusMessage = "";
-
   private long startTimestamp;
   private long endTimestamp;
   private Map<Object, Object> stepProperties;
@@ -78,7 +77,9 @@ public abstract class Action {
   private FileSystem fs;
 
   private DataStoreBuilder builder = null;
-  private ContextStorage storage;
+
+  private transient ContextStorage storage;
+  private transient WorkflowStatePersistence persistence;
 
   public Action(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
@@ -192,11 +193,14 @@ public abstract class Action {
     storage.set(resource, value);
   }
 
-  protected final void internalExecute(ContextStorage storage, Map<Object, Object> properties) {
+  protected final void internalExecute(WorkflowStatePersistence persistence,
+                                       ContextStorage storage,
+                                       Map<Object, Object> properties) {
     List<ResourceSemaphore> locks = Lists.newArrayList();
     try {
       this.startTimestamp = System.currentTimeMillis();
       this.storage = storage;
+      this.persistence = persistence;
 
       //  only set properties not explicitly set by the step
       for (Object prop : properties.keySet()) {
@@ -298,11 +302,11 @@ public abstract class Action {
    */
   protected void setStatusMessage(String statusMessage) {
     LOG.info("Status Message: " + statusMessage);
-    lastStatusMessage = statusMessage;
+    persistence.markStepStatusMessage(actionId.resolve(), statusMessage);
   }
 
   public String getStatusMessage() {
-    return lastStatusMessage;
+    return persistence.getState(actionId.resolve()).getStatusMessage();
   }
 
   public Map<String, String> getStatusLinks() {

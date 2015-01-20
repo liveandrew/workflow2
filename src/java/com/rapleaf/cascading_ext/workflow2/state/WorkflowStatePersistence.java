@@ -17,6 +17,8 @@ public interface WorkflowStatePersistence {
   public void markStepSkipped(String stepToken) throws IOException;
   public void markStepCompleted(String stepToken) throws IOException;
 
+  public void markStepStatusMessage(String stepToken, String newMessage);
+
   public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps);
 
   public void markShutdownRequested(String reason);

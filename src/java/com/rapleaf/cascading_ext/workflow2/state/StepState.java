@@ -8,12 +8,14 @@ public class StepState {
   //  required
   private StepStatus status;
 
+  private String statusMessage;
   private String failureMessage;
   private String failureTrace;
 
   public StepState(StepStatus status, String actionClass) {
     this.status = status;
     this.actionClass = actionClass;
+    this.statusMessage = "";
   }
 
   public StepStatus getStatus() {
@@ -22,6 +24,14 @@ public class StepState {
 
   public void setStatus(StepStatus status) {
     this.status = status;
+  }
+
+  public String getStatusMessage() {
+    return statusMessage;
+  }
+
+  public void setStatusMessage(String statusMessage) {
+    this.statusMessage = statusMessage;
   }
 
   public String getFailureMessage() {
