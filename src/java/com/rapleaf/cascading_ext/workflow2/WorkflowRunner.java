@@ -22,7 +22,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobPriority;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -86,6 +85,22 @@ public final class WorkflowRunner {
       this.state = state;
     }
 
+    private Map<Object, Object> buildInheritedProperties(){
+      Map<Object, Object> stepProperties = Maps.newHashMap(workflowJobProperties);
+      String priority = persistence.getPriority();
+      String pool = persistence.getPool();
+
+      if(priority != null) {
+        stepProperties.put(JOB_PRIORITY_PARAM, priority);
+      }
+
+      if(pool != null) {
+        stepProperties.put(JOB_POOL_PARAM, pool);
+      }
+
+      return stepProperties;
+    }
+
     public void start() {
       CascadingHelper.get().getJobConf();
       Runnable r = new Runnable() {
@@ -101,7 +116,7 @@ public final class WorkflowRunner {
               persistence.markStepRunning(stepToken);
 
               LOG.info("Executing step " + stepToken);
-              step.run(Lists.newArrayList(statsRecorder), workflowJobProperties);
+              step.run(Lists.newArrayList(statsRecorder), buildInheritedProperties());
 
               persistence.markStepCompleted(stepToken);
             }
@@ -233,8 +248,10 @@ public final class WorkflowRunner {
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps, timer);
 
-
-    this.persistence.prepare(dependencyGraph);
+    this.persistence.prepare(dependencyGraph,
+        findDefaultValue(JOB_POOL_PARAM),
+        findDefaultValue(JOB_PRIORITY_PARAM)
+    );
 
     removeRedundantEdges(dependencyGraph);
     setStepContextObjects(dependencyGraph);
@@ -571,61 +588,25 @@ public final class WorkflowRunner {
     enabledNotifications.add(workflowRunnerNotification);
   }
 
-  public void requestShutdown(String reason) {
-    LOG.info("Shutdown was requested. Running components will be allowed to complete before shutdown.");
-
-    String reasonForShutdown;
-    if (reason == null || reason.equals("")) {
-      reasonForShutdown = "No reason provided.";
-    } else {
-      reasonForShutdown = reason;
-    }
-
-    persistence.markShutdownRequested(reasonForShutdown);
-  }
-
-  public void setPriority(String priority) {
-    LOG.info("Setting new default priority: " + priority);
-
-    //  just so we fail loudly if not valid
-    JobPriority.valueOf(priority);
-
-    workflowJobProperties.put(JOB_PRIORITY_PARAM, priority);
-  }
-
-  public void setPool(String pool) {
-    LOG.info("Setting new pool: " + pool);
-
-    workflowJobProperties.put(JOB_POOL_PARAM, pool);
-  }
-
-  public String getPriority() {
-    return (String)getProperty(JOB_PRIORITY_PARAM);
-  }
-
-  public String getPool() {
-    return (String)getProperty(JOB_POOL_PARAM);
-  }
-
-  private Object getProperty(String property) {
+  private String findDefaultValue(String property) {
 
     //  fall back to static jobconf props if not set elsewhere
     JobConf jobconf = CascadingHelper.get().getJobConf();
 
     if (workflowJobProperties.containsKey(property)) {
-      return workflowJobProperties.get(property);
+      return (String) workflowJobProperties.get(property);
     }
 
     Map<Object, Object> defaultProps = CascadingHelper.get().getDefaultProperties();
     if (defaultProps.containsKey(property)) {
-      return defaultProps.get(property);
+      return (String) defaultProps.get(property);
     }
 
     return jobconf.get(property);
   }
 
 
-  public String getReasonForShutdownRequest() {
+  private String getReasonForShutdownRequest() {
     return persistence.getShutdownRequest();
   }
 

@@ -69,7 +69,7 @@ public class WorkflowWebServer {
     WorkflowDiagram diagram = new WorkflowDiagram(workflowRunner, persistence);
 
     webAppContext.addServlet(new ServletHolder(new WorkflowStateServlet(diagram)), "/state");
-    webAppContext.addServlet(new ServletHolder(new WorkflowCommandServlet(workflowRunner)), "/command");
+    webAppContext.addServlet(new ServletHolder(new WorkflowCommandServlet(persistence)), "/command");
 
     server.setHandler(webAppContext);
 

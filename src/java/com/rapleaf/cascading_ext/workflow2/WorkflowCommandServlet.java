@@ -6,12 +6,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+
 public class WorkflowCommandServlet extends HttpServlet {
 
-  private final WorkflowRunner runner;
+  private final WorkflowStatePersistence persistence;
 
-  public WorkflowCommandServlet(WorkflowRunner runner) {
-    this.runner = runner;
+  public WorkflowCommandServlet(WorkflowStatePersistence persistence) {
+    this.persistence = persistence;
   }
 
   private static final Object lock = new Object();
@@ -22,13 +24,15 @@ public class WorkflowCommandServlet extends HttpServlet {
 
     synchronized (lock) {
       if (command.equals("shutdown")) {
-        runner.requestShutdown(req.getParameter("reason"));
+        persistence.markShutdownRequested(req.getParameter("reason"));
       } else if (command.equals("set_pool")) {
-        runner.setPool(req.getParameter("pool"));
+        persistence.markPool(req.getParameter("pool"));
       } else if (command.equals("set_priority")) {
-        runner.setPriority(req.getParameter("priority"));
+        persistence.markPriority(req.getParameter("priority"));
       }
     }
     
   }
+
+
 }

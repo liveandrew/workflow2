@@ -11,7 +11,7 @@ import com.rapleaf.cascading_ext.workflow2.Step;
 
 public interface WorkflowStatePersistence {
 
-  public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps);
+  public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps, String pool, String priority);
 
   public void markStepRunning(String stepToken) throws IOException;
   public void markStepFailed(String stepToken, Throwable t) throws IOException;
@@ -21,15 +21,15 @@ public interface WorkflowStatePersistence {
   public void markStepStatusMessage(String stepToken, String newMessage);
   public void markStepRunningJob(String stepToken, RunningJob job);
 
-//  public void markPool(String pool);
-//  public void markPriority(String priority);
+  public void markPool(String pool);
+  public void markPriority(String priority);
   public void markShutdownRequested(String reason);
   public void markWorkflowStopped();
 
   public StepState getState(String stepToken);
   public Map<String, StepState> getStepStatuses();
   public String getShutdownRequest();
-//  public String getPriority();
-//  public String getPool();
+  public String getPriority();
+  public String getPool();
 
 }

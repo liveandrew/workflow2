@@ -57,4 +57,13 @@ public class WorkflowUtil {
 
     return false;
   }
+
+  public static String getShutdownReason(String provided){
+    if (provided == null || provided.equals("")) {
+      return "No reason provided.";
+    } else {
+      return provided;
+    }
+  }
+
 }

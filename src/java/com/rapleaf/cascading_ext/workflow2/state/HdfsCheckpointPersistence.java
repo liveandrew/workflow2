@@ -20,6 +20,7 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.cascading_ext.workflow2.WorkflowUtil;
 
 public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = Logger.getLogger(HdfsCheckpointPersistence.class);
@@ -46,7 +47,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
   @Override
   public void markShutdownRequested(String reason) {
-    shutdownReason = reason;
+    shutdownReason = WorkflowUtil.getShutdownReason(reason);
   }
 
   @Override
@@ -96,15 +97,15 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     return shutdownReason;
   }
 
-//  @Override
-//  public String getPriority() {
-//    // TODO implement
-//  }
-//
-//  @Override
-//  public String getPool() {
-//    // TODO implement
-//  }
+  @Override
+  public String getPriority() {
+    return priority;
+  }
+
+  @Override
+  public String getPool() {
+    return pool;
+  }
 
   @Override
   public void markStepRunning(String stepToken) throws IOException {
@@ -171,7 +172,20 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps) {
+  public void markPool(String pool) {
+    this.pool = pool;
+  }
+
+  @Override
+  public void markPriority(String priority) {
+    this.priority = priority;
+  }
+
+  @Override
+  public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps, String pool, String priority) {
+
+    this.pool = pool;
+    this.priority = priority;
 
     try {
       LOG.info("Creating checkpoint dir " + checkpointDir);

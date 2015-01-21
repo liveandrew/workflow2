@@ -301,7 +301,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     t.start();
 
     Thread.sleep(500);
-    run.requestShutdown("Shutdown Requested");
+    peristence.markShutdownRequested("Shutdown Requested");
     semaphore2.release();
 
     t.join();
@@ -335,7 +335,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     t.start();
 
     Thread.sleep(500);
-    run.requestShutdown("Shutdown Requested");
+    peristence.markShutdownRequested("Shutdown Requested");
 
     semaphore.release();
 
@@ -370,7 +370,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     t.start();
 
     Thread.sleep(500);
-    run.requestShutdown("Shutdown Requested");
+    peristence.markShutdownRequested("Shutdown Requested");
 
     semaphore.release();
 
