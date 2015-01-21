@@ -30,64 +30,7 @@ import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 
 public class WorkflowDiagram {
 
-  public static class Vertex {
-    private String id;
-    private String status;
-    private long startTimestamp;
-    private long endTimestamp;
-    private String message;
-    private String actionName;
-    private Map<String, String> statusLinks;
-
-    public Vertex(String stepId, WorkflowStatePersistence persistence) {
-
-      this.id = stepId;
-
-      StepState state = persistence.getState(id);
-
-      this.actionName = state.getActionClass();
-      this.status = state.getStatus().name().toLowerCase();
-      this.statusLinks = Maps.newTreeMap();
-
-      for (Map.Entry<String, MapReduceJob> entry : state.getMrJobsByID().entrySet()) {
-        statusLinks.put(entry.getValue().getTrackingURL(), entry.getValue().getJobName());
-      }
-      this.message = state.getStatusMessage();
-
-      this.startTimestamp = state.getStartTimestamp();
-      this.endTimestamp = state.getEndTimestamp();
-    }
-
-    public String getStatus() {
-      return status;
-    }
-
-    public String getId() {
-      return id;
-    }
-
-    public long getStartTimestamp() {
-      return startTimestamp;
-    }
-
-    public long getEndTimestamp() {
-      return endTimestamp;
-    }
-
-    public String getMessage() {
-      return message;
-    }
-
-    public Map<String, String> getStatusLinks() {
-      return statusLinks;
-    }
-
-    public String getActionName() {
-      return actionName;
-    }
-  }
-
-  public static DirectedGraph<Vertex, DefaultEdge> getDiagramGraph(WorkflowStatePersistence persistence) {
+  public static DirectedGraph<StepState, DefaultEdge> getDiagramGraph(WorkflowStatePersistence persistence) {
 
     DirectedGraph<String, DefaultEdge> forwardGraph = new SimpleDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
 
@@ -102,12 +45,34 @@ public class WorkflowDiagram {
     }
 
     DirectedGraph<String, DefaultEdge> dependencyGraph = new EdgeReversedGraph<String, DefaultEdge>(forwardGraph);
-    DirectedGraph<Vertex, DefaultEdge> diagramGraph = wrapVertices(dependencyGraph, persistence);
+    DirectedGraph<StepState, DefaultEdge> diagramGraph = wrapVertices(dependencyGraph, persistence);
     removeRedundantEdges(diagramGraph);
     return diagramGraph;
   }
 
-  private static void addDatastoreConnections(Vertex step,
+  private static DirectedGraph<StepState, DefaultEdge> wrapVertices(DirectedGraph<String, DefaultEdge> graph,
+                                                                    WorkflowStatePersistence persistence) {
+    DirectedGraph<StepState, DefaultEdge> resultGraph =
+        new SimpleDirectedGraph<StepState, DefaultEdge>(DefaultEdge.class);
+
+    Map<String, StepState> stepToVertex = new HashMap<String, StepState>();
+    for (String step : graph.vertexSet()) {
+      StepState node = persistence.getState(step);
+
+      stepToVertex.put(step, node);
+      resultGraph.addVertex(node);
+    }
+
+    for (DefaultEdge edge : graph.edgeSet()) {
+      StepState source = stepToVertex.get(graph.getEdgeSource(edge));
+      StepState target = stepToVertex.get(graph.getEdgeTarget(edge));
+      resultGraph.addEdge(source, target);
+    }
+
+    return resultGraph;
+  }
+
+  private static void addDatastoreConnections(StepState step,
                                               Map<String, Integer> stepIdToNum,
                                               JSONArray dsConnections,
                                               Multimap<Action.DSAction, DataStoreInfo> stores) throws JSONException {
@@ -118,7 +83,7 @@ public class WorkflowDiagram {
       for (DataStoreInfo ds : stores.get(action)) {
 
         dsConnections.put(new JSONObject()
-            .put("step", stepIdToNum.get(step.getId()))
+            .put("step", stepIdToNum.get(step.getStepId()))
             .put("datastore", ds.getIndexInFlow())
             .put("connection", type));
       }
@@ -129,7 +94,7 @@ public class WorkflowDiagram {
 
   public static JSONObject getJSONState(WorkflowStatePersistence persistence) throws JSONException, UnknownHostException {
 
-    DirectedGraph<Vertex, DefaultEdge> graph = getDiagramGraph(persistence);
+    DirectedGraph<StepState, DefaultEdge> graph = getDiagramGraph(persistence);
 
     JSONArray steps = new JSONArray();
     JSONArray edges = new JSONArray();
@@ -137,39 +102,44 @@ public class WorkflowDiagram {
     Map<String, Integer> stepIdToNum = Maps.newHashMap();
     Multimap<String, String> allEdges = HashMultimap.create();
 
-    TopologicalOrderIterator<Vertex, DefaultEdge> iter = new TopologicalOrderIterator<Vertex, DefaultEdge>(graph);
+    TopologicalOrderIterator<StepState, DefaultEdge> iter = new TopologicalOrderIterator<StepState, DefaultEdge>(graph);
 
     while (iter.hasNext()) {
-      Vertex vertex = iter.next();
+      StepState vertex = iter.next();
 
       int nodeIndex = stepIdToNum.size();
-      stepIdToNum.put(vertex.getId(), nodeIndex);
+      stepIdToNum.put(vertex.getStepId(), nodeIndex);
+
+      Map<String, String> statusLinks = Maps.newHashMap();
+      for (Map.Entry<String, MapReduceJob> entry : vertex.getMrJobsByID().entrySet()) {
+        statusLinks.put(entry.getValue().getTrackingURL(), entry.getValue().getJobName());
+      }
 
       steps.put(new JSONObject()
-              .put("id", vertex.getId())
+              .put("id", vertex.getStepId())
               .put("index", nodeIndex)
               .put("status", vertex.getStatus())
               .put("start_timestamp", vertex.getStartTimestamp())
               .put("end_timestamp", vertex.getEndTimestamp())
-              .put("message", vertex.getMessage())
-              .put("action_name", vertex.getActionName())
-              .put("status_links", vertex.getStatusLinks())
+              .put("message", vertex.getStatusMessage())
+              .put("action_name", vertex.getActionClass())
+              .put("status_links", statusLinks)
       );
 
       for (DefaultEdge inEdge : graph.incomingEdgesOf(vertex)) {
-        Vertex source = graph.getEdgeSource(inEdge);
-        allEdges.put(source.getId(), vertex.getId());
+        StepState source = graph.getEdgeSource(inEdge);
+        allEdges.put(source.getStepId(), vertex.getStepId());
       }
     }
 
 
     JSONArray dsConnections = new JSONArray();
 
-    for (Vertex step : graph.vertexSet()) {
+    for (StepState step : graph.vertexSet()) {
       addDatastoreConnections(step,
           stepIdToNum,
           dsConnections,
-          persistence.getState(step.getId()).getDatastores()
+          persistence.getState(step.getStepId()).getDatastores()
       );
     }
 
@@ -215,50 +185,27 @@ public class WorkflowDiagram {
     return "running";
   }
 
-  private static DirectedGraph<Vertex, DefaultEdge> wrapVertices(DirectedGraph<String, DefaultEdge> graph,
-                                                                 WorkflowStatePersistence persistence) {
-    DirectedGraph<Vertex, DefaultEdge> resultGraph =
-        new SimpleDirectedGraph<Vertex, DefaultEdge>(DefaultEdge.class);
+  private static void removeRedundantEdges(DirectedGraph<StepState, DefaultEdge> graph) {
+    for (StepState vertex : graph.vertexSet()) {
+      Set<StepState> firstDegDeps = new HashSet<StepState>();
+      Set<StepState> secondPlusDegDeps = new HashSet<StepState>();
+      for (DefaultEdge edge : graph.outgoingEdgesOf(vertex)) {
+        StepState depVertex = graph.getEdgeTarget(edge);
+        firstDegDeps.add(depVertex);
+        getOutgoingVerticesRecursive(depVertex, secondPlusDegDeps, graph);
+      }
 
-    Map<String, Vertex> stepToVertex = new HashMap<String, Vertex>();
-    for (String step : graph.vertexSet()) {
-      Vertex vwrapper = new Vertex(step, persistence);
-      stepToVertex.put(step, vwrapper);
-      resultGraph.addVertex(vwrapper);
-    }
-
-    for (DefaultEdge edge : graph.edgeSet()) {
-      Vertex source = stepToVertex.get(graph.getEdgeSource(edge));
-      Vertex target = stepToVertex.get(graph.getEdgeTarget(edge));
-      resultGraph.addEdge(source, target);
-    }
-
-    return resultGraph;
-  }
-
-  private static void removeRedundantEdges(DirectedGraph<Vertex, DefaultEdge> graph) {
-    for (Vertex vertex : graph.vertexSet()) {
-      if (!vertex.getStatus().equals("datastore")) {
-        Set<Vertex> firstDegDeps = new HashSet<Vertex>();
-        Set<Vertex> secondPlusDegDeps = new HashSet<Vertex>();
-        for (DefaultEdge edge : graph.outgoingEdgesOf(vertex)) {
-          Vertex depVertex = graph.getEdgeTarget(edge);
-          firstDegDeps.add(depVertex);
-          getOutgoingVerticesRecursive(depVertex, secondPlusDegDeps, graph);
-        }
-
-        for (Vertex firstDegDep : firstDegDeps) {
-          if (secondPlusDegDeps.contains(firstDegDep)) {
-            graph.removeAllEdges(vertex, firstDegDep);
-          }
+      for (StepState firstDegDep : firstDegDeps) {
+        if (secondPlusDegDeps.contains(firstDegDep)) {
+          graph.removeAllEdges(vertex, firstDegDep);
         }
       }
     }
   }
 
-  private static void getOutgoingVerticesRecursive(Vertex vertex, Set<Vertex> results, DirectedGraph<Vertex, DefaultEdge> graph) {
+  private static void getOutgoingVerticesRecursive(StepState vertex, Set<StepState> results, DirectedGraph<StepState, DefaultEdge> graph) {
     for (DefaultEdge edge : graph.outgoingEdgesOf(vertex)) {
-      Vertex s = graph.getEdgeTarget(edge);
+      StepState s = graph.getEdgeTarget(edge);
       results.add(s);
       getOutgoingVerticesRecursive(s, results, graph);
     }

@@ -272,6 +272,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
         }
 
         statuses.put(val.getCheckpointToken(), new StepState(
+            val.getCheckpointToken(),
             StepStatus.WAITING,
             action.getClass().getSimpleName(),
             dependencies,

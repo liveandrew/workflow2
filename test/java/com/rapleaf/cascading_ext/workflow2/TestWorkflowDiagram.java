@@ -16,9 +16,9 @@ import org.junit.Test;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram.Vertex;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
+import com.rapleaf.cascading_ext.workflow2.state.StepState;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
@@ -55,8 +55,8 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     }
   }
 
-  private Map<String, Vertex> idToVertex;
-  DirectedGraph<Vertex, DefaultEdge> graph;
+  private Map<String, StepState> idToVertex;
+  DirectedGraph<StepState, DefaultEdge> graph;
 
   @Test
   public void testVerifyNoOrphanedTailStep() throws Exception {
@@ -209,10 +209,10 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     return new BytesDataStore(null, name, "/tmp/", name);
   }
 
-  private void populateNameToVertex(DirectedGraph<Vertex, DefaultEdge> graph) {
-    idToVertex = new HashMap<String, Vertex>();
-    for (Vertex v : graph.vertexSet()) {
-      idToVertex.put(v.getId(), v);
+  private void populateNameToVertex(DirectedGraph<StepState, DefaultEdge> graph) {
+    idToVertex = new HashMap<String, StepState>();
+    for (StepState v : graph.vertexSet()) {
+      idToVertex.put(v.getStepId(), v);
     }
   }
 
