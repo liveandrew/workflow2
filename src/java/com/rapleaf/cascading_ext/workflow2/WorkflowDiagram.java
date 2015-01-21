@@ -124,10 +124,6 @@ public class WorkflowDiagram {
     }
   }
 
-  public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph() {
-    return getDiagramGraph(dependencyGraphFromTailSteps(workflowRunner.getTailSteps(), null));
-  }
-
   public DirectedGraph<Vertex, DefaultEdge> getDiagramGraph(DirectedGraph<Step, DefaultEdge> graph) {
     DirectedGraph<Step, DefaultEdge> dependencyGraph = new EdgeReversedGraph(graph);
     DirectedGraph<Vertex, DefaultEdge> diagramGraph = wrapVertices(dependencyGraph);
@@ -320,12 +316,7 @@ public class WorkflowDiagram {
     }
   }
 
-  protected static DirectedGraph<Step, DefaultEdge> flatDependencyGraphFromTailSteps(Set<Step> tailSteps,
-                                                                                     EventTimer workflowTimer) {
-    return dependencyGraphFromTailSteps(tailSteps, workflowTimer);
-  }
-
-  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer) {
+  public static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer) {
     verifyNoOrphanedTailSteps(tailSteps);
     return dependencyGraphFromTailStepsNoVerification(tailSteps, workflowTimer);
   }

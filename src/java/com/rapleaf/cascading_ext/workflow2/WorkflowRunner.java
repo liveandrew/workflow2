@@ -232,7 +232,7 @@ public final class WorkflowRunner {
     this.registry = options.getRegistry();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
-    this.dependencyGraph = WorkflowDiagram.flatDependencyGraphFromTailSteps(tailSteps, timer);
+    this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps, timer);
 
 
     this.persistence.prepare(dependencyGraph);

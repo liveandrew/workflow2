@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.junit.Test;
@@ -16,6 +18,7 @@ import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram.Vertex;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
@@ -98,8 +101,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   @Test
   public void testComplexNestedAllExpanded() throws Exception {
     Step tail = getComplexNestedWorkflowTail();
-    WorkflowDiagram wfd = getWorkflowDiagramFromTails(tail);
-    setupWorkflowGraph(wfd);
+    setupWorkflowGraph(tail);
 
     verifyNumVertices(13);
     verifyVertexInGraph("s1");
@@ -192,16 +194,17 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
       s6);
   }
 
-  private void setupWorkflowGraph(WorkflowDiagram wfd) {
-    graph = wfd.getDiagramGraph();
-    populateNameToVertex(graph);
-  }
+  private void setupWorkflowGraph(Step tailStep) {
+    HashSet<Step> tail = Sets.newHashSet(tailStep);
+    WorkflowUtil.setCheckpointPrefixes(tail);
 
-  private WorkflowDiagram getWorkflowDiagramFromTails(Step first, Step... rest) {
-    WorkflowRunner wfr = new WorkflowRunner("Test Workflow", getTestRoot() + "/test_workflow",
-        new TestWorkflowOptions().setMaxConcurrentSteps(1),
-        first, rest);
-    return new WorkflowDiagram(wfr, wfr.getPersistence());
+    HdfsCheckpointPersistence pers = new HdfsCheckpointPersistence(getTestRoot()+"/perm");
+    WorkflowRunner wfr = new WorkflowRunner("test", pers, new TestWorkflowOptions(), tail);
+    WorkflowDiagram wd = new WorkflowDiagram(wfr, pers);
+
+    graph = wd.getDiagramGraph(WorkflowDiagram.dependencyGraphFromTailSteps(tail, null));
+
+    populateNameToVertex(graph);
   }
 
   private static DataStore getFakeDS(String name) throws Exception {
