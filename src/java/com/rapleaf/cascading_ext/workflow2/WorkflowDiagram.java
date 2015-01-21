@@ -44,14 +44,9 @@ public class WorkflowDiagram {
     private String actionName;
     private Map<String, String> statusLinks;
 
-    public Vertex(Step step, WorkflowStatePersistence persistence) {
+    public Vertex(String stepId, WorkflowStatePersistence persistence) {
 
-      Action action = step.getAction();
-      this.id = step.getCheckpointToken();
-
-      if (action instanceof MultiStepAction) {
-        throw new RuntimeException("Should never be called on MSA!");
-      }
+      this.id = stepId;
 
       StepState state = persistence.getState(id);
 
@@ -62,10 +57,10 @@ public class WorkflowDiagram {
       for (Map.Entry<String, MapReduceJob> entry : state.getMrJobsByID().entrySet()) {
         statusLinks.put(entry.getValue().getTrackingURL(), entry.getValue().getJobName());
       }
+      this.message = state.getStatusMessage();
 
-      this.message = action.getStatusMessage();
-      this.startTimestamp = action.getStartTimestamp();
-      this.endTimestamp = action.getEndTimestamp();
+      this.startTimestamp = state.getStartTimestamp();
+      this.endTimestamp = state.getEndTimestamp();
     }
 
     public String getStatus() {
@@ -279,7 +274,7 @@ public class WorkflowDiagram {
 
     Map<Step, Vertex> stepToVertex = new HashMap<Step, Vertex>();
     for (Step step : graph.vertexSet()) {
-      Vertex vwrapper = createVertexFromStep(step);
+      Vertex vwrapper = createVertexFromStep(step.getCheckpointToken());
       stepToVertex.put(step, vwrapper);
       resultGraph.addVertex(vwrapper);
     }
@@ -293,8 +288,8 @@ public class WorkflowDiagram {
     return resultGraph;
   }
 
-  private Vertex createVertexFromStep(Step step) {
-    return new Vertex(step, persistence);
+  private Vertex createVertexFromStep(String token) {
+    return new Vertex(token, persistence);
   }
 
   private void removeRedundantEdges(DirectedGraph<Vertex, DefaultEdge> graph) {

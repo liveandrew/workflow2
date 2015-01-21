@@ -90,8 +90,9 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
   @Override
   public void markStepRunning(String stepToken) throws IOException {
-    StepState state = getState(stepToken);
-    state.setStatus(StepStatus.RUNNING);
+    getState(stepToken)
+        .setStatus(StepStatus.RUNNING)
+        .setStartTimestamp(System.currentTimeMillis());
   }
 
   @Override
@@ -101,16 +102,18 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
 
-    StepState state = getState(stepToken);
-    state.setStatus(StepStatus.FAILED);
-    state.setFailureMessage(e.getMessage());
-    state.setFailureTrace(sw.toString());
+    getState(stepToken)
+        .setFailureMessage(e.getMessage())
+        .setFailureTrace(sw.toString())
+        .setStatus(StepStatus.FAILED)
+        .setEndTimestamp(System.currentTimeMillis());
+
   }
 
   @Override
   public void markStepSkipped(String stepToken) throws IOException {
-    StepState state = getState(stepToken);
-    state.setStatus(StepStatus.SKIPPED);
+    getState(stepToken)
+        .setStatus(StepStatus.SKIPPED);
   }
 
   @Override
@@ -122,13 +125,15 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
     }
     LOG.debug("Done writing checkpoint token for " + stepToken);
 
-    StepState state = getState(stepToken);
-    state.setStatus(StepStatus.COMPLETED);
+    getState(stepToken)
+        .setStatus(StepStatus.COMPLETED)
+        .setEndTimestamp(System.currentTimeMillis());
   }
 
   @Override
   public void markStepStatusMessage(String stepToken, String newMessage) {
-    getState(stepToken).setStatusMessage(newMessage);
+    getState(stepToken)
+        .setStatusMessage(newMessage);
   }
 
   @Override

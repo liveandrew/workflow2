@@ -63,13 +63,8 @@ public abstract class Action {
 
   private final Multimap<ResourceAction, Resource> resources = HashMultimap.create();
 
-
   private StoreReaderLockProvider lockProvider;
-
-  private long startTimestamp;
-  private long endTimestamp;
   private Map<Object, Object> stepProperties;
-
 
   private List<ActionOperation> operations = new ArrayList<ActionOperation>();
 
@@ -203,8 +198,6 @@ public abstract class Action {
 
     try {
 
-      this.startTimestamp = System.currentTimeMillis();
-
       //  only set properties not explicitly set by the step
       for (Object prop : properties.keySet()) {
         if (!stepProperties.containsKey(prop)) {
@@ -227,7 +220,6 @@ public abstract class Action {
       LOG.fatal("Action " + fullId() + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
     } finally {
-      endTimestamp = System.currentTimeMillis();
       unlock(locks);
       if(jobPoller != null) {
         jobPoller.shutdown();
@@ -317,10 +309,6 @@ public abstract class Action {
     persistence.markStepStatusMessage(fullId(), statusMessage);
   }
 
-  public String getStatusMessage() {
-    return persistence.getState(fullId()).getStatusMessage();
-  }
-
   public void setOptionObjects(StoreReaderLockProvider lockProvider,
                                WorkflowStatePersistence persistence,
                                ContextStorage storage) {
@@ -370,14 +358,6 @@ public abstract class Action {
     operation.start();
 
     operation.complete();
-  }
-
-  public long getStartTimestamp() {
-    return startTimestamp;
-  }
-
-  public long getEndTimestamp() {
-    return endTimestamp;
   }
 
 }

@@ -16,6 +16,9 @@ public class StepState {
   private String failureMessage;
   private String failureTrace;
 
+  private long startTimestamp;
+  private long endTimestamp;
+
   private Map<String, MapReduceJob> mrJobsByID = Maps.newHashMap();
 
   public StepState(StepStatus status, String actionClass) {
@@ -24,24 +27,45 @@ public class StepState {
     this.statusMessage = "";
   }
 
+  protected StepState setStatus(StepStatus status) {
+    this.status = status;
+    return this;
+  }
+  protected StepState setStatusMessage(String statusMessage) {
+    this.statusMessage = statusMessage;
+    return this;
+  }
+  protected StepState setFailureMessage(String failureMessage) {
+    this.failureMessage = failureMessage;
+    return this;
+  }
+  protected StepState setFailureTrace(String failureTrace) {
+    this.failureTrace = failureTrace;
+    return this;
+  }
+  protected StepState setStartTimestamp(long startTimestamp) {
+    this.startTimestamp = startTimestamp;
+    return this;
+  }
+  protected StepState setEndTimestamp(long endTime) {
+    this.endTimestamp = endTime;
+    return this;
+  }
+  protected StepState addMrjob(MapReduceJob job) {
+    this.mrJobsByID.put(job.getJobId(), job);
+    return this;
+  }
+
   public StepStatus getStatus() {
     return status;
   }
 
-  protected void setStatus(StepStatus status) {
-    this.status = status;
+  public long getStartTimestamp() {
+    return startTimestamp;
   }
-  protected void setStatusMessage(String statusMessage) {
-    this.statusMessage = statusMessage;
-  }
-  protected void setFailureMessage(String failureMessage) {
-    this.failureMessage = failureMessage;
-  }
-  protected void setFailureTrace(String failureTrace) {
-    this.failureTrace = failureTrace;
-  }
-  public void addMrjob(MapReduceJob job) {
-    this.mrJobsByID.put(job.getJobId(), job);
+
+  public long getEndTimestamp() {
+    return endTimestamp;
   }
 
   public String getFailureMessage() {
