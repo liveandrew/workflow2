@@ -26,7 +26,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.liveramp.cascading_ext.event_timer.EventTimer;
-import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.state.MapReduceJob;
 import com.rapleaf.cascading_ext.workflow2.state.StepState;
@@ -237,13 +236,11 @@ public class WorkflowDiagram {
           .put("target", stepIdToNum.get(edge.getValue())));
     }
 
-    LiveWorkflowMeta meta = workflowRunner.getMeta();
-
     return new JSONObject()
-        .put("name", meta.get_name())
-        .put("host", meta.get_host())
-        .put("id", workflowRunner.getWorkflowUUID())
-        .put("username", meta.get_username())
+        .put("name", persistence.getDescription())
+        .put("host", persistence.getHost())
+        .put("id", persistence.getId())
+        .put("username", persistence.getUsername())
         .put("shutdown_reason", persistence.getShutdownRequest())
         .put("priority", persistence.getPriority())
         .put("pool", persistence.getPool())

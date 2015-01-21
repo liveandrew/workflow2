@@ -15,12 +15,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
@@ -46,7 +44,6 @@ import com.rapleaf.cascading_ext.workflow2.state.StepState;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
-import com.rapleaf.support.Rap;
 import com.rapleaf.support.event_timer.TimedEventHelper;
 
 public final class WorkflowRunner {
@@ -154,10 +151,6 @@ public final class WorkflowRunner {
     }
   }
 
-  private final String workflowName;
-
-  private final String workflowUUID;
-
   /**
    * how many components will we allow to execute simultaneously?
    */
@@ -230,8 +223,6 @@ public final class WorkflowRunner {
   }
 
   public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowOptions options, Set<Step> tailSteps) {
-    this.workflowUUID = Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID()));
-    this.workflowName = workflowName;
     this.persistence = persistence;
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.statsRecorder = options.getStatsRecorder().makeRecorder(workflowName);
@@ -249,6 +240,9 @@ public final class WorkflowRunner {
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps, timer);
 
     this.persistence.prepare(dependencyGraph,
+        workflowName,
+        getHostName(),
+        System.getProperty("user.name"),
         findDefaultValue(JOB_POOL_PARAM),
         findDefaultValue(JOB_PRIORITY_PARAM)
     );
@@ -265,8 +259,12 @@ public final class WorkflowRunner {
     }
   }
 
-  public String getWorkflowUUID() {
-    return workflowUUID;
+  private static String getHostName(){
+    try {
+      return InetAddress.getLocalHost().getHostName();
+    } catch (UnknownHostException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void setStepContextObjects(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
@@ -372,7 +370,7 @@ public final class WorkflowRunner {
       // Notify
       LOG.info(getStartMessage());
       startWebServer();
-      registry.register(workflowUUID, getMeta());
+      registry.register(persistence.getId(), getMeta());
       // Note: start email after web server so that UI is functional
       sendStartEmail();
 
@@ -511,8 +509,8 @@ public final class WorkflowRunner {
 
   public LiveWorkflowMeta getMeta() throws UnknownHostException {
     return new LiveWorkflowMeta()
-        .set_uuid(getWorkflowUUID())
-        .set_name(getWorkflowName())
+        .set_uuid(persistence.getId())
+        .set_name(persistence.getDescription())
         .set_host(InetAddress.getLocalHost().getHostName())
         .set_port(getWebServer().getBoundPort())
         .set_username(System.getProperty("user.name"))
@@ -547,19 +545,19 @@ public final class WorkflowRunner {
   }
 
   private String getStartMessage() {
-    return "Started: " + getWorkflowName();
+    return "Started: " + persistence.getDescription();
   }
 
   private String getSuccessMessage() {
-    return "Succeeded: " + getWorkflowName();
+    return "Succeeded: " + persistence.getDescription();
   }
 
   private String getFailureMessage() {
-    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + getWorkflowName();
+    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + persistence.getDescription();
   }
 
   private String getShutdownMessage(String reason) {
-    return "Shutdown requested: " + getWorkflowName() + ". Reason: " + reason;
+    return "Shutdown requested: " + persistence.getDescription() + ". Reason: " + reason;
   }
 
   private void mail(String subject, AlertRecipient recipient) throws IOException {
@@ -656,18 +654,6 @@ public final class WorkflowRunner {
     webServer.start();
   }
 
-  public StepState getStepStatus(Step step) {
-    return persistence.getState(step.getCheckpointToken());
-  }
-
-  public String getWorkflowName() {
-    return workflowName;
-  }
-
-  public int getMaxConcurrentSteps() {
-    return maxConcurrentSteps;
-  }
-
   public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
     return dependencyGraph;
   }
@@ -686,7 +672,7 @@ public final class WorkflowRunner {
     List<NestedCounter> counters = new ArrayList<NestedCounter>();
     for (StepRunner sr : completedSteps) {
       for (NestedCounter c : sr.step.getCounters()) {
-        counters.add(c.addParentEvent(workflowName));
+        counters.add(c.addParentEvent(persistence.getDescription()));
       }
     }
     return counters;

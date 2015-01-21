@@ -5,9 +5,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -21,6 +23,7 @@ import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowUtil;
+import com.rapleaf.support.Rap;
 
 public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = Logger.getLogger(HdfsCheckpointPersistence.class);
@@ -32,8 +35,12 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private final Map<String, StepState> statuses = Maps.newHashMap();
   private String shutdownReason;
 
+  private String id;
+  private String description;
   private String priority;
   private String pool;
+  private String host;
+  private String username;
 
   public HdfsCheckpointPersistence(String checkpointDir) {
     this(checkpointDir, true);
@@ -105,6 +112,26 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   @Override
   public String getPool() {
     return pool;
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
+  }
+
+  @Override
+  public String getId() {
+    return id;
+  }
+
+  @Override
+  public String getHost() {
+    return host;
+  }
+
+  @Override
+  public String getUsername() {
+    return username;
   }
 
   @Override
@@ -182,8 +209,17 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps, String pool, String priority) {
+  public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
+                      String description,
+                      String host,
+                      String username,
+                      String pool,
+                      String priority) {
 
+    this.id = Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID()));
+    this.description = description;
+    this.username = username;
+    this.host = host;
     this.pool = pool;
     this.priority = priority;
 
