@@ -1,8 +1,12 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+
+import com.rapleaf.cascading_ext.workflow2.Action;
 
 public class StepState {
 
@@ -18,13 +22,21 @@ public class StepState {
 
   private long startTimestamp;
   private long endTimestamp;
+  private final Set<String> stepDependencies;
+
+  private final Multimap<Action.DSAction, DataStoreInfo> datastores;
 
   private Map<String, MapReduceJob> mrJobsByID = Maps.newHashMap();
 
-  public StepState(StepStatus status, String actionClass) {
+  public StepState(StepStatus status,
+                   String actionClass,
+                   Set<String> dependencies,
+                   Multimap<Action.DSAction, DataStoreInfo> datastores) {
     this.status = status;
     this.actionClass = actionClass;
     this.statusMessage = "";
+    this.stepDependencies = dependencies;
+    this.datastores = datastores;
   }
 
   protected StepState setStatus(StepStatus status) {
@@ -59,15 +71,12 @@ public class StepState {
   public StepStatus getStatus() {
     return status;
   }
-
   public long getStartTimestamp() {
     return startTimestamp;
   }
-
   public long getEndTimestamp() {
     return endTimestamp;
   }
-
   public String getFailureMessage() {
     return failureMessage;
   }
@@ -83,6 +92,10 @@ public class StepState {
   public Map<String, MapReduceJob> getMrJobsByID() {
     return mrJobsByID;
   }
-
-
+  public Set<String> getStepDependencies(){
+    return stepDependencies;
+  }
+  public Multimap<Action.DSAction, DataStoreInfo> getDatastores() {
+    return datastores;
+  }
 }

@@ -19,7 +19,6 @@ public class WorkflowWebServer {
   private static final Logger LOG = Logger.getLogger(WorkflowWebServer.class);
 
   private final int port;
-  private final WorkflowRunner workflowRunner;
   private final WorkflowStatePersistence persistence;
 
   private Server server;
@@ -47,8 +46,7 @@ public class WorkflowWebServer {
     }
   }
 
-  public WorkflowWebServer(WorkflowRunner workflowRunner, WorkflowStatePersistence persistence, int port) {
-    this.workflowRunner = workflowRunner;
+  public WorkflowWebServer(WorkflowStatePersistence persistence, int port) {
     this.persistence = persistence;
     this.port = port;
   }
@@ -64,11 +62,7 @@ public class WorkflowWebServer {
     LOG.info("War url external form: " + warUrlString);
 
     WebAppContext webAppContext = new WebAppContext(warUrlString, "/");
-    webAppContext.setAttribute("workflowRunner", workflowRunner);
-
-    WorkflowDiagram diagram = new WorkflowDiagram(workflowRunner, persistence);
-
-    webAppContext.addServlet(new ServletHolder(new WorkflowStateServlet(diagram)), "/state");
+    webAppContext.addServlet(new ServletHolder(new WorkflowStateServlet(persistence)), "/state");
     webAppContext.addServlet(new ServletHolder(new WorkflowCommandServlet(persistence)), "/command");
 
     server.setHandler(webAppContext);
@@ -84,6 +78,8 @@ public class WorkflowWebServer {
           return getBoundPort() != -1;
         }
       });
+
+      LOG.info("Bound Web Server to port: "+getBoundPort());
       
     }catch(Exception e){
       LOG.info("Failed to bind UI server to a real port!", e);

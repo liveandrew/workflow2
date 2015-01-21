@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.mapred.RunningJob;
@@ -33,6 +34,7 @@ public interface WorkflowStatePersistence {
 
   public StepState getState(String stepToken);
   public Map<String, StepState> getStepStatuses();
+  public List<DataStoreInfo> getDatastores();
   public String getShutdownRequest();
   public String getPriority();
   public String getPool();

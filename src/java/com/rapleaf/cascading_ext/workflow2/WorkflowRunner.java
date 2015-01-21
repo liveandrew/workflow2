@@ -157,7 +157,6 @@ public final class WorkflowRunner {
   private final int maxConcurrentSteps;
 
   private final DirectedGraph<Step, DefaultEdge> dependencyGraph;
-  private final Set<Step> tailSteps;
 
   /**
    * semaphore used to control the max number of running components
@@ -229,7 +228,6 @@ public final class WorkflowRunner {
     this.alertsHandler = options.getAlertsHandler();
     this.enabledNotifications = options.getEnabledNotifications().get();
     this.semaphore = new Semaphore(maxConcurrentSteps);
-    this.tailSteps = tailSteps;
     this.timer = new EventTimer(workflowName);
     this.lockProvider = options.getLockProvider();
     this.storage = options.getStorage();
@@ -650,16 +648,12 @@ public final class WorkflowRunner {
   }
 
   private void startWebServer() {
-    webServer = new WorkflowWebServer(this, persistence, ANY_FREE_PORT);
+    webServer = new WorkflowWebServer(persistence, ANY_FREE_PORT);
     webServer.start();
   }
 
   public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
     return dependencyGraph;
-  }
-
-  public Set<Step> getTailSteps() {
-    return tailSteps;
   }
 
   public EventTimer getTimer() {
