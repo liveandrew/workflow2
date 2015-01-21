@@ -145,7 +145,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     for (Step badTail : allSteps) {
       if (badTail != realTail) {
         try {
-          WorkflowDiagram.verifyNoOrphanedTailStep(badTail);
+          WorkflowDiagram.verifyNoOrphanedTailSteps(Collections.singleton(badTail));
           fail("badTail: " + badTail);
         } catch (RuntimeException e) {
           // pass

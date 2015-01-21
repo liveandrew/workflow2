@@ -1,7 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -315,10 +314,6 @@ public class WorkflowDiagram {
     return dependencyGraph;
   }
 
-  public static void verifyNoOrphanedTailStep(Step tailStep) {
-    verifyNoOrphanedTailSteps(Collections.singleton(tailStep));
-  }
-
   public static void verifyNoOrphanedTailSteps(Set<Step> tailSteps) {
     Set<Step> orphans = getOrphanedTailSteps(tailSteps);
     if (orphans.size() != 0) {
@@ -342,18 +337,10 @@ public class WorkflowDiagram {
   }
 
   static Set<Step> getOrphanedTailSteps(Set<Step> tailSteps) {
-    Set<Step> multiStepsToExpand = new HashSet<Step>();
-    tailSteps = new HashSet<Step>(tailSteps);
-    Set<Step> reachableSteps = reachableSteps(tailSteps);
-    for (Step step : reachableSteps) {
-      if (step.getAction() instanceof MultiStepAction) {
-        multiStepsToExpand.add(step);
-      }
-    }
-
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = dependencyGraphFromTailStepsNoVerification(tailSteps, null);
-
-    return getOrphanedTailSteps(dependencyGraph, reachableSteps);
+    return getOrphanedTailSteps(
+        dependencyGraphFromTailStepsNoVerification(tailSteps, null),
+        reachableSteps(tailSteps)
+    );
   }
 
   private static Set<Step> getOrphanedTailSteps(DirectedGraph<Step, DefaultEdge> dependencyGraph, Set<Step> allSteps) {
