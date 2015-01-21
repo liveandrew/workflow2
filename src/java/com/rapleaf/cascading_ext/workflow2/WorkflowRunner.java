@@ -45,7 +45,6 @@ import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.StepState;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowState;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.support.Rap;
@@ -452,7 +451,7 @@ public final class WorkflowRunner {
     }
 
     // if there are any failures, then the workflow failed. throw an exception.
-    if (isFailPending()) {
+    if (WorkflowUtil.isFailPending(persistence)) {
       String failureMessage = buildStepsFailureMessage();
       sendFailureEmail(failureMessage);
       throw new RuntimeException(getFailureMessage() + "\n" + failureMessage);
@@ -473,7 +472,7 @@ public final class WorkflowRunner {
     PrintWriter pw = new PrintWriter(sw);
 
     int numFailed = 0;
-    Map<String, StepState> statuses = persistence.getFlowStatus().getStepStatuses();
+    Map<String, StepState> statuses = persistence.getStepStatuses();
     for (Map.Entry<String, StepState> status : statuses.entrySet()) {
       if (status.getValue().getStatus() == StepStatus.FAILED) {
         numFailed++;
@@ -564,22 +563,6 @@ public final class WorkflowRunner {
     return webServer;
   }
 
-  public boolean isFailPending() {
-    WorkflowState state = persistence.getFlowStatus();
-
-    for (Map.Entry<String, StepState> entry : state.getStepStatuses().entrySet()) {
-      if (entry.getValue().getStatus() == StepStatus.FAILED) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  public boolean isShutdownPending() {
-    return persistence.getFlowStatus().getShutdownRequest() != null;
-  }
-
   public void disableNotification(WorkflowRunnerNotification workflowRunnerNotification) {
     enabledNotifications.remove(workflowRunnerNotification);
   }
@@ -643,7 +626,7 @@ public final class WorkflowRunner {
 
 
   public String getReasonForShutdownRequest() {
-    return persistence.getFlowStatus().getShutdownRequest();
+    return persistence.getShutdownRequest();
   }
 
   private void clearFinishedSteps() {
@@ -678,7 +661,7 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() {
-    return !isFailPending() && !isShutdownPending();
+    return !WorkflowUtil.isFailPending(persistence) && !WorkflowUtil.isShutdownPending(persistence);
   }
 
   private void shutdownWebServer() {

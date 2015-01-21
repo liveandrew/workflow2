@@ -31,6 +31,9 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private final Map<String, StepState> statuses = Maps.newHashMap();
   private String shutdownReason;
 
+  private String priority;
+  private String pool;
+
   public HdfsCheckpointPersistence(String checkpointDir) {
     this(checkpointDir, true);
   }
@@ -84,9 +87,24 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public WorkflowState getFlowStatus() {
-    return new WorkflowState(statuses, shutdownReason);
+  public Map<String, StepState> getStepStatuses() {
+    return statuses;
   }
+
+  @Override
+  public String getShutdownRequest() {
+    return shutdownReason;
+  }
+
+//  @Override
+//  public String getPriority() {
+//    // TODO implement
+//  }
+//
+//  @Override
+//  public String getPool() {
+//    // TODO implement
+//  }
 
   @Override
   public void markStepRunning(String stepToken) throws IOException {

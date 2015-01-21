@@ -244,7 +244,7 @@ public class WorkflowDiagram {
         .put("host", meta.get_host())
         .put("id", workflowRunner.getWorkflowUUID())
         .put("username", meta.get_username())
-        .put("shutdown_reason", workflowRunner.getReasonForShutdownRequest())
+        .put("shutdown_reason", persistence.getShutdownRequest())
         .put("priority", workflowRunner.getPriority())
         .put("pool", workflowRunner.getPool())
         .put("status", getStatus())
@@ -255,10 +255,11 @@ public class WorkflowDiagram {
   }
 
   private String getStatus() {
-    if (workflowRunner.isFailPending()) {
+
+    if (WorkflowUtil.isFailPending(persistence)) {
       return "failPending";
     }
-    if (workflowRunner.isShutdownPending()) {
+    if (WorkflowUtil.isShutdownPending(persistence)) {
       return "shutdownPending";
     }
     return "running";

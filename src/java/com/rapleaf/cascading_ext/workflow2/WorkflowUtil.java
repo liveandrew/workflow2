@@ -1,8 +1,13 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+
+import com.rapleaf.cascading_ext.workflow2.state.StepState;
+import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 
 public class WorkflowUtil {
 
@@ -36,5 +41,20 @@ public class WorkflowUtil {
       setCheckpointPrefixes(dep, prefix, explored);
     }
 
+  }
+
+  public static boolean isShutdownPending(WorkflowStatePersistence persistence) {
+    return persistence.getShutdownRequest() != null;
+  }
+
+  public static boolean isFailPending(WorkflowStatePersistence persistence) {
+
+    for (Map.Entry<String, StepState> entry : persistence.getStepStatuses().entrySet()) {
+      if (entry.getValue().getStatus() == StepStatus.FAILED) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
