@@ -47,6 +47,11 @@ public class WaitForHankDeploy extends Action {
       }
 
       Set<Domain> domainGroup = ringGroup.getDomainGroup().getDomains();
+      if(domainGroup == null){
+        LOG.info("No domains found for group: "+ringGroup.getDomainGroup().getName());
+        continue;
+      }
+
       List<DomainAndVersion> versions = getDomainsAndVersions(domainGroup);
       if (!versions.isEmpty()) {
         ringsToWaitFor.put(ringGroup, versions);
