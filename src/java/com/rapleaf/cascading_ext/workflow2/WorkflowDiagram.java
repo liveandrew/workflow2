@@ -118,7 +118,7 @@ public class WorkflowDiagram {
       steps.put(new JSONObject()
               .put("id", vertex.getStepId())
               .put("index", nodeIndex)
-              .put("status", vertex.getStatus())
+              .put("status", vertex.getStatus().name().toLowerCase())
               .put("start_timestamp", vertex.getStartTimestamp())
               .put("end_timestamp", vertex.getEndTimestamp())
               .put("message", vertex.getStatusMessage())
