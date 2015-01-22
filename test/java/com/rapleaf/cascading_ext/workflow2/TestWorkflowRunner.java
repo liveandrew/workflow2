@@ -2,7 +2,9 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,7 +12,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import junit.framework.Assert;
-import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,6 +27,7 @@ import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.context.HdfsContextStorage;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
@@ -39,166 +41,57 @@ import static org.junit.Assert.assertEquals;
 
 public class TestWorkflowRunner extends CascadingExtTestCase {
 
-  public static class FailingAction extends Action {
-    public FailingAction(String checkpointToken) {
-      super(checkpointToken);
-    }
-
-    @Override
-    public void execute() {
-      throw new RuntimeException("failed on purpose");
-    }
+  public interface PersistenceFactory {
+    public WorkflowStatePersistence make();
   }
 
-  public static class DelayedFailingAction extends Action {
-    private final Semaphore semaphore;
-
-    public DelayedFailingAction(String checkpointToken, Semaphore sem) {
-      super(checkpointToken);
-      this.semaphore = sem;
-    }
-
+  private PersistenceFactory hdfsPersistenceFactory = new PersistenceFactory() {
     @Override
-    public void execute() throws InterruptedException {
-      semaphore.acquire();
-      throw new RuntimeException("failed on purpose");
+    public WorkflowStatePersistence make() {
+      return new HdfsCheckpointPersistence(getTestRoot() + "/hdfs_root");
     }
-  }
-
-  public static class FlipAction extends Action {
-
-    private final AtomicBoolean val;
-
-    public FlipAction(String checkpointToken, AtomicBoolean val) {
-      super(checkpointToken);
-      this.val = val;
-    }
-
-    @Override
-    public void execute() {
-      val.set(true);
-    }
-  }
-
-  public static class IncrementAction extends Action {
-    public IncrementAction(String checkpointToken) {
-      super(checkpointToken);
-    }
-
-    public static int counter = 0;
-
-    @Override
-    public void execute() {
-      counter++;
-    }
-  }
-
-  public static class IncrementAction2 extends Action {
-
-    private final AtomicInteger counter;
-
-    public IncrementAction2(String checkpointToken, AtomicInteger counter) {
-      super(checkpointToken);
-      this.counter = counter;
-    }
-
-    @Override
-    public void execute() {
-      counter.incrementAndGet();
-    }
-
-  }
-
-
-  public static class LockedAction extends Action {
-
-    private final Semaphore semaphore;
-
-    public LockedAction(String checkpointToken, Semaphore semaphore) {
-      super(checkpointToken);
-      this.semaphore = semaphore;
-    }
-
-    @Override
-    protected void execute() throws Exception {
-      semaphore.acquire();
-    }
-  }
-
-  public static class UnlockWaitAction extends Action {
-
-    private final Semaphore toUnlock;
-    private final Semaphore toAwait;
-
-
-    public UnlockWaitAction(String checkpointToken, Semaphore toUnlock,
-                            Semaphore toAwait) {
-      super(checkpointToken);
-      this.toUnlock = toUnlock;
-      this.toAwait = toAwait;
-    }
-
-    @Override
-    protected void execute() throws Exception {
-      toUnlock.release();
-      toAwait.acquire();
-    }
-  }
-
-
-  private final String checkpointDir = getTestRoot() + "/checkpoints";
+  };
 
   @Before
   public void prepare() throws Exception {
     IncrementAction.counter = 0;
   }
 
+  private WorkflowRunner buildWfr(WorkflowStatePersistence persistence, Step tail) {
+    return buildWfr(persistence, Sets.newHashSet(tail));
+  }
+
+  private WorkflowRunner buildWfr(WorkflowStatePersistence persistence, Set<Step> tailSteps) {
+    return buildWfr(persistence, new TestWorkflowOptions(), tailSteps);
+  }
+
+  private WorkflowRunner buildWfr(WorkflowStatePersistence persistence, WorkflowOptions opts, Set<Step> tailSteps) {
+    return new WorkflowRunner("Test Workflow", persistence, opts, tailSteps);
+  }
+
+
   @Test
-  public void testSimple() throws Exception {
+  public void testSimple1() throws Exception {
+    testSimple(hdfsPersistenceFactory);
+  }
+
+  public void testSimple(PersistenceFactory persistence) throws Exception {
     Step first = new Step(new IncrementAction("first"));
     Step second = new Step(new IncrementAction("second"), first);
 
-    executeWorkflow(second);
+    buildWfr(persistence.make(), second).run();
 
     assertEquals(2, IncrementAction.counter);
   }
 
   @Test
-  public void testWritesCheckpoints() throws Exception {
-    Step first = new Step(new IncrementAction("first"));
-    Step second = new Step(new FailingAction("second"), first);
-
-    try {
-      executeWorkflow(second);
-      fail("should have failed!");
-    } catch (Exception e) {
-      // expected
-    }
-
-    assertEquals(1, IncrementAction.counter);
-    assertTrue(getFS().exists(new Path(checkpointDir + "/first")));
-  }
-
-  @Test
-  public void testResume() throws Exception {
-    Step first = new Step(new IncrementAction("first"));
-    Step second = new Step(new IncrementAction("second"), first);
-
-    getFS().createNewFile(new Path(checkpointDir + "/first"));
-
-    new WorkflowRunner("test", checkpointDir,
-        new TestWorkflowOptions(),
-        second).run();
-
-    assertEquals(1, IncrementAction.counter);
-  }
-
-  @Test
   public void testFullRestart1() throws IOException {
+    testFullRestart(hdfsPersistenceFactory);
+  }
+
+  public void testFullRestart(PersistenceFactory persistence) throws IOException {
 
     //  test a full restart if interrupted by a failure
-
-    WorkflowStatePersistence peristence = new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints");
 
     AtomicInteger int1 = new AtomicInteger(0);
     AtomicInteger int2 = new AtomicInteger(0);
@@ -207,7 +100,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Step two = new Step(new FailingAction("two"), one);
     Step three = new Step(new IncrementAction2("three", int2), two);
 
-    WorkflowRunner run = new WorkflowRunner("Test Workflow", peristence, new TestWorkflowOptions(), Sets.newHashSet(three));
+    WorkflowRunner run = new WorkflowRunner("Test Workflow", persistence.make(), new TestWorkflowOptions(), Sets.newHashSet(three));
 
     try {
       run.run();
@@ -219,13 +112,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertEquals(1, int1.intValue());
     assertEquals(0, int2.intValue());
 
-    peristence = new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints");
-
     one = new Step(new IncrementAction2("one", int1));
     two = new Step(new NoOpAction("two"), one);
     three = new Step(new IncrementAction2("three", int2), two);
 
-    run = new WorkflowRunner("Test Workflow", peristence, new TestWorkflowOptions(), Sets.newHashSet(three));
+    run = new WorkflowRunner("Test Workflow", persistence.make(), new TestWorkflowOptions(), Sets.newHashSet(three));
     run.run();
 
     assertEquals(1, int1.intValue());
@@ -234,35 +125,47 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testLoneMultiStepAction() throws Exception {
+  public void testLoneMultiStepAction1() throws Exception {
+    testLoneMultiStepAction(hdfsPersistenceFactory);
+  }
+
+  public void testLoneMultiStepAction(PersistenceFactory factory) throws Exception {
     // lone multi
     Step s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(
         new IncrementAction("blah")))));
 
-    executeWorkflow(s);
+    buildWfr(factory.make(), s).run();
 
     assertEquals(1, IncrementAction.counter);
   }
 
   @Test
-  public void testMultiInTheMiddle() throws Exception {
+  public void testMultiInTheMiddle1() throws Exception {
+    testMultiIntheMiddle(hdfsPersistenceFactory);
+  }
+
+  public void testMultiIntheMiddle(PersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
     s = new Step(new IncrementAction("last"), s);
 
-    executeWorkflow(s);
+    buildWfr(factory.make(), s).run();
 
     assertEquals(3, IncrementAction.counter);
   }
 
   @Test
   public void testMultiAtTheEnd() throws Exception {
+    testMultiAtEnd(hdfsPersistenceFactory);
+  }
+
+  public void testMultiAtEnd(PersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
 
-    executeWorkflow(s);
+    buildWfr(factory.make(), s).run();
 
     assertEquals(2, IncrementAction.counter);
   }
@@ -281,9 +184,13 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testFailThenShutdown() throws InterruptedException {
+  public void testFailThenShutdown1() throws InterruptedException {
+    testFailThenShutdown(hdfsPersistenceFactory);
+  }
 
-    WorkflowStatePersistence peristence = new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints");
+  public void testFailThenShutdown(PersistenceFactory factory) throws InterruptedException {
+
+    WorkflowStatePersistence persistence = factory.make();
 
     Semaphore semaphore = new Semaphore(0);
     Semaphore semaphore2 = new Semaphore(0);
@@ -294,14 +201,14 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Step last = new Step(new FlipAction("after", didExecute), unlockFail);
 
     Wrapper<Exception> exception = new Wrapper<Exception>();
-    WorkflowRunner run = new WorkflowRunner("Test Workflow", peristence, new TestWorkflowOptions().setMaxConcurrentSteps(2),
+    WorkflowRunner run = new WorkflowRunner("Test Workflow", persistence, new TestWorkflowOptions().setMaxConcurrentSteps(2),
         Sets.newHashSet(fail, last));
 
     Thread t = run(run, exception);
     t.start();
 
     Thread.sleep(500);
-    peristence.markShutdownRequested("Shutdown Requested");
+    persistence.markShutdownRequested("Shutdown Requested");
     semaphore2.release();
 
     t.join();
@@ -309,21 +216,26 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Exception failure = exception.getVal();
     assertTrue(failure.getMessage().contains("(1/1) Step fail failed with exception: failed on purpose"));
 
-    assertEquals("Shutdown Requested", peristence.getShutdownRequest());
+    assertEquals("Shutdown Requested", persistence.getShutdownRequest());
     assertFalse(didExecute.get());
-    assertTrue(peristence.getStepStatuses().get("fail").getStatus() == StepStatus.FAILED);
-    assertTrue(peristence.getStepStatuses().get("unlock").getStatus() == StepStatus.COMPLETED);
-    assertTrue(peristence.getStepStatuses().get("after").getStatus() == StepStatus.WAITING);
+    assertTrue(persistence.getStepStatuses().get("fail").getStatus() == StepStatus.FAILED);
+    assertTrue(persistence.getStepStatuses().get("unlock").getStatus() == StepStatus.COMPLETED);
+    assertTrue(persistence.getStepStatuses().get("after").getStatus() == StepStatus.WAITING);
 
   }
 
   @Test
   public void testShutdownThenFail() throws InterruptedException {
+    testShutdownThenFail(hdfsPersistenceFactory);
+  }
+
+  public void testShutdownThenFail(PersistenceFactory factory) throws InterruptedException {
+
+    WorkflowStatePersistence peristence = factory.make();
 
     Semaphore semaphore = new Semaphore(0);
     AtomicBoolean didExecute = new AtomicBoolean(false);
 
-    WorkflowStatePersistence peristence = new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints");
 
     Step fail = new Step(new DelayedFailingAction("fail", semaphore));
     Step after = new Step(new FlipAction("after", didExecute), fail);
@@ -351,9 +263,13 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testShutdown() throws InterruptedException {
+  public void testShutdown1() throws InterruptedException {
+    testShutdown(hdfsPersistenceFactory);
+  }
 
-    WorkflowStatePersistence peristence = new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints");
+  public void testShutdown(PersistenceFactory factory) throws InterruptedException {
+
+    WorkflowStatePersistence peristence = factory.make();
 
     Semaphore semaphore = new Semaphore(0);
     AtomicInteger preCounter = new AtomicInteger(0);
@@ -389,7 +305,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     //  restart
 
-    peristence = new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints");
+    peristence = factory.make();
     run = new WorkflowRunner("Test Workflow", peristence, new TestWorkflowOptions(), Sets.newHashSet(after));
 
     t = run(run, exception);
@@ -425,20 +341,28 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testMultiInMultiEnd() throws Exception {
+  public void testMultiInMultiEnd1() throws Exception {
+    testMultiInMultiEnd(hdfsPersistenceFactory);
+  }
+
+  public void testMultiInMultiEnd(PersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     // please, never do this in real code
     s = new Step(new MultiStepAction("depth 1", Arrays.asList(new Step(new MultiStepAction(
         "depth 2", Arrays.asList(new Step(new IncrementAction("blah"))))))), s);
     s = new Step(new IncrementAction("last"), s);
 
-    executeWorkflow(s);
+    buildWfr(factory.make(), s).run();
 
     assertEquals(3, IncrementAction.counter);
   }
 
   @Test
-  public void testMulitInMultiMiddle() throws Exception {
+  public void testMulitInMultiMiddle1() throws Exception {
+    testMultiInMultiMiddle(hdfsPersistenceFactory);
+  }
+
+  public void testMultiInMultiMiddle(PersistenceFactory factory) throws IOException {
     Step b = new Step(new IncrementAction("b"));
     Step innermost = new Step(new MultiStepAction("innermost", Arrays.asList(new Step(
         new IncrementAction("c")))), b);
@@ -448,18 +372,24 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     Step outer = new Step(new MultiStepAction("outer", Arrays.asList(b, innermost, d)), a);
 
-    executeWorkflow(outer);
+    buildWfr(factory.make(), outer).run();
 
     assertEquals(4, IncrementAction.counter);
   }
 
   @Test
-  public void testDuplicateCheckpoints() throws Exception {
+  public void testDuplicateCheckpoints1() throws Exception {
+    testDuplicateCheckpoints(hdfsPersistenceFactory);
+  }
+
+  public void testDuplicateCheckpoints(PersistenceFactory factory) throws IOException {
     try {
-      executeWorkflow(Sets.<Step>newHashSet(
-              new Step(new IncrementAction("a")),
-              new Step(new IncrementAction("a"))),
-          checkpointDir);
+
+      HashSet<Step> tails = Sets.newHashSet(
+          new Step(new IncrementAction("a")),
+          new Step(new IncrementAction("a")));
+
+      buildWfr(factory.make(), tails).run();
 
       fail("should have thrown an exception");
     } catch (IllegalArgumentException e) {
@@ -468,7 +398,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testTimingMultiStep() throws Exception {
+  public void testTimingMultiStep1() throws Exception {
+    testTimingMultiStep(hdfsPersistenceFactory);
+  }
+
+  public void testTimingMultiStep(PersistenceFactory factory) throws Exception {
 
     Step bottom1 = new Step(new IncrementAction("bottom1"));
     Step bottom2 = new Step(new IncrementAction("bottom2"));
@@ -478,9 +412,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     Step top = new Step(new MultiStepAction("Tom's first test dude", Arrays.asList(multiMiddle, flatMiddle)));
 
-    WorkflowRunner testWorkflow = new WorkflowRunner("", checkpointDir,
-        new TestWorkflowOptions(),
-        top);
+    WorkflowRunner testWorkflow = buildWfr(factory.make(), top);
     testWorkflow.run();
 
     assertTrue(testWorkflow.getTimer() != null);
@@ -506,12 +438,15 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testSandboxDir() throws Exception {
+  public void testSandboxDir1() throws Exception {
+    testSandboxDir(hdfsPersistenceFactory);
+  }
+
+  public void testSandboxDir(PersistenceFactory persistence) throws Exception {
     try {
-      WorkflowRunner wfr = new WorkflowRunner("", checkpointDir,
-          new TestWorkflowOptions(),
-          fakeStep("a", "/fake/EVIL/../path"),
-          fakeStep("b", "/path/of/fakeness"));
+      WorkflowRunner wfr = buildWfr(persistence.make(),
+          Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"), fakeStep("b", "/path/of/fakeness"))
+      );
       wfr.setSandboxDir("//fake/path");
       wfr.run();
       fail("There was an invalid path!");
@@ -519,12 +454,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       // expected
     }
 
-
     try {
-      WorkflowRunner wfr = new WorkflowRunner("", checkpointDir,
-          new TestWorkflowOptions(),
-          fakeStep("a", "/fake/EVIL/../path"),
-          fakeStep("b", "/fake/./path"));
+      WorkflowRunner wfr = buildWfr(persistence.make(),
+          Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"),
+              fakeStep("b", "/fake/./path")));
+
       wfr.setSandboxDir("//fake/path");
       wfr.run();
       // expected
@@ -564,7 +498,13 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testPathNesting() throws IOException, ClassNotFoundException {
+  public void testPathNesting1() throws IOException, ClassNotFoundException {
+    testPathNesting(hdfsPersistenceFactory);
+  }
+
+  public void testPathNesting(PersistenceFactory factory) throws IOException, ClassNotFoundException {
+
+    WorkflowStatePersistence persistence = factory.make();
 
     String tmpRoot = getTestRoot() + "/tmp-dir";
 
@@ -574,8 +514,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     TestWorkflowOptions options = new TestWorkflowOptions()
         .setStorage(storage);
-
-    WorkflowStatePersistence persistence = new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints");
 
     new WorkflowRunner(
         "test workflow",
@@ -595,7 +533,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Assert.assertEquals(StepStatus.COMPLETED, persistence.getState("parent-step__set-resource").getStatus());
     Assert.assertEquals(StepStatus.COMPLETED, persistence.getState("parent-step__consume-resource").getStatus());
 
-    TupleDataStore store = new TupleDataStoreImpl("store", tmpRoot+"/parent-step-tmp-stores/consume-resource-tmp-stores/", "tup_out", new Fields("string"));
+    TupleDataStore store = new TupleDataStoreImpl("store", tmpRoot + "/parent-step-tmp-stores/consume-resource-tmp-stores/", "tup_out", new Fields("string"));
     List<Tuple> tups = HRap.getAllTuples(store.getTap());
 
     assertCollectionEquivalent(Sets.newHashSet(tups), Lists.<Tuple>newArrayList(new Tuple(1)));
@@ -673,5 +611,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       );
     }
   }
+
 
 }
