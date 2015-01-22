@@ -47,8 +47,8 @@ public class WaitForHankDeploy extends Action {
       }
 
       Set<Domain> domainGroup = ringGroup.getDomainGroup().getDomains();
-      if(domainGroup == null){
-        LOG.info("No domains found for group: "+ringGroup.getDomainGroup().getName());
+      if (domainGroup == null) {
+        LOG.info("No domains found for group: " + ringGroup.getDomainGroup().getName());
         continue;
       }
 
@@ -99,8 +99,10 @@ public class WaitForHankDeploy extends Action {
     List<DomainAndVersion> versions = Lists.newArrayList();
     for (Map.Entry<String, Integer> entry : domainToVersion.entrySet()) {
       Domain domain = coordinator.getDomain(entry.getKey());
-      if (domainGroup.contains(domain)) {
-        versions.add(new DomainAndVersion(domain, entry.getValue()));
+      if (domain != null) {  // TODO get rid of this chekc, just adding this because I removed mid_to_pam and there are still messages with it
+        if (domainGroup.contains(domain)) {
+          versions.add(new DomainAndVersion(domain, entry.getValue()));
+        }
       }
     }
     return versions;
