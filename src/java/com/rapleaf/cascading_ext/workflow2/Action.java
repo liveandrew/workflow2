@@ -304,7 +304,7 @@ public abstract class Action {
    *
    * @param statusMessage
    */
-  protected void setStatusMessage(String statusMessage) {
+  protected void setStatusMessage(String statusMessage) throws IOException {
     LOG.info("Status Message: " + statusMessage);
     persistence.markStepStatusMessage(fullId(), statusMessage);
   }

@@ -194,7 +194,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
       s6);
   }
 
-  private void setupWorkflowGraph(Step tailStep) {
+  private void setupWorkflowGraph(Step tailStep) throws IOException {
     HashSet<Step> tail = Sets.newHashSet(tailStep);
     WorkflowUtil.setCheckpointPrefixes(tail);
 

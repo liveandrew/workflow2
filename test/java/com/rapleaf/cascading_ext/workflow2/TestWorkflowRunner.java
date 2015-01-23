@@ -31,6 +31,7 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.support.event_timer.TimedEvent;
 
@@ -52,9 +53,17 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     }
   };
 
+//  private PersistenceFactory dbPersistenceFactory = new PersistenceFactory() {
+//    @Override
+//    public WorkflowStatePersistence make() {
+//      return new DbPersistence(new DatabasesImpl().getRlDb());
+//    }
+//  };
+
   @Before
   public void prepare() throws Exception {
     IncrementAction.counter = 0;
+    new DatabasesImpl().getRlDb().deleteAll();
   }
 
   private WorkflowRunner buildWfr(WorkflowStatePersistence persistence, Step tail) {
@@ -74,6 +83,12 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testSimple1() throws Exception {
     testSimple(hdfsPersistenceFactory);
   }
+
+//  @Test
+//  public void testSimple2() throws Exception {
+//    testSimple(dbPersistenceFactory);
+//  }
+
 
   public void testSimple(PersistenceFactory persistence) throws Exception {
     Step first = new Step(new IncrementAction("first"));

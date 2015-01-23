@@ -65,7 +65,7 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
     }
 
     @Override
-    public void execute() {
+    public void execute() throws IOException {
       for (int i = 0; i < seconds; i++) {
         try {
           Thread.sleep(1000);
