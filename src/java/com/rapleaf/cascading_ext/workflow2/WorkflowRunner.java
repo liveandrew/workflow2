@@ -82,16 +82,16 @@ public final class WorkflowRunner {
       this.state = state;
     }
 
-    private Map<Object, Object> buildInheritedProperties(){
+    private Map<Object, Object> buildInheritedProperties() throws IOException {
       Map<Object, Object> stepProperties = Maps.newHashMap(workflowJobProperties);
       String priority = persistence.getPriority();
       String pool = persistence.getPool();
 
-      if(priority != null) {
+      if (priority != null) {
         stepProperties.put(JOB_PRIORITY_PARAM, priority);
       }
 
-      if(pool != null) {
+      if (pool != null) {
         stepProperties.put(JOB_POOL_PARAM, pool);
       }
 
@@ -140,7 +140,7 @@ public final class WorkflowRunner {
       thread.start();
     }
 
-    public boolean allDependenciesCompleted() {
+    public boolean allDependenciesCompleted() throws IOException {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
         if (!StepStatus.NON_BLOCKING.contains(state.getState(dep.getCheckpointToken()).getStatus())) {
@@ -239,6 +239,8 @@ public final class WorkflowRunner {
 
     this.persistence.prepare(dependencyGraph,
         workflowName,
+        options.getScopeIdentifier(),
+        options.getAppType(),
         getHostName(),
         System.getProperty("user.name"),
         findDefaultValue(JOB_POOL_PARAM),
@@ -257,7 +259,7 @@ public final class WorkflowRunner {
     }
   }
 
-  private static String getHostName(){
+  private static String getHostName() {
     try {
       return InetAddress.getLocalHost().getHostName();
     } catch (UnknownHostException e) {
@@ -479,7 +481,7 @@ public final class WorkflowRunner {
     }
   }
 
-  private String buildStepsFailureMessage() {
+  private String buildStepsFailureMessage() throws IOException {
     int n = 1;
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
@@ -505,10 +507,10 @@ public final class WorkflowRunner {
     return sw.toString();
   }
 
-  public LiveWorkflowMeta getMeta() throws UnknownHostException {
+  public LiveWorkflowMeta getMeta() throws IOException {
     return new LiveWorkflowMeta()
         .set_uuid(persistence.getId())
-        .set_name(persistence.getDescription())
+        .set_name(persistence.getName())
         .set_host(InetAddress.getLocalHost().getHostName())
         .set_port(getWebServer().getBoundPort())
         .set_username(System.getProperty("user.name"))
@@ -542,20 +544,20 @@ public final class WorkflowRunner {
     }
   }
 
-  private String getStartMessage() {
-    return "Started: " + persistence.getDescription();
+  private String getStartMessage() throws IOException {
+    return "Started: " + persistence.getName();
   }
 
-  private String getSuccessMessage() {
-    return "Succeeded: " + persistence.getDescription();
+  private String getSuccessMessage() throws IOException {
+    return "Succeeded: " + persistence.getName();
   }
 
-  private String getFailureMessage() {
-    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + persistence.getDescription();
+  private String getFailureMessage() throws IOException {
+    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + persistence.getName();
   }
 
-  private String getShutdownMessage(String reason) {
-    return "Shutdown requested: " + persistence.getDescription() + ". Reason: " + reason;
+  private String getShutdownMessage(String reason) throws IOException {
+    return "Shutdown requested: " + persistence.getName() + ". Reason: " + reason;
   }
 
   private void mail(String subject, AlertRecipient recipient) throws IOException {
@@ -590,23 +592,23 @@ public final class WorkflowRunner {
     JobConf jobconf = CascadingHelper.get().getJobConf();
 
     if (workflowJobProperties.containsKey(property)) {
-      return (String) workflowJobProperties.get(property);
+      return (String)workflowJobProperties.get(property);
     }
 
     Map<Object, Object> defaultProps = CascadingHelper.get().getDefaultProperties();
     if (defaultProps.containsKey(property)) {
-      return (String) defaultProps.get(property);
+      return (String)defaultProps.get(property);
     }
 
     return jobconf.get(property);
   }
 
 
-  private String getReasonForShutdownRequest() {
+  private String getReasonForShutdownRequest() throws IOException {
     return persistence.getShutdownRequest();
   }
 
-  private void clearFinishedSteps() {
+  private void clearFinishedSteps() throws IOException {
     Iterator<StepRunner> iter = runningSteps.iterator();
     while (iter.hasNext()) {
       StepRunner cr = iter.next();
@@ -628,7 +630,7 @@ public final class WorkflowRunner {
     stepRunner.start();
   }
 
-  private StepRunner getStartableStep(Set<StepRunner> pendingSteps) {
+  private StepRunner getStartableStep(Set<StepRunner> pendingSteps) throws IOException {
     for (StepRunner cr : pendingSteps) {
       if (cr.allDependenciesCompleted()) {
         return cr;
@@ -637,7 +639,7 @@ public final class WorkflowRunner {
     return null;
   }
 
-  private boolean shouldKeepStartingSteps() {
+  private boolean shouldKeepStartingSteps() throws IOException {
     return !WorkflowUtil.isFailPending(persistence) && !WorkflowUtil.isShutdownPending(persistence);
   }
 
@@ -661,15 +663,19 @@ public final class WorkflowRunner {
   }
 
   public List<NestedCounter> getCounters() {
-    // we don't know what stage of execution we are in when this is called
-    // so get an up-to-date list of counters each time
-    List<NestedCounter> counters = new ArrayList<NestedCounter>();
-    for (StepRunner sr : completedSteps) {
-      for (NestedCounter c : sr.step.getCounters()) {
-        counters.add(c.addParentEvent(persistence.getDescription()));
+    try {
+      // we don't know what stage of execution we are in when this is called
+      // so get an up-to-date list of counters each time
+      List<NestedCounter> counters = new ArrayList<NestedCounter>();
+      for (StepRunner sr : completedSteps) {
+        for (NestedCounter c : sr.step.getCounters()) {
+          counters.add(c.addParentEvent(persistence.getName()));
+        }
       }
+      return counters;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
-    return counters;
   }
 
   public Map<String, Map<String, Long>> getCounterMap() {

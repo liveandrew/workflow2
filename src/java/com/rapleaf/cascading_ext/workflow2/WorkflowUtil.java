@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,11 +44,11 @@ public class WorkflowUtil {
 
   }
 
-  public static boolean isShutdownPending(WorkflowStatePersistence persistence) {
+  public static boolean isShutdownPending(WorkflowStatePersistence persistence) throws IOException {
     return persistence.getShutdownRequest() != null;
   }
 
-  public static boolean isFailPending(WorkflowStatePersistence persistence) {
+  public static boolean isFailPending(WorkflowStatePersistence persistence) throws IOException {
 
     for (Map.Entry<String, StepState> entry : persistence.getStepStatuses().entrySet()) {
       if (entry.getValue().getStatus() == StepStatus.FAILED) {

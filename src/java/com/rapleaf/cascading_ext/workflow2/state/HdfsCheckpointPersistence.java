@@ -24,6 +24,7 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.liveramp.importer.generated.AppType;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -42,7 +43,7 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   private String shutdownReason;
 
   private String id;
-  private String description;
+  private String name;
   private String priority;
   private String pool;
   private String host;
@@ -126,8 +127,8 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public String getDescription() {
-    return description;
+  public String getName() {
+    return name;
   }
 
   @Override
@@ -221,14 +222,16 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence {
 
   @Override
   public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
-                      String description,
+                      String name,
+                      String uniqueId,
+                      AppType appType,
                       String host,
                       String username,
                       String pool,
                       String priority) {
 
     this.id = Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID()));
-    this.description = description;
+    this.name = name;
     this.username = username;
     this.host = host;
     this.pool = pool;

@@ -5,6 +5,7 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
@@ -22,6 +23,8 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
   private StoreReaderLockProvider lockProvider;
   private ContextStorage storage;
   private WorkflowRegistry registry;
+  private String uniqueIdentifier;
+  private AppType appType;
 
   protected WorkflowOptions(){}
 
@@ -107,6 +110,24 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
 
   public T setStatsRecorder(RecorderFactory statsRecorder) {
     this.statsRecorder = statsRecorder;
+    return (T) this;
+  }
+
+  public String getScopeIdentifier() {
+    return uniqueIdentifier;
+  }
+
+  public T setUniqueIdentifier(String uniqueIdentifier) {
+    this.uniqueIdentifier = uniqueIdentifier;
+    return (T) this;
+  }
+
+  public AppType getAppType() {
+    return appType;
+  }
+
+  public T setAppType(AppType appType) {
+    this.appType = appType;
     return (T) this;
   }
 }

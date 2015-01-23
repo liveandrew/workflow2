@@ -1,6 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -30,7 +30,7 @@ import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 
 public class WorkflowDiagram {
 
-  public static DirectedGraph<StepState, DefaultEdge> getDiagramGraph(WorkflowStatePersistence persistence) {
+  public static DirectedGraph<StepState, DefaultEdge> getDiagramGraph(WorkflowStatePersistence persistence) throws IOException {
 
     DirectedGraph<String, DefaultEdge> forwardGraph = new SimpleDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
 
@@ -51,7 +51,7 @@ public class WorkflowDiagram {
   }
 
   private static DirectedGraph<StepState, DefaultEdge> wrapVertices(DirectedGraph<String, DefaultEdge> graph,
-                                                                    WorkflowStatePersistence persistence) {
+                                                                    WorkflowStatePersistence persistence) throws IOException {
     DirectedGraph<StepState, DefaultEdge> resultGraph =
         new SimpleDirectedGraph<StepState, DefaultEdge>(DefaultEdge.class);
 
@@ -92,7 +92,7 @@ public class WorkflowDiagram {
 
   }
 
-  public static JSONObject getJSONState(WorkflowStatePersistence persistence) throws JSONException, UnknownHostException {
+  public static JSONObject getJSONState(WorkflowStatePersistence persistence) throws JSONException, IOException {
 
     DirectedGraph<StepState, DefaultEdge> graph = getDiagramGraph(persistence);
 
@@ -160,7 +160,7 @@ public class WorkflowDiagram {
     }
 
     return new JSONObject()
-        .put("name", persistence.getDescription())
+        .put("name", persistence.getName())
         .put("host", persistence.getHost())
         .put("id", persistence.getId())
         .put("username", persistence.getUsername())
@@ -174,7 +174,7 @@ public class WorkflowDiagram {
         .put("steps", steps);
   }
 
-  private static String getStatus(WorkflowStatePersistence persistence) {
+  private static String getStatus(WorkflowStatePersistence persistence) throws IOException {
 
     if (WorkflowUtil.isFailPending(persistence)) {
       return "failPending";
