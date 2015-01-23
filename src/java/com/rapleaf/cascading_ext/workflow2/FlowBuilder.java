@@ -118,7 +118,11 @@ public class FlowBuilder {
     return new FlowClosure(name, sources, sinks, traps, tails);
   }
 
-  public class FlowClosure {
+  protected interface IFlowClosure {
+    public Flow buildFlow();
+  }
+
+  public class FlowClosure implements IFlowClosure {
 
     private final String name;
     private final Map<String, Tap> sources;
@@ -140,7 +144,7 @@ public class FlowBuilder {
       return this;
     }
 
-    protected Flow buildFlow() {
+    public Flow buildFlow() {
       Flow connect = connector.connect(name, sources, sinks, traps, tails);
       for (FlowListener listener : listeners) {
         connect.addListener(listener);

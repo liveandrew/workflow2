@@ -17,6 +17,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 
 import cascading.flow.Flow;
+import cascading.flow.FlowConnector;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
@@ -319,7 +320,11 @@ public abstract class Action {
   }
 
   protected FlowBuilder buildFlow() {
-    return new FlowBuilder(CascadingHelper.get().getFlowConnector(stepProperties), getClass());
+    return new FlowBuilder(buildFlowConnector(), getClass());
+  }
+
+  protected FlowConnector buildFlowConnector() {
+    return CascadingHelper.get().getFlowConnector(stepProperties);
   }
 
   protected void completeWithProgress(RunnableJob job) {
@@ -327,7 +332,7 @@ public abstract class Action {
     completeWithProgress(new HadoopOperation(job));
   }
 
-  protected Flow completeWithProgress(FlowBuilder.FlowClosure flowc) {
+  protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc) {
     Flow flow = flowc.buildFlow();
     completeWithProgress(new FlowOperation(flow));
     return flow;
