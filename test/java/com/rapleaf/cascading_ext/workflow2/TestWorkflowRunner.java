@@ -184,11 +184,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testFailThenShutdown1() throws InterruptedException {
+  public void testFailThenShutdown1() throws InterruptedException, IOException {
     testFailThenShutdown(hdfsPersistenceFactory);
   }
 
-  public void testFailThenShutdown(PersistenceFactory factory) throws InterruptedException {
+  public void testFailThenShutdown(PersistenceFactory factory) throws InterruptedException, IOException {
 
     WorkflowStatePersistence persistence = factory.make();
 
@@ -225,11 +225,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testShutdownThenFail() throws InterruptedException {
+  public void testShutdownThenFail() throws InterruptedException, IOException {
     testShutdownThenFail(hdfsPersistenceFactory);
   }
 
-  public void testShutdownThenFail(PersistenceFactory factory) throws InterruptedException {
+  public void testShutdownThenFail(PersistenceFactory factory) throws InterruptedException, IOException {
 
     WorkflowStatePersistence peristence = factory.make();
 
@@ -263,11 +263,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testShutdown1() throws InterruptedException {
+  public void testShutdown1() throws InterruptedException, IOException {
     testShutdown(hdfsPersistenceFactory);
   }
 
-  public void testShutdown(PersistenceFactory factory) throws InterruptedException {
+  public void testShutdown(PersistenceFactory factory) throws InterruptedException, IOException {
 
     WorkflowStatePersistence peristence = factory.make();
 

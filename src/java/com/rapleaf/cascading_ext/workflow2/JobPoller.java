@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.mapred.RunningJob;
@@ -38,11 +39,13 @@ class JobPoller extends Thread {
         Thread.sleep(TEN_SECONDS);
       } catch (InterruptedException e) {
         //  expected
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
   }
 
-  private void updateRunningJobs() {
+  private void updateRunningJobs() throws IOException {
     for (ActionOperation operation : actionList) {
       try {
         for (RunningJob job : operation.listJobs()) {
