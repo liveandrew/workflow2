@@ -130,7 +130,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     String token = step.getCheckpointToken();
 
-    return rldb.stepAttempts().create((int)attempt.getId(), token, 0l, 0l,
+    return rldb.stepAttempts().create((int)attempt.getId(), token, null, null,
         getInitialStatus(token, previousAttempt).ordinal(),
         null,
         null,
