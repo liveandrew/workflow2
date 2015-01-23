@@ -14,11 +14,11 @@ import org.apache.log4j.Logger;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
-import com.rapleaf.cascading_ext.workflow2.WorkflowUtil;
 import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
 import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
@@ -68,7 +68,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public void markShutdownRequested(String reason) {
-    shutdownReason = WorkflowUtil.getShutdownReason(reason);
+    shutdownReason = WorkflowGraph.getShutdownReason(reason);
   }
 
   @Override

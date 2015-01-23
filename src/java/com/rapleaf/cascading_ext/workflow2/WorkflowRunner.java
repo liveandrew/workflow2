@@ -43,6 +43,7 @@ import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
@@ -467,7 +468,7 @@ public final class WorkflowRunner {
     }
 
     // if there are any failures, then the workflow failed. throw an exception.
-    if (WorkflowUtil.isFailPending(persistence)) {
+    if (WorkflowGraph.isFailPending(persistence)) {
       String failureMessage = buildStepsFailureMessage();
       sendFailureEmail(failureMessage);
       throw new RuntimeException(getFailureMessage() + "\n" + failureMessage);
@@ -647,7 +648,7 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() throws IOException {
-    return !WorkflowUtil.isFailPending(persistence) && !WorkflowUtil.isShutdownPending(persistence);
+    return !WorkflowGraph.isFailPending(persistence) && !WorkflowGraph.isShutdownPending(persistence);
   }
 
   private void shutdownWebServer() {

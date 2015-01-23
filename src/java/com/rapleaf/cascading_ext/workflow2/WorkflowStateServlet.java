@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import org.json.JSONObject;
 
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class WorkflowStateServlet extends HttpServlet {
@@ -21,7 +22,7 @@ public class WorkflowStateServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     try {
-      JSONObject state = WorkflowDiagram.getJSONState(persistence);
+      JSONObject state = WorkflowGraph.getJSONState(persistence);
       resp.addHeader("Access-Control-Allow-Origin", "*");
       resp.getWriter().append(state.toString());
     }catch(Exception e){

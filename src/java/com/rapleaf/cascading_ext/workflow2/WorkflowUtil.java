@@ -1,14 +1,8 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-
-import com.rapleaf.db_schemas.rldb.workflow.StepState;
-import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class WorkflowUtil {
 
@@ -42,29 +36,6 @@ public class WorkflowUtil {
       setCheckpointPrefixes(dep, prefix, explored);
     }
 
-  }
-
-  public static boolean isShutdownPending(WorkflowStatePersistence persistence) throws IOException {
-    return persistence.getShutdownRequest() != null;
-  }
-
-  public static boolean isFailPending(WorkflowStatePersistence persistence) throws IOException {
-
-    for (Map.Entry<String, StepState> entry : persistence.getStepStatuses().entrySet()) {
-      if (entry.getValue().getStatus() == StepStatus.FAILED) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  public static String getShutdownReason(String provided){
-    if (provided == null || provided.equals("")) {
-      return "No reason provided.";
-    } else {
-      return provided;
-    }
   }
 
 }
