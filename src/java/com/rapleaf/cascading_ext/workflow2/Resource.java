@@ -1,5 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import com.liveramp.java_support.workflow.ActionId;
+
 public class Resource<T> {
 
   private final String relativeId;

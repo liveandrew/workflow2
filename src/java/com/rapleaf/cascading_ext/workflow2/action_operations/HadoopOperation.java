@@ -11,7 +11,7 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.log4j.Logger;
 
 import com.liveramp.cascading_ext.counters.Counter;
-import com.liveramp.cascading_ext.event_timer.FixedTimedEvent;
+import com.liveramp.java_support.event_timer.FixedTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
 import com.rapleaf.cascading_ext.workflow2.RunnableJob;

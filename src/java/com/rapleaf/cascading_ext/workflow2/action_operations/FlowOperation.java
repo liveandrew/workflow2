@@ -12,7 +12,7 @@ import cascading.stats.hadoop.HadoopStepStats;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.counters.Counters;
-import com.liveramp.cascading_ext.event_timer.FixedTimedEvent;
+import com.liveramp.java_support.event_timer.FixedTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
 import com.rapleaf.cascading_ext.workflow2.Step;
