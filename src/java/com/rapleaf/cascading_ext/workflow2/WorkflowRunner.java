@@ -221,8 +221,7 @@ public final class WorkflowRunner {
         combine(first, rest));
   }
 
-  public WorkflowRunner(String workflowName, WorkflowStatePersistence persistence, WorkflowOptions options, Set<Step> tailSteps) {
-    this.persistence = persistence;
+  public WorkflowRunner(String workflowName, WorkflowStatePersistence.Factory persistence, WorkflowOptions options, Set<Step> tailSteps) {
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.statsRecorder = options.getStatsRecorder().makeRecorder(workflowName);
     this.alertsHandler = options.getAlertsHandler();
@@ -237,7 +236,7 @@ public final class WorkflowRunner {
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps, timer);
 
-    this.persistence.prepare(dependencyGraph,
+    this.persistence = persistence.prepare(dependencyGraph,
         workflowName,
         options.getScopeIdentifier(),
         options.getAppType(),
@@ -254,7 +253,7 @@ public final class WorkflowRunner {
 
     // prep runners
     for (Step step : dependencyGraph.vertexSet()) {
-      StepRunner runner = new StepRunner(step, persistence);
+      StepRunner runner = new StepRunner(step, this.persistence);
       pendingSteps.add(runner);
     }
   }

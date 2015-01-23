@@ -198,9 +198,8 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     HashSet<Step> tail = Sets.newHashSet(tailStep);
     WorkflowUtil.setCheckpointPrefixes(tail);
 
-    HdfsCheckpointPersistence pers = new HdfsCheckpointPersistence(getTestRoot()+"/perm");
-    new WorkflowRunner("test", pers, new TestWorkflowOptions(), tail);
-    graph = WorkflowDiagram.getDiagramGraph(pers);
+    WorkflowRunner wfr = new WorkflowRunner("test", new HdfsCheckpointPersistence(getTestRoot()+"/perm"), new TestWorkflowOptions(), tail);
+    graph = WorkflowDiagram.getDiagramGraph(wfr.getPersistence());
 
     populateNameToVertex(graph);
   }

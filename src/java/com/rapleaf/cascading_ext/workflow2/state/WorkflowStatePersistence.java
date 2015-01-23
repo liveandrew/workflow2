@@ -13,14 +13,16 @@ import com.rapleaf.cascading_ext.workflow2.Step;
 
 public interface WorkflowStatePersistence {
 
-  public void prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
-                      String name,
-                      String scopeId,
-                      AppType appType,
-                      String host,
-                      String username,
-                      String pool,
-                      String priority);
+  public static interface Factory {
+    public WorkflowStatePersistence prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
+                        String name,
+                        String scopeId,
+                        AppType appType,
+                        String host,
+                        String username,
+                        String pool,
+                        String priority);
+  }
 
   public void markStepRunning(String stepToken) throws IOException;
   public void markStepFailed(String stepToken, Throwable t) throws IOException;
