@@ -25,6 +25,7 @@ import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.iface.IMapreduceJobPersistence;
+import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.StepAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.StepDependency;
@@ -54,13 +55,13 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   @Override
   public synchronized void prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
-                      String name,
-                      String scopeId,
-                      AppType appType,
-                      String host,
-                      String username,
-                      String pool,
-                      String priority) {
+                                   String name,
+                                   String scopeId,
+                                   AppType appType,
+                                   String host,
+                                   String username,
+                                   String pool,
+                                   String priority) {
 
     try {
 
@@ -311,12 +312,24 @@ public class DbPersistence implements WorkflowStatePersistence {
   @Override
   public synchronized void markStepRunningJob(String stepToken, RunningJob job) throws IOException {
     LOG.info("Marking step " + stepToken + " as running job " + job.getID());
-    IMapreduceJobPersistence jobPersistence = rldb.mapreduceJobs();
-    jobPersistence.save(jobPersistence.create((int)getStep(stepToken).getId(),
-        job.getID().toString(),
-        job.getJobName(),
-        job.getTrackingURL()
-    ));
+
+    StepAttempt step = getStep(stepToken);
+    String jobId = job.getID().toString();
+
+    Set<MapreduceJob> saved = rldb.mapreduceJobs().query()
+        .stepAttemptId((int)step.getId())
+        .jobIdentifier(jobId)
+        .find();
+
+    if (saved.isEmpty()) {
+      IMapreduceJobPersistence jobPersistence = rldb.mapreduceJobs();
+      jobPersistence.save(jobPersistence.create((int)step.getId(),
+          jobId,
+          job.getJobName(),
+          job.getTrackingURL()
+      ));
+    }
+
   }
 
   @Override
@@ -407,7 +420,7 @@ public class DbPersistence implements WorkflowStatePersistence {
   }
 
   private DataStoreInfo asDSInfo(WorkflowAttemptDatastore store) {
-    return new DataStoreInfo(store.getName(), store.getClassName(), store.getPath(), (int) store.getId());
+    return new DataStoreInfo(store.getName(), store.getClassName(), store.getPath(), (int)store.getId());
   }
 
   @Override

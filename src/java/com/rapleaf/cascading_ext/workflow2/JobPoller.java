@@ -8,7 +8,7 @@ import org.apache.hadoop.mapred.RunningJob;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
 
 class JobPoller extends Thread {
-  private static final long TEN_SECONDS = 10000;
+  private static final long THIRTY_SECONDS = 30000;
 
   private boolean shouldShutdown = false;
 
@@ -36,22 +36,22 @@ class JobPoller extends Thread {
     while (!shouldShutdown) {
       try {
         updateRunningJobs();
-        Thread.sleep(TEN_SECONDS);
+        Thread.sleep(THIRTY_SECONDS);
       } catch (InterruptedException e) {
         //  expected
-      } catch (IOException e) {
-        throw new RuntimeException(e);
       }
     }
   }
 
-  private void updateRunningJobs() throws IOException {
+  public void updateRunningJobs()  {
     for (ActionOperation operation : actionList) {
       try {
         for (RunningJob job : operation.listJobs()) {
           persistence.markStepRunningJob(checkpoint, job);
         }
       } catch (NullPointerException e) {
+        //  no op
+      } catch (IOException e) {
         //  no op
       }
     }

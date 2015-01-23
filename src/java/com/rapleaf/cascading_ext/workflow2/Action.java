@@ -222,6 +222,8 @@ public abstract class Action {
     } finally {
       unlock(locks);
       if(jobPoller != null) {
+        //  try to refresh info in case of fast failures
+        jobPoller.updateRunningJobs();
         jobPoller.shutdown();
       }
     }
