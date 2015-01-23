@@ -23,7 +23,7 @@ public class DataStoreInfo {
   public String getPath() {
     return path;
   }
-  public Integer getIndexInFlow() {
+  public Integer getId() {
     return indexInFlow;
   }
 

@@ -84,7 +84,7 @@ public class WorkflowDiagram {
 
         dsConnections.put(new JSONObject()
             .put("step", stepIdToNum.get(step.getStepId()))
-            .put("datastore", ds.getIndexInFlow())
+            .put("datastore", ds.getId())
             .put("connection", type));
       }
     }
@@ -147,7 +147,7 @@ public class WorkflowDiagram {
 
     for (DataStoreInfo storeInfo : persistence.getDatastores()) {
       stores.put(new JSONObject()
-          .put("index", storeInfo.getIndexInFlow())
+          .put("index", storeInfo.getId())
           .put("name", storeInfo.getName())
           .put("path", storeInfo.getPath())
           .put("type", storeInfo.getClassName()));

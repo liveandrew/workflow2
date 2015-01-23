@@ -25,11 +25,11 @@ import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.iface.IMapreduceJobPersistence;
-import com.rapleaf.db_schemas.rldb.models.AttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.StepAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.StepDependency;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
+import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.jack.queries.where_operators.In;
@@ -83,15 +83,13 @@ public class DbPersistence implements WorkflowStatePersistence {
         }
       }
 
-      int count = 0;
-      Map<DataStore, AttemptDatastore> datastores = Maps.newHashMap();
+      Map<DataStore, WorkflowAttemptDatastore> datastores = Maps.newHashMap();
       for (DataStore store : allStores) {
-        datastores.put(store, rldb.attemptDatastores().create(
+        datastores.put(store, rldb.workflowAttemptDatastores().create(
+            (int)workflowAttemptId,
             store.getName(),
             store.getPath(),
-            store.getClass().getName(),
-            count++,
-            (int)workflowAttemptId
+            store.getClass().getName()
         ));
       }
 
@@ -131,7 +129,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     String token = step.getCheckpointToken();
 
-    return rldb.stepAttempts().create(token, (int)attempt.getId(), 0l, 0l,
+    return rldb.stepAttempts().create((int)attempt.getId(), token, 0l, 0l,
         getInitialStatus(token, previousAttempt).ordinal(),
         null,
         null,
@@ -185,7 +183,7 @@ public class DbPersistence implements WorkflowStatePersistence {
   }
 
   private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, WorkflowExecution execution) throws IOException {
-    return rldb.workflowAttempts().create(username, null, priority, pool, host, (int)execution.getId());
+    return rldb.workflowAttempts().create((int)execution.getId(), username, null, priority, pool, host);
   }
 
   private WorkflowExecution getExecution(String name, String scopeId, AppType appType) throws IOException {
@@ -314,10 +312,10 @@ public class DbPersistence implements WorkflowStatePersistence {
   public synchronized void markStepRunningJob(String stepToken, RunningJob job) throws IOException {
     LOG.info("Marking step " + stepToken + " as running job " + job.getID());
     IMapreduceJobPersistence jobPersistence = rldb.mapreduceJobs();
-    jobPersistence.save(jobPersistence.create(job.getID().toString(),
+    jobPersistence.save(jobPersistence.create((int)getStep(stepToken).getId(),
+        job.getID().toString(),
         job.getJobName(),
-        job.getTrackingURL(),
-        (int)getStep(stepToken).getId()
+        job.getTrackingURL()
     ));
   }
 
@@ -382,7 +380,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     Multimap<Action.DSAction, DataStoreInfo> datastores = HashMultimap.create();
     for (StepAttemptDatastore ds : step.getStepAttemptDatastores()) {
-      datastores.put(Action.DSAction.values()[ds.getDsAction()], asDSInfo(ds.getAttemptDatastore()));
+      datastores.put(Action.DSAction.values()[ds.getDsAction()], asDSInfo(ds.getWorkflowAttemptDatastore()));
     }
 
     return new StepState(step.getStepToken(),
@@ -408,8 +406,8 @@ public class DbPersistence implements WorkflowStatePersistence {
     return states;
   }
 
-  private DataStoreInfo asDSInfo(AttemptDatastore store) {
-    return new DataStoreInfo(store.getName(), store.getClassName(), store.getPath(), store.getIndexInFlow());
+  private DataStoreInfo asDSInfo(WorkflowAttemptDatastore store) {
+    return new DataStoreInfo(store.getName(), store.getClassName(), store.getPath(), (int) store.getId());
   }
 
   @Override
@@ -417,7 +415,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     List<DataStoreInfo> info = Lists.newArrayList();
 
-    for (AttemptDatastore attemptDatastore : rldb.attemptDatastores().query()
+    for (WorkflowAttemptDatastore attemptDatastore : rldb.workflowAttemptDatastores().query()
         .workflowAttemptId((int)workflowAttemptId)
         .find()) {
       info.add(asDSInfo(attemptDatastore));

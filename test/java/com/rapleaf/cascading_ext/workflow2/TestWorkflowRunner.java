@@ -64,7 +64,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Before
   public void prepare() throws Exception {
     IncrementAction.counter = 0;
-    System.out.println("deleting all");
     new DatabasesImpl().getRlDb().deleteAll();
   }
 
