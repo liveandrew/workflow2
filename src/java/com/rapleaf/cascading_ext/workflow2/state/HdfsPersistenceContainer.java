@@ -8,12 +8,14 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
 import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
@@ -151,6 +153,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   @Override
   public String getUsername() {
     return username;
+  }
+
+  @Override
+  public AttemptStatus getStatus() throws IOException {
+    throw new NotImplementedException();
   }
 
   @Override

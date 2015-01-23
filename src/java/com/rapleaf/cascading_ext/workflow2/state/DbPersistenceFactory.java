@@ -51,7 +51,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       WorkflowExecution execution = getExecution(name, scopeId, appType);
       LOG.info("Using workflow execution: " + execution);
 
-      WorkflowAttempt previousAttempt = findLastWorkflowAttempt(execution);
+      Set<WorkflowAttempt> previousAttempt = findLastWorkflowAttempt(execution);
       LOG.info("Found previous attempt: " + previousAttempt);
 
       WorkflowAttempt attempt = createAttempt(host, username, pool, priority, execution);
@@ -117,12 +117,32 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   }
 
 
-  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, WorkflowAttempt previousAttempt) throws IOException {
+  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, Set<WorkflowAttempt> previousAttempt) throws IOException {
+
+    Set<Integer> prevIds = Sets.newHashSet();
+    for (WorkflowAttempt prev : previousAttempt) {
+      prevIds.add((int) prev.getId());
+    }
 
     String token = step.getCheckpointToken();
 
+    //  if the previous workflow died uncleanly (machine died, OOME, etc), we might see steps as still running.  fail them here to clean up.
+    for (StepAttempt runningStepAttmpt : rldb.stepAttempts().query()
+        .whereWorkflowAttemptId(new In<Integer>(prevIds))
+        .stepToken(token)
+        .stepStatus(StepStatus.RUNNING.ordinal())
+        .find()) {
+
+      runningStepAttmpt
+          .setStepStatus(StepStatus.FAILED.ordinal())
+          .setFailureCause("Unknown, failed by cleanup.")
+          .save();
+
+    }
+
+
     return rldb.stepAttempts().create((int)attempt.getId(), token, null, null,
-        getInitialStatus(token, previousAttempt).ordinal(),
+        getInitialStatus(token, prevIds).ordinal(),
         null,
         null,
         step.getAction().getClass().getName(),
@@ -131,23 +151,19 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private StepStatus getInitialStatus(String stepId, WorkflowAttempt prevAttempt) throws IOException {
+  private StepStatus getInitialStatus(String stepId, Set<Integer> prevAttemptIds) throws IOException {
 
-    if (isStepComplete(stepId, prevAttempt)) {
+    if (isStepComplete(stepId, prevAttemptIds)) {
       return StepStatus.SKIPPED;
     }
 
     return StepStatus.WAITING;
   }
 
-  private boolean isStepComplete(String step, WorkflowAttempt lastAttempt) throws IOException {
-
-    if (lastAttempt == null) {
-      return false;
-    }
+  private boolean isStepComplete(String step, Set<Integer> previousAttemptIds) throws IOException {
 
     Set<StepAttempt> completeAttempt = rldb.stepAttempts().query()
-        .workflowAttemptId((int)lastAttempt.getId())
+        .whereWorkflowAttemptId(new In<Integer>(previousAttemptIds))
         .stepToken(step)
         .whereStepStatus(new In<Integer>(StepStatus.NON_BLOCKING_IDS))
         .find();
@@ -160,18 +176,11 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private WorkflowAttempt findLastWorkflowAttempt(WorkflowExecution execution) throws IOException {
-    Set<WorkflowAttempt> found = rldb.workflowAttempts().query()
+  private Set<WorkflowAttempt> findLastWorkflowAttempt(WorkflowExecution execution) throws IOException {
+    return rldb.workflowAttempts().query()
         .workflowExecutionId((int)execution.getId())
         .orderById(QueryOrder.DESC)
-        .limit(1)
         .find();
-
-    if (found.isEmpty()) {
-      return null;
-    }
-
-    return found.iterator().next();
   }
 
 
