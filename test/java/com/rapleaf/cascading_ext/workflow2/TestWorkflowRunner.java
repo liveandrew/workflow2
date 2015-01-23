@@ -28,6 +28,7 @@ import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.context.HdfsContextStorage;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.state.DbPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
@@ -53,16 +54,17 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     }
   };
 
-//  private PersistenceFactory dbPersistenceFactory = new PersistenceFactory() {
-//    @Override
-//    public WorkflowStatePersistence make() {
-//      return new DbPersistence(new DatabasesImpl().getRlDb());
-//    }
-//  };
+  private PersistenceFactory dbPersistenceFactory = new PersistenceFactory() {
+    @Override
+    public WorkflowStatePersistence make() {
+      return new DbPersistence();
+    }
+  };
 
   @Before
   public void prepare() throws Exception {
     IncrementAction.counter = 0;
+    System.out.println("deleting all");
     new DatabasesImpl().getRlDb().deleteAll();
   }
 
@@ -84,10 +86,10 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testSimple(hdfsPersistenceFactory);
   }
 
-//  @Test
-//  public void testSimple2() throws Exception {
-//    testSimple(dbPersistenceFactory);
-//  }
+  @Test
+  public void testSimple2() throws Exception {
+    testSimple(dbPersistenceFactory);
+  }
 
 
   public void testSimple(PersistenceFactory persistence) throws Exception {
@@ -102,6 +104,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Test
   public void testFullRestart1() throws IOException {
     testFullRestart(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testFullRestart2() throws IOException {
+    testFullRestart(dbPersistenceFactory);
   }
 
   public void testFullRestart(PersistenceFactory persistence) throws IOException {
@@ -144,6 +151,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testLoneMultiStepAction(hdfsPersistenceFactory);
   }
 
+  @Test
+  public void testLoneMultiStepAction2() throws Exception {
+    testLoneMultiStepAction(dbPersistenceFactory);
+  }
+
   public void testLoneMultiStepAction(PersistenceFactory factory) throws Exception {
     // lone multi
     Step s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(
@@ -157,6 +169,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Test
   public void testMultiInTheMiddle1() throws Exception {
     testMultiIntheMiddle(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testMultiInTheMiddle2() throws Exception {
+    testMultiIntheMiddle(dbPersistenceFactory);
   }
 
   public void testMultiIntheMiddle(PersistenceFactory factory) throws IOException {
@@ -174,6 +191,12 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testMultiAtTheEnd() throws Exception {
     testMultiAtEnd(hdfsPersistenceFactory);
   }
+
+  @Test
+  public void testMultiAtTheEnd2() throws Exception {
+    testMultiAtEnd(dbPersistenceFactory);
+  }
+
 
   public void testMultiAtEnd(PersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
@@ -201,6 +224,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Test
   public void testFailThenShutdown1() throws InterruptedException, IOException {
     testFailThenShutdown(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testFailThenShutdown2() throws InterruptedException, IOException {
+    testFailThenShutdown(dbPersistenceFactory);
   }
 
   public void testFailThenShutdown(PersistenceFactory factory) throws InterruptedException, IOException {
@@ -240,8 +268,13 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
   @Test
-  public void testShutdownThenFail() throws InterruptedException, IOException {
+  public void testShutdownThenFail1() throws InterruptedException, IOException {
     testShutdownThenFail(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testShutdownThenFail2() throws InterruptedException, IOException {
+    testShutdownThenFail(dbPersistenceFactory);
   }
 
   public void testShutdownThenFail(PersistenceFactory factory) throws InterruptedException, IOException {
@@ -280,6 +313,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Test
   public void testShutdown1() throws InterruptedException, IOException {
     testShutdown(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testShutdown12() throws InterruptedException, IOException {
+    testShutdown(dbPersistenceFactory);
   }
 
   public void testShutdown(PersistenceFactory factory) throws InterruptedException, IOException {
@@ -360,6 +398,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testMultiInMultiEnd(hdfsPersistenceFactory);
   }
 
+  @Test
+  public void testMultiInMultiEnd2() throws Exception {
+    testMultiInMultiEnd(dbPersistenceFactory);
+  }
+
   public void testMultiInMultiEnd(PersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     // please, never do this in real code
@@ -375,6 +418,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Test
   public void testMulitInMultiMiddle1() throws Exception {
     testMultiInMultiMiddle(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testMulitInMultiMiddle2() throws Exception {
+    testMultiInMultiMiddle(dbPersistenceFactory);
   }
 
   public void testMultiInMultiMiddle(PersistenceFactory factory) throws IOException {
@@ -397,6 +445,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testDuplicateCheckpoints(hdfsPersistenceFactory);
   }
 
+  @Test
+  public void testDuplicateCheckpoints2() throws Exception {
+    testDuplicateCheckpoints(dbPersistenceFactory);
+  }
+
   public void testDuplicateCheckpoints(PersistenceFactory factory) throws IOException {
     try {
 
@@ -415,6 +468,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Test
   public void testTimingMultiStep1() throws Exception {
     testTimingMultiStep(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testTimingMultiStep2() throws Exception {
+    testTimingMultiStep(dbPersistenceFactory);
   }
 
   public void testTimingMultiStep(PersistenceFactory factory) throws Exception {
@@ -455,6 +513,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Test
   public void testSandboxDir1() throws Exception {
     testSandboxDir(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testSandboxDir2() throws Exception {
+    testSandboxDir(dbPersistenceFactory);
   }
 
   public void testSandboxDir(PersistenceFactory persistence) throws Exception {
@@ -515,6 +578,11 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   @Test
   public void testPathNesting1() throws IOException, ClassNotFoundException {
     testPathNesting(hdfsPersistenceFactory);
+  }
+
+  @Test
+  public void testPathNesting2() throws IOException, ClassNotFoundException {
+    testPathNesting(dbPersistenceFactory);
   }
 
   public void testPathNesting(PersistenceFactory factory) throws IOException, ClassNotFoundException {

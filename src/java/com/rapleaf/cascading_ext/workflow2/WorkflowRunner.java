@@ -243,8 +243,8 @@ public final class WorkflowRunner {
         options.getAppType(),
         getHostName(),
         System.getProperty("user.name"),
-        findDefaultValue(JOB_POOL_PARAM),
-        findDefaultValue(JOB_PRIORITY_PARAM)
+        findDefaultValue(JOB_POOL_PARAM, "default"),
+        findDefaultValue(JOB_PRIORITY_PARAM, "NORMAL")
     );
 
     removeRedundantEdges(dependencyGraph);
@@ -586,7 +586,7 @@ public final class WorkflowRunner {
     enabledNotifications.add(workflowRunnerNotification);
   }
 
-  private String findDefaultValue(String property) {
+  private String findDefaultValue(String property, String defaultValue) {
 
     //  fall back to static jobconf props if not set elsewhere
     JobConf jobconf = CascadingHelper.get().getJobConf();
@@ -600,9 +600,15 @@ public final class WorkflowRunner {
       return (String)defaultProps.get(property);
     }
 
-    return jobconf.get(property);
-  }
+    String value = jobconf.get(property);
 
+    if(value != null){
+      return value;
+    }
+
+    //  only really expect in tests
+    return defaultValue;
+  }
 
   private String getReasonForShutdownRequest() throws IOException {
     return persistence.getShutdownRequest();
