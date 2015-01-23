@@ -40,10 +40,12 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
-import com.rapleaf.cascading_ext.workflow2.state.StepState;
-import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.StepState;
+import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
+import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.support.event_timer.TimedEventHelper;
 
 public final class WorkflowRunner {
@@ -221,7 +223,7 @@ public final class WorkflowRunner {
         combine(first, rest));
   }
 
-  public WorkflowRunner(String workflowName, WorkflowStatePersistence.Factory persistence, WorkflowOptions options, Set<Step> tailSteps) {
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) {
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.statsRecorder = options.getStatsRecorder().makeRecorder(workflowName);
     this.alertsHandler = options.getAlertsHandler();
@@ -340,8 +342,8 @@ public final class WorkflowRunner {
       for (Step step : steps) {
         Action stepAction = step.getAction();
         if (stepAction != null) { // TODO: check if this check is necessary, it shouldn't be
-          checkStepsSandboxViolation(stepAction.getDatastores(Action.DSAction.CREATES));
-          checkStepsSandboxViolation(stepAction.getDatastores(Action.DSAction.CREATES_TEMPORARY));
+          checkStepsSandboxViolation(stepAction.getDatastores(DSAction.CREATES));
+          checkStepsSandboxViolation(stepAction.getDatastores(DSAction.CREATES_TEMPORARY));
         }
       }
     }

@@ -27,30 +27,14 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
 
   private final ActionId actionId;
   private final String tmpRoot;
-
-  public static enum DSAction {
-
-    //  input
-    READS_FROM,
-    CONSUMES,
-
-    //  output
-    CREATES,
-    CREATES_TEMPORARY,
-    WRITES_TO;
-
-    @Override
-    public String toString() {
-      return super.toString().toLowerCase();
-    }
-  }
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
 

@@ -6,9 +6,9 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-import com.rapleaf.cascading_ext.workflow2.state.StepState;
-import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.StepState;
+import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class WorkflowUtil {
 

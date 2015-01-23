@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import org.json.JSONObject;
 
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class WorkflowStateServlet extends HttpServlet {
 

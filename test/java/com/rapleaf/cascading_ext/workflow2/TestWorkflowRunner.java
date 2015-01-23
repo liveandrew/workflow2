@@ -30,8 +30,9 @@ import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
-import com.rapleaf.cascading_ext.workflow2.state.StepStatus;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.support.event_timer.TimedEvent;
@@ -43,9 +44,9 @@ import static org.junit.Assert.assertEquals;
 
 public class TestWorkflowRunner extends CascadingExtTestCase {
 
-  private WorkflowStatePersistence.Factory hdfsPersistenceFactory = new HdfsCheckpointPersistence(getTestRoot() + "/hdfs_root");
+  private WorkflowPersistenceFactory hdfsPersistenceFactory = new HdfsCheckpointPersistence(getTestRoot() + "/hdfs_root");
 
-  private WorkflowStatePersistence.Factory dbPersistenceFactory = new DbPersistenceFactory();
+  private WorkflowPersistenceFactory dbPersistenceFactory = new DbPersistenceFactory();
 
   @Before
   public void prepare() throws Exception {
@@ -53,15 +54,15 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     new DatabasesImpl().getRlDb().deleteAll();
   }
 
-  private WorkflowRunner buildWfr(WorkflowStatePersistence.Factory persistence, Step tail) {
+  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, Step tail) {
     return buildWfr(persistence, Sets.newHashSet(tail));
   }
 
-  private WorkflowRunner buildWfr(WorkflowStatePersistence.Factory persistence, Set<Step> tailSteps) {
+  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, Set<Step> tailSteps) {
     return buildWfr(persistence, new TestWorkflowOptions(), tailSteps);
   }
 
-  private WorkflowRunner buildWfr(WorkflowStatePersistence.Factory persistence, WorkflowOptions opts, Set<Step> tailSteps) {
+  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, WorkflowOptions opts, Set<Step> tailSteps) {
     return new WorkflowRunner("Test Workflow", persistence, opts, tailSteps);
   }
 
@@ -77,7 +78,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
 
-  public void testSimple(WorkflowStatePersistence.Factory persistence) throws Exception {
+  public void testSimple(WorkflowPersistenceFactory persistence) throws Exception {
     Step first = new Step(new IncrementAction("first"));
     Step second = new Step(new IncrementAction("second"), first);
 
@@ -96,7 +97,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testFullRestart(dbPersistenceFactory);
   }
 
-  public void testFullRestart(WorkflowStatePersistence.Factory persistence) throws IOException {
+  public void testFullRestart(WorkflowPersistenceFactory persistence) throws IOException {
 
     //  test a full restart if interrupted by a failure
 
@@ -141,7 +142,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testLoneMultiStepAction(dbPersistenceFactory);
   }
 
-  public void testLoneMultiStepAction(WorkflowStatePersistence.Factory factory) throws Exception {
+  public void testLoneMultiStepAction(WorkflowPersistenceFactory factory) throws Exception {
     // lone multi
     Step s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(
         new IncrementAction("blah")))));
@@ -161,7 +162,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testMultiIntheMiddle(dbPersistenceFactory);
   }
 
-  public void testMultiIntheMiddle(WorkflowStatePersistence.Factory factory) throws IOException {
+  public void testMultiIntheMiddle(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
@@ -183,7 +184,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   }
 
 
-  public void testMultiAtEnd(WorkflowStatePersistence.Factory factory) throws IOException {
+  public void testMultiAtEnd(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
@@ -216,7 +217,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testFailThenShutdown(dbPersistenceFactory);
   }
 
-  public void testFailThenShutdown(WorkflowStatePersistence.Factory factory) throws InterruptedException, IOException {
+  public void testFailThenShutdown(WorkflowPersistenceFactory factory) throws InterruptedException, IOException {
 
     Semaphore semaphore = new Semaphore(0);
     Semaphore semaphore2 = new Semaphore(0);
@@ -262,7 +263,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testShutdownThenFail(dbPersistenceFactory);
   }
 
-  public void testShutdownThenFail(WorkflowStatePersistence.Factory factory) throws InterruptedException, IOException {
+  public void testShutdownThenFail(WorkflowPersistenceFactory factory) throws InterruptedException, IOException {
 
     Semaphore semaphore = new Semaphore(0);
     AtomicBoolean didExecute = new AtomicBoolean(false);
@@ -304,7 +305,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testShutdown(dbPersistenceFactory);
   }
 
-  public void testShutdown(WorkflowStatePersistence.Factory factory) throws InterruptedException, IOException {
+  public void testShutdown(WorkflowPersistenceFactory factory) throws InterruptedException, IOException {
 
     Semaphore semaphore = new Semaphore(0);
     AtomicInteger preCounter = new AtomicInteger(0);
@@ -387,7 +388,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testMultiInMultiEnd(dbPersistenceFactory);
   }
 
-  public void testMultiInMultiEnd(WorkflowStatePersistence.Factory factory) throws IOException {
+  public void testMultiInMultiEnd(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     // please, never do this in real code
     s = new Step(new MultiStepAction("depth 1", Arrays.asList(new Step(new MultiStepAction(
@@ -409,7 +410,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testMultiInMultiMiddle(dbPersistenceFactory);
   }
 
-  public void testMultiInMultiMiddle(WorkflowStatePersistence.Factory factory) throws IOException {
+  public void testMultiInMultiMiddle(WorkflowPersistenceFactory factory) throws IOException {
     Step b = new Step(new IncrementAction("b"));
     Step innermost = new Step(new MultiStepAction("innermost", Arrays.asList(new Step(
         new IncrementAction("c")))), b);
@@ -434,7 +435,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testDuplicateCheckpoints(dbPersistenceFactory);
   }
 
-  public void testDuplicateCheckpoints(WorkflowStatePersistence.Factory factory) throws IOException {
+  public void testDuplicateCheckpoints(WorkflowPersistenceFactory factory) throws IOException {
     try {
 
       HashSet<Step> tails = Sets.newHashSet(
@@ -459,7 +460,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testTimingMultiStep(dbPersistenceFactory);
   }
 
-  public void testTimingMultiStep(WorkflowStatePersistence.Factory factory) throws Exception {
+  public void testTimingMultiStep(WorkflowPersistenceFactory factory) throws Exception {
 
     Step bottom1 = new Step(new IncrementAction("bottom1"));
     Step bottom2 = new Step(new IncrementAction("bottom2"));
@@ -504,7 +505,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testSandboxDir(dbPersistenceFactory);
   }
 
-  public void testSandboxDir(WorkflowStatePersistence.Factory persistence) throws Exception {
+  public void testSandboxDir(WorkflowPersistenceFactory persistence) throws Exception {
     try {
       WorkflowRunner wfr = buildWfr(persistence,
           Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"), fakeStep("b", "/path/of/fakeness"))
@@ -569,7 +570,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testPathNesting(dbPersistenceFactory);
   }
 
-  public void testPathNesting(WorkflowStatePersistence.Factory factory) throws IOException, ClassNotFoundException {
+  public void testPathNesting(WorkflowPersistenceFactory factory) throws IOException, ClassNotFoundException {
 
     String tmpRoot = getTestRoot() + "/tmp-dir";
 

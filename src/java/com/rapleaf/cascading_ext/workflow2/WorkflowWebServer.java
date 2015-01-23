@@ -12,7 +12,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.liveramp.hank.util.Condition;
 import com.liveramp.hank.util.WaitUntil;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.support.collections.Accessors;
 
 public class WorkflowWebServer {

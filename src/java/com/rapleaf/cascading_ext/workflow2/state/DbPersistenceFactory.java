@@ -12,7 +12,6 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.importer.generated.AppType;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -20,10 +19,14 @@ import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
+import com.rapleaf.db_schemas.rldb.workflow.DSAction;
+import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
+import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.jack.queries.where_operators.In;
 
-public class DbPersistenceFactory implements DbPersistence.Factory{
+public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private static final Logger LOG = Logger.getLogger(DbPersistence.class);
 
   private final IRlDb rldb;
@@ -79,7 +82,7 @@ public class DbPersistenceFactory implements DbPersistence.Factory{
         StepAttempt stepAttempt = createStepAttempt(step, attempt, previousAttempt);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
 
-        for (Map.Entry<Action.DSAction, DataStore> entry : step.getAction().getAllDatastores().entries()) {
+        for (Map.Entry<DSAction, DataStore> entry : step.getAction().getAllDatastores().entries()) {
           rldb.stepAttemptDatastores().create(
               (int)stepAttempt.getId(),
               (int)datastores.get(entry.getValue()).getId(),

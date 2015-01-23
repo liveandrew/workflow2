@@ -22,10 +22,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.liveramp.cascading_ext.event_timer.EventTimer;
-import com.rapleaf.cascading_ext.workflow2.state.DataStoreInfo;
-import com.rapleaf.cascading_ext.workflow2.state.MapReduceJob;
-import com.rapleaf.cascading_ext.workflow2.state.StepState;
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
+import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
+import com.rapleaf.db_schemas.rldb.workflow.StepState;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 
 
 public class WorkflowDiagram {
@@ -75,9 +76,9 @@ public class WorkflowDiagram {
   private static void addDatastoreConnections(StepState step,
                                               Map<String, Integer> stepIdToNum,
                                               JSONArray dsConnections,
-                                              Multimap<Action.DSAction, DataStoreInfo> stores) throws JSONException {
+                                              Multimap<DSAction, DataStoreInfo> stores) throws JSONException {
 
-    for (Action.DSAction action : stores.keySet()) {
+    for (DSAction action : stores.keySet()) {
       String type = action.toString().toLowerCase();
 
       for (DataStoreInfo ds : stores.get(action)) {

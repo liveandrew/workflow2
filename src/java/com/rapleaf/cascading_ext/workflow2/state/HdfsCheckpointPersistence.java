@@ -23,9 +23,14 @@ import com.liveramp.importer.generated.AppType;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.db_schemas.rldb.workflow.DSAction;
+import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
+import com.rapleaf.db_schemas.rldb.workflow.StepState;
+import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.support.Rap;
 
-public class HdfsCheckpointPersistence implements WorkflowStatePersistence.Factory {
+public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
   private static final Logger LOG = Logger.getLogger(HdfsPersistenceContainer.class);
 
   private final String checkpointDir;
@@ -68,9 +73,9 @@ public class HdfsCheckpointPersistence implements WorkflowStatePersistence.Facto
           dependencies.add(flatSteps.getEdgeTarget(edge).getCheckpointToken());
         }
 
-        Multimap<Action.DSAction, DataStoreInfo> stepDsInfo = HashMultimap.create();
+        Multimap<DSAction, DataStoreInfo> stepDsInfo = HashMultimap.create();
 
-        for (Map.Entry<Action.DSAction, DataStore> entry : val.getAction().getAllDatastores().entries()) {
+        for (Map.Entry<DSAction, DataStore> entry : val.getAction().getAllDatastores().entries()) {
           DataStore dataStore = entry.getValue();
 
           if (!dataStoreToRep.containsKey(dataStore)) {

@@ -18,7 +18,7 @@ import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
-import com.rapleaf.cascading_ext.workflow2.state.StepState;
+import com.rapleaf.db_schemas.rldb.workflow.StepState;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;

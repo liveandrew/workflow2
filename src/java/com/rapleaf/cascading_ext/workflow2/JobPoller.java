@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.apache.hadoop.mapred.RunningJob;
 
-import com.rapleaf.cascading_ext.workflow2.state.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 class JobPoller extends Thread {
   private static final long THIRTY_SECONDS = 30000;
@@ -47,7 +47,12 @@ class JobPoller extends Thread {
     for (ActionOperation operation : actionList) {
       try {
         for (RunningJob job : operation.listJobs()) {
-          persistence.markStepRunningJob(checkpoint, job);
+          persistence.markStepRunningJob(
+              checkpoint,
+              job.getID().toString(),
+              job.getJobName(),
+              job.getTrackingURL()
+          );
         }
       } catch (NullPointerException e) {
         //  no op

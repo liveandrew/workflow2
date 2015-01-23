@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.liveramp.cascading_ext.event_timer.MultiTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 
 public class MultiStepAction extends Action {
 

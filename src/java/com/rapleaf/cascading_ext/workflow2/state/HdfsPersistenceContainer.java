@@ -10,12 +10,16 @@ import java.util.Set;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.log4j.Logger;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.rapleaf.cascading_ext.workflow2.WorkflowUtil;
+import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
+import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
+import com.rapleaf.db_schemas.rldb.workflow.StepState;
+import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private static final Logger LOG = Logger.getLogger(HdfsPersistenceContainer.class);
@@ -198,17 +202,17 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
-  public void markStepRunningJob(String stepToken, RunningJob job) {
+  public void markStepRunningJob(String stepToken, String jobId, String jobName, String trackingURL) {
 
     Set<String> knownJobs = Sets.newHashSet();
     StepState stepState = getState(stepToken);
 
-    for (String jobId : stepState.getMrJobsByID().keySet()) {
-      knownJobs.add(jobId);
+    for (String existingId : stepState.getMrJobsByID().keySet()) {
+      knownJobs.add(existingId);
     }
 
-    if (!knownJobs.contains(job.getID().toString())) {
-      stepState.addMrjob(new MapReduceJob(job.getID().toString(), job.getJobName(), job.getTrackingURL()));
+    if (!knownJobs.contains(jobId)) {
+      stepState.addMrjob(new MapReduceJob(jobId, jobName, trackingURL));
     }
 
   }
