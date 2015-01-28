@@ -161,6 +161,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
+  public boolean isLatestExecution() throws IOException {
+    throw new NotImplementedException();
+  }
+
+  @Override
   public void markStepRunning(String stepToken) throws IOException {
     getState(stepToken)
         .setStatus(StepStatus.RUNNING)
@@ -200,6 +205,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     getState(stepToken)
         .setStatus(StepStatus.COMPLETED)
         .setEndTimestamp(System.currentTimeMillis());
+  }
+
+  @Override
+  public void markStepCancelled(String stepToken) throws IOException {
+    throw new NotImplementedException();
   }
 
   @Override

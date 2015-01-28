@@ -19,6 +19,8 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
+import com.liveramp.java_support.event_timer.TimedEvent;
+import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -30,13 +32,13 @@ import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
-import com.liveramp.java_support.workflow.ActionId;
-import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.db_schemas.DatabasesImpl;
+import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
-import com.liveramp.java_support.event_timer.TimedEvent;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -87,6 +89,8 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     assertEquals(2, IncrementAction.counter);
   }
+
+  //  TODO test restart with cancelled step
 
   @Test
   public void testFullRestart1() throws IOException {
@@ -608,6 +612,103 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertCollectionEquivalent(Sets.newHashSet(tups), Lists.<Tuple>newArrayList(new Tuple(1)));
 
   }
+
+  @Test
+  public void integrationTestCancelComplete() throws Exception {
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+
+    AtomicInteger step1Count = new AtomicInteger(0);
+    AtomicInteger step2Count = new AtomicInteger(0);
+
+    Step step1 = new Step(new IncrementAction2("step1", step1Count));
+    Step step2 = new Step(new IncrementAction2("step2", step2Count), step1);
+
+    WorkflowRunner testWorkflow = buildWfr(dbPersistenceFactory, step2);
+    testWorkflow.run();
+
+    WorkflowStatePersistence origPersistence = testWorkflow.getPersistence();
+
+    assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(), rldb.workflowExecutions().query()
+        .name("Test Workflow")
+        .find().iterator().next().getStatus());
+
+    origPersistence.markStepCancelled("step1");
+
+    assertEquals(WorkflowExecutionStatus.INCOMPLETE.ordinal(), rldb.workflowExecutions().query()
+        .name("Test Workflow")
+        .find().iterator().next().getStatus());
+
+
+    step1 = new Step(new IncrementAction2("step1", step1Count));
+    step2 = new Step(new IncrementAction2("step2", step2Count), step1);
+
+    testWorkflow = buildWfr(dbPersistenceFactory, step2);
+    testWorkflow.run();
+
+    assertEquals(2, step1Count.get());
+    assertEquals(1, step2Count.get());
+    assertEquals(StepStatus.CANCELLED, origPersistence.getState("step1").getStatus());
+
+  }
+
+  @Test
+  public void integrationTestCancelIncomplete() throws Exception {
+
+    AtomicInteger step1Count = new AtomicInteger(0);
+    AtomicInteger step2Count = new AtomicInteger(0);
+
+    Step step1 = new Step(new IncrementAction2("step1", step1Count));
+    Step step2 = new Step(new FailingAction("step2"), step1);
+
+    WorkflowRunner testWorkflow = buildWfr(dbPersistenceFactory, step2);
+
+    try {
+      testWorkflow.run();
+    }catch (Exception e){
+      //  fine
+    }
+
+    testWorkflow.getPersistence().markStepCancelled("step1");
+
+
+    step1 = new Step(new IncrementAction2("step1", step1Count));
+    step2 = new Step(new IncrementAction2("step2", step2Count), step1);
+
+    testWorkflow = buildWfr(dbPersistenceFactory, step2);
+    testWorkflow.run();
+
+    assertEquals(2, step1Count.get());
+    assertEquals(1, step2Count.get());
+
+  }
+
+
+  @Test
+  public void integrationTestCancelFailure() throws Exception {
+
+    Step step1 = new Step(new NoOpAction("step1"));
+    Step step2 = new Step(new NoOpAction("step2"), step1);
+
+    WorkflowRunner firstRun = buildWfr(dbPersistenceFactory, step2);
+    firstRun.run();
+
+    step1 = new Step(new NoOpAction("step1"));
+    step2 = new Step(new NoOpAction("step2"), step1);
+
+    WorkflowRunner secondRun = buildWfr(dbPersistenceFactory, step2);
+    secondRun.run();
+
+    assertEquals(StepStatus.COMPLETED, secondRun.getPersistence().getState("step1").getStatus());
+
+    try {
+      firstRun.getPersistence().markStepCancelled("step1");
+      fail();
+    }catch(Exception e){
+      assertEquals("Invalid operation for attempt 1. Newer execution found.", e.getMessage());
+    }
+
+  }
+
 
   public static class ParentResource extends MultiStepAction {
 

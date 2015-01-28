@@ -49,13 +49,13 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     try {
 
       WorkflowExecution execution = getExecution(name, scopeId, appType);
-      LOG.info("Using workflow execution: " + execution);
+      LOG.info("Using workflow execution: " + execution+" id " + execution.getId());
 
       Set<WorkflowAttempt> previousAttempt = findLastWorkflowAttempt(execution);
-      LOG.info("Found previous attempt: " + previousAttempt);
+      LOG.info("Found previous attempts: " + previousAttempt);
 
       WorkflowAttempt attempt = createAttempt(host, username, pool, priority, execution);
-      LOG.info("Using new attempt: " + attempt);
+      LOG.info("Using new attempt: " + attempt+" id "+attempt.getId());
       long workflowAttemptId = attempt.getId();
 
       Set<DataStore> allStores = Sets.newHashSet();
@@ -197,6 +197,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     }
 
     if (incompleteExecutions.isEmpty()) {
+      LOG.info("No incomplete execution found, creating new execution");
 
       //  new execution
       WorkflowExecution ex = rldb.workflowExecutions().create(name, WorkflowExecutionStatus.INCOMPLETE.ordinal())
@@ -209,9 +210,11 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       return ex;
 
     } else {
-
       //  only one, return it
-      return incompleteExecutions.iterator().next();
+      WorkflowExecution prevExecution = incompleteExecutions.iterator().next();
+      LOG.info("Found previous execution "+prevExecution+" id "+prevExecution.getId());
+
+      return prevExecution;
 
     }
 
