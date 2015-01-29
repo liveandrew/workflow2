@@ -23,7 +23,7 @@ import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
-import com.rapleaf.jack.queries.QueryOrder;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
 import com.rapleaf.jack.queries.where_operators.In;
 
 public class DbPersistenceFactory implements WorkflowPersistenceFactory {
@@ -51,8 +51,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       WorkflowExecution execution = getExecution(name, scopeId, appType);
       LOG.info("Using workflow execution: " + execution+" id " + execution.getId());
 
-      Set<WorkflowAttempt> previousAttempt = findLastWorkflowAttempt(execution);
-      LOG.info("Found previous attempts: " + previousAttempt);
+      LOG.info("Found previous attempts: " + execution.getWorkflowAttempt());
 
       WorkflowAttempt attempt = createAttempt(host, username, pool, priority, execution);
       LOG.info("Using new attempt: " + attempt+" id "+attempt.getId());
@@ -79,7 +78,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       Map<String, StepAttempt> attempts = Maps.newHashMap();
       for (Step step : flatSteps.vertexSet()) {
 
-        StepAttempt stepAttempt = createStepAttempt(step, attempt, previousAttempt);
+        StepAttempt stepAttempt = createStepAttempt(step, attempt, execution);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
 
         for (Map.Entry<DSAction, DataStore> entry : step.getAction().getAllDatastores().entries()) {
@@ -117,18 +116,14 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   }
 
 
-  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, Set<WorkflowAttempt> previousAttempt) throws IOException {
-
-    Set<Integer> prevIds = Sets.newHashSet();
-    for (WorkflowAttempt prev : previousAttempt) {
-      prevIds.add((int) prev.getId());
-    }
+  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
 
     String token = step.getCheckpointToken();
+    Set<Integer> attemptIds = WorkflowGraph.getAttemptIds(execution);
 
     //  if the previous workflow died uncleanly (machine died, OOME, etc), we might see steps as still running.  fail them here to clean up.
     for (StepAttempt runningStepAttmpt : rldb.stepAttempts().query()
-        .whereWorkflowAttemptId(new In<Integer>(prevIds))
+        .whereWorkflowAttemptId(new In<Integer>(attemptIds))
         .stepToken(token)
         .stepStatus(StepStatus.RUNNING.ordinal())
         .find()) {
@@ -142,7 +137,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
 
     return rldb.stepAttempts().create((int)attempt.getId(), token, null, null,
-        getInitialStatus(token, prevIds).ordinal(),
+        getInitialStatus(token, attemptIds).ordinal(),
         null,
         null,
         step.getAction().getClass().getName(),
@@ -151,38 +146,14 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private StepStatus getInitialStatus(String stepId, Set<Integer> prevAttemptIds) throws IOException {
+  private StepStatus getInitialStatus(String stepId, Set<Integer> attemtptIds) throws IOException {
 
-    if (isStepComplete(stepId, prevAttemptIds)) {
+    if (WorkflowGraph.isStepComplete(rldb, stepId, attemtptIds)) {
       return StepStatus.SKIPPED;
     }
 
     return StepStatus.WAITING;
   }
-
-  private boolean isStepComplete(String step, Set<Integer> previousAttemptIds) throws IOException {
-
-    Set<StepAttempt> completeAttempt = rldb.stepAttempts().query()
-        .whereWorkflowAttemptId(new In<Integer>(previousAttemptIds))
-        .stepToken(step)
-        .whereStepStatus(new In<Integer>(StepStatus.NON_BLOCKING_IDS))
-        .find();
-
-    if (completeAttempt.size() > 1) {
-      throw new RuntimeException("Found multiple complete step attempts for a workflow attempt!");
-    }
-
-    return !completeAttempt.isEmpty();
-
-  }
-
-  private Set<WorkflowAttempt> findLastWorkflowAttempt(WorkflowExecution execution) throws IOException {
-    return rldb.workflowAttempts().query()
-        .workflowExecutionId((int)execution.getId())
-        .orderById(QueryOrder.DESC)
-        .find();
-  }
-
 
   private WorkflowExecution getExecution(String name, String scopeId, AppType appType) throws IOException {
 

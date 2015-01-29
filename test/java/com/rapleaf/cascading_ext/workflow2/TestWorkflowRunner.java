@@ -35,6 +35,7 @@ import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
@@ -632,7 +633,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
         .name("Test Workflow")
         .find().iterator().next().getStatus());
 
-    origPersistence.markStepCancelled("step1");
+    origPersistence.markStepReverted("step1");
 
     assertEquals(WorkflowExecutionStatus.INCOMPLETE.ordinal(), rldb.workflowExecutions().query()
         .name("Test Workflow")
@@ -647,9 +648,71 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     assertEquals(2, step1Count.get());
     assertEquals(1, step2Count.get());
-    assertEquals(StepStatus.CANCELLED, origPersistence.getState("step1").getStatus());
+    assertEquals(StepStatus.REVERTED, origPersistence.getState("step1").getStatus());
 
   }
+
+  @Test
+  public void integrationTestCancelTwoDeep() throws Exception {
+
+    //  complete, fail, wait
+    //  skip, complete, fail
+    //  cancel 1
+    //  make sure it runs 1 again
+
+    AtomicInteger step1Count = new AtomicInteger(0);
+    AtomicInteger step2Count = new AtomicInteger(0);
+    AtomicInteger step3Count = new AtomicInteger(0);
+
+    Step step1 = new Step(new IncrementAction2("step1", step1Count));
+    Step step2 = new Step(new FailingAction("step2"), step1);
+    Step step3 = new Step(new IncrementAction2("step3", step3Count), step2);
+
+    WorkflowRunner testWorkflow = buildWfr(dbPersistenceFactory, step3);
+
+    try {
+      testWorkflow.run();
+    }catch(Exception e){
+      //  fine
+    }
+
+    WorkflowStatePersistence pers1 = testWorkflow.getPersistence();
+
+    step1 = new Step(new IncrementAction2("step1", step1Count));
+    step2 = new Step(new IncrementAction2("step2", step2Count), step1);
+    step3 = new Step(new IncrementAction2("step3", step3Count), step2);
+
+    testWorkflow = buildWfr(dbPersistenceFactory, step3);
+    WorkflowStatePersistence pers2 = testWorkflow.getPersistence();
+
+    try {
+      testWorkflow.run();
+    }catch(Exception e){
+      //  fine
+    }
+
+    assertEquals(AttemptStatus.COMPLETE, pers2.getStatus());
+
+    pers1.markStepReverted("step1");
+
+    assertEquals(AttemptStatus.STOPPED, pers2.getStatus());
+
+    step1 = new Step(new IncrementAction2("step1", step1Count));
+    step2 = new Step(new IncrementAction2("step2", step2Count), step1);
+    step3 = new Step(new IncrementAction2("step3", step3Count), step2);
+
+    testWorkflow = buildWfr(dbPersistenceFactory, step3);
+    testWorkflow.run();
+
+    assertEquals(AttemptStatus.COMPLETE, pers2.getStatus());
+
+    assertEquals(2, step1Count.get());
+    assertEquals(1, step2Count.get());
+    assertEquals(1, step3Count.get());
+
+  }
+
+  //  TODO test cancelling a workflow, that it restarts from the beginning regardless
 
   @Test
   public void integrationTestCancelIncomplete() throws Exception {
@@ -668,7 +731,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       //  fine
     }
 
-    testWorkflow.getPersistence().markStepCancelled("step1");
+    testWorkflow.getPersistence().markStepReverted("step1");
 
 
     step1 = new Step(new IncrementAction2("step1", step1Count));
@@ -701,7 +764,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertEquals(StepStatus.COMPLETED, secondRun.getPersistence().getState("step1").getStatus());
 
     try {
-      firstRun.getPersistence().markStepCancelled("step1");
+      firstRun.getPersistence().markStepReverted("step1");
       fail();
     }catch(Exception e){
       assertEquals("Invalid operation for attempt 1. Newer execution found.", e.getMessage());
