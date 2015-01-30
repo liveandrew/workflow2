@@ -20,6 +20,7 @@ import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
 import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
@@ -161,6 +162,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
+  public WorkflowExecutionStatus getExecutionStatus() throws IOException {
+    throw new NotImplementedException();
+  }
+
+  @Override
   public boolean isLatestExecution() throws IOException {
     throw new NotImplementedException();
   }
@@ -236,6 +242,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     if (!knownJobs.contains(jobId)) {
       stepState.addMrjob(new MapReduceJob(jobId, jobName, trackingURL));
     }
+
+  }
+
+  @Override
+  public void markWorkflowStarted() throws IOException {
 
   }
 

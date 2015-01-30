@@ -365,16 +365,14 @@ public final class WorkflowRunner {
       LOG.info("Checking that no action goes outside sandboxDir \"" + getSandboxDir() + "\"");
       checkStepsSandboxViolation(getPhsyicalDependencyGraph().vertexSet());
 
-      LOG.info("Generating workflow docs");
-
-      LOG.info("Preparing workflow state");
-
       // Notify
       LOG.info(getStartMessage());
       startWebServer();
       registry.register(persistence.getId(), getMeta());
       // Note: start email after web server so that UI is functional
       sendStartEmail();
+
+      persistence.markWorkflowStarted();
 
       // Run internal
       runInternal();

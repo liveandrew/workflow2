@@ -691,10 +691,12 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       //  fine
     }
 
-    assertEquals(AttemptStatus.COMPLETE, pers2.getStatus());
+    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, pers2.getExecutionStatus());
+    assertEquals(AttemptStatus.STOPPED, pers2.getStatus());
 
     pers1.markStepReverted("step1");
 
+    Assert.assertEquals(WorkflowExecutionStatus.INCOMPLETE, pers2.getExecutionStatus());
     assertEquals(AttemptStatus.STOPPED, pers2.getStatus());
 
     step1 = new Step(new IncrementAction2("step1", step1Count));
@@ -704,7 +706,8 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testWorkflow = buildWfr(dbPersistenceFactory, step3);
     testWorkflow.run();
 
-    assertEquals(AttemptStatus.COMPLETE, pers2.getStatus());
+    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, pers2.getExecutionStatus());
+    assertEquals(AttemptStatus.STOPPED, pers2.getStatus());
 
     assertEquals(2, step1Count.get());
     assertEquals(1, step2Count.get());
