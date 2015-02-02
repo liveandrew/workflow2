@@ -246,7 +246,9 @@ public final class WorkflowRunner {
         getHostName(),
         System.getProperty("user.name"),
         findDefaultValue(JOB_POOL_PARAM, "default"),
-        findDefaultValue(JOB_PRIORITY_PARAM, "NORMAL")
+        findDefaultValue(JOB_PRIORITY_PARAM, "NORMAL"),
+        System.getProperty("user.dir"),
+        HadoopJarUtil.getLanuchJarName()
     );
 
     removeRedundantEdges(dependencyGraph);
@@ -602,7 +604,7 @@ public final class WorkflowRunner {
 
     String value = jobconf.get(property);
 
-    if(value != null){
+    if (value != null) {
       return value;
     }
 

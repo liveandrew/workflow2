@@ -168,12 +168,12 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public boolean isLatestExecution() throws IOException {
-    throw new NotImplementedException();
+    return true;
   }
 
   @Override
   public boolean isExecutionLive() throws IOException {
-    throw new NotImplementedException();
+    return true;
   }
 
   @Override

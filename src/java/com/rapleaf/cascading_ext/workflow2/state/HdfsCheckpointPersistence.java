@@ -46,13 +46,15 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
   }
   @Override
   public WorkflowStatePersistence prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
-                      String name,
-                      String uniqueId,
-                      AppType appType,
-                      String host,
-                      String username,
-                      String pool,
-                      String priority) {
+                                          String name,
+                                          String scopeId,
+                                          AppType appType,
+                                          String host,
+                                          String username,
+                                          String pool,
+                                          String priority,
+                                          String launchDir,
+                                          String launchJar) {
 
     FileSystem fs = FileSystemHelper.getFS();
 

@@ -775,7 +775,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   }
 
-
   public static class ParentResource extends MultiStepAction {
 
     public ParentResource(String checkpointToken, String tmpRoot) throws IOException {
