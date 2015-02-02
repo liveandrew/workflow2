@@ -54,10 +54,11 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       WorkflowExecution execution = getExecution(name, scopeId, appType);
       LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
+      Set<WorkflowAttempt> prevAttempts = execution.getWorkflowAttempt();
       Set<Integer> prevAttemptIds = WorkflowGraph.getAttemptIds(execution);
       resolveRunningAttempts(prevAttemptIds);
 
-      LOG.info("Found previous attempts: " + execution.getWorkflowAttempt());
+      LOG.info("Found previous attempts: " + prevAttempts);
 
       WorkflowAttempt attempt = createAttempt(host, username, pool, priority, launchDir, launchJar, execution);
       LOG.info("Using new attempt: " + attempt + " id " + attempt.getId());
@@ -120,7 +121,13 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   private void resolveRunningAttempts(Set<Integer> prevAttemptIds) throws IOException {
 
+    Set<Long> prevLongs = Sets.newHashSet();
+    for (Integer attemptId : prevAttemptIds) {
+      prevLongs.add((long) attemptId);
+    }
+
     for (WorkflowAttempt runningAttempt : rldb.workflowAttempts().query()
+        .idIn(prevLongs)
         .whereStatus(new In<Integer>(AttemptStatus.LIVE_STATUSES))
         .find()) {
 
