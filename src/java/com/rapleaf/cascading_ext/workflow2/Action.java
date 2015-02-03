@@ -23,14 +23,14 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
-import com.liveramp.java_support.workflow.ActionId;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public abstract class Action {
   private static final Logger LOG = Logger.getLogger(Action.class);
@@ -39,6 +39,7 @@ public abstract class Action {
   private final String tmpRoot;
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
+  private final ResourceFactory resourceFactory;
 
   //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
   //  which actually make sense...
@@ -69,6 +70,7 @@ public abstract class Action {
     this.actionId = new ActionId(checkpointToken);
     this.tmpRoot = null;
     this.stepProperties = properties;
+    this.resourceFactory = new ResourceFactory(actionId);
   }
 
   public Action(String checkpointToken, String tmpRoot) {
@@ -80,6 +82,7 @@ public abstract class Action {
     this.tmpRoot = tmpRoot + "/" + checkpointToken + "-tmp-stores";
     this.builder = new DataStoreBuilder(getTmpRoot());
     this.stepProperties = properties;
+    this.resourceFactory = new ResourceFactory(actionId);
   }
 
   public ActionId getActionId() {
@@ -154,8 +157,13 @@ public abstract class Action {
   }
 
   protected <T> Resource<T> resource(String name) {
-    return new Resource<T>(name, actionId);
+    return resourceFactory().makeResource(name);
   }
+
+  public ResourceFactory resourceFactory() {
+    return resourceFactory;
+  }
+
 
   protected <T> T get(Resource<T> resource) throws IOException, ClassNotFoundException {
     if (!resources.get(ResourceAction.USES).contains(resource)) {
@@ -196,7 +204,7 @@ public abstract class Action {
 
       prepDirs();
       locks = lockReadsFromStores();
-      LOG.info("Aquired locks for " + getDatastores(DSAction.READS_FROM));
+      LOG.info("Acquired locks for " + getDatastores(DSAction.READS_FROM));
       LOG.info("Locks " + locks);
       execute();
 
@@ -207,7 +215,7 @@ public abstract class Action {
       throw wrapRuntimeException(t);
     } finally {
       unlock(locks);
-      if(jobPoller != null) {
+      if (jobPoller != null) {
         //  try to refresh info in case of fast failures
         jobPoller.updateRunningJobs();
         jobPoller.shutdown();
