@@ -1,7 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
-import java.util.concurrent.Callable;
-
 import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,14 +81,13 @@ public class TestDbPersistenceFactory extends CascadingExtTestCase {
 
     rldb.stepAttempts().create((int)workflowAttempt.getId(), "step1", StepStatus.RUNNING.ordinal(), Object.class.getName());
 
-    Exception exception = getException(new Callable() {
+    Exception exception = getException(new Runnable2() {
       @Override
-      public Object call() throws Exception {
+      public void run() throws Exception {
         new WorkflowRunner("Workflow",
             new DbPersistenceFactory(),
             new TestWorkflowOptions(),
             Sets.newHashSet(new Step(new NoOpAction("step1"))));
-        return null;
       }
     });
 

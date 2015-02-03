@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -182,11 +181,10 @@ public class TestCascadingAction2 extends CascadingExtTestCase {
     final TupleDataStore output = builder().getTupleDataStore("output1", new Fields("field"));
     final TupleDataStore output1 = builder().getTupleDataStore("output2", new Fields("field"));
 
-    Exception token = getException(new Callable() {
+    Exception token = getException(new Runnable2() {
       @Override
-      public Object call() throws Exception {
+      public void run() throws Exception {
         executeWorkflow(new Fail1("token", getTestRoot() + "/tmp", input, output, output1));
-        return null;
       }
     });
 
