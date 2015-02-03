@@ -1,4 +1,4 @@
-package com.rapleaf.cascading_ext.workflow2.context;
+package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 
@@ -19,8 +19,6 @@ import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.commons.util.serialization.JavaObjectSerializationHandler;
 import com.liveramp.commons.util.serialization.SerializationHandler;
 import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.workflow2.ContextStorage;
-import com.rapleaf.cascading_ext.workflow2.Resource;
 
 //  TODO very proof-of-concept, should really have an in-memory cache.  could also stream directly to file
 public class HdfsContextStorage extends ContextStorage {
