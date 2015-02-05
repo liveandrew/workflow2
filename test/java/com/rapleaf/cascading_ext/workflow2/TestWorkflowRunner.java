@@ -714,6 +714,8 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   }
 
+  //  TODO test cancelling all steps cancels workflow
+
   //  TODO test cancelling a workflow, that it restarts from the beginning regardless
 
   @Test

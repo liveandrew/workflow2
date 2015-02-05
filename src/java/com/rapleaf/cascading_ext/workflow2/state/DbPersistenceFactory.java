@@ -24,8 +24,7 @@ import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
-import com.rapleaf.jack.queries.where_operators.In;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 
 public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private static final Logger LOG = Logger.getLogger(DbPersistence.class);
@@ -55,8 +54,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
       Set<WorkflowAttempt> prevAttempts = execution.getWorkflowAttempt();
-      Set<Integer> prevAttemptIds = WorkflowGraph.getAttemptIds(execution);
-      resolveRunningAttempts(prevAttemptIds);
+      resolveRunningAttempts(prevAttempts);
 
       LOG.info("Found previous attempts: " + prevAttempts);
 
@@ -86,7 +84,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       Map<String, StepAttempt> attempts = Maps.newHashMap();
       for (Step step : flatSteps.vertexSet()) {
 
-        StepAttempt stepAttempt = createStepAttempt(step, attempt, prevAttemptIds);
+        StepAttempt stepAttempt = createStepAttempt(step, attempt, prevAttempts);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
 
         for (Map.Entry<DSAction, DataStore> entry : step.getAction().getAllDatastores().entries()) {
@@ -119,42 +117,38 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private void resolveRunningAttempts(Set<Integer> prevAttemptIds) throws IOException {
+  private void resolveRunningAttempts(Set<WorkflowAttempt> prevAttempts) throws IOException {
 
-    Set<Long> prevLongs = Sets.newHashSet();
-    for (Integer attemptId : prevAttemptIds) {
-      prevLongs.add((long) attemptId);
-    }
+    for (WorkflowAttempt attempt : prevAttempts) {
 
-    for (WorkflowAttempt runningAttempt : rldb.workflowAttempts().query()
-        .idIn(prevLongs)
-        .whereStatus(new In<Integer>(AttemptStatus.LIVE_STATUSES))
-        .find()) {
+      //  check to see if any of these workflows are still marked as alive
+      if(AttemptStatus.LIVE_STATUSES.contains(attempt.getStatus())){
 
-      if(WorkflowGraph.isLive(runningAttempt)){
-        throw new RuntimeException("Cannot start, a previous attempt is still alive! Attempt: "+runningAttempt);
+        //  if it's still heartbeating, fail loudly
+        if(WorkflowQueries.isLive(attempt)){
+          throw new RuntimeException("Cannot start, a previous attempt is still alive! Attempt: "+attempt);
+        }
+
+        //  otherwise it is safe to clean up
+        LOG.info("Marking old running attempt as FAILED: "+attempt);
+        attempt
+            .setStatus(AttemptStatus.FAILED.ordinal())
+            .setEndTime(System.currentTimeMillis())
+            .save();
+
       }
 
-      LOG.info("Marking old running attempt as FAILED: "+runningAttempt);
-      runningAttempt
-          .setStatus(AttemptStatus.FAILED.ordinal())
-          .setEndTime(System.currentTimeMillis())
-          .save();
-
-    }
-
-    //  if the previous workflow died uncleanly (machine died, OOME, etc), we might see steps as still running.  fail them here to clean up.
-    for (StepAttempt runningStepAttmpt : rldb.stepAttempts().query()
-        .whereWorkflowAttemptId(new In<Integer>(prevAttemptIds))
-        .stepStatus(StepStatus.RUNNING.ordinal())
-        .find()) {
-
-      LOG.info("Marking old runing step as FAILED: "+runningStepAttmpt);
-      runningStepAttmpt
-          .setStepStatus(StepStatus.FAILED.ordinal())
-          .setFailureCause("Unknown, failed by cleanup.")
-          .setEndTime(System.currentTimeMillis())
-          .save();
+      //  and mark any step that was still running as failed
+      for (StepAttempt step : attempt.getStepAttempt()) {
+        if(step.getStepStatus() == StepStatus.RUNNING.ordinal()){
+          LOG.info("Marking old runing step as FAILED: "+step);
+          step
+              .setStepStatus(StepStatus.FAILED.ordinal())
+              .setFailureCause("Unknown, failed by cleanup.")
+              .setEndTime(System.currentTimeMillis())
+              .save();
+        }
+      }
 
     }
 
@@ -168,12 +162,12 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     return attempt;
   }
 
-  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, Set<Integer> attemptIds) throws IOException {
+  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, Set<WorkflowAttempt> attempts) throws IOException {
 
     String token = step.getCheckpointToken();
 
     return rldb.stepAttempts().create((int)attempt.getId(), token, null, null,
-        getInitialStatus(token, attemptIds).ordinal(),
+        getInitialStatus(token, attempts).ordinal(),
         null,
         null,
         step.getAction().getClass().getName(),
@@ -182,9 +176,9 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private StepStatus getInitialStatus(String stepId, Set<Integer> attemtptIds) throws IOException {
+  private StepStatus getInitialStatus(String stepId, Set<WorkflowAttempt> attempts) throws IOException {
 
-    if (WorkflowGraph.isStepComplete(rldb, stepId, attemtptIds)) {
+    if (WorkflowQueries.isStepComplete(rldb, stepId, attempts)) {
       return StepStatus.SKIPPED;
     }
 

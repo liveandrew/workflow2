@@ -11,15 +11,12 @@ import java.util.Set;
 import com.google.common.collect.Sets;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.EdgeReversedGraph;
 import org.junit.Test;
 
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
-import com.rapleaf.db_schemas.rldb.workflow.StepState;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
@@ -56,8 +53,8 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     }
   }
 
-  private Map<String, StepState> idToVertex;
-  DirectedGraph<StepState, DefaultEdge> graph;
+  private Map<String, Step> idToVertex;
+  DirectedGraph<Step, DefaultEdge> graph;
 
   @Test
   public void testVerifyNoOrphanedTailStep() throws Exception {
@@ -198,9 +195,7 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
   private void setupWorkflowGraph(Step tailStep) throws IOException {
     HashSet<Step> tail = Sets.newHashSet(tailStep);
     WorkflowUtil.setCheckpointPrefixes(tail);
-
-    WorkflowRunner wfr = new WorkflowRunner("test", new HdfsCheckpointPersistence(getTestRoot()+"/perm"), new TestWorkflowOptions(), tail);
-    graph = WorkflowGraph.getDiagramGraph(wfr.getPersistence());
+    graph = new EdgeReversedGraph<Step, DefaultEdge>(WorkflowDiagram.dependencyGraphFromTailSteps(tail, null));
 
     populateNameToVertex(graph);
   }
@@ -209,10 +204,10 @@ public class TestWorkflowDiagram extends CascadingExtTestCase {
     return new BytesDataStore(null, name, "/tmp/", name);
   }
 
-  private void populateNameToVertex(DirectedGraph<StepState, DefaultEdge> graph) {
-    idToVertex = new HashMap<String, StepState>();
-    for (StepState v : graph.vertexSet()) {
-      idToVertex.put(v.getStepId(), v);
+  private void populateNameToVertex(DirectedGraph<Step, DefaultEdge> graph) {
+    idToVertex = new HashMap<String, Step>();
+    for (Step v : graph.vertexSet()) {
+      idToVertex.put(v.getCheckpointToken(), v);
     }
   }
 

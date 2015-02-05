@@ -46,7 +46,6 @@ import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public final class WorkflowRunner {
@@ -468,7 +467,7 @@ public final class WorkflowRunner {
     }
 
     // if there are any failures, then the workflow failed. throw an exception.
-    if (WorkflowGraph.isFailPending(persistence)) {
+    if (isFailPending()) {
       String failureMessage = buildStepsFailureMessage();
       sendFailureEmail(failureMessage);
       throw new RuntimeException(getFailureMessage() + "\n" + failureMessage);
@@ -519,6 +518,18 @@ public final class WorkflowRunner {
         .set_working_dir(System.getProperty("user.dir"))
         .set_jar(HadoopJarUtil.getLanuchJarName())
         .set_start_time(getTimer().getEventStartTime());
+  }
+
+  //  TODO use AttemptStatus when migration done
+  public boolean isFailPending() throws IOException {
+
+    for (Map.Entry<String, StepState> entry : persistence.getStepStatuses().entrySet()) {
+      if (entry.getValue().getStatus() == StepStatus.FAILED) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
 
@@ -648,7 +659,7 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() throws IOException {
-    return !WorkflowGraph.isFailPending(persistence) && !WorkflowGraph.isShutdownPending(persistence);
+    return !isFailPending() && persistence.getShutdownRequest() == null;
   }
 
   private void shutdownWebServer() {
