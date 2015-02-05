@@ -714,8 +714,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   }
 
-  //  TODO test cancelling all steps cancels workflow
-
   //  TODO test cancelling a workflow, that it restarts from the beginning regardless
 
   @Test
@@ -771,7 +769,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       firstRun.getPersistence().markStepReverted("step1");
       fail();
     }catch(Exception e){
-      assertEquals("Invalid operation for attempt 1. Newer execution found.", e.getMessage());
+      assertEquals("Invalid operation for execution 1. Newer execution found.", e.getMessage());
     }
 
   }

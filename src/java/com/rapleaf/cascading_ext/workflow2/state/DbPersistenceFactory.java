@@ -53,15 +53,12 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       WorkflowExecution execution = getExecution(name, scopeId, appType);
       LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
-      Set<WorkflowAttempt> prevAttempts = execution.getWorkflowAttempt();
-      resolveRunningAttempts(prevAttempts);
-
-      LOG.info("Found previous attempts: " + prevAttempts);
+      cleanUpRunningAttempts(execution);
 
       WorkflowAttempt attempt = createAttempt(host, username, pool, priority, launchDir, launchJar, execution);
-      LOG.info("Using new attempt: " + attempt + " id " + attempt.getId());
-      long workflowAttemptId = attempt.getId();
 
+      long workflowAttemptId = attempt.getId();
+      LOG.info("Using new attempt: " + attempt + " id " + workflowAttemptId);
 
       Set<DataStore> allStores = Sets.newHashSet();
 
@@ -84,7 +81,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       Map<String, StepAttempt> attempts = Maps.newHashMap();
       for (Step step : flatSteps.vertexSet()) {
 
-        StepAttempt stepAttempt = createStepAttempt(step, attempt, prevAttempts);
+        StepAttempt stepAttempt = createStepAttempt(step, attempt, execution);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
 
         for (Map.Entry<DSAction, DataStore> entry : step.getAction().getAllDatastores().entries()) {
@@ -117,7 +114,10 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private void resolveRunningAttempts(Set<WorkflowAttempt> prevAttempts) throws IOException {
+  private void cleanUpRunningAttempts(WorkflowExecution execution) throws IOException {
+
+    Set<WorkflowAttempt> prevAttempts = execution.getWorkflowAttempt();
+    LOG.info("Found previous attempts: " + prevAttempts);
 
     for (WorkflowAttempt attempt : prevAttempts) {
 
@@ -162,12 +162,12 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     return attempt;
   }
 
-  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, Set<WorkflowAttempt> attempts) throws IOException {
+  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
 
     String token = step.getCheckpointToken();
 
     return rldb.stepAttempts().create((int)attempt.getId(), token, null, null,
-        getInitialStatus(token, attempts).ordinal(),
+        getInitialStatus(token, execution).ordinal(),
         null,
         null,
         step.getAction().getClass().getName(),
@@ -176,9 +176,9 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private StepStatus getInitialStatus(String stepId, Set<WorkflowAttempt> attempts) throws IOException {
+  private StepStatus getInitialStatus(String stepId, WorkflowExecution execution) throws IOException {
 
-    if (WorkflowQueries.isStepComplete(rldb, stepId, attempts)) {
+    if (WorkflowQueries.isStepComplete(rldb, stepId, execution)) {
       return StepStatus.SKIPPED;
     }
 

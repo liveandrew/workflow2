@@ -21,7 +21,7 @@ import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowGraph;
+import com.rapleaf.db_schemas.rldb.workflow.json.WorkflowJSON;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
@@ -71,7 +71,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public void markShutdownRequested(String reason) {
-    shutdownReason = WorkflowGraph.getShutdownReason(reason);
+    shutdownReason = WorkflowJSON.getShutdownReason(reason);
   }
 
   @Override
