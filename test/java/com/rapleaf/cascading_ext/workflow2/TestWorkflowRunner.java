@@ -34,11 +34,14 @@ import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.controller.ApplicationController;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
+import com.rapleaf.support.collections.Accessors;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -89,8 +92,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     assertEquals(2, IncrementAction.counter);
   }
-
-  //  TODO test restart with cancelled step
 
   @Test
   public void testFullRestart1() throws IOException {
@@ -671,7 +672,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     try {
       testWorkflow.run();
-    }catch(Exception e){
+    } catch (Exception e) {
       //  fine
     }
 
@@ -686,7 +687,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     try {
       testWorkflow.run();
-    }catch(Exception e){
+    } catch (Exception e) {
       //  fine
     }
 
@@ -714,7 +715,43 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   }
 
+
   //  TODO test cancelling a workflow, that it restarts from the beginning regardless
+
+  @Test
+  public void testCancelWorkflow() throws IOException {
+
+
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+
+    AtomicInteger step1Count = new AtomicInteger(0);
+
+    Step step1 = new Step(new IncrementAction2("step1", step1Count));
+    Step step2 = new Step(new FailingAction("step2"), step1);
+
+    final WorkflowRunner testWorkflow = buildWfr(dbPersistenceFactory, step2);
+
+    getException(new Runnable2() {
+      @Override
+      public void run() throws Exception {
+        testWorkflow.run();
+      }
+    });
+
+    WorkflowStatePersistence persistence = testWorkflow.getPersistence();
+
+    ApplicationController.cancelLatestExecution(rldb, "Test Workflow", null);
+    WorkflowExecution ex = Accessors.first(rldb.workflowExecutions().findAll());
+
+    assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
+    assertEquals(StepStatus.REVERTED.ordinal(), persistence.getState("step1").getStatus().ordinal());
+    assertEquals(StepStatus.FAILED.ordinal(), persistence.getState("step2").getStatus().ordinal());
+
+    //  TODO restart
+
+  }
+
+  //  TODO test assertions and cancelling
 
   @Test
   public void integrationTestCancelIncomplete() throws Exception {
@@ -729,7 +766,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     try {
       testWorkflow.run();
-    }catch (Exception e){
+    } catch (Exception e) {
       //  fine
     }
 
@@ -768,7 +805,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     try {
       firstRun.getPersistence().markStepReverted("step1");
       fail();
-    }catch(Exception e){
+    } catch (Exception e) {
       assertEquals("Invalid operation for execution 1. Newer execution found.", e.getMessage());
     }
 

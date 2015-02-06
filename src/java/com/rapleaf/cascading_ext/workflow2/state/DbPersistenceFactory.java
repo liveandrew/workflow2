@@ -139,7 +139,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       }
 
       //  and mark any step that was still running as failed
-      for (StepAttempt step : attempt.getStepAttempt()) {
+      for (StepAttempt step : attempt.getStepAttempt()) { 
         if(step.getStepStatus() == StepStatus.RUNNING.ordinal()){
           LOG.info("Marking old runing step as FAILED: "+step);
           step

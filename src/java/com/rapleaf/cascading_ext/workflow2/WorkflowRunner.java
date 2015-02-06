@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.Lists;
@@ -66,6 +67,9 @@ public final class WorkflowRunner {
   private final StoreReaderLockProvider lockProvider;
   private final ContextStorage storage;
   private final WorkflowRegistry registry;
+
+  //  set this if something fails in a step (outside user-code) so we don't keep trying to start steps
+  private List<Exception> internalErrors = new CopyOnWriteArrayList<Exception>();
 
   private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
 
@@ -120,19 +124,20 @@ public final class WorkflowRunner {
               persistence.markStepCompleted(stepToken);
             }
           } catch (Throwable e) {
+
             LOG.fatal("Step " + stepToken + " failed!", e);
 
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+
             try {
-
-              StringWriter sw = new StringWriter();
-              PrintWriter pw = new PrintWriter(sw);
-              e.printStackTrace(pw);
-
               persistence.markStepFailed(stepToken, e);
-
             } catch (Exception e2) {
               LOG.fatal("Could not update step " + stepToken + " to failed! ", e2);
+              internalErrors.add(e2);
             }
+
           } finally {
             semaphore.release();
           }
@@ -462,6 +467,7 @@ public final class WorkflowRunner {
       try {
         statsRecorder.stop();
       } catch (Exception e) {
+        LOG.error("Stats recording failed to stop: " + e);
         //  don't want to interrupt the rest
       }
     }
@@ -473,6 +479,13 @@ public final class WorkflowRunner {
       throw new RuntimeException(getFailureMessage() + "\n" + failureMessage);
     }
 
+    //  something internal to WorkflowRunner failed.
+    if (!internalErrors.isEmpty()) {
+      LOG.error("WorkflowRunner has encountered an internal error");
+      sendInternalErrorMessage();
+      throw new RuntimeException(getFailureMessage()+" internal WorkflowRunner error");
+    }
+
     // nothing failed, but if there are steps that haven't been executed, it's
     // because someone shut down the workflow.
     if (pendingSteps.size() > 0) {
@@ -480,6 +493,23 @@ public final class WorkflowRunner {
       sendShutdownEmail(reason);
       throw new RuntimeException(getShutdownMessage(reason));
     }
+  }
+
+  private void sendInternalErrorMessage() throws IOException {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+
+    pw.write("WorkflowRunner failed with an internal error.  Manual cleanup may be necessary.");
+
+    for (Exception error : internalErrors) {
+      pw.append(error.getMessage())
+          .append("\n");
+      error.printStackTrace(pw);
+      pw.append("---------------------\n");
+    }
+
+    mail(getFailureMessage(), pw.toString(), AlertRecipients.engineering(AlertSeverity.ERROR));
+
   }
 
   private String buildStepsFailureMessage() throws IOException {
@@ -659,7 +689,7 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() throws IOException {
-    return !isFailPending() && persistence.getShutdownRequest() == null;
+    return !isFailPending() && persistence.getShutdownRequest() == null && internalErrors.isEmpty();
   }
 
   private void shutdownWebServer() {
