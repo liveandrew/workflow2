@@ -755,7 +755,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       }
     });
 
-    assertTrue(exception.getMessage().startsWith("Invalid operation on cancelled execution"));
+    assertTrue(exception.getMessage().startsWith("Cannot revert steps or cancel execution"));
 
     //  restart workflow
     step1 = new Step(new IncrementAction2("step1", step1Count));
@@ -795,7 +795,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       }
     });
 
-    assertTrue(cancelNonLatest.getMessage().contains("Newer execution found."));
+    assertTrue(cancelNonLatest.getMessage().startsWith("Cannot revert steps or cancel execution"));
 
   }
 
@@ -852,7 +852,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       firstRun.getPersistence().markStepReverted("step1");
       fail();
     } catch (Exception e) {
-      assertEquals("Invalid operation for execution 1. Newer execution found.", e.getMessage());
+      assertTrue(e.getMessage().startsWith("Cannot revert steps or cancel execution"));
     }
 
   }

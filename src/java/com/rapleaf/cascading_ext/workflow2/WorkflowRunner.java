@@ -49,7 +49,7 @@ import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
-public final class WorkflowRunner {
+  public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
   private final StepStatsRecorder statsRecorder;
 

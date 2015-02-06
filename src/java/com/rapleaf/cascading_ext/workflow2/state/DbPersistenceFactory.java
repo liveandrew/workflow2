@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.log4j.Logger;
@@ -55,7 +56,17 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       cleanUpRunningAttempts(execution);
 
-      WorkflowAttempt attempt = createAttempt(host, username, pool, priority, launchDir, launchJar, execution);
+      Optional<WorkflowAttempt> latestAttempt = WorkflowQueries
+          .getLatestAttemptOptional(rldb, execution);
+
+      WorkflowAttempt attempt = createAttempt(host,
+          username,
+          getPool(latestAttempt, pool),
+          getPriority(latestAttempt, priority),
+          launchDir,
+          launchJar,
+          execution
+      );
 
       long workflowAttemptId = attempt.getId();
       LOG.info("Using new attempt: " + attempt + " id " + workflowAttemptId);
@@ -112,6 +123,20 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       throw new RuntimeException(e);
     }
 
+  }
+
+  private String getPool(Optional<WorkflowAttempt> last, String provided){
+    if(last.isPresent()){
+      return last.get().getPool();
+    }
+    return provided;
+  }
+
+  private String getPriority(Optional<WorkflowAttempt> last, String priority){
+    if(last.isPresent()){
+      return last.get().getPriority();
+    }
+    return priority;
   }
 
   private void cleanUpRunningAttempts(WorkflowExecution execution) throws IOException {
