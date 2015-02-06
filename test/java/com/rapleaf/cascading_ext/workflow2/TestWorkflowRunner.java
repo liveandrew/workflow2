@@ -720,6 +720,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testCancelWorkflow() throws IOException {
 
     final IRlDb rldb = new DatabasesImpl().getRlDb();
+    rldb.disableCaching();
 
     AtomicInteger step1Count = new AtomicInteger(0);
     AtomicInteger step2Count = new AtomicInteger(0);
