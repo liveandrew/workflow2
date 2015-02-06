@@ -42,6 +42,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.db_schemas.rldb.workflow.controller.ApplicationController;
 import com.rapleaf.db_schemas.rldb.workflow.controller.ExecutionController;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
+import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.support.collections.Accessors;
 
 import static junit.framework.Assert.assertFalse;
@@ -765,13 +766,14 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     WorkflowStatePersistence newPeristence = restartedWorkflow.getPersistence();
 
     //  nothing changed for first execution
-    ex = Accessors.first(rldb.workflowExecutions().findAll());
+    List<WorkflowExecution> executions = rldb.workflowExecutions().query().order(QueryOrder.ASC).findWithOrder();
+    ex = Accessors.first(executions);
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
     assertEquals(StepStatus.REVERTED.ordinal(), persistence.getState("step1").getStatus().ordinal());
     assertEquals(StepStatus.FAILED.ordinal(), persistence.getState("step2").getStatus().ordinal());
 
     //  second one is complete
-    final WorkflowExecution ex2 = Accessors.second(rldb.workflowExecutions().findAll());
+    final WorkflowExecution ex2 = Accessors.second(executions);
     assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(), ex2.getStatus());
     assertEquals(StepStatus.COMPLETED.ordinal(), newPeristence.getState("step1").getStatus().ordinal());
     assertEquals(StepStatus.COMPLETED.ordinal(), newPeristence.getState("step2").getStatus().ordinal());
