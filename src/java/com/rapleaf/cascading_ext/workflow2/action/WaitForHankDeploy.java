@@ -75,7 +75,7 @@ public class WaitForHankDeploy extends Action {
           itr.remove();
         } else {
           if (RingGroups.isServingOnlyUpToDateOrMoreRecent(ringGroup, versions)) {
-            LOG.info("Noting domain as up-to-date: " + ringGroup.getName());
+            LOG.info("Noting ring group as up-to-date: " + ringGroup.getName());
             itr.remove();
           }
         }
