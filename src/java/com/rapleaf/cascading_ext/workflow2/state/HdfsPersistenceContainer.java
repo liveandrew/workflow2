@@ -18,6 +18,7 @@ import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
 import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
+import com.rapleaf.db_schemas.rldb.workflow.ProcessStatus;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
@@ -172,8 +173,8 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
-  public boolean isExecutionLive() throws IOException {
-    return true;
+  public ProcessStatus getProcessStatus() throws IOException {
+    return ProcessStatus.ALIVE;
   }
 
   @Override

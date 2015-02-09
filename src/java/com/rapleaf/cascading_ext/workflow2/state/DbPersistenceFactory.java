@@ -20,6 +20,7 @@ import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
+import com.rapleaf.db_schemas.rldb.workflow.Assertions;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
@@ -149,10 +150,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       //  check to see if any of these workflows are still marked as alive
       if(AttemptStatus.LIVE_STATUSES.contains(attempt.getStatus())){
 
-        //  if it's still heartbeating, fail loudly
-        if(WorkflowQueries.isLive(attempt)){
-          throw new RuntimeException("Cannot start, a previous attempt is still alive! Attempt: "+attempt);
-        }
+        Assertions.assertDead(attempt);
 
         //  otherwise it is safe to clean up
         LOG.info("Marking old running attempt as FAILED: "+attempt);
@@ -182,7 +180,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, WorkflowExecution execution) throws IOException {
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setLaunchDir(launchDir)
-        .setLaunchJar(launchJar);
+        .setLaunchJar(launchJar)
+        .setLastHeartbeat(System.currentTimeMillis());
     attempt.save();
     return attempt;
   }
