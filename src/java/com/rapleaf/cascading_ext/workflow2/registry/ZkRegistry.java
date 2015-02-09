@@ -5,8 +5,8 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.log4j.Logger;
 
+import com.liveramp.cascading_ext.zookeeper.ThriftMapCache;
 import com.liveramp.java_support.constants.ZkConstants;
-import com.liveramp.mugatu.core.curated.ThriftMapCache;
 import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.rapleaf.cascading_ext.queues.LiverampQueues;
 
