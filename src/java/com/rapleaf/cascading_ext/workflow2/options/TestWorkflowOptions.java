@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
+import com.rapleaf.cascading_ext.test.CommonTestUtil;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.registry.MockRegistry;
@@ -20,6 +21,7 @@ public class TestWorkflowOptions extends WorkflowOptions<TestWorkflowOptions> {
     setStorage(new ContextStorage.None());
     setRegistry(new MockRegistry());
     setStepPollInterval(100);
+    setWorkflowJobProperties(CommonTestUtil.getWorkflowJobPropertiesForTests());
   }
 
 }
