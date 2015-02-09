@@ -20,6 +20,7 @@ import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
@@ -227,6 +228,10 @@ public final class WorkflowRunner {
         checkpointDir,
         new ProductionWorkflowOptions().setMaxConcurrentSteps(maxConcurrentSteps),
         combine(first, rest));
+  }
+
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
+    this(workflowName, persistence, options, Sets.newHashSet(tail));
   }
 
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) {
