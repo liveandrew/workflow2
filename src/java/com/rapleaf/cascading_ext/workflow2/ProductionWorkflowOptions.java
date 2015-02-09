@@ -22,6 +22,7 @@ public class ProductionWorkflowOptions extends WorkflowOptions<ProductionWorkflo
     setLockProvider(null);
     setStorage(new ContextStorage.None());
     setRegistry(new ZkRegistry());
+    setStepPollInterval(3000);  // be nice to production DB
 
   }
 

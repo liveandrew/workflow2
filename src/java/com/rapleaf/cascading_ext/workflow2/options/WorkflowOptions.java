@@ -25,6 +25,7 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
   private WorkflowRegistry registry;
   private String uniqueIdentifier;
   private AppType appType;
+  private Integer stepPollInterval;
 
   protected WorkflowOptions(){}
 
@@ -35,6 +36,15 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
   public T setMaxConcurrentSteps(int maxConcurrentSteps) {
     this.maxConcurrentSteps = maxConcurrentSteps;
     return (T) this;
+  }
+
+  public T setStepPollInterval(int ms){
+    this.stepPollInterval = ms;
+    return (T) this;
+  }
+
+  public Integer getStepPollInterval() {
+    return stepPollInterval;
   }
 
   public AlertsHandler getAlertsHandler() {

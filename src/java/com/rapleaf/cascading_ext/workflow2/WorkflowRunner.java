@@ -49,7 +49,7 @@ import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
-  public final class WorkflowRunner {
+public final class WorkflowRunner {
   private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
   private final StepStatsRecorder statsRecorder;
 
@@ -67,6 +67,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
   private final StoreReaderLockProvider lockProvider;
   private final ContextStorage storage;
   private final WorkflowRegistry registry;
+  private final int stepPollInterval;
 
   //  set this if something fails in a step (outside user-code) so we don't keep trying to start steps
   private List<Exception> internalErrors = new CopyOnWriteArrayList<Exception>();
@@ -239,6 +240,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
     this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.registry = options.getRegistry();
+    this.stepPollInterval = options.getStepPollInterval();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps, timer);
@@ -433,7 +435,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
         // back around the loop.
         semaphore.release();
         try {
-          Thread.sleep(100);
+          Thread.sleep(stepPollInterval);
         } catch (InterruptedException e) {
           LOG.debug("Interrupted waiting for step to become ready", e);
         }
@@ -483,7 +485,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
     if (!internalErrors.isEmpty()) {
       LOG.error("WorkflowRunner has encountered an internal error");
       sendInternalErrorMessage();
-      throw new RuntimeException(getFailureMessage()+" internal WorkflowRunner error");
+      throw new RuntimeException(getFailureMessage() + " internal WorkflowRunner error");
     }
 
     // nothing failed, but if there are steps that haven't been executed, it's

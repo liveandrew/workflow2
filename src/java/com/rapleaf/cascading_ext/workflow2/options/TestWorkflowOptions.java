@@ -19,6 +19,7 @@ public class TestWorkflowOptions extends WorkflowOptions<TestWorkflowOptions> {
     setLockProvider(null);
     setStorage(new ContextStorage.None());
     setRegistry(new MockRegistry());
+    setStepPollInterval(100);
   }
 
 }
