@@ -234,6 +234,10 @@ public final class WorkflowRunner {
     this(workflowName, persistence, options, Sets.newHashSet(tail));
   }
 
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) {
+    this(workflowName, persistence, new ProductionWorkflowOptions(), Sets.newHashSet(tail));
+  }
+
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) {
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.statsRecorder = options.getStatsRecorder().makeRecorder(workflowName);
