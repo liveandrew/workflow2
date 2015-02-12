@@ -173,6 +173,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
+  public long getExecutionId() throws IOException {
+    throw new RuntimeException("Not supported by hdfs persistence");
+  }
+
+  @Override
   public ProcessStatus getProcessStatus() throws IOException {
     return ProcessStatus.ALIVE;
   }
@@ -260,7 +265,5 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   public void markPriority(String priority) {
     this.priority = priority;
   }
-
-
 
 }

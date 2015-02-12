@@ -14,6 +14,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.log4j.Logger;
 
 import cascading.flow.Flow;
@@ -354,10 +355,16 @@ public abstract class Action {
    * @param operation
    */
   private void completeWithProgress(ActionOperation operation) {
+
     runningFlow(operation);
     operation.start();
 
     operation.complete();
+
+  }
+
+  protected long getCurrentExecutionId() throws IOException {
+    return persistence.getExecutionId();
   }
 
 }
