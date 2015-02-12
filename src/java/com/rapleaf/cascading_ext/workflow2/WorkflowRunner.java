@@ -230,14 +230,6 @@ public final class WorkflowRunner {
     this(workflowName, checkpointDir, options, combine(first, rest));
   }
 
-  @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, int maxConcurrentSteps, final Step first, Step... rest) {
-    this(workflowName,
-        checkpointDir,
-        new ProductionWorkflowOptions().setMaxConcurrentSteps(maxConcurrentSteps),
-        combine(first, rest));
-  }
-
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
     this(workflowName, persistence, options, Sets.newHashSet(tail));
   }
