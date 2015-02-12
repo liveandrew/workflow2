@@ -235,6 +235,10 @@ public final class WorkflowRunner {
   }
 
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) {
+    this(workflowName, persistence, Sets.newHashSet(tail));
+  }
+
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Set<Step> tail) {
     this(workflowName, persistence, new ProductionWorkflowOptions(), Sets.newHashSet(tail));
   }
 
