@@ -61,4 +61,5 @@ class JobPoller extends Thread {
       }
     }
   }
+
 }

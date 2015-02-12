@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import junit.framework.Assert;
+import org.apache.hadoop.mapreduce.TaskCounter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,6 +26,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.event_timer.TimedEvent;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
@@ -33,6 +35,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
@@ -888,10 +891,10 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   }
 
-//  @Test
-  private void testCounters() throws IOException {
+  @Test
+  public void testCounters() throws IOException {
 
-    //  TODO test
+    IRlDb rldb = new DatabasesImpl().getRlDb();
 
     TupleDataStore input = builder().getTupleDataStore("input",
         new Fields("string")
@@ -905,7 +908,26 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
         new Fields("string")
     );
 
-    WorkflowRunner runner = execute(new IncrementCounter("step1", getTestRoot(), input, output));
+    Step step = new Step(new IncrementCounter("step1", getTestRoot(), input, output));
+
+    WorkflowRunner runner = new WorkflowRunner("Test Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions()
+            .setCounterFilter(CounterFilters.userGroups(Sets.newHashSet("CUSTOM_COUNTER"))),
+        step
+    );
+
+    runner.run();
+
+    TwoNestedMap<String, String, Long> counters = runner.getFlatCounters(rldb);
+
+    assertEquals(1l, counters.get("CUSTOM_COUNTER", "NAME").longValue());
+    assertFalse(counters.containsKey("OTHER_COUNTER", "NAME"));
+
+    TaskCounter mapIn = TaskCounter.MAP_INPUT_RECORDS;
+    assertEquals(1l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
+
+    assertEquals(3, counters.size());
 
   }
 
@@ -926,6 +948,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
       @Override
       public boolean isRemove(FlowProcess flowProcess, FilterCall filterCall) {
         flowProcess.increment("CUSTOM_COUNTER", "NAME", 1);
+        flowProcess.increment("OTHER_COUNTER", "NAME", 1);
         return false;
       }
     }

@@ -29,6 +29,7 @@ import org.jgrapht.graph.DefaultEdge;
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
@@ -40,11 +41,17 @@ import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
+import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
+import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
+import com.rapleaf.db_schemas.rldb.models.StepAttempt;
+import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
@@ -190,6 +197,7 @@ public final class WorkflowRunner {
   private boolean alreadyRun;
   private final AlertsHandler alertsHandler;
   private final Set<WorkflowRunnerNotification> enabledNotifications;
+  private final CounterFilter counterFilter;
   private String sandboxDir;
 
   public String getSandboxDir() {
@@ -242,6 +250,7 @@ public final class WorkflowRunner {
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.statsRecorder = options.getStatsRecorder().makeRecorder(workflowName);
     this.alertsHandler = options.getAlertsHandler();
+    this.counterFilter = options.getCounterFilter();
     this.enabledNotifications = options.getEnabledNotifications().get();
     this.semaphore = new Semaphore(maxConcurrentSteps);
     this.timer = new EventTimer(workflowName);
@@ -291,7 +300,8 @@ public final class WorkflowRunner {
       step.getAction().setOptionObjects(
           this.lockProvider,
           this.persistence,
-          this.storage
+          this.storage,
+          this.counterFilter
       );
     }
   }
@@ -720,6 +730,25 @@ public final class WorkflowRunner {
 
   public EventTimer getTimer() {
     return timer;
+  }
+
+
+  public TwoNestedMap<String, String, Long> getFlatCounters(IRlDb db) throws IOException {
+    long executionId = persistence.getExecutionId();
+
+    TwoNestedMap<String, String, Long> counters = new TwoNestedMap<String, String, Long>();
+    for (WorkflowAttempt attempt : db.workflowExecutions().find(executionId).getWorkflowAttempt()) {
+      for (StepAttempt step : attempt.getStepAttempt()) {
+        for (MapreduceJob job : step.getMapreduceJobs()) {
+          for (MapreduceCounter counter : job.getMapreduceCounters()) {
+            counters.put(counter.getGroup(), counter.getName(), counter.getValue());
+          }
+        }
+      }
+    }
+
+    return counters;
+
   }
 
   @Deprecated

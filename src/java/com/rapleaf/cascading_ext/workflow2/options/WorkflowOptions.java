@@ -10,6 +10,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
 import com.rapleaf.cascading_ext.workflow2.stats.RecorderFactory;
 
@@ -26,6 +27,7 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
   private String uniqueIdentifier;
   private AppType appType;
   private Integer stepPollInterval;
+  private CounterFilter counterFilter;
 
   protected WorkflowOptions(){}
 
@@ -138,6 +140,15 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
 
   public T setAppType(AppType appType) {
     this.appType = appType;
+    return (T) this;
+  }
+
+  public CounterFilter getCounterFilter() {
+    return counterFilter;
+  }
+
+  public T setCounterFilter(CounterFilter filter) {
+    this.counterFilter = filter;
     return (T) this;
   }
 }

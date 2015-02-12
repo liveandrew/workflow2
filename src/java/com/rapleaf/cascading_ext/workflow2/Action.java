@@ -15,9 +15,6 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapreduce.FileSystemCounter;
-import org.apache.hadoop.mapreduce.JobCounter;
-import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.log4j.Logger;
 
 import cascading.flow.Flow;
@@ -35,6 +32,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
@@ -55,21 +53,7 @@ public abstract class Action {
     USES
   }
 
-  private static final List<Enum<?>> DEFAULT_CAPTURED_STATS = Lists.newArrayList(
-      JobCounter.SLOTS_MILLIS_MAPS,
-      JobCounter.SLOTS_MILLIS_REDUCES,
-
-      TaskCounter.MAP_INPUT_RECORDS,
-      TaskCounter.MAP_OUTPUT_RECORDS,
-      TaskCounter.REDUCE_OUTPUT_RECORDS,
-
-      FileSystemCounter.BYTES_READ,
-      FileSystemCounter.BYTES_WRITTEN
-  );
-
   private final Multimap<ResourceAction, Resource> resources = HashMultimap.create();
-
-  private final List<String> additionalCaptureGroups = Lists.newArrayList();
 
   private StoreReaderLockProvider lockProvider;
   private Map<Object, Object> stepProperties;
@@ -78,9 +62,11 @@ public abstract class Action {
 
   private FileSystem fs;
 
+  private JobPoller jobPoller = null;
 
   private transient ContextStorage storage;
   private transient WorkflowStatePersistence persistence;
+  private transient CounterFilter counterFilter;
 
   public Action(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
@@ -211,7 +197,6 @@ public abstract class Action {
 
   protected final void internalExecute(Map<Object, Object> properties) {
     List<ResourceSemaphore> locks = Lists.newArrayList();
-    JobPoller jobPoller = null;
 
     try {
 
@@ -330,10 +315,12 @@ public abstract class Action {
 
   protected void setOptionObjects(StoreReaderLockProvider lockProvider,
                                   WorkflowStatePersistence persistence,
-                                  ContextStorage storage) {
+                                  ContextStorage storage,
+                                  CounterFilter counterFilter) {
     this.lockProvider = lockProvider;
     this.persistence = persistence;
     this.storage = storage;
+    this.counterFilter = counterFilter;
   }
 
   protected StoreReaderLockProvider getLockProvider() {
@@ -369,11 +356,6 @@ public abstract class Action {
     return flow;
   }
 
-  //  TODO make some kind of StepConfig class and pass this in via constructor
-  public void recordCounters(String group) {
-    additionalCaptureGroups.add(group);
-  }
-
   /**
    * Complete the provided ActionOperation while monitoring and reporting its progress.
    * This method will call setPercentComplete with values between startPct and
@@ -388,11 +370,15 @@ public abstract class Action {
 
     operation.complete();
 
-    //  recordCounters(operation);
+    recordCounters(operation);
 
   }
 
   private void recordCounters(ActionOperation operation) {
+
+    //  make sure each MR job exists in the DB
+    jobPoller.updateRunningJobs();
+
     for (RunningJob job : operation.listJobs()) {
       String jobId = job.getID().toString();
 
@@ -400,19 +386,11 @@ public abstract class Action {
         TwoNestedMap<String, String, Long> map = Counters.getCounterMap(job);
         TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
 
-        for (Enum<?> defaultCaptures : DEFAULT_CAPTURED_STATS) {
-          String group = defaultCaptures.getClass().getName();
-          String name = defaultCaptures.name();
-
-          Long value = map.get(group, name);
-          if (value != null) {
-            toRecord.put(group, name, value);
-          }
-        }
-
-        for (String group : additionalCaptureGroups) {
-          for (Map.Entry<String, Long> name : map.get(group).entrySet()) {
-            toRecord.put(group, name.getKey(), name.getValue());
+        for (TwoNestedMap.Entry<String, String, Long> counter : map) {
+          String group = counter.getK1();
+          String name = counter.getK2();
+          if (counterFilter.isRecord(group, name)) {
+            toRecord.put(group, name, counter.getValue());
           }
         }
 

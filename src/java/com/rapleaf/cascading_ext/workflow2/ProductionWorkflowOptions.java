@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import org.apache.log4j.Logger;
 
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.registry.ZkRegistry;
 import com.rapleaf.cascading_ext.workflow2.stats.RecorderFactory;
@@ -23,6 +24,8 @@ public class ProductionWorkflowOptions extends WorkflowOptions<ProductionWorkflo
     setStorage(new ContextStorage.None());
     setRegistry(new ZkRegistry());
     setStepPollInterval(3000);  // be nice to production DB
+    setCounterFilter(CounterFilters.defaultCounters()); //  TODO we can probably switch this to all user counters by default
+                                                      //  after making sure it's not going to nuke the DB
 
   }
 
