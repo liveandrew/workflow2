@@ -370,7 +370,10 @@ public abstract class Action {
 
     operation.complete();
 
-    recordCounters(operation);
+    //  TODO this is because some things call execute() directly... really want to prevent that eventually
+    if(persistence != null) {
+      recordCounters(operation);
+    }
 
   }
 
