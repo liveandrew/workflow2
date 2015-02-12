@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.fs.FileSystem;
@@ -247,7 +248,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     }
 
     if (!knownJobs.contains(jobId)) {
-      stepState.addMrjob(new MapReduceJob(jobId, jobName, trackingURL));
+      stepState.addMrjob(new MapReduceJob(jobId, jobName, trackingURL, Lists.<MapReduceJob.Counter>newArrayList()));
     }
 
   }
