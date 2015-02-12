@@ -234,6 +234,10 @@ public final class WorkflowRunner {
     this(workflowName, persistence, options, Sets.newHashSet(tail));
   }
 
+  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, Step tail) {
+    this(klass.getSimpleName(), persistence, tail);
+  }
+
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) {
     this(workflowName, persistence, Sets.newHashSet(tail));
   }
