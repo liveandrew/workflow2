@@ -15,6 +15,12 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import cascading.flow.FlowProcess;
+import cascading.operation.BaseOperation;
+import cascading.operation.Filter;
+import cascading.operation.FilterCall;
+import cascading.pipe.Each;
+import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
@@ -881,6 +887,50 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     }
 
   }
+
+//  @Test
+  private void testCounters() throws IOException {
+
+    //  TODO test
+
+    TupleDataStore input = builder().getTupleDataStore("input",
+        new Fields("string")
+    );
+
+    TupleDataStoreHelper.writeToStore(input,
+        new Tuple("1")
+    );
+
+    TupleDataStore output = builder().getTupleDataStore("output",
+        new Fields("string")
+    );
+
+    WorkflowRunner runner = execute(new IncrementCounter("step1", getTestRoot(), input, output));
+
+  }
+
+  public static class IncrementCounter extends CascadingAction2 {
+
+    public IncrementCounter(String checkpointToken, String tmpRoot,
+                            TupleDataStore in,
+                            TupleDataStore out) {
+      super(checkpointToken, tmpRoot);
+
+      Pipe pipe = bindSource("input", in);
+      pipe = new Each(pipe, new Count());
+      complete("step", pipe, out);
+
+    }
+
+    private static class Count extends BaseOperation implements Filter {
+      @Override
+      public boolean isRemove(FlowProcess flowProcess, FilterCall filterCall) {
+        flowProcess.increment("CUSTOM_COUNTER", "NAME", 1);
+        return false;
+      }
+    }
+  }
+
 
   public static class SetResource extends Action {
 

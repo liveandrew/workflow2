@@ -94,7 +94,7 @@ public class HadoopOperation implements ActionOperation {
       for (Counters.Counter c : counterGroup) {
         if (c.getValue() > 0) {
           Counter singleValueCounter = new Counter(groupName, c.getName(), c.getValue());
-          nestedCounters.add(new NestedCounter(singleValueCounter, checkpointToken));
+          nestedCounters.add(new NestedCounter(singleValueCounter));
         }
       }
     }

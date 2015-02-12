@@ -171,7 +171,7 @@ public class MultiStepAction extends Action {
     List<NestedCounter> counters = new ArrayList<NestedCounter>();
     for (Step s : steps) {
       for (NestedCounter c : s.getCounters()) {
-        counters.add(c.addParentEvent(s.getCheckpointToken()));
+        counters.add(c);
       }
     }
     return counters;

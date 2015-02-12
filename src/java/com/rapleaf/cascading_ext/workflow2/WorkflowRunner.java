@@ -722,14 +722,15 @@ public final class WorkflowRunner {
     return timer;
   }
 
-  public List<NestedCounter> getCounters() {
+  @Deprecated
+  private List<NestedCounter> getCounters() {
     try {
       // we don't know what stage of execution we are in when this is called
       // so get an up-to-date list of counters each time
       List<NestedCounter> counters = new ArrayList<NestedCounter>();
       for (StepRunner sr : completedSteps) {
         for (NestedCounter c : sr.step.getCounters()) {
-          counters.add(c.addParentEvent(persistence.getName()));
+          counters.add(c);
         }
       }
       return counters;
@@ -738,6 +739,7 @@ public final class WorkflowRunner {
     }
   }
 
+  @Deprecated
   public Map<String, Map<String, Long>> getCounterMap() {
     // we don't know what stage of execution we are in when this is called
     // so get an up-to-date list of counters each time

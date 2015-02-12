@@ -15,15 +15,20 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapreduce.FileSystemCounter;
+import org.apache.hadoop.mapreduce.JobCounter;
+import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.log4j.Logger;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.counters.Counters;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -41,6 +46,7 @@ public abstract class Action {
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
   private final ResourceFactory resourceFactory;
+  private final DataStoreBuilder builder;
 
   //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
   //  which actually make sense...
@@ -49,7 +55,21 @@ public abstract class Action {
     USES
   }
 
+  private static final List<Enum<?>> DEFAULT_CAPTURED_STATS = Lists.newArrayList(
+      JobCounter.SLOTS_MILLIS_MAPS,
+      JobCounter.SLOTS_MILLIS_REDUCES,
+
+      TaskCounter.MAP_INPUT_RECORDS,
+      TaskCounter.MAP_OUTPUT_RECORDS,
+      TaskCounter.REDUCE_OUTPUT_RECORDS,
+
+      FileSystemCounter.BYTES_READ,
+      FileSystemCounter.BYTES_WRITTEN
+  );
+
   private final Multimap<ResourceAction, Resource> resources = HashMultimap.create();
+
+  private final List<String> additionalCaptureGroups = Lists.newArrayList();
 
   private StoreReaderLockProvider lockProvider;
   private Map<Object, Object> stepProperties;
@@ -58,7 +78,6 @@ public abstract class Action {
 
   private FileSystem fs;
 
-  private DataStoreBuilder builder = null;
 
   private transient ContextStorage storage;
   private transient WorkflowStatePersistence persistence;
@@ -67,23 +86,26 @@ public abstract class Action {
     this(checkpointToken, Maps.newHashMap());
   }
 
-  public Action(String checkpointToken, Map<Object, Object> properties) {
-    this.actionId = new ActionId(checkpointToken);
-    this.tmpRoot = null;
-    this.stepProperties = properties;
-    this.resourceFactory = new ResourceFactory(actionId);
-  }
-
   public Action(String checkpointToken, String tmpRoot) {
     this(checkpointToken, tmpRoot, Maps.newHashMap());
   }
 
+  public Action(String checkpointToken, Map<Object, Object> properties) {
+    this(checkpointToken, null, properties);
+  }
+
   public Action(String checkpointToken, String tmpRoot, Map<Object, Object> properties) {
     this.actionId = new ActionId(checkpointToken);
-    this.tmpRoot = tmpRoot + "/" + checkpointToken + "-tmp-stores";
-    this.builder = new DataStoreBuilder(getTmpRoot());
     this.stepProperties = properties;
     this.resourceFactory = new ResourceFactory(actionId);
+
+    if (tmpRoot != null) {
+      this.tmpRoot = tmpRoot + "/" + checkpointToken + "-tmp-stores";
+      this.builder = new DataStoreBuilder(getTmpRoot());
+    } else {
+      this.tmpRoot = null;
+      this.builder = null;
+    }
   }
 
   public ActionId getActionId() {
@@ -242,7 +264,7 @@ public abstract class Action {
     return locks;
   }
 
-  public static RuntimeException wrapRuntimeException(Throwable t) {
+  private static RuntimeException wrapRuntimeException(Throwable t) {
     return (t instanceof RuntimeException) ? (RuntimeException)t : new RuntimeException(t);
   }
 
@@ -306,9 +328,9 @@ public abstract class Action {
     persistence.markStepStatusMessage(fullId(), statusMessage);
   }
 
-  public void setOptionObjects(StoreReaderLockProvider lockProvider,
-                               WorkflowStatePersistence persistence,
-                               ContextStorage storage) {
+  protected void setOptionObjects(StoreReaderLockProvider lockProvider,
+                                  WorkflowStatePersistence persistence,
+                                  ContextStorage storage) {
     this.lockProvider = lockProvider;
     this.persistence = persistence;
     this.storage = storage;
@@ -347,6 +369,11 @@ public abstract class Action {
     return flow;
   }
 
+  //  TODO make some kind of StepConfig class and pass this in via constructor
+  public void recordCounters(String group) {
+    additionalCaptureGroups.add(group);
+  }
+
   /**
    * Complete the provided ActionOperation while monitoring and reporting its progress.
    * This method will call setPercentComplete with values between startPct and
@@ -361,6 +388,41 @@ public abstract class Action {
 
     operation.complete();
 
+    //  recordCounters(operation);
+
+  }
+
+  private void recordCounters(ActionOperation operation) {
+    for (RunningJob job : operation.listJobs()) {
+      String jobId = job.getID().toString();
+
+      try {
+        TwoNestedMap<String, String, Long> map = Counters.getCounterMap(job);
+        TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
+
+        for (Enum<?> defaultCaptures : DEFAULT_CAPTURED_STATS) {
+          String group = defaultCaptures.getClass().getName();
+          String name = defaultCaptures.name();
+
+          Long value = map.get(group, name);
+          if (value != null) {
+            toRecord.put(group, name, value);
+          }
+        }
+
+        for (String group : additionalCaptureGroups) {
+          for (Map.Entry<String, Long> name : map.get(group).entrySet()) {
+            toRecord.put(group, name.getKey(), name.getValue());
+          }
+        }
+
+        persistence.markJobCounters(fullId(), jobId, toRecord);
+
+      } catch (IOException e) {
+        LOG.error("Failed to capture stats for job: " + jobId);
+      }
+
+    }
   }
 
   protected long getCurrentExecutionId() throws IOException {

@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
 import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
@@ -249,6 +250,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
       stepState.addMrjob(new MapReduceJob(jobId, jobName, trackingURL));
     }
 
+  }
+
+  @Override
+  public void markJobCounters(String stepToken, String jobId, TwoNestedMap<String, String, Long> values) throws IOException {
+    //  no op
   }
 
   @Override

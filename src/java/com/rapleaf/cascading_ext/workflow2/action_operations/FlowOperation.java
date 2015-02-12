@@ -67,8 +67,7 @@ public class FlowOperation implements ActionOperation {
 
       if (counters.containsKey(stepStats)) {
         for (Counter c : counters.get(stepStats)) {
-          NestedCounter nc = new NestedCounter(c, stepStats.getName());
-          nc.addParentEvent(checkpointToken);
+          NestedCounter nc = new NestedCounter(c);
           nestedCounters.add(nc);
         }
       }
