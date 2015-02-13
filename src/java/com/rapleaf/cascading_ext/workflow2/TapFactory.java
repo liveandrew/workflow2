@@ -3,11 +3,12 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 
 import cascading.tap.Tap;
+import cascading.tuple.Fields;
 
 import com.liveramp.cascading_ext.tap.NullTap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
-public interface TapFactory {
+public abstract class TapFactory {
 
   /**
    * TapFactories should expect this method to be called multiple times, including during workflow
@@ -15,9 +16,14 @@ public interface TapFactory {
    *
    * @throws IOException
    */
-  public Tap createTap() throws IOException;
+  public abstract Tap createTap() throws IOException;
 
-  public static class SimpleFactory implements TapFactory {
+  //  override this if createTap is an expensive operation and you know the source fields
+  public Fields getSourceFields() throws IOException {
+    return createTap().getSourceFields();
+  }
+
+  public static class SimpleFactory extends TapFactory {
 
     private final DataStore store;
     public SimpleFactory(DataStore store){
@@ -30,7 +36,7 @@ public interface TapFactory {
     }
   }
 
-  public static class NullTapFactory implements TapFactory {
+  public static class NullTapFactory extends TapFactory {
     @Override
     public Tap createTap() throws IOException {
       return new NullTap();

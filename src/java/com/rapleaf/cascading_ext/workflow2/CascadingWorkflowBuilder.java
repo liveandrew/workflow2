@@ -345,7 +345,7 @@ public class CascadingWorkflowBuilder {
     if (previousPipes.length == 0) {
       Fields sourceFields;
       if (pipenameToTap.containsKey(tail.getName())) {
-        sourceFields = pipenameToTap.get(tail.getName()).createTap().getSourceFields();
+        sourceFields = pipenameToTap.get(tail.getName()).getSourceFields();
       } else {
         throw new RuntimeException("Cannot find head pipe name " + tail.getName() + " in any source map during field resolution");
       }
