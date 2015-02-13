@@ -291,7 +291,7 @@ public abstract class Action {
 
   public final String getTmpRoot() {
     if (tmpRoot == null) {
-      throw new RuntimeException("Temp root not set!");
+      throw new RuntimeException("Temp root not set for action " + this.toString());
     }
     return tmpRoot;
   }
