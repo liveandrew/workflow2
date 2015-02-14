@@ -47,7 +47,7 @@ public class TestCleanUpMsjStores extends CascadingExtTestCase {
   }
 
   private void runAndVerify(int numToKeep, int[] expectedRemaining) throws IOException {
-    executeWorkflow(new CleanUpMsjStores("checkpoint", numToKeep, false, alertsHandler, store));
+    executeWorkflow(new CleanUpMsjStores("checkpoint", getTestRoot() + "/msj", numToKeep, false, alertsHandler, store));
     FileStatus[] statuses = getFS().listStatus(new Path(store.getPath()));
     Set<String> remainingPaths = Sets.newHashSet();
     Set<Integer> remainingVersions = Sets.newHashSet();

@@ -75,8 +75,8 @@ public class CleanUpMsjStores extends MultiStepAction {
     }
   }
 
-  public CleanUpMsjStores(String checkpointToken, int numVersionsToKeep, boolean runCompaction, AlertsHandler alertsHandler, TMSJDataStore... stores) {
-    super(checkpointToken);
+  public CleanUpMsjStores(String checkpointToken, String tmpRoot, int numVersionsToKeep, boolean runCompaction, AlertsHandler alertsHandler, TMSJDataStore... stores) {
+    super(checkpointToken, tmpRoot);
 
     List<Step> steps = Lists.newArrayList();
     for (TMSJDataStore store : stores) {
