@@ -13,7 +13,7 @@ public class TestAcquireLock extends CascadingExtTestCase{
   @Test
   public void testExclusion() throws IOException {
     try {
-      executeWorkflow(new MultiLock("locks", getTestRoot() + "/lock"));
+      executeWorkflow(new MultiLock("locks", getTestRoot() + "/lock", getTestRoot() + "/tmp"));
       org.junit.Assert.fail("Locking twice worked.");
     } catch (RuntimeException e) {
       org.junit.Assert.assertTrue(e.getMessage().contains("Could not acquire lock for:"));
@@ -22,13 +22,13 @@ public class TestAcquireLock extends CascadingExtTestCase{
 
   @Test
   public void testRelease() throws IOException {
-    executeWorkflow(new AcquireAndRelease("releasing", getTestRoot() + "/lock"));
+    executeWorkflow(new AcquireAndRelease("releasing", getTestRoot() + "/lock", getTestRoot() + "/tmp"));
   }
 
   private static class MultiLock extends MultiStepAction {
 
-    public MultiLock(String checkpointToken, String lockPath) {
-      super(checkpointToken);
+    public MultiLock(String checkpointToken, String tmpRoot, String lockPath) {
+      super(checkpointToken, tmpRoot);
 
       Step lock1 = new Step(new AcquireLock(
           "acquire-lock",
@@ -46,8 +46,8 @@ public class TestAcquireLock extends CascadingExtTestCase{
 
   private static class AcquireAndRelease extends MultiStepAction {
 
-    public AcquireAndRelease(String checkpointToken, String lockPath) {
-      super(checkpointToken);
+    public AcquireAndRelease(String checkpointToken, String tmpRoot, String lockPath) {
+      super(checkpointToken, tmpRoot);
 
       Step lock1 = new Step(new AcquireLock(
           "acquire-lock",
