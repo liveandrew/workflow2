@@ -235,11 +235,11 @@ public final class WorkflowRunner {
   }
 
   public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, Step tail) {
-    this(klass.getSimpleName(), persistence, tail);
+    this(klass.getName(), persistence, tail);
   }
 
   public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, WorkflowOptions options, final Step first, Step... rest) {
-    this(klass.getSimpleName(), persistence, options, combine(first, rest));
+    this(klass.getName(), persistence, options, combine(first, rest));
   }
 
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) {
