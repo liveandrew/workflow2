@@ -254,6 +254,10 @@ public final class WorkflowRunner {
     this(klass.getName(), persistence, options, tailSteps);
   }
 
+  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, Set<Step> tailSteps) {
+    this(klass, persistence, new ProductionWorkflowOptions(), tailSteps);
+  }
+
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) {
     this(workflowName, persistence, Sets.newHashSet(tail));
   }
