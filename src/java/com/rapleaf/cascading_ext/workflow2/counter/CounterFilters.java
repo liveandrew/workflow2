@@ -1,10 +1,8 @@
 package com.rapleaf.cascading_ext.workflow2.counter;
 
-import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import org.apache.hadoop.mapreduce.FileSystemCounter;
 import org.apache.hadoop.mapreduce.JobCounter;
@@ -12,24 +10,20 @@ import org.apache.hadoop.mapreduce.TaskCounter;
 
 public class CounterFilters {
 
-  private static final List<Enum<?>> DEFAULT_CAPTURED_STATS = Lists.newArrayList(
-      JobCounter.SLOTS_MILLIS_MAPS,
-      JobCounter.SLOTS_MILLIS_REDUCES,
-
-      TaskCounter.MAP_INPUT_RECORDS,
-      TaskCounter.MAP_OUTPUT_RECORDS,
-      TaskCounter.REDUCE_OUTPUT_RECORDS,
-
-      FileSystemCounter.BYTES_READ,
-      FileSystemCounter.BYTES_WRITTEN
-  );
-
   private static final Multimap<String, String> DEFAULT_AS_MAP = HashMultimap.create();
 
   static {
-    for (Enum<?> stat : DEFAULT_CAPTURED_STATS) {
-      DEFAULT_AS_MAP.put(stat.getClass().getName(), stat.name());
-    }
+
+    DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.SLOTS_MILLIS_MAPS.name());
+    DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.SLOTS_MILLIS_REDUCES.name());
+
+    DEFAULT_AS_MAP.put(TaskCounter.class.getName(), TaskCounter.MAP_INPUT_RECORDS.name());
+    DEFAULT_AS_MAP.put(TaskCounter.class.getName(), TaskCounter.MAP_OUTPUT_RECORDS.name());
+    DEFAULT_AS_MAP.put(TaskCounter.class.getName(), TaskCounter.REDUCE_OUTPUT_RECORDS.name());
+
+    DEFAULT_AS_MAP.put(FileSystemCounter.class.getName(), "HDFS_BYTES_READ");
+    DEFAULT_AS_MAP.put(FileSystemCounter.class.getName(), "HDFS_BYTES_WRITTEN");
+
   }
 
   public static CounterFilter defaultCounters(){

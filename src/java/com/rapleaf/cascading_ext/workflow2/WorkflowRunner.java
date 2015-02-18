@@ -210,14 +210,20 @@ public final class WorkflowRunner {
 
   private WorkflowWebServer webServer;
 
+  //  migrating to using DB backed workflows -- don't write any new workflows using this
+  @Deprecated
   public WorkflowRunner(String workflowName, String checkpointDir, Set<Step> tailSteps) {
     this(workflowName, checkpointDir, new ProductionWorkflowOptions(), tailSteps);
   }
 
+  //  migrating to using DB backed workflows -- don't write any new workflows using this
+  @Deprecated
   public WorkflowRunner(String workflowName, String checkpointDir, final Step first, final Step... rest) {
     this(workflowName, checkpointDir, new ProductionWorkflowOptions(), first, rest);
   }
 
+  //  migrating to using DB backed workflows -- don't write any new workflows using this
+  @Deprecated
   public WorkflowRunner(String workflowName, String checkpointDir, WorkflowOptions options, Set<Step> tailSteps) {
     this(
         workflowName,
@@ -226,6 +232,8 @@ public final class WorkflowRunner {
         tailSteps);
   }
 
+  //  migrating to using DB backed workflows -- don't write any new workflows using this
+  @Deprecated
   public WorkflowRunner(String workflowName, String checkpointDir, WorkflowOptions options, final Step first, Step... rest) {
     this(workflowName, checkpointDir, options, combine(first, rest));
   }
