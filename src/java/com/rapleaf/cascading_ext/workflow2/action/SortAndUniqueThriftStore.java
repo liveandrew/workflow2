@@ -4,12 +4,15 @@ import java.util.Map;
 
 import org.apache.thrift.TBase;
 
+import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 import cascading.pipe.assembly.Unique;
+import cascading.tuple.Fields;
 
 import com.liveramp.cascading_ext.util.FieldHelper;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.UnitDataStore;
+import com.rapleaf.cascading_ext.function.SerializeThriftObject;
 import com.rapleaf.cascading_ext.workflow2.CascadingAction2;
 import com.rapleaf.cascading_ext.workflow2.Step;
 
@@ -48,6 +51,9 @@ public class SortAndUniqueThriftStore<T extends TBase<?, ?>> extends CascadingAc
   }
 
   private static class SortAndUnique<T extends TBase<?, ?>> extends CascadingAction2 {
+
+    private static final String TEMP_FIELD = "_serialized_tmp_field";
+
     public SortAndUnique(
         String checkpointToken,
         String tmpRoot,
@@ -58,7 +64,8 @@ public class SortAndUniqueThriftStore<T extends TBase<?, ?>> extends CascadingAc
       super(checkpointToken, tmpRoot, properties);
 
       Pipe pipe = bindSource("input", input);
-      pipe = new Unique(pipe, FieldHelper.fieldOf(clazz));
+      pipe = new Each(pipe, FieldHelper.fieldOf(clazz), new SerializeThriftObject(TEMP_FIELD), Fields.ALL);
+      pipe = new Unique(pipe, new Fields(TEMP_FIELD));
 
       complete("sort-store-by-thrift-field", pipe, uniqueAndSortedOutput);
     }
