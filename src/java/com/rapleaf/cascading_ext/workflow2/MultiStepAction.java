@@ -27,11 +27,6 @@ public class MultiStepAction extends Action {
     }
   }
 
-  @Deprecated
-  public MultiStepAction(String checkpointToken) {
-    this(checkpointToken, null, null);
-  }
-
   public MultiStepAction(String checkpointToken, Collection<Step> steps) {
     this(checkpointToken, null, steps);
   }
