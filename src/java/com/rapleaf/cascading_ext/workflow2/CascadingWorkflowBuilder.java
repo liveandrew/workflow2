@@ -26,6 +26,8 @@ import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.PartitionAssemblySinkBinding;
+import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
@@ -211,6 +213,10 @@ public class CascadingWorkflowBuilder {
 
   public Step buildPartitionedTail(String tailStepName, Pipe output, BucketDataStore outputStore, PartitionStructure structure) {
     return buildTail(tailStepName, Lists.newArrayList(new SinkBinding.PartitionedSink(output, outputStore, structure)), new EmptyListener());
+  }
+
+  public Step buildPartitionedTail(String tailStepName, Pipe output, PartitionedDataStore store, final PartitionStructure structure){
+    return buildTail(tailStepName, Lists.newArrayList(new PartitionAssemblySinkBinding(store, output, structure)));
   }
 
   public Step buildTail(String tailStepName, Pipe output, DataStore outputStore, FlowListener listener) {
