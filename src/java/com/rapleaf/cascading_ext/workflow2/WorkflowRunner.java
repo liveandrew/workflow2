@@ -30,6 +30,7 @@ import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
@@ -260,7 +261,7 @@ public final class WorkflowRunner {
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
   public WorkflowRunner(WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) {
-    this(options.getAppType().name(), persistence, options, tailSteps);
+    this(getName(options), persistence, options, tailSteps);
   }
 
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) {
@@ -310,6 +311,14 @@ public final class WorkflowRunner {
       StepRunner runner = new StepRunner(step, this.persistence);
       pendingSteps.add(runner);
     }
+  }
+
+  private static String getName(WorkflowOptions options){
+    AppType appType = options.getAppType();
+    if(appType == null){
+      throw new RuntimeException("AppType must be set in WorkflowOptions!");
+    }
+    return appType.name();
   }
 
   private static String getHostName() {
