@@ -264,6 +264,11 @@ public final class WorkflowRunner {
     this(getName(options), persistence, options, tailSteps);
   }
 
+  // This constructor requires that the given options contain an AppType for generating the workflow name
+  public WorkflowRunner(WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
+    this(getName(options), persistence, options, Sets.newHashSet(tail));
+  }
+
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) {
     this(workflowName, persistence, Sets.newHashSet(tail));
   }
