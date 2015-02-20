@@ -58,7 +58,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       cleanUpRunningAttempts(execution);
 
       Optional<WorkflowAttempt> latestAttempt = WorkflowQueries
-          .getLatestAttemptOptional(rldb, execution);
+          .getLatestAttemptOptional(execution);
 
       WorkflowAttempt attempt = createAttempt(host,
           username,
@@ -202,7 +202,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   private StepStatus getInitialStatus(String stepId, WorkflowExecution execution) throws IOException {
 
-    if (WorkflowQueries.isStepComplete(rldb, stepId, execution)) {
+    if (WorkflowQueries.isStepComplete(stepId, execution)) {
       return StepStatus.SKIPPED;
     }
 
