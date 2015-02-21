@@ -278,6 +278,10 @@ public final class WorkflowRunner {
   }
 
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) {
+
+    //  TODO we can move name into WorkflowOptions and do this verification when setting it there.  eliminate contructors here
+    verifyName(workflowName, options);
+
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.statsRecorder = options.getStatsRecorder().makeRecorder(workflowName);
     this.alertsHandler = options.getAlertsHandler();
@@ -315,6 +319,15 @@ public final class WorkflowRunner {
     for (Step step : dependencyGraph.vertexSet()) {
       StepRunner runner = new StepRunner(step, this.persistence);
       pendingSteps.add(runner);
+    }
+  }
+
+  private void verifyName(String name, WorkflowOptions options){
+    AppType appType = options.getAppType();
+    if(appType != null){
+      if(!appType.name().equals(name)){
+        throw new RuntimeException("Workflow name cannot conflict with AppType name!");
+      }
     }
   }
 
