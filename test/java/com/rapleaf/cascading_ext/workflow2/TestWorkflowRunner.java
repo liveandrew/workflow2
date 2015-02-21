@@ -755,17 +755,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
     assertEquals(StepStatus.REVERTED.ordinal(), persistence.getState("step1").getStatus().ordinal());
     assertEquals(StepStatus.FAILED.ordinal(), persistence.getState("step2").getStatus().ordinal());
-
-    //  make sure we can't cancel the first workflow again
-    Exception exception = getException(new Runnable2() {
-      @Override
-      public void run() throws Exception {
-        ApplicationController.cancelLatestExecution(rldb, "Test Workflow", null);
-      }
-    });
-
-    assertTrue(exception.getMessage().startsWith("Cannot revert steps or cancel execution"));
-
+    
     //  restart workflow
     step1 = new Step(new IncrementAction2("step1", step1Count));
     step2 = new Step(new IncrementAction2("step2", step2Count), step1);
