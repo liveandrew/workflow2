@@ -328,6 +328,12 @@ public final class WorkflowRunner {
       if(!appType.name().equals(name)){
         throw new RuntimeException("Workflow name cannot conflict with AppType name!");
       }
+    } else {
+      for(AppType a : AppType.values()) {
+        if(a.name().equals(name)) {
+          throw new RuntimeException("Provided workflow name " + name + " is already an AppType");
+        }
+      }
     }
   }
 
