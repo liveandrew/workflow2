@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
+import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
+
 public class Example {
   
   public static class SlightlyLessComplex extends MultiStepAction {
@@ -61,6 +63,11 @@ public class Example {
     s = new Step(new ComplexAction(), s);
     s = new Step(new PrintAction("last"), s);
     
-    new WorkflowRunner("workflow", "/tmp/checkpoint_dir", new ProductionWorkflowOptions().setMaxConcurrentSteps(1), new HashSet<Step>(Arrays.asList(s))).run();
+    new WorkflowRunner(
+        Example.class,
+        new DbPersistenceFactory(),
+        new ProductionWorkflowOptions().setMaxConcurrentSteps(1),
+        new HashSet<Step>(Arrays.asList(s))
+    ).run();
   }
 }
