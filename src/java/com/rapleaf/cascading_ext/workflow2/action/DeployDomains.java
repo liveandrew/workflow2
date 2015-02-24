@@ -23,6 +23,7 @@ import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
+import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 
 public class DeployDomains extends Action {
 
@@ -93,6 +94,10 @@ public class DeployDomains extends Action {
     );
 
     Step step = new Step(deployAction);
-    new WorkflowRunner("Test Deployer", "/data/pwestling/testDeployer/checkpoints", step).run();
+    new WorkflowRunner(
+        DeployDomains.class,
+        new DbPersistenceFactory(),
+        step
+    ).run();
   }
 }
