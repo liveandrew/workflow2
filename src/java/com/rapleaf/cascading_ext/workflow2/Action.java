@@ -383,24 +383,29 @@ public abstract class Action {
     jobPoller.updateRunningJobs();
 
     for (RunningJob job : operation.listJobs()) {
-      String jobId = job.getID().toString();
+      
+      if(job != null){
+        if(job.getID() != null){
+          String jobId = job.getID().toString();
 
-      try {
-        TwoNestedMap<String, String, Long> map = Counters.getCounterMap(job);
-        TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
+          try {
+            TwoNestedMap<String, String, Long> map = Counters.getCounterMap(job);
+            TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
 
-        for (TwoNestedMap.Entry<String, String, Long> counter : map) {
-          String group = counter.getK1();
-          String name = counter.getK2();
-          if (counterFilter.isRecord(group, name)) {
-            toRecord.put(group, name, counter.getValue());
+            for (TwoNestedMap.Entry<String, String, Long> counter : map) {
+              String group = counter.getK1();
+              String name = counter.getK2();
+              if (counterFilter.isRecord(group, name)) {
+                toRecord.put(group, name, counter.getValue());
+              }
+            }
+
+            persistence.markJobCounters(fullId(), jobId, toRecord);
+
+          } catch (IOException e) {
+            LOG.error("Failed to capture stats for job: " + jobId);
           }
         }
-
-        persistence.markJobCounters(fullId(), jobId, toRecord);
-
-      } catch (IOException e) {
-        LOG.error("Failed to capture stats for job: " + jobId);
       }
 
     }
