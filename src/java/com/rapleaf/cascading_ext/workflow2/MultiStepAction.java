@@ -57,7 +57,7 @@ public class MultiStepAction extends Action {
     }
     for (Step s : steps) {
       if (tokens.contains(s.getSimpleCheckpointToken())) {
-        throw new IllegalArgumentException("Substep checkpoint token " + s.getCheckpointToken()
+        throw new IllegalArgumentException("Substep checkpoint token " + s.getSimpleCheckpointToken()
             + " is used more than once in " + this);
       }
       tokens.add(s.getSimpleCheckpointToken());
