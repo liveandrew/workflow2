@@ -213,18 +213,6 @@ public final class WorkflowRunner {
 
   //  migrating to using DB backed workflows -- don't write any new workflows using this
   @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, Set<Step> tailSteps) {
-    this(workflowName, checkpointDir, new ProductionWorkflowOptions(), tailSteps);
-  }
-
-  //  migrating to using DB backed workflows -- don't write any new workflows using this
-  @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, final Step first, final Step... rest) {
-    this(workflowName, checkpointDir, new ProductionWorkflowOptions(), first, rest);
-  }
-
-  //  migrating to using DB backed workflows -- don't write any new workflows using this
-  @Deprecated
   public WorkflowRunner(String workflowName, String checkpointDir, WorkflowOptions options, Set<Step> tailSteps) {
     this(
         workflowName,
