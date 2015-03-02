@@ -346,7 +346,11 @@ public abstract class Action {
     return buildFlow(Maps.newHashMap());
   }
 
-  protected FlowConnector buildFlowConnector(Map<Object, Object> properties) {
+  protected FlowConnector buildFlowConnector() {
+    return buildFlowConnector(nestedProperties.getPropertiesMap());
+  }
+
+  private FlowConnector buildFlowConnector(Map<Object, Object> properties) {
     List<FlowStepStrategy<JobConf>> strategies = Lists.newArrayList();
     for(FlowStepStrategyFactory<JobConf> factory : CascadingHelper.get().getDefaultFlowStepStrategies()) {
       strategies.add(factory.getFlowStepStrategy());
