@@ -14,13 +14,25 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.log4j.Logger;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
+import cascading.flow.FlowStepStrategy;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.counters.Counters;
+import com.liveramp.cascading_ext.flow.LoggingFlowConnector;
+import com.liveramp.cascading_ext.flow_step_strategy.FlowStepStrategyFactory;
+import com.liveramp.cascading_ext.flow_step_strategy.MultiFlowStepStrategy;
+import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
+import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.util.HadoopProperties;
+import com.liveramp.cascading_ext.util.NestedProperties;
+import com.liveramp.cascading_ext.util.OperationStatsUtils;
 import com.liveramp.cascading_ext.counters.Counters;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
@@ -32,6 +44,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
+import com.liveramp.cascading_ext.util.NestedProperties;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
@@ -56,7 +69,8 @@ public abstract class Action {
   private final Multimap<ResourceAction, Resource> resources = HashMultimap.create();
 
   private StoreReaderLockProvider lockProvider;
-  private Map<Object, Object> stepProperties;
+  private HadoopProperties stepProperties;
+  private NestedProperties nestedProperties;
 
   private List<ActionOperation> operations = new ArrayList<ActionOperation>();
 
@@ -82,7 +96,7 @@ public abstract class Action {
 
   public Action(String checkpointToken, String tmpRoot, Map<Object, Object> properties) {
     this.actionId = new ActionId(checkpointToken);
-    this.stepProperties = properties;
+    this.stepProperties = new HadoopProperties(properties, false);
     this.resourceFactory = new ResourceFactory(actionId);
 
     if (tmpRoot != null) {
@@ -195,17 +209,13 @@ public abstract class Action {
     return actionId.resolve();
   }
 
-  protected final void internalExecute(Map<Object, Object> properties) {
+  protected final void internalExecute(NestedProperties parentProperties) {
     List<ResourceSemaphore> locks = Lists.newArrayList();
 
     try {
 
       //  only set properties not explicitly set by the step
-      for (Object prop : properties.keySet()) {
-        if (!stepProperties.containsKey(prop)) {
-          stepProperties.put(prop, properties.get(prop));
-        }
-      }
+      nestedProperties = new NestedProperties(parentProperties, stepProperties);
 
       jobPoller = new JobPoller(fullId(), operations, persistence);
       jobPoller.start();
@@ -328,25 +338,27 @@ public abstract class Action {
   }
 
   protected FlowBuilder buildFlow(Map<Object, Object> properties) {
-
-    Map<Object, Object> allProps = Maps.newHashMap(stepProperties);
-    for (Map.Entry<Object, Object> property : properties.entrySet()) {
-      allProps.put(property.getKey(), property.getValue());
-    }
-
-    return new FlowBuilder(CascadingHelper.get().getFlowConnector(allProps), getClass());
+    NestedProperties flowProperties = new NestedProperties(nestedProperties, properties);
+    return new FlowBuilder(buildFlowConnector(flowProperties.getPropertiesMap()), getClass());
   }
 
   protected FlowBuilder buildFlow() {
-    return new FlowBuilder(buildFlowConnector(), getClass());
+    return buildFlow(Maps.newHashMap());
   }
 
-  protected FlowConnector buildFlowConnector() {
-    return CascadingHelper.get().getFlowConnector(stepProperties);
+  protected FlowConnector buildFlowConnector(Map<Object, Object> properties) {
+    List<FlowStepStrategy<JobConf>> strategies = Lists.newArrayList();
+    for(FlowStepStrategyFactory<JobConf> factory : CascadingHelper.get().getDefaultFlowStepStrategies()) {
+      strategies.add(factory.getFlowStepStrategy());
+    }
+
+    return new LoggingFlowConnector(properties,
+        new MultiFlowStepStrategy(strategies),
+        OperationStatsUtils.formatStackPosition(OperationStatsUtils.getStackPosition(2)));
   }
 
   protected void completeWithProgress(RunnableJob job) {
-    job.addProperties(stepProperties);
+    job.addProperties(nestedProperties.getPropertiesMap());
     completeWithProgress(new HadoopOperation(job));
   }
 
