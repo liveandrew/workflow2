@@ -5,8 +5,11 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.util.HadoopProperties;
+import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
@@ -18,7 +21,8 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
 
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
-  private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
+  private NestedProperties defaultNestedProperties = new NestedProperties(null, CascadingHelper.get().getDefaultHadoopProperties());
+  private HadoopProperties workflowHadoopProperties = new HadoopProperties();
   private WorkflowRunnerNotificationSet enabledNotifications;
   private RecorderFactory statsRecorder;
   private StoreReaderLockProvider lockProvider;
@@ -73,8 +77,13 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
     return (T) this;
   }
 
-  public T setWorkflowJobProperties(Map<Object, Object> properties){
-    this.workflowJobProperties = properties;
+  public T setWorkflowDefaultProperties(NestedProperties defaultProperties) {
+    this.defaultNestedProperties = defaultProperties;
+    return (T) this;
+  }
+
+  public T setWorkflowHadoopProperties(HadoopProperties workflowHadoopProperties) {
+    this.workflowHadoopProperties = workflowHadoopProperties;
     return (T) this;
   }
 
@@ -94,8 +103,8 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
   }
 
 
-  public Map<Object, Object> getWorkflowJobProperties() {
-    return workflowJobProperties;
+  public NestedProperties getWorkflowJobProperties() {
+    return new NestedProperties(defaultNestedProperties, workflowHadoopProperties);
   }
 
   public ContextStorage getStorage() {

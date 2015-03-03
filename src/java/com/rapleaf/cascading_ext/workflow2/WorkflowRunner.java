@@ -29,6 +29,8 @@ import org.jgrapht.graph.DefaultEdge;
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
+import com.liveramp.cascading_ext.util.HadoopProperties;
+import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
@@ -81,7 +83,7 @@ public final class WorkflowRunner {
   //  set this if something fails in a step (outside user-code) so we don't keep trying to start steps
   private List<Exception> internalErrors = new CopyOnWriteArrayList<Exception>();
 
-  private Map<Object, Object> workflowJobProperties = Maps.newHashMap();
+  private NestedProperties workflowJobProperties;
 
   /**
    * StepRunner keeps track of some extra state for each component, as
@@ -98,20 +100,20 @@ public final class WorkflowRunner {
       this.state = state;
     }
 
-    private Map<Object, Object> buildInheritedProperties() throws IOException {
-      Map<Object, Object> stepProperties = Maps.newHashMap(workflowJobProperties);
+    private NestedProperties buildInheritedProperties() throws IOException {
+      HadoopProperties.Builder uiPropertiesBuilder = new HadoopProperties.Builder();
       String priority = persistence.getPriority();
       String pool = persistence.getPool();
 
       if (priority != null) {
-        stepProperties.put(JOB_PRIORITY_PARAM, priority);
+        uiPropertiesBuilder.setProperty(JOB_PRIORITY_PARAM, priority, true);
       }
 
       if (pool != null) {
-        stepProperties.put(JOB_POOL_PARAM, pool);
+        uiPropertiesBuilder.setProperty(JOB_POOL_PARAM, pool, true);
       }
 
-      return stepProperties;
+      return new NestedProperties(workflowJobProperties, uiPropertiesBuilder.build());
     }
 
     public void start() {
@@ -701,13 +703,8 @@ public final class WorkflowRunner {
     //  fall back to static jobconf props if not set elsewhere
     JobConf jobconf = CascadingHelper.get().getJobConf();
 
-    if (workflowJobProperties.containsKey(property)) {
-      return (String)workflowJobProperties.get(property);
-    }
-
-    Map<Object, Object> defaultProps = CascadingHelper.get().getDefaultProperties();
-    if (defaultProps.containsKey(property)) {
-      return (String)defaultProps.get(property);
+    if (workflowJobProperties.isSetProperty(property)) {
+      return (String)workflowJobProperties.getProperty(property);
     }
 
     String value = jobconf.get(property);

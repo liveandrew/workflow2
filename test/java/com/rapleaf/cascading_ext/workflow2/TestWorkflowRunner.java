@@ -703,12 +703,12 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     }
 
     Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, pers2.getExecutionStatus());
-    assertEquals(AttemptStatus.STOPPED, pers2.getStatus());
+    assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
 
     pers1.markStepReverted("step1");
 
     Assert.assertEquals(WorkflowExecutionStatus.INCOMPLETE, pers2.getExecutionStatus());
-    assertEquals(AttemptStatus.STOPPED, pers2.getStatus());
+    assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
 
     step1 = new Step(new IncrementAction2("step1", step1Count));
     step2 = new Step(new IncrementAction2("step2", step2Count), step1);
@@ -718,7 +718,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     testWorkflow.run();
 
     Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, pers2.getExecutionStatus());
-    assertEquals(AttemptStatus.STOPPED, pers2.getStatus());
+    assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
 
     assertEquals(2, step1Count.get());
     assertEquals(1, step2Count.get());

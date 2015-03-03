@@ -214,4 +214,19 @@ public abstract class HankDomainBuilderAction extends Action {
     public Map<String, Integer> read();
 
   }
+
+  public static class MockDomainStorage implements DomainVersionStorage{
+
+    private final Map<String, Integer> memoryMap = Maps.newHashMap();
+
+    @Override
+    public void store(String domainName, Integer version) {
+      memoryMap.put(domainName, version);
+    }
+
+    @Override
+    public Map<String, Integer> read() {
+      return memoryMap;
+    }
+  }
 }

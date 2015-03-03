@@ -42,7 +42,7 @@ public class TestDbPersistenceFactory extends CascadingExtTestCase {
     long currentTime = System.currentTimeMillis();
 
     WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create((int)ex.getId(), "bpodgursky", "default", "default", "localhost")
-        .setStatus(AttemptStatus.running.ordinal())
+        .setStatus(AttemptStatus.RUNNING.ordinal())
         .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 2));
     workflowAttempt.save();
 
@@ -75,7 +75,7 @@ public class TestDbPersistenceFactory extends CascadingExtTestCase {
     long currentTime = System.currentTimeMillis();
 
     WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create((int)ex.getId(), "bpodgursky", "default", "default", "localhost")
-        .setStatus(AttemptStatus.running.ordinal())
+        .setStatus(AttemptStatus.RUNNING.ordinal())
         .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * 2));
     workflowAttempt.save();
 
