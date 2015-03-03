@@ -105,11 +105,11 @@ public final class WorkflowRunner {
       HadoopProperties.Builder uiPropertiesBuilder = new HadoopProperties.Builder();
 
       if (priority != null) {
-        uiPropertiesBuilder.setProperty(JOB_PRIORITY_PARAM, priority, true);
+        uiPropertiesBuilder.setProperty(JOB_PRIORITY_PARAM, priority, false);
       }
 
       if (pool != null) {
-        uiPropertiesBuilder.setProperty(JOB_POOL_PARAM, pool, true);
+        uiPropertiesBuilder.setProperty(JOB_POOL_PARAM, pool, false);
       }
 
       return new NestedProperties(workflowJobProperties, uiPropertiesBuilder.build());
