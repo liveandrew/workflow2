@@ -6,9 +6,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.java_support.event_timer.EventTimer;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
@@ -94,7 +94,7 @@ public final class Step {
     return nestedCounters;
   }
 
-  public void run(List<StepStatsRecorder> recorders, NestedProperties properties) {
+  public void run(List<StepStatsRecorder> recorders, Map<Object, Object> properties) {
 
     timer.start();
     try {

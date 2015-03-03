@@ -35,6 +35,7 @@ public class TestSortStoreByThriftField extends CascadingExtTestCase {
     dies = bucket("dies", die1, die2, die3);
 
     properties = new Properties();
+    properties.putAll(CascadingHelper.get().getDefaultProperties());
     properties.put("mapred.reduce.tasks", 1599);
   }
 
