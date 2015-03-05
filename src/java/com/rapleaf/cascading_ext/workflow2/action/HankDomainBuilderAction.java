@@ -13,6 +13,7 @@ import com.liveramp.hank.cascading.CascadingDomainBuilder;
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.coordinator.Coordinator;
 import com.liveramp.hank.coordinator.Domain;
+import com.liveramp.hank.coordinator.Domains;
 import com.liveramp.hank.coordinator.RunWithCoordinator;
 import com.liveramp.hank.coordinator.RunnableWithCoordinator;
 import com.liveramp.hank.hadoop.DomainBuilderProperties;
@@ -26,6 +27,7 @@ public abstract class HankDomainBuilderAction extends Action {
   protected final Map<Object, Object> properties;
 
   private final HankDataStore output;
+  private final boolean allowSimultaneousDeltas;
   protected HankVersionType versionType;
   private boolean shouldPartitionAndSortInput = true;
   private final CoordinatorConfigurator configurator;
@@ -48,7 +50,7 @@ public abstract class HankDomainBuilderAction extends Action {
       boolean shouldPartitionAndSortInput,
       CoordinatorConfigurator configurator,
       HankDataStore output) {
-    this(checkpointToken, null, versionType, shouldPartitionAndSortInput, configurator, output, Maps.newHashMap());
+    this(checkpointToken, null, versionType, shouldPartitionAndSortInput, false, configurator, output, Maps.newHashMap());
   }
 
   public HankDomainBuilderAction(
@@ -57,7 +59,7 @@ public abstract class HankDomainBuilderAction extends Action {
       CoordinatorConfigurator configurator,
       HankDataStore output,
       Map<Object, Object> properties) {
-    this(checkpointToken, null, versionType, true, configurator, output, properties);
+    this(checkpointToken, null, versionType, true, false, configurator, output, properties);
   }
 
   public HankDomainBuilderAction(String checkpointToken,
@@ -65,7 +67,7 @@ public abstract class HankDomainBuilderAction extends Action {
                                  HankVersionType versionType,
                                  CoordinatorConfigurator configurator,
                                  HankDataStore output) {
-    this(checkpointToken, tmpRoot, versionType, true, configurator, output, Maps.newHashMap());
+    this(checkpointToken, tmpRoot, versionType, true, false, configurator, output, Maps.newHashMap());
   }
 
   public HankDomainBuilderAction(String checkpointToken,
@@ -74,7 +76,7 @@ public abstract class HankDomainBuilderAction extends Action {
                                  boolean shouldPartitionAndSortInput,
                                  CoordinatorConfigurator configurator,
                                  HankDataStore output) {
-    this(checkpointToken, tmpRoot, versionType, shouldPartitionAndSortInput, configurator, output, Maps.newHashMap());
+    this(checkpointToken, tmpRoot, versionType, shouldPartitionAndSortInput, false, configurator, output, Maps.newHashMap());
   }
 
   public HankDomainBuilderAction(String checkpointToken,
@@ -84,9 +86,21 @@ public abstract class HankDomainBuilderAction extends Action {
                                  CoordinatorConfigurator configurator,
                                  HankDataStore output,
                                  Map<Object, Object> properties) {
+    this(checkpointToken, tmpRoot, versionType, shouldPartitionAndSortInput, false, configurator, output, properties);
+  }
+
+  public HankDomainBuilderAction(String checkpointToken,
+                                 String tmpRoot,
+                                 HankVersionType versionType,
+                                 boolean shouldPartitionAndSortInput,
+                                 boolean allowSimultaneousDeltas,
+                                 CoordinatorConfigurator configurator,
+                                 HankDataStore output,
+                                 Map<Object, Object> properties) {
     super(checkpointToken, tmpRoot);
     this.versionType = versionType;
     this.shouldPartitionAndSortInput = shouldPartitionAndSortInput;
+    this.allowSimultaneousDeltas = allowSimultaneousDeltas;
     this.configurator = configurator;
     this.output = output;
     this.properties = properties;
@@ -96,15 +110,24 @@ public abstract class HankDomainBuilderAction extends Action {
   private static class IncrementalDomainVersionPropertiesDeltaGetter implements RunnableWithCoordinator {
 
     private final String domainName;
+    private final boolean allowSimultaneousDeltas;
     private IncrementalDomainVersionProperties result;
 
-    public IncrementalDomainVersionPropertiesDeltaGetter(String domainName) {
+    public IncrementalDomainVersionPropertiesDeltaGetter(String domainName, boolean allowSimultaneousDeltas) {
       this.domainName = domainName;
+      this.allowSimultaneousDeltas = allowSimultaneousDeltas;
     }
 
     @Override
     public void run(Coordinator coordinator) throws IOException {
       Domain domain = DomainBuilderProperties.getDomain(coordinator, domainName);
+
+      if(!allowSimultaneousDeltas) {
+        if(Domains.hasOpenDelta(domain)){
+          throw new RuntimeException("Multiple deltas are open!.  Please mark defunct and delete any old deltas");
+        }
+      }
+
       result = new IncrementalDomainVersionProperties.Delta(domain);
     }
   }
@@ -131,7 +154,8 @@ public abstract class HankDomainBuilderAction extends Action {
         break;
       case DELTA:
         IncrementalDomainVersionPropertiesDeltaGetter deltaGetter =
-            new IncrementalDomainVersionPropertiesDeltaGetter(domainBuilderProperties.getDomainName());
+            new IncrementalDomainVersionPropertiesDeltaGetter(domainBuilderProperties.getDomainName(), allowSimultaneousDeltas);
+
         RunWithCoordinator.run(domainBuilderProperties.getConfigurator(), deltaGetter);
         domainVersionProperties = deltaGetter.result;
         break;
