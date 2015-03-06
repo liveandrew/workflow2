@@ -47,7 +47,6 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
-import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -212,22 +211,6 @@ public final class WorkflowRunner {
   }
 
   private WorkflowWebServer webServer;
-
-  //  migrating to using DB backed workflows -- don't write any new workflows using this
-  @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, WorkflowOptions options, Set<Step> tailSteps) {
-    this(
-        workflowName,
-        new HdfsCheckpointPersistence(checkpointDir),
-        options,
-        tailSteps);
-  }
-
-  //  migrating to using DB backed workflows -- don't write any new workflows using this
-  @Deprecated
-  public WorkflowRunner(String workflowName, String checkpointDir, WorkflowOptions options, final Step first, Step... rest) {
-    this(workflowName, checkpointDir, options, combine(first, rest));
-  }
 
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
     this(workflowName, persistence, options, Sets.newHashSet(tail));
