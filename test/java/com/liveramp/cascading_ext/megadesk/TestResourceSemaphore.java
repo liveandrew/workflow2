@@ -122,7 +122,10 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
   }
 
   private void attemptToClean(VersionedBucketDataStore<StringOrNone> versionedStore, WorkflowOptions options) throws IOException {
-    execute(new Step(new CleanUpOlderVersions("clean", getTestRoot(), 1, versionedStore)));
+    new WorkflowRunner("Test Workflow",
+        new DbPersistenceFactory(),
+        options,
+        new Step(new CleanUpOlderVersions("clean", getTestRoot(), 1, versionedStore))).run();
   }
 
   private void waitOnAction(AtomicBoolean barrier) throws InterruptedException {
