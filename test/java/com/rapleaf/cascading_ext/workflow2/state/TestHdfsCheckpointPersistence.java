@@ -47,7 +47,8 @@ public class TestHdfsCheckpointPersistence extends CascadingExtTestCase {
 
     getFS().createNewFile(new Path(checkpointDir + "/first"));
 
-    new WorkflowRunner("test", checkpointDir,
+    new WorkflowRunner("test",
+        new HdfsCheckpointPersistence(checkpointDir),
         new TestWorkflowOptions(),
         second).run();
 
