@@ -9,7 +9,7 @@ import java.util.Set;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.config.InvalidConfigurationException;
@@ -27,7 +27,7 @@ import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 
 public class DeployDomains extends Action {
 
-  private final Logger LOG = Logger.getLogger(DeployDomains.class);
+  private final Logger LOG = LoggerFactory.getLogger(DeployDomains.class);
   private final Coordinator coordinator;
   private final List<String> domainNames;
 

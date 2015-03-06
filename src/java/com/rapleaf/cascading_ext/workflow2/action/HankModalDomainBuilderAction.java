@@ -7,7 +7,7 @@ import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -17,7 +17,7 @@ public abstract class HankModalDomainBuilderAction extends HankDomainBuilderActi
   private BucketDataStore delta = null;
   private BucketDataStore input = null;
   private double domainDeltaRatio;
-  private static final Logger LOG = Logger.getLogger(HankModalDomainBuilderAction.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HankModalDomainBuilderAction.class);
 
 
   public HankModalDomainBuilderAction(

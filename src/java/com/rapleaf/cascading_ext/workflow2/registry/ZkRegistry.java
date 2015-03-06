@@ -3,7 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.registry;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import com.liveramp.zk_tools.cache.ThriftMapCache;
 import com.liveramp.java_support.constants.ZkConstants;
@@ -11,7 +11,7 @@ import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.rapleaf.cascading_ext.queues.LiverampQueues;
 
 public class ZkRegistry implements WorkflowRegistry {
-  private static final Logger LOG = Logger.getLogger(ZkRegistry.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ZkRegistry.class);
 
   private ThriftMapCache<LiveWorkflowMeta> liveWorkflowMap;
   private CuratorFramework framework;

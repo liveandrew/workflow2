@@ -1,6 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.stats;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -20,7 +20,7 @@ public interface StepStatsRecorder {
 }
 
 class MockStatsRecorder implements StepStatsRecorder {
-  private static final Logger LOG = Logger.getLogger(MockStatsRecorder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MockStatsRecorder.class);
 
   @Override
   public void recordStats(Step step, Step.StepTimer timer) {

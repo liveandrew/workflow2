@@ -19,12 +19,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.log4j.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
@@ -61,7 +61,7 @@ import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public final class WorkflowRunner {
-  private static final Logger LOG = Logger.getLogger(WorkflowRunner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WorkflowRunner.class);
   private final StepStatsRecorder statsRecorder;
 
   /**
@@ -137,7 +137,7 @@ public final class WorkflowRunner {
             }
           } catch (Throwable e) {
 
-            LOG.fatal("Step " + stepToken + " failed!", e);
+            LOG.error("Step " + stepToken + " failed!", e);
 
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -146,7 +146,7 @@ public final class WorkflowRunner {
             try {
               persistence.markStepFailed(stepToken, e);
             } catch (Exception e2) {
-              LOG.fatal("Could not update step " + stepToken + " to failed! ", e2);
+              LOG.error("Could not update step " + stepToken + " to failed! ", e2);
               internalErrors.add(e2);
             }
 

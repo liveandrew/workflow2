@@ -1,7 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.stats;
 
 import com.timgroup.statsd.NonBlockingStatsDClient;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 public interface RecorderFactory {
 
@@ -16,7 +16,7 @@ public interface RecorderFactory {
   }
 
   public static class StatsD implements RecorderFactory {
-    private static final Logger LOG = Logger.getLogger(RecorderFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RecorderFactory.class);
 
     public StepStatsRecorder makeRecorder(String workflowName) {
       try {

@@ -14,7 +14,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
@@ -31,7 +31,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.support.Rap;
 
 public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
-  private static final Logger LOG = Logger.getLogger(HdfsPersistenceContainer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
   private final String checkpointDir;
   private final boolean deleteOnSuccess;

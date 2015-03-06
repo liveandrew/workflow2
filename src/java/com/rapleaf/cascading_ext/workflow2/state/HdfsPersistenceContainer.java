@@ -12,7 +12,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
@@ -28,7 +28,7 @@ import com.rapleaf.db_schemas.rldb.workflow.json.WorkflowJSON;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
-  private static final Logger LOG = Logger.getLogger(HdfsPersistenceContainer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
   private final String checkpointDir;
   private final boolean deleteCheckpointsOnSuccess;

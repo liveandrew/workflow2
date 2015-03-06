@@ -9,7 +9,7 @@ import com.google.common.collect.Lists;
 import com.timgroup.statsd.StatsDClient;
 import org.apache.hadoop.mapreduce.JobCounter;
 import org.apache.hadoop.mapreduce.TaskCounter;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import cascading.flow.SliceCounters;
 import cascading.flow.StepCounters;
@@ -21,7 +21,7 @@ import com.rapleaf.support.Rap;
 public class StatsDRecorder implements StepStatsRecorder {
 
   private StatsDClient client;
-  private static final Logger LOG = Logger.getLogger(StatsDRecorder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(StatsDRecorder.class);
 
   private static final int TIME_MS_SCALE = 100 * 1000;
   private static final int BYTES_SCALE = 1000 * 1000;

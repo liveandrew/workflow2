@@ -8,7 +8,7 @@ import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.java_support.event_timer.FixedTimedEvent;
@@ -18,7 +18,7 @@ import com.rapleaf.cascading_ext.workflow2.RunnableJob;
 import com.rapleaf.cascading_ext.workflow2.Step;
 
 public class HadoopOperation implements ActionOperation {
-  private static Logger LOG = Logger.getLogger(HadoopOperation.class);
+  private static Logger LOG = LoggerFactory.getLogger(HadoopOperation.class);
 
   private final RunnableJob runnableJob;
 

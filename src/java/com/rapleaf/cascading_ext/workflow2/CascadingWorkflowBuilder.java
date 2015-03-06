@@ -12,7 +12,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import cascading.flow.FlowListener;
 import cascading.flow.planner.Scope;
@@ -42,7 +42,7 @@ import com.rapleaf.cascading_ext.workflow2.action.FutureCascadingAction;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 
 public class CascadingWorkflowBuilder {
-  private static final Logger LOG = Logger.getLogger(CascadingWorkflowBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CascadingWorkflowBuilder.class);
 
   private final String flowName;
   private final DataStoreBuilder dsBuilder;

@@ -10,7 +10,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import com.liveramp.hank.coordinator.Coordinator;
 import com.liveramp.hank.coordinator.Domain;
@@ -21,7 +21,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 
 public class WaitForHankDeploy extends Action {
 
-  private static final Logger LOG = Logger.getLogger(WaitForHankDeploy.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WaitForHankDeploy.class);
   public static final int MINUTES_BETWEEN_CHECKS = 5;
 
   private final Coordinator coordinator;

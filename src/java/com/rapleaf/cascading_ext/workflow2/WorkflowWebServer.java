@@ -4,7 +4,7 @@ import java.net.URL;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -16,7 +16,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.support.collections.Accessors;
 
 public class WorkflowWebServer {
-  private static final Logger LOG = Logger.getLogger(WorkflowWebServer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WorkflowWebServer.class);
 
   private final int port;
   private final WorkflowStatePersistence persistence;

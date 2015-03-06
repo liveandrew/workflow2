@@ -7,7 +7,7 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
@@ -29,7 +29,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 
 public class DbPersistenceFactory implements WorkflowPersistenceFactory {
-  private static final Logger LOG = Logger.getLogger(DbPersistence.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
 
   private final IRlDb rldb;
 

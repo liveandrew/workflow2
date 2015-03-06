@@ -1,6 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
@@ -10,7 +10,7 @@ import com.rapleaf.cascading_ext.workflow2.stats.RecorderFactory;
 import com.rapleaf.support.Rap;
 
 public class ProductionWorkflowOptions extends WorkflowOptions<ProductionWorkflowOptions> {
-  private static final Logger LOG = Logger.getLogger(ProductionWorkflowOptions.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProductionWorkflowOptions.class);
 
   public ProductionWorkflowOptions() {
 

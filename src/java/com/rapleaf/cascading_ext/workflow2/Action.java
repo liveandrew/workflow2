@@ -16,7 +16,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
@@ -45,7 +45,7 @@ import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public abstract class Action {
-  private static final Logger LOG = Logger.getLogger(Action.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Action.class);
 
   private final ActionId actionId;
   private final String tmpRoot;
@@ -225,7 +225,7 @@ public abstract class Action {
       jobPoller.shutdown();
 
     } catch (Throwable t) {
-      LOG.fatal("Action " + fullId() + " failed due to Throwable", t);
+      LOG.error("Action " + fullId() + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
     } finally {
       unlock(locks);
