@@ -196,6 +196,8 @@ public final class WorkflowRunner {
 
   private final EventTimer timer;
 
+  private final Thread shutdownHook;
+
   private boolean alreadyRun;
   private final AlertsHandler alertsHandler;
   private final Set<WorkflowRunnerNotification> enabledNotifications;
@@ -293,26 +295,28 @@ public final class WorkflowRunner {
       StepRunner runner = new StepRunner(step, this.persistence);
       pendingSteps.add(runner);
     }
+
+    this.shutdownHook = new Thread(new ShutdownHook());
   }
 
-  private void verifyName(String name, WorkflowOptions options){
+  private void verifyName(String name, WorkflowOptions options) {
     AppType appType = options.getAppType();
-    if(appType != null){
-      if(!appType.name().equals(name)){
+    if (appType != null) {
+      if (!appType.name().equals(name)) {
         throw new RuntimeException("Workflow name cannot conflict with AppType name!");
       }
     } else {
-      for(AppType a : AppType.values()) {
-        if(a.name().equals(name)) {
+      for (AppType a : AppType.values()) {
+        if (a.name().equals(name)) {
           throw new RuntimeException("Provided workflow name " + name + " is already an AppType");
         }
       }
     }
   }
 
-  private static String getName(WorkflowOptions options){
+  private static String getName(WorkflowOptions options) {
     AppType appType = options.getAppType();
-    if(appType == null){
+    if (appType == null) {
       throw new RuntimeException("AppType must be set in WorkflowOptions!");
     }
     return appType.name();
@@ -432,6 +436,8 @@ public final class WorkflowRunner {
 
       persistence.markWorkflowStarted();
 
+      Runtime.getRuntime().addShutdownHook(shutdownHook);
+
       // Run internal
       runInternal();
 
@@ -439,10 +445,30 @@ public final class WorkflowRunner {
       sendSuccessEmail();
       LOG.info(getSuccessMessage());
     } finally {
+      Runtime.getRuntime().removeShutdownHook(shutdownHook);
       shutdownWebServer();
       registry.deregister();
       timer.stop();
       LOG.info("Timing statistics:\n" + TimedEventHelper.toTextSummary(timer));
+    }
+  }
+
+  private class ShutdownHook implements Runnable {
+    @Override
+    public void run() {
+      try {
+        LOG.info("Process killed, updating persistence.");
+        for (StepRunner runningStep : runningSteps) {
+          persistence.markStepFailed(
+              runningStep.step.getCheckpointToken(),
+              new RuntimeException("Workflow process killed!")
+          );
+        }
+        persistence.markWorkflowStopped();
+        LOG.info("Finished cleaning up status");
+      } catch (Exception e) {
+        LOG.info("Failed to cleanly shutdown", e);
+      }
     }
   }
 
@@ -671,14 +697,6 @@ public final class WorkflowRunner {
 
   protected WorkflowWebServer getWebServer() {
     return webServer;
-  }
-
-  public void disableNotification(WorkflowRunnerNotification workflowRunnerNotification) {
-    enabledNotifications.remove(workflowRunnerNotification);
-  }
-
-  public void enableNotification(WorkflowRunnerNotification workflowRunnerNotification) {
-    enabledNotifications.add(workflowRunnerNotification);
   }
 
   private String findDefaultValue(String property, String defaultValue) {
