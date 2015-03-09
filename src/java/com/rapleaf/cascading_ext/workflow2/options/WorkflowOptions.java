@@ -1,9 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
-import java.util.Map;
-
-import com.google.common.collect.Maps;
-
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
@@ -14,8 +10,6 @@ import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
-import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
-import com.rapleaf.cascading_ext.workflow2.stats.RecorderFactory;
 
 public class WorkflowOptions<T extends WorkflowOptions<T>> {
 
@@ -24,10 +18,8 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
   private NestedProperties defaultNestedProperties = new NestedProperties(null, CascadingHelper.get().getDefaultHadoopProperties());
   private HadoopProperties workflowHadoopProperties = new HadoopProperties();
   private WorkflowRunnerNotificationSet enabledNotifications;
-  private RecorderFactory statsRecorder;
   private StoreReaderLockProvider lockProvider;
   private ContextStorage storage;
-  private WorkflowRegistry registry;
   private String uniqueIdentifier;
   private AppType appType;
   private Integer stepPollInterval;
@@ -59,15 +51,6 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
 
   public T setAlertsHandler(AlertsHandler alertsHandler) {
     this.alertsHandler = alertsHandler;
-    return (T) this;
-  }
-
-  public WorkflowRegistry getRegistry() {
-    return registry;
-  }
-
-  public T setRegistry(WorkflowRegistry registry) {
-    this.registry = registry;
     return (T) this;
   }
 
@@ -122,15 +105,6 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
 
   public T setLockProvider(StoreReaderLockProvider lockProvider) {
     this.lockProvider = lockProvider;
-    return (T) this;
-  }
-
-  public RecorderFactory getStatsRecorder() {
-    return statsRecorder;
-  }
-
-  public T setStatsRecorder(RecorderFactory statsRecorder) {
-    this.statsRecorder = statsRecorder;
     return (T) this;
   }
 

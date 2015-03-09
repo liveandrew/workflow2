@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapred.JobConf;
 import org.jgrapht.DirectedGraph;
@@ -46,9 +45,7 @@ import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.registry.WorkflowRegistry;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
-import com.rapleaf.cascading_ext.workflow2.stats.StepStatsRecorder;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
@@ -61,12 +58,10 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public final class WorkflowRunner {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowRunner.class);
-  private final StepStatsRecorder statsRecorder;
 
   /**
    * Specify this and the system will pick any free port.j
    */
-  public static final Integer ANY_FREE_PORT = 0;
   public static final String WORKFLOW_EMAIL_SUBJECT_TAG = "WORKFLOW";
   public static final String ERROR_EMAIL_SUBJECT_TAG = "ERROR";
 
@@ -76,7 +71,6 @@ public final class WorkflowRunner {
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;
   private final ContextStorage storage;
-  private final WorkflowRegistry registry;
   private final int stepPollInterval;
 
   //  set this if something fails in a step (outside user-code) so we don't keep trying to start steps
@@ -130,7 +124,7 @@ public final class WorkflowRunner {
               persistence.markStepRunning(stepToken);
 
               LOG.info("Executing step " + stepToken);
-              step.run(Lists.newArrayList(statsRecorder), buildInheritedProperties());
+              step.run(buildInheritedProperties());
 
               persistence.markStepCompleted(stepToken);
             }
@@ -212,8 +206,6 @@ public final class WorkflowRunner {
     this.sandboxDir = sandboxDir;
   }
 
-  private WorkflowWebServer webServer;
-
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
     this(workflowName, persistence, options, Sets.newHashSet(tail));
   }
@@ -258,7 +250,6 @@ public final class WorkflowRunner {
     verifyName(workflowName, options);
 
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
-    this.statsRecorder = options.getStatsRecorder().makeRecorder(workflowName);
     this.alertsHandler = options.getAlertsHandler();
     this.counterFilter = options.getCounterFilter();
     this.enabledNotifications = options.getEnabledNotifications().get();
@@ -267,7 +258,6 @@ public final class WorkflowRunner {
     this.lockProvider = options.getLockProvider();
     this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
-    this.registry = options.getRegistry();
     this.stepPollInterval = options.getStepPollInterval();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
@@ -429,8 +419,6 @@ public final class WorkflowRunner {
 
       // Notify
       LOG.info(getStartMessage());
-      startWebServer();
-      registry.register(persistence.getId(), getMeta());
       // Note: start email after web server so that UI is functional
       sendStartEmail();
 
@@ -446,8 +434,6 @@ public final class WorkflowRunner {
       LOG.info(getSuccessMessage());
     } finally {
       Runtime.getRuntime().removeShutdownHook(shutdownHook);
-      shutdownWebServer();
-      registry.deregister();
       timer.stop();
       LOG.info("Timing statistics:\n" + TimedEventHelper.toTextSummary(timer));
     }
@@ -541,15 +527,6 @@ public final class WorkflowRunner {
 
     persistence.markWorkflowStopped();
 
-    if (statsRecorder != null) {
-      try {
-        statsRecorder.stop();
-      } catch (Exception e) {
-        LOG.error("Stats recording failed to stop: " + e);
-        //  don't want to interrupt the rest
-      }
-    }
-
     // if there are any failures, then the workflow failed. throw an exception.
     if (isFailPending()) {
       String failureMessage = buildStepsFailureMessage();
@@ -621,7 +598,6 @@ public final class WorkflowRunner {
         .set_uuid(persistence.getId())
         .set_name(persistence.getName())
         .set_host(InetAddress.getLocalHost().getHostName())
-        .set_port(getWebServer().getBoundPort())
         .set_username(System.getProperty("user.name"))
         .set_working_dir(System.getProperty("user.dir"))
         .set_jar(HadoopJarUtil.getLanuchJarName())
@@ -695,10 +671,6 @@ public final class WorkflowRunner {
     );
   }
 
-  protected WorkflowWebServer getWebServer() {
-    return webServer;
-  }
-
   private String findDefaultValue(String property, String defaultValue) {
 
     //  fall back to static jobconf props if not set elsewhere
@@ -755,17 +727,6 @@ public final class WorkflowRunner {
 
   private boolean shouldKeepStartingSteps() throws IOException {
     return !isFailPending() && persistence.getShutdownRequest() == null && internalErrors.isEmpty();
-  }
-
-  private void shutdownWebServer() {
-    if (webServer != null) {
-      webServer.stop();
-    }
-  }
-
-  private void startWebServer() {
-    webServer = new WorkflowWebServer(persistence, ANY_FREE_PORT);
-    webServer.start();
   }
 
   public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
