@@ -13,6 +13,7 @@ import cascading.tap.Tap;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.msj_tap.InsertEmptySplit;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
 import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
@@ -45,8 +46,8 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
     List<DataStore> dsStores = Lists.newArrayList();
     for (StoreExtractor input : asList) {
       MapSideJoinableDataStore store = input.getStore();
-      if(store instanceof DataStore){
-        dsStores.add((DataStore) store);
+      if (store instanceof DataStore) {
+        dsStores.add((DataStore)store);
       }
     }
 
@@ -61,6 +62,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
         function
     );
 
+    pipe = new InsertEmptySplit(pipe);
     completePartitioned("msj-tap", pipe, output, outputStructure);
 
   }

@@ -7,7 +7,6 @@ import cascading.tap.Tap;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.msj_tap.InsertEmptySplit;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.NullTapFactory;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
@@ -85,7 +84,7 @@ public interface SinkBinding {
 
     @Override
     public Pipe getPipe() {
-      return new InsertEmptySplit(pipe);
+      return pipe;
     }
 
     @Override
