@@ -128,7 +128,7 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
   @Test
   public void testIt() throws IOException {
     Step tail = getTailStep();
-    executeWorkflow(tail);
+    execute(tail);
   }
 
   private static DataStore getFakeDS(String name) throws IOException {

@@ -34,7 +34,7 @@ public class TestAction extends CascadingExtTestCase {
     Path dir3Path = new Path(getTestRoot() + "/dir3");
     getFS().mkdirs(dir3Path);
 
-    executeWorkflow(new ExampleAction());
+    execute(new ExampleAction());
 
     assertFalse("dir2 should be deleted", getFS().exists(dir2Path));
     assertTrue("dir3 should exist", getFS().exists(dir3Path));

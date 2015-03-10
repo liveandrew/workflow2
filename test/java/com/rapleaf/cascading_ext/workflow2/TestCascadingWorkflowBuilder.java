@@ -129,7 +129,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     Step step = workflow.buildTail("last-step",
         Lists.newArrayList(new DSSink(pipe3, store1), new DSSink(pipe2, store2)));
 
-    executeWorkflow(step);
+    execute(step);
 
     List<Tuple> allTuples = HRap.getAllTuples(store1.getTap());
     List<Tuple> allTuples2 = HRap.getAllTuples(store2.getTap());
@@ -142,7 +142,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
   public void testMultiSourcePipes() throws Exception {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1"));
 
-    executeWorkflow(buildComplex(output));
+    execute(buildComplex(output));
 
     assertEquals(TUPLE_NAMES, HRap.getAllTuples(output.getTap()));
   }
@@ -151,7 +151,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
   public void testBuildStep() throws IOException {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1"));
 
-    executeWorkflow(buildComplex(output));
+    execute(buildComplex(output));
 
     assertEquals(TUPLE_NAMES, HRap.getAllTuples(output.getTap()));
   }
@@ -181,7 +181,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
       }
     });
 
-    executeWorkflow(workflow.buildTail(pipe1, output));
+    execute(workflow.buildTail(pipe1, output));
 
     assertCollectionEquivalent(Lists.<Tuple>newArrayList(new Tuple(keepDU)),
         HRap.getAllTuples(output.getTap()));
@@ -201,7 +201,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
     final AtomicBoolean isCompleted = new AtomicBoolean(false);
 
-    executeWorkflow(workflow.buildTail("tail-step", pipe1, output, new EmptyListener() {
+    execute(workflow.buildTail("tail-step", pipe1, output, new EmptyListener() {
       @Override
       public void onCompleted(Flow flow) {
         isCompleted.set(true);
@@ -264,7 +264,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     pipe = builder.addCheckpoint(pipe);
     pipe = new Increment(pipe, "counter_group", "counter2");
 
-    executeWorkflow(builder.buildTail(pipe, output));
+    execute(builder.buildTail(pipe, output));
 
     assertCollectionEquivalent(Lists.newArrayList(MSJFixtures.die1, MSJFixtures.die2),
         HRap.<DustinInternalEquiv>getValuesFromBucket(output));
@@ -288,7 +288,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     //  actual version
     VersionedThriftBucketDataStoreHelper.writeToNewVersion(store, email);
 
-    executeWorkflow(tail);
+    execute(tail);
 
     assertCollectionEquivalent(Lists.newArrayList(email), HRap.<PIN>getValuesFromBucket(output));
   }
@@ -318,7 +318,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
 
     pipe1 = new Increment(pipe1, "COUNTER1", "VALUE");
 
-    WorkflowRunner workflowRunner = executeWorkflow(builder.buildTail(pipe1, output));
+    WorkflowRunner workflowRunner = execute(builder.buildTail(pipe1, output));
 
     assertEquals(new Long(1), workflowRunner.getCounterMap().get("COUNTER1").get("VALUE"));
 
@@ -363,7 +363,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
         new ExampleMultiJoiner());
     die = new Increment(die, "AFTER", "COUNT");
 
-    WorkflowRunner output1 = executeWorkflow(builder.buildTail("output", die, output));
+    WorkflowRunner output1 = execute(builder.buildTail("output", die, output));
 
     assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
     assertEquals(new Long(1), output1.getCounterMap().get("SUMMS").get("COUNT"));
@@ -403,7 +403,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
         new ExampleMultiJoiner());
     die = new Increment(die, "AFTER", "COUNT");
 
-    WorkflowRunner output1 = executeWorkflow(builder.buildTail("output", die, output));
+    WorkflowRunner output1 = execute(builder.buildTail("output", die, output));
 
     assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
     assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
@@ -426,7 +426,7 @@ public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
     Pipe pipe1 = builder.bindSource("pipe1", store1);
     pipe1 = new Increment(pipe1, "DIES", "COUNT");
 
-    WorkflowRunner output1 = executeWorkflow(builder.buildNullTail(pipe1));
+    WorkflowRunner output1 = execute(builder.buildNullTail(pipe1));
     assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
 
   }

@@ -13,7 +13,7 @@ public class TestAcquireLock extends CascadingExtTestCase{
   @Test
   public void testExclusion() throws IOException {
     try {
-      executeWorkflow(new MultiLock("locks", getTestRoot() + "/lock", getTestRoot() + "/tmp"));
+      execute(new MultiLock("locks", getTestRoot() + "/lock", getTestRoot() + "/tmp"));
       org.junit.Assert.fail("Locking twice worked.");
     } catch (RuntimeException e) {
       org.junit.Assert.assertTrue(e.getMessage().contains("Could not acquire lock for:"));

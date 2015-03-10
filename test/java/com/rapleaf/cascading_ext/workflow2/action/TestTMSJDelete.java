@@ -64,7 +64,7 @@ public class TestTMSJDelete extends CascadingExtTestCase {
         spelDataStore
     ));
 
-    executeWorkflow(delete);
+    execute(delete);
 
     List<SPEL> expected = Lists.newArrayList(
         new SPEL("2"),

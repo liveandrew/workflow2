@@ -93,7 +93,7 @@ public class TestSortStoreByThriftField extends CascadingExtTestCase {
           properties
       ));
 
-      executeWorkflow(sortStoreByThriftField);
+      execute(sortStoreByThriftField);
 
       fail("Workflow should not have completed.");
     } catch (RuntimeException re) {
@@ -118,7 +118,7 @@ public class TestSortStoreByThriftField extends CascadingExtTestCase {
           properties
       ));
 
-      executeWorkflow(sortStoreByThriftField);
+      execute(sortStoreByThriftField);
 
       fail("Workflow should not have completed.");
     } catch (RuntimeException re) {
@@ -139,6 +139,6 @@ public class TestSortStoreByThriftField extends CascadingExtTestCase {
         properties
     ));
 
-    executeWorkflow(sortStoreByThriftField);
+    execute(sortStoreByThriftField);
   }
 }
