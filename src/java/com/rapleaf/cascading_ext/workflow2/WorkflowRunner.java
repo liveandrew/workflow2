@@ -45,6 +45,7 @@ import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
@@ -205,6 +206,23 @@ public final class WorkflowRunner {
   public void setSandboxDir(String sandboxDir) {
     this.sandboxDir = sandboxDir;
   }
+
+  public WorkflowRunner(Class klass, Step tail) {
+    this(klass, new DbPersistenceFactory(), tail);
+  }
+
+  public WorkflowRunner(Class klass, WorkflowOptions options, Step tail) {
+    this(klass, new DbPersistenceFactory(), options, tail);
+  }
+
+  public WorkflowRunner(Class klass, Set<Step> tailSteps) {
+    this(klass, new DbPersistenceFactory(), tailSteps);
+  }
+
+  public WorkflowRunner(Class klass, WorkflowOptions options, Set<Step> tailSteps) {
+    this(klass, new DbPersistenceFactory(), options, tailSteps);
+  }
+
 
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
     this(workflowName, persistence, options, Sets.newHashSet(tail));
