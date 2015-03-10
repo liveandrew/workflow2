@@ -22,7 +22,7 @@ public class TestAcquireLock extends CascadingExtTestCase{
 
   @Test
   public void testRelease() throws IOException {
-    executeWorkflow(new AcquireAndRelease("releasing", getTestRoot() + "/lock", getTestRoot() + "/tmp"));
+    execute(new AcquireAndRelease("releasing", getTestRoot() + "/lock", getTestRoot() + "/tmp"));
   }
 
   private static class MultiLock extends MultiStepAction {
