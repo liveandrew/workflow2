@@ -223,6 +223,16 @@ public final class WorkflowRunner {
     this(klass, new DbPersistenceFactory(), options, tailSteps);
   }
 
+  // This constructor requires that the given options contain an AppType for generating the workflow name
+  public WorkflowRunner(WorkflowOptions options, Step tail) {
+    this(new DbPersistenceFactory(), options, tail);
+  }
+
+  // This constructor requires that the given options contain an AppType for generating the workflow name
+  public WorkflowRunner(WorkflowOptions options, Set<Step> tailSteps) {
+    this(new DbPersistenceFactory(), options, tailSteps);
+  }
+
 
   public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
     this(workflowName, persistence, options, Sets.newHashSet(tail));
