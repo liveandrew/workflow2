@@ -30,7 +30,10 @@ public class TestHdfsCheckpointPersistence extends CascadingExtTestCase {
     Step second = new Step(new FailingAction("second"), first);
 
     try {
-      execute(second);
+      new WorkflowRunner("test",
+          new HdfsCheckpointPersistence(checkpointDir),
+          new TestWorkflowOptions(),
+          second).run();
       fail("should have failed!");
     } catch (Exception e) {
       // expected
