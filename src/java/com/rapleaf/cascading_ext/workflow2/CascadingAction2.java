@@ -11,12 +11,10 @@ import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tuple.Fields;
 
-import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
-import com.rapleaf.cascading_ext.msj_tap.store.PartionableDataStore;
+import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 
 public class CascadingAction2 extends MultiStepAction {
@@ -52,7 +50,7 @@ public class CascadingAction2 extends MultiStepAction {
     setSubStepsFromTail(workflowHelper.buildNullTail(output));
   }
 
-  protected void completePartitioned(String stepName, Pipe output, PartionableDataStore outputStore, PartitionStructure structure){
+  protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionStructure structure){
     setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, structure));
   }
 

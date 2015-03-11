@@ -5,9 +5,8 @@ import java.io.IOException;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 
-import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.msj_tap.store.PartionableDataStore;
+import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.NullTapFactory;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
@@ -74,10 +73,10 @@ public interface SinkBinding {
   public class PartitionedSink implements SinkBinding, DataStoreSink {
 
     private final Pipe pipe;
-    private final PartionableDataStore store;
+    private final PartitionableDataStore store;
     private final PartitionStructure structure;
 
-    public PartitionedSink(Pipe pipe, PartionableDataStore store, PartitionStructure structure){
+    public PartitionedSink(Pipe pipe, PartitionableDataStore store, PartitionStructure structure){
       this.pipe = pipe;
       this.store = store;
       this.structure = structure;
