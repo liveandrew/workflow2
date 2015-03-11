@@ -16,6 +16,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
+import com.rapleaf.cascading_ext.msj_tap.store.PartionableDataStore;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 
 public class CascadingAction2 extends MultiStepAction {
@@ -51,12 +52,8 @@ public class CascadingAction2 extends MultiStepAction {
     setSubStepsFromTail(workflowHelper.buildNullTail(output));
   }
 
-  protected void completePartitioned(String stepName, Pipe output, BucketDataStore outputStore, PartitionStructure structure){
+  protected void completePartitioned(String stepName, Pipe output, PartionableDataStore outputStore, PartitionStructure structure){
     setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, structure));
-  }
-
-  protected void completePartitioned(String stepName, Pipe output, PartitionedDataStore store, final PartitionStructure structure){
-    setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, store, structure));
   }
 
   protected void complete(String stepName, Pipe output, DataStore outputStore, TupleDataStore persistStatsStore) throws IOException {

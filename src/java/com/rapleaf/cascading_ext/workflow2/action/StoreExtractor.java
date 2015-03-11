@@ -1,24 +1,30 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import com.liveramp.commons.collections.list.ListBuilder;
+import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
 import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 
 public class StoreExtractor<K extends Comparable> {
-  private final MapSideJoinableDataStore store;
-  private final Extractor<K> extractor;
+  private final DataStore store;
+  private final ConfFactory<K> confFactory;
 
-  public StoreExtractor(MapSideJoinableDataStore store, Extractor<K> extractor) {
+  public StoreExtractor(MapSideJoinableDataStore store, Extractor<K> confFactory) {
     this.store = store;
-    this.extractor = extractor;
+    this.confFactory = new ConfFactory.ExtractorConfFactory<K>(store, confFactory);
   }
 
-  public MapSideJoinableDataStore getStore() {
+  public StoreExtractor(DataStore store, ConfFactory<K> factory) {
+    this.store = store;
+    this.confFactory = factory;
+  }
+
+  public DataStore getStore() {
     return store;
   }
 
-  public Extractor<K> getExtractor() {
-    return extractor;
+  public InputConf<K> getConf() {
+    return confFactory.getInputConf();
   }
 
 }
