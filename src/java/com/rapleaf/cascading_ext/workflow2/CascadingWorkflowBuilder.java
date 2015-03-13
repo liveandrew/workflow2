@@ -210,7 +210,7 @@ public class CascadingWorkflowBuilder {
     return buildTail(tailStepName, Lists.newArrayList(new DSSink(output, outputStore)), new EmptyListener());
   }
 
-  public Step buildPartitionedTail(String tailStepName, Pipe output, PartitionableDataStore outputStore, PartitionFuture structure) {
+  public Step buildPartitionedTail(String tailStepName, Pipe output, PartitionableDataStore outputStore, PartitionFactory structure) {
     return buildTail(tailStepName, Lists.newArrayList(new SinkBinding.PartitionedSink(output, outputStore, structure)), new EmptyListener());
   }
 

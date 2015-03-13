@@ -73,9 +73,9 @@ public interface SinkBinding {
 
     private final Pipe pipe;
     private final PartitionableDataStore store;
-    private final PartitionFuture structure;
+    private final PartitionFactory structure;
 
-    public PartitionedSink(Pipe pipe, PartitionableDataStore store, PartitionFuture structure){
+    public PartitionedSink(Pipe pipe, PartitionableDataStore store, PartitionFactory structure){
       this.pipe = pipe;
       this.store = store;
       this.structure = structure;

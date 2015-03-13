@@ -4,10 +4,10 @@ import java.io.IOException;
 
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 
-public interface PartitionFuture {
+public interface PartitionFactory {
   public PartitionStructure create() throws IOException;
 
-  public class Now implements PartitionFuture {
+  public class Now implements PartitionFactory {
 
     private final PartitionStructure struct;
     public Now(PartitionStructure struct){
