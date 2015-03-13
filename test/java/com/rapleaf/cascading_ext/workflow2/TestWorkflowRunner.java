@@ -595,7 +595,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     HdfsContextStorage storage = new HdfsContextStorage(getTestRoot() + "/context");
 
-    TestWorkflowOptions options = new TestWorkflowOptions()
+    WorkflowOptions options = new TestWorkflowOptions()
         .setStorage(storage);
 
     WorkflowRunner wfr = new WorkflowRunner(

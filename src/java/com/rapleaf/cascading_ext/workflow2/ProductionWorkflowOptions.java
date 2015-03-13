@@ -8,7 +8,7 @@ import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.support.Rap;
 
-public class ProductionWorkflowOptions extends WorkflowOptions<ProductionWorkflowOptions> {
+public class ProductionWorkflowOptions extends WorkflowOptions {
   private static final Logger LOG = LoggerFactory.getLogger(ProductionWorkflowOptions.class);
 
   public ProductionWorkflowOptions() {

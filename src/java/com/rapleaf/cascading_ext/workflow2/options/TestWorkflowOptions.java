@@ -8,7 +8,7 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.support.Rap;
 
-public class TestWorkflowOptions extends WorkflowOptions<TestWorkflowOptions> {
+public class TestWorkflowOptions extends WorkflowOptions {
 
   public TestWorkflowOptions() {
     Rap.assertTest();

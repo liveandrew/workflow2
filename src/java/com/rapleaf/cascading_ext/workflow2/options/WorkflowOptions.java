@@ -11,7 +11,7 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 
-public class WorkflowOptions<T extends WorkflowOptions<T>> {
+public class WorkflowOptions {
 
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
@@ -31,14 +31,14 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
     return maxConcurrentSteps;
   }
 
-  public T setMaxConcurrentSteps(int maxConcurrentSteps) {
+  public WorkflowOptions setMaxConcurrentSteps(int maxConcurrentSteps) {
     this.maxConcurrentSteps = maxConcurrentSteps;
-    return (T) this;
+    return this;
   }
 
-  public T setStepPollInterval(int ms){
+  public WorkflowOptions setStepPollInterval(int ms){
     this.stepPollInterval = ms;
-    return (T) this;
+    return this;
   }
 
   public Integer getStepPollInterval() {
@@ -49,36 +49,36 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
     return alertsHandler;
   }
 
-  public T setAlertsHandler(AlertsHandler alertsHandler) {
+  public WorkflowOptions setAlertsHandler(AlertsHandler alertsHandler) {
     this.alertsHandler = alertsHandler;
-    return (T) this;
+    return this;
   }
 
-  public T setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
+  public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
                                                        WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = WorkflowRunnerNotificationSet.only(enabledNotification, enabledNotifications);
-    return (T) this;
+    return this;
   }
 
-  public T setWorkflowDefaultProperties(NestedProperties defaultProperties) {
+  public WorkflowOptions setWorkflowDefaultProperties(NestedProperties defaultProperties) {
     this.defaultNestedProperties = defaultProperties;
-    return (T) this;
+    return this;
   }
 
-  public T setWorkflowHadoopProperties(HadoopProperties workflowHadoopProperties) {
+  public WorkflowOptions setWorkflowHadoopProperties(HadoopProperties workflowHadoopProperties) {
     this.workflowHadoopProperties = workflowHadoopProperties;
-    return (T) this;
+    return this;
   }
 
-  public T setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
+  public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
     this.enabledNotifications = enabledNotifications;
-    return (T) this;
+    return this;
   }
 
-  public T setEnabledNotificationsExcept(WorkflowRunnerNotification enabledNotification,
+  public WorkflowOptions setEnabledNotificationsExcept(WorkflowRunnerNotification enabledNotification,
                                                              WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = WorkflowRunnerNotificationSet.except(enabledNotification, enabledNotifications);
-    return (T) this;
+    return this;
   }
 
   public WorkflowRunnerNotificationSet getEnabledNotifications() {
@@ -94,44 +94,44 @@ public class WorkflowOptions<T extends WorkflowOptions<T>> {
     return storage;
   }
 
-  public T setStorage(ContextStorage storage) {
+  public WorkflowOptions setStorage(ContextStorage storage) {
     this.storage = storage;
-    return (T) this;
+    return this;
   }
 
   public StoreReaderLockProvider getLockProvider() {
     return lockProvider;
   }
 
-  public T setLockProvider(StoreReaderLockProvider lockProvider) {
+  public WorkflowOptions setLockProvider(StoreReaderLockProvider lockProvider) {
     this.lockProvider = lockProvider;
-    return (T) this;
+    return this;
   }
 
   public String getScopeIdentifier() {
     return uniqueIdentifier;
   }
 
-  public T setUniqueIdentifier(String uniqueIdentifier) {
+  public WorkflowOptions setUniqueIdentifier(String uniqueIdentifier) {
     this.uniqueIdentifier = uniqueIdentifier;
-    return (T) this;
+    return this;
   }
 
   public AppType getAppType() {
-    return appType;
+    return appType; 
   }
 
-  public T setAppType(AppType appType) {
+  public WorkflowOptions setAppType(AppType appType) {
     this.appType = appType;
-    return (T) this;
+    return this;
   }
 
   public CounterFilter getCounterFilter() {
     return counterFilter;
   }
 
-  public T setCounterFilter(CounterFilter filter) {
+  public WorkflowOptions setCounterFilter(CounterFilter filter) {
     this.counterFilter = filter;
-    return (T) this;
+    return this;
   }
 }
