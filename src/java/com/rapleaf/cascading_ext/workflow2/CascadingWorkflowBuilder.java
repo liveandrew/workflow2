@@ -12,7 +12,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.io.BytesWritable;
-import org.slf4j.Logger; import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cascading.flow.FlowListener;
 import cascading.flow.planner.Scope;
@@ -34,7 +35,6 @@ import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
-import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
 import com.rapleaf.cascading_ext.workflow2.action.FutureCascadingAction;
@@ -210,7 +210,7 @@ public class CascadingWorkflowBuilder {
     return buildTail(tailStepName, Lists.newArrayList(new DSSink(output, outputStore)), new EmptyListener());
   }
 
-  public Step buildPartitionedTail(String tailStepName, Pipe output, PartitionableDataStore outputStore, PartitionStructure structure) {
+  public Step buildPartitionedTail(String tailStepName, Pipe output, PartitionableDataStore outputStore, PartitionFuture structure) {
     return buildTail(tailStepName, Lists.newArrayList(new SinkBinding.PartitionedSink(output, outputStore, structure)), new EmptyListener());
   }
 

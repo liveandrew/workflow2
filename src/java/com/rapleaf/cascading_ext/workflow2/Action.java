@@ -184,7 +184,7 @@ public abstract class Action {
   }
 
 
-  protected <T> T get(Resource<T> resource) throws IOException, ClassNotFoundException {
+  protected <T> T get(Resource<T> resource) throws IOException {
     if (!resources.get(ResourceAction.USES).contains(resource)) {
       throw new RuntimeException("Cannot use resource without declaring it with uses()");
     }

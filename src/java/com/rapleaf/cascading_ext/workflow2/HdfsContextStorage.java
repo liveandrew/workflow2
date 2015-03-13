@@ -55,7 +55,7 @@ public class HdfsContextStorage extends ContextStorage {
   }
 
   @Override
-  public <T> T get(Resource<T> ref) throws IOException, ClassNotFoundException {
+  public <T> T get(Resource<T> ref) throws IOException {
     String path = getPath(ref);
     if (fs.exists(new Path(path))) {
       Hfs hfs = new Hfs(new SequenceFile(new Fields("data")), path);

@@ -51,9 +51,12 @@ public class CascadingAction2 extends MultiStepAction {
   }
 
   protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionStructure structure){
-    setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, structure));
+    setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, new PartitionFuture.Now(structure)));
   }
 
+  protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionFuture structure){
+    setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, structure));
+  }
   protected void complete(String stepName, Pipe output, DataStore outputStore, TupleDataStore persistStatsStore) throws IOException {
     setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore, persistStatsStore));
   }
@@ -78,19 +81,19 @@ public class CascadingAction2 extends MultiStepAction {
     return workflowHelper.msj(name, bindings, joiner);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException {
+  protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException, ClassNotFoundException {
     return workflowHelper.addCheckpoint(pipe, checkpointName);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe) throws IOException {
+  protected Pipe addCheckpoint(Pipe pipe) throws IOException, ClassNotFoundException {
     return workflowHelper.addCheckpoint(pipe);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, FlowListener flowListener) throws IOException {
+  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, FlowListener flowListener) throws IOException, ClassNotFoundException {
     return workflowHelper.addCheckpoint(pipe, checkpointName, flowListener);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, FlowListener flowListener) throws IOException {
+  protected Pipe addCheckpoint(Pipe pipe, FlowListener flowListener) throws IOException, ClassNotFoundException {
     return workflowHelper.addCheckpoint(pipe, flowListener);
   }
 

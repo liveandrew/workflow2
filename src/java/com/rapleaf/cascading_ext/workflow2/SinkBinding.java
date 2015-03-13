@@ -7,7 +7,6 @@ import cascading.tap.Tap;
 
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
-import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.NullTapFactory;
 import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
 
@@ -74,9 +73,9 @@ public interface SinkBinding {
 
     private final Pipe pipe;
     private final PartitionableDataStore store;
-    private final PartitionStructure structure;
+    private final PartitionFuture structure;
 
-    public PartitionedSink(Pipe pipe, PartitionableDataStore store, PartitionStructure structure){
+    public PartitionedSink(Pipe pipe, PartitionableDataStore store, PartitionFuture structure){
       this.pipe = pipe;
       this.store = store;
       this.structure = structure;
@@ -92,7 +91,7 @@ public interface SinkBinding {
       return new TapFactory() {
         @Override
         public Tap createTap() throws IOException {
-          return store.getPartitionedSinkTap(structure);
+          return store.getPartitionedSinkTap(structure.create());
         }
       };
     }

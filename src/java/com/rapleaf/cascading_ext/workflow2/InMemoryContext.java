@@ -39,7 +39,7 @@ public class InMemoryContext extends ContextStorage {
   }
 
   @Override
-  public <T> T get(Resource<T> ref) throws IOException, ClassNotFoundException {
+  public <T> T get(Resource<T> ref) throws IOException {
     if (resourceMap.containsKey(getPath(ref))) {
       return (T)handler.deserialize(resourceMap.get(getPath(ref)));
     } else {

@@ -38,7 +38,7 @@ public class TestCascadingAction2 extends CascadingExtTestCase {
 
   public static class SimpleExampleAction extends CascadingAction2 {
     public SimpleExampleAction(String checkpointToken, String tmpRoot,
-                               DataStore input, DataStore output) throws IOException {
+                               DataStore input, DataStore output) throws IOException, ClassNotFoundException {
       super(checkpointToken, tmpRoot, Maps.newHashMap());
 
       Pipe source = bindSource("source", input);
@@ -141,7 +141,7 @@ public class TestCascadingAction2 extends CascadingExtTestCase {
   }
 
   @Test
-  public void testIt() throws IOException {
+  public void testIt() throws IOException, ClassNotFoundException {
 
     TupleDataStore input = builder().getTupleDataStore("input", new Fields("field"));
     TupleDataStore output = builder().getTupleDataStore("output", new Fields("field"));

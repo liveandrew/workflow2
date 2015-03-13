@@ -40,6 +40,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
                       PartitionableDataStore output,
                       PartitionStructure outputStructure) {
     super(checkpointToken, tmpRoot, properties);
+
     final List<StoreExtractor<K>> asList = inputs.get();
 
     List<DataStore> dsStores = Lists.newArrayList();

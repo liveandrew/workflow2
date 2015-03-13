@@ -6,7 +6,7 @@ public abstract class ContextStorage {
 
   public abstract <T> void set(Resource<T> ref, T value) throws IOException;
 
-  public abstract<T> T get(Resource<T> ref) throws IOException, ClassNotFoundException;
+  public abstract<T> T get(Resource<T> ref) throws IOException;
 
 
   public static class None extends ContextStorage{
