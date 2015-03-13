@@ -57,6 +57,7 @@ public class CascadingAction2 extends MultiStepAction {
   protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionFuture structure){
     setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, structure));
   }
+  
   protected void complete(String stepName, Pipe output, DataStore outputStore, TupleDataStore persistStatsStore) throws IOException {
     setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore, persistStatsStore));
   }
