@@ -82,19 +82,19 @@ public class CascadingAction2 extends MultiStepAction {
     return workflowHelper.msj(name, bindings, joiner);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException, ClassNotFoundException {
+  protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException {
     return workflowHelper.addCheckpoint(pipe, checkpointName);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe) throws IOException, ClassNotFoundException {
+  protected Pipe addCheckpoint(Pipe pipe) throws IOException {
     return workflowHelper.addCheckpoint(pipe);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, FlowListener flowListener) throws IOException, ClassNotFoundException {
+  protected Pipe addCheckpoint(Pipe pipe, String checkpointName, FlowListener flowListener) throws IOException {
     return workflowHelper.addCheckpoint(pipe, checkpointName, flowListener);
   }
 
-  protected Pipe addCheckpoint(Pipe pipe, FlowListener flowListener) throws IOException, ClassNotFoundException {
+  protected Pipe addCheckpoint(Pipe pipe, FlowListener flowListener) throws IOException {
     return workflowHelper.addCheckpoint(pipe, flowListener);
   }
 
