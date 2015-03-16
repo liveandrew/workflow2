@@ -339,10 +339,17 @@ public abstract class Action {
     if (nestedProperties != null) {
       flowProperties = new NestedProperties(nestedProperties, properties);
     } else {
-      flowProperties = new NestedProperties(
-          new NestedProperties(null, CascadingHelper.get().getDefaultHadoopProperties()),
-          stepProperties
-      );
+      flowProperties =
+          new NestedProperties(
+              new NestedProperties(
+                  new NestedProperties(
+                      null,
+                      CascadingHelper.get().getDefaultHadoopProperties()
+                  ),
+                  stepProperties
+              ),
+              properties
+          );
     }
     return new FlowBuilder(buildFlowConnector(flowProperties.getPropertiesMap()), getClass());
   }
