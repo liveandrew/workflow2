@@ -12,6 +12,7 @@ import cascading.stats.hadoop.HadoopStepStats;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.counters.Counters;
+import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.java_support.event_timer.FixedTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
@@ -55,6 +56,11 @@ public class FlowOperation implements ActionOperation {
     }
 
     return jobs;
+  }
+
+  @Override
+  public ThreeNestedMap<String, String, String, Long> getJobCounters(){
+    return Counters.getCounterMap(flow.getFlowStats());
   }
 
   @Override

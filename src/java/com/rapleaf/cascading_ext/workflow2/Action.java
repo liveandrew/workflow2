@@ -15,15 +15,14 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
-import org.slf4j.Logger; import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
 import cascading.flow.FlowStepStrategy;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.cascading_ext.counters.Counters;
 import com.liveramp.cascading_ext.flow.LoggingFlowConnector;
 import com.liveramp.cascading_ext.flow_step_strategy.FlowStepStrategyFactory;
 import com.liveramp.cascading_ext.flow_step_strategy.MultiFlowStepStrategy;
@@ -33,6 +32,7 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.cascading_ext.util.OperationStatsUtils;
+import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingHelper;
@@ -336,7 +336,7 @@ public abstract class Action {
   protected FlowBuilder buildFlow(Map<Object, Object> properties) {
     NestedProperties flowProperties;
     //TODO Sweep direct calls to execute() so we don't have to do this!
-    if(nestedProperties != null) {
+    if (nestedProperties != null) {
       flowProperties = new NestedProperties(nestedProperties, properties);
     } else {
       flowProperties = new NestedProperties(
@@ -402,33 +402,24 @@ public abstract class Action {
     //  make sure each MR job exists in the DB
     jobPoller.updateRunningJobs();
 
-    for (RunningJob job : operation.listJobs()) {
+    ThreeNestedMap<String, String, String, Long> counters = operation.getJobCounters();
 
-      if(job != null){
-        if(job.getID() != null){
-          String jobId = job.getID().toString();
-
-          try {
-            TwoNestedMap<String, String, Long> map = Counters.getCounterMap(job);
-            TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
-
-            for (TwoNestedMap.Entry<String, String, Long> counter : map) {
-              String group = counter.getK1();
-              String name = counter.getK2();
-              if (counterFilter.isRecord(group, name)) {
-                toRecord.put(group, name, counter.getValue());
-              }
-            }
-
-            persistence.markJobCounters(fullId(), jobId, toRecord);
-
-          } catch (IOException e) {
-            LOG.error("Failed to capture stats for job: " + jobId);
+    for (String job : counters.key1Set()) {
+      TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
+      for (String group : counters.key2Set(job)) {
+        for (String name : counters.key3Set(job, group)) {
+          if (counterFilter.isRecord(group, name)) {
+            toRecord.put(group, name, counters.get(job, group, name));
           }
         }
       }
-
+      try {
+        persistence.markJobCounters(fullId(), job, toRecord);
+      } catch (IOException e) {
+        LOG.error("Failed to capture stats for job: " + job);
+      }
     }
+
   }
 
   protected long getCurrentExecutionId() throws IOException {
