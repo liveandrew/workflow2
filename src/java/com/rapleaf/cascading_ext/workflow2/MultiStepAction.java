@@ -27,6 +27,9 @@ public class MultiStepAction extends Action {
     }
   }
 
+  /**
+   * @deprecated Specify a tmpRoot instead
+   */
   @Deprecated
   public MultiStepAction(String checkpointToken, Collection<Step> steps) {
     this(checkpointToken, null, steps);
