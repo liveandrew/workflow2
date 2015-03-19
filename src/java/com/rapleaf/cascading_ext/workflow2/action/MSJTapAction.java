@@ -100,7 +100,8 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
 
     pipe = new Each(pipe,
         new Fields(ThriftBucketScheme.getFieldName(output.getRecordsType())),
-        new InsertSplit(splitGen));
+        new InsertSplit(splitGen),
+        Fields.ALL);
 
     completePartitioned("msj-tap", pipe, output, structureFactory);
   }
