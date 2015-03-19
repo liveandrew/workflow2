@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import com.liveramp.cascading_ext.FileSystemHelper;
 import com.rapleaf.cascading_ext.RapDistcp;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
@@ -21,7 +22,7 @@ public class CopyCommitMSJDelta<RecordType, KeyType extends Comparable> extends 
 
   @Override
   protected void execute() throws Exception {
-    String tmpStorePath = versionToCommit.getPath() + "/_tmp_copy_commit";
+    String tmpStorePath = FileSystemHelper.getRandomTemporaryPath().toString();
     RapDistcp.distcp(versionToCommit.getPath(), new String[] {}, tmpStorePath);
     store.commitDelta(tmpStorePath);
   }
