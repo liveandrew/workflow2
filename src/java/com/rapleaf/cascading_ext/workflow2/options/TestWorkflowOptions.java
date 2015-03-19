@@ -1,7 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
-import com.rapleaf.cascading_ext.test.CommonTestUtil;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
@@ -18,8 +17,6 @@ public class TestWorkflowOptions extends WorkflowOptions {
     setLockProvider(null);
     setStorage(new ContextStorage.None());
     setStepPollInterval(100);
-    addWorkflowHadoopProperties(CommonTestUtil.getFinalWorkflowJobPropertiesForTests());
-    addWorkflowHadoopProperties(CommonTestUtil.getOverridableWorkflowJobPropertiesForTests());
     setCounterFilter(CounterFilters.defaultCounters()); //  TODO we can probably switch this to all user counters by default
     //  after making sure it's not going to nuke the DB
 

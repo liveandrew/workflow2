@@ -15,7 +15,7 @@ public class WorkflowOptions {
 
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
-  private NestedProperties nestedProperties = new NestedProperties(null, CascadingHelper.get().getDefaultHadoopProperties());
+  private NestedProperties nestedProperties = null;
   private WorkflowRunnerNotificationSet enabledNotifications;
   private StoreReaderLockProvider lockProvider;
   private ContextStorage storage;
@@ -81,7 +81,7 @@ public class WorkflowOptions {
 
 
   public NestedProperties getWorkflowJobProperties() {
-    return nestedProperties;
+    return new NestedProperties(nestedProperties, CascadingHelper.get().getDefaultHadoopProperties());
   }
 
   public ContextStorage getStorage() {
