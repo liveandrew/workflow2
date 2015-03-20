@@ -6,9 +6,7 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.io.BytesWritable;
 import org.junit.Test;
 
-import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
-
+import com.liveramp.cascading_ext.Bytes;
 import com.liveramp.commons.collections.map.MapBuilder;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
@@ -62,13 +60,12 @@ public class TestMOMSJTapAction extends CascadingExtTestCase {
         DIE4
     );
 
-    BucketDataStore<DustinInternalEquiv> output1 = builder().getBucketDataStore("output1", DustinInternalEquiv.class);
-    BucketDataStore<DustinInternalEquiv> output2 = builder().getBucketDataStore("output2", DustinInternalEquiv.class);
+    BucketDataStore<PIN> output1 = builder().getBucketDataStore("output1", PIN.class);
+    BucketDataStore<BytesWritable> output2 = builder().getBucketDataStore("output2", BytesWritable.class);
 
-    MOMSJTapAction<DustinInternalEquiv, Outputs> action = new MOMSJTapAction<DustinInternalEquiv, Outputs>(
+    MOMSJTapAction<Outputs> action = new MOMSJTapAction<Outputs>(
         "token",
         getTestRoot() + "/tmp",
-        DustinInternalEquiv.class,
         new ExtractorsList<BytesWritable>()
             .add(pins1, MSJFixtures.DIE_EID_EXTRACTOR)
             .add(pins2, MSJFixtures.DIE_EID_EXTRACTOR),
@@ -81,15 +78,21 @@ public class TestMOMSJTapAction extends CascadingExtTestCase {
 
     execute(action);
 
-    assertCollectionEquivalent(Lists.newArrayList(DIE1, DIE3), HRap.getValuesFromBucket(output1));
-    assertCollectionEquivalent(Lists.newArrayList(DIE2, DIE4), HRap.getValuesFromBucket(output2));
+    assertCollectionEquivalent(Lists.newArrayList(EMAIL1, EMAIL2, EMAIL3, EMAIL4), HRap.getValuesFromBucket(output1));
+    assertCollectionEquivalent(
+        Lists.newArrayList(
+            Bytes.byteBufferToBytesWritable(EID1),
+            Bytes.byteBufferToBytesWritable(EID2),
+            Bytes.byteBufferToBytesWritable(EID1),
+            Bytes.byteBufferToBytesWritable(EID2)),
+        HRap.getValuesFromBucket(output2));
 
   }
 
   private static class TestFunction extends MOMSJFunction<Outputs, BytesWritable> {
 
     public TestFunction() {
-      super(new Fields("dustin_internal_equiv"));
+      super();
     }
 
     @Override
@@ -106,15 +109,10 @@ public class TestMOMSJTapAction extends CascadingExtTestCase {
   }
 
   private static void emitValues(MOMSJFunctionCall<Outputs> functionCall, TIterator<DustinInternalEquiv> iter1) {
-    while(iter1.hasNext()){
+    while (iter1.hasNext()) {
       DustinInternalEquiv val = iter1.next();
-      if(ByteBuffer.wrap(val.get_eid()).equals(EID1)){
-        functionCall.emit(Outputs.ONE, new Tuple(val));
-      }
-      if(ByteBuffer.wrap(val.get_eid()).equals(EID2)){
-        functionCall.emit(Outputs.TWO, new Tuple(val));
-      }
+      functionCall.emit(Outputs.ONE, val.get_pin());
+      functionCall.emit(Outputs.TWO, new BytesWritable(val.get_eid()));
     }
   }
-
 }

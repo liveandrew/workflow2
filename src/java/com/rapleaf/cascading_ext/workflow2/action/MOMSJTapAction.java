@@ -8,41 +8,40 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.thrift.TBase;
 
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
-import com.rapleaf.cascading_ext.datastore.CategoryBucketDataStore;
-import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
 import com.rapleaf.cascading_ext.msj_tap.operation.MOMSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
-import com.rapleaf.cascading_ext.tap.bucket2.BytesBucketScheme;
+import com.rapleaf.cascading_ext.tap.bucket2.CategoryBucketTap;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
+import com.rapleaf.cascading_ext.tap.bucket2.PartitionedBucketTap;
+import com.rapleaf.cascading_ext.tap.bucket2.storage.BytesStorageStrategy;
 import com.rapleaf.cascading_ext.workflow2.Action;
+import com.rapleaf.formats.bucket.Bucket;
 
-public class MOMSJTapAction<T extends TBase, E extends Enum<E>> extends Action {
+public class MOMSJTapAction<E extends Enum<E>> extends Action {
 
   private final MOMSJFunction<E, BytesWritable> function;
   private final List<StoreExtractor<BytesWritable>> extractors;
   private final Map<E, ? extends BucketDataStore> outputCategories;
-  private final PartitionedDataStore<T> tmpPartitioned;
+  private final BucketDataStore<BytesWritable> tmpPartitioned;
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
-                        Class<T> recordClass,
                         final ExtractorsList<BytesWritable> extractors,
                         MOMSJFunction<E, BytesWritable> function,
-                        Map<E, ? extends BucketDataStore> outputCategories) {
+                        Map<E, ? extends BucketDataStore> outputCategories) throws IOException {
     super(checkpointToken, tmpRoot);
 
     this.function = function;
     this.extractors = extractors.get();
     this.outputCategories = outputCategories;
 
-    tmpPartitioned = builder().getPartitionedDataStore("tmp_partitioned", recordClass);
+    tmpPartitioned = builder().getBucketDataStore("tmp_partitioned", BytesWritable.class);
 
     for (StoreExtractor input : this.extractors) {
       readsFrom(input.getStore());
@@ -60,12 +59,13 @@ public class MOMSJTapAction<T extends TBase, E extends Enum<E>> extends Action {
     Pipe pipe = new Pipe("pipe");
     pipe = new Each(pipe, function);
 
-
     MSJTap<BytesWritable> source = new MSJTap<BytesWritable>(getConfs(extractors), new MSJScheme<BytesWritable>());
 
     completeWithProgress(buildFlow().connect(
         source,
-        tmpPartitioned.getPartitionedSinkTap(PartitionStructure.UNENFORCED),
+        new PartitionedBucketTap<BytesWritable>(tmpPartitioned.getPath(),
+            new BytesStorageStrategy(MOMSJFunction.RECORD_FIELD),
+            PartitionStructure.UNENFORCED),
         pipe
     ));
 
@@ -77,9 +77,13 @@ public class MOMSJTapAction<T extends TBase, E extends Enum<E>> extends Action {
       toClass.put(name, entry.getValue().getRecordsType());
     }
 
-    new CategoryBucketDataStore<BytesWritable>(tmpPartitioned.getRoot(), new BytesBucketScheme(), "type", false, "Temporary output")
-        .getCategoryBucketTap()
-        .createBucketsFromCategories(asStrings, toClass);
+    Bucket bucket = tmpPartitioned.getBucket();
+    CategoryBucketTap.createBucketsFromCategories(
+        new Path(tmpPartitioned.getPath()),
+        bucket.getFormat(),
+        bucket.getFormatArgs(),
+        asStrings, toClass
+    );
 
   }
 
