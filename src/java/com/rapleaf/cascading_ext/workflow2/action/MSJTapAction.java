@@ -19,7 +19,7 @@ import cascading.tuple.Tuple;
 
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
-import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
+import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction; import com.rapleaf.cascading_ext.msj_tap.operation.functioncall.MSJFunctionCall;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
