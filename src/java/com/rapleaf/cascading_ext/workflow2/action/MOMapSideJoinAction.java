@@ -19,6 +19,7 @@ import com.rapleaf.cascading_ext.map_side_join.MOMapSideJoin;
 import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
+@Deprecated //  try using MOMSJTapAction and let me know if anything isn't supported --ben
 public abstract class MOMapSideJoinAction<T extends Comparable, E extends Enum<E>> extends Action {
 
   private final List<MapSideJoinableDataStore> inputStores = new ArrayList<MapSideJoinableDataStore>();
