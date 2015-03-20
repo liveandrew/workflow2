@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 
+import cascading.flow.Flow;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 
@@ -31,15 +32,37 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
   private final Map<E, ? extends BucketDataStore> outputCategories;
   private final BucketDataStore<BytesWritable> tmpPartitioned;
 
+  public interface PostFlow {
+    public void callback(Flow flow);
+
+    public class NoOp implements PostFlow {
+      @Override
+      public void callback(Flow flow) {
+        // no op
+      }
+    }
+  }
+
+  private final PostFlow callback;
+
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
                         final ExtractorsList<BytesWritable> extractors,
                         MOMSJFunction<E, BytesWritable> function,
                         Map<E, ? extends BucketDataStore> outputCategories) throws IOException {
+    this(checkpointToken, tmpRoot, extractors, function, outputCategories, new PostFlow.NoOp());
+  }
+
+  public MOMSJTapAction(String checkpointToken, String tmpRoot,
+                        final ExtractorsList<BytesWritable> extractors,
+                        MOMSJFunction<E, BytesWritable> function,
+                        Map<E, ? extends BucketDataStore> outputCategories,
+                        PostFlow callback) throws IOException {
     super(checkpointToken, tmpRoot);
 
     this.function = function;
     this.extractors = extractors.get();
     this.outputCategories = outputCategories;
+    this.callback = callback;
 
     tmpPartitioned = builder().getBucketDataStore("tmp_partitioned", BytesWritable.class);
 
@@ -61,7 +84,7 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
 
     MSJTap<BytesWritable> source = new MSJTap<BytesWritable>(getConfs(extractors), new MSJScheme<BytesWritable>());
 
-    completeWithProgress(buildFlow().connect(
+    Flow flow = completeWithProgress(buildFlow().connect(
         source,
         new PartitionedBucketTap<BytesWritable>(tmpPartitioned.getPath(),
             new BytesStorageStrategy(MOMSJFunction.RECORD_FIELD),
@@ -84,6 +107,8 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
         bucket.getFormatArgs(),
         asStrings, toClass
     );
+
+    callback.callback(flow);
 
   }
 
