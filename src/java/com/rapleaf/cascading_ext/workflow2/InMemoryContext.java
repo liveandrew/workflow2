@@ -21,11 +21,11 @@ public class InMemoryContext extends ContextStorage {
   }
 
   @Override
-  public <T> void set(Resource<T> ref, T value) throws IOException {
+  public <T> void set(OldResource<T> ref, T value) throws IOException {
     resourceMap.put(getPath(ref), handler.serialize(value));
   }
 
-  private <T> String getPath(Resource<T> ref) {
+  private <T> String getPath(OldResource<T> ref) {
     StringBuilder location = new StringBuilder();
     ActionId parent = ref.getParent();
 
@@ -39,7 +39,7 @@ public class InMemoryContext extends ContextStorage {
   }
 
   @Override
-  public <T> T get(Resource<T> ref) throws IOException {
+  public <T> T get(OldResource<T> ref) throws IOException {
     if (resourceMap.containsKey(getPath(ref))) {
       return (T)handler.deserialize(resourceMap.get(getPath(ref)));
     } else {
@@ -47,15 +47,15 @@ public class InMemoryContext extends ContextStorage {
     }
   }
 
-  public <T> Resource<T> getAndSet(String globalResource, T obj) throws IOException {
-    Resource<T> res = new Resource<T>(globalResource, null);
+  public <T> OldResource<T> getAndSet(String globalResource, T obj) throws IOException {
+    OldResource<T> res = new OldResource<T>(globalResource, null);
     set(res, obj);
     return res;
   }
 
   //  make public to expose to tests
-  public <T> Resource<T> create(String name, ActionId actionId) {
-    return new Resource<T>(name, actionId);
+  public <T> OldResource<T> create(String name, ActionId actionId) {
+    return new OldResource<T>(name, actionId);
   }
 
 }

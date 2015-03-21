@@ -10,8 +10,8 @@ public class ResourceFactory {
     this.actionId = actionId;
   }
 
-  public <T> Resource<T> makeResource(String name){
-    return new Resource<T>(name, actionId);
+  public <T> OldResource<T> makeResource(String name){
+    return new OldResource<T>(name, actionId);
   }
 
 }

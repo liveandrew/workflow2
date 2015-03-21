@@ -61,7 +61,7 @@ public abstract class Action {
     USES
   }
 
-  private final Multimap<ResourceAction, Resource> resources = HashMultimap.create();
+  private final Multimap<ResourceAction, OldResource> resources = HashMultimap.create();
 
   private StoreReaderLockProvider lockProvider;
   private HadoopProperties stepProperties;
@@ -129,15 +129,15 @@ public abstract class Action {
 
   //  resource actions
 
-  protected void creates(Resource resource) {
+  protected void creates(OldResource resource) {
     mark(ResourceAction.CREATES, resource);
   }
 
-  protected void uses(Resource resource) {
+  protected void uses(OldResource resource) {
     mark(ResourceAction.USES, resource);
   }
 
-  private void mark(ResourceAction action, Resource resource) {
+  private void mark(ResourceAction action, OldResource resource) {
     resources.put(action, resource);
   }
 
@@ -175,7 +175,7 @@ public abstract class Action {
     return builder;
   }
 
-  protected <T> Resource<T> resource(String name) {
+  protected <T> OldResource<T> resource(String name) {
     return resourceFactory().makeResource(name);
   }
 
@@ -184,7 +184,7 @@ public abstract class Action {
   }
 
 
-  protected <T> T get(Resource<T> resource) throws IOException {
+  protected <T> T get(OldResource<T> resource) throws IOException {
     if (!resources.get(ResourceAction.USES).contains(resource)) {
       throw new RuntimeException("Cannot use resource without declaring it with uses()");
     }
@@ -192,7 +192,7 @@ public abstract class Action {
     return storage.get(resource);
   }
 
-  protected <T> void set(Resource<T> resource, T value) throws IOException {
+  protected <T> void set(OldResource<T> resource, T value) throws IOException {
 
     if (!resources.get(ResourceAction.CREATES).contains(resource)) {
       throw new RuntimeException("Cannot set resource without declaring it with creates()");

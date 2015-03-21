@@ -607,9 +607,9 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     wfr.run();
     WorkflowStatePersistence persistence = wfr.getPersistence();
 
-    Resource<Integer> resMock1 = new Resource<Integer>("resource", new ActionId("parent-step")
+    OldResource<Integer> resMock1 = new OldResource<Integer>("resource", new ActionId("parent-step")
         .setParentPrefix(""));
-    Resource<Integer> resMock2 = new Resource<Integer>("output", new ActionId("consume-resource")
+    OldResource<Integer> resMock2 = new OldResource<Integer>("output", new ActionId("consume-resource")
         .setParentPrefix("parent-step__"));
 
     assertEquals(1, storage.get(resMock1).intValue());
@@ -861,7 +861,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     public ParentResource(String checkpointToken, String tmpRoot) throws IOException {
       super(checkpointToken, tmpRoot);
 
-      Resource<Integer> res = resource("resource");
+      OldResource<Integer> res = resource("resource");
 
       Step set = new Step(new SetResource(
           "set-resource",
@@ -947,10 +947,10 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   public static class SetResource extends Action {
 
-    private final Resource<Integer> res;
+    private final OldResource<Integer> res;
 
     public SetResource(String checkpointToken,
-                       Resource<Integer> res1) {
+                       OldResource<Integer> res1) {
       super(checkpointToken);
       this.res = res1;
       creates(res1);
@@ -964,14 +964,14 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   public static class ConsumeResource extends Action {
 
-    private final Resource<Integer> res;
+    private final OldResource<Integer> res;
 
-    private final Resource<Integer> resOut;
+    private final OldResource<Integer> resOut;
     private final TupleDataStore tupOut;
 
     public ConsumeResource(String checkpointToken,
                            String tmpRoot,
-                           Resource<Integer> res1) throws IOException {
+                           OldResource<Integer> res1) throws IOException {
       super(checkpointToken, tmpRoot);
       this.res = res1;
       uses(res);

@@ -33,12 +33,12 @@ public class HdfsContextStorage extends ContextStorage {
     this.root = root;
   }
 
-  private String getPath(Resource ref) {
+  private String getPath(OldResource ref) {
     return root + "/" + ref.getParent().resolve() + "/" + ref.getRelativeId();
   }
 
   @Override
-  public <T> void set(Resource<T> ref, T value) throws IOException {
+  public <T> void set(OldResource<T> ref, T value) throws IOException {
 
     Path path = new Path(getPath(ref));
     if (fs.exists(path)) {
@@ -55,7 +55,7 @@ public class HdfsContextStorage extends ContextStorage {
   }
 
   @Override
-  public <T> T get(Resource<T> ref) throws IOException {
+  public <T> T get(OldResource<T> ref) throws IOException {
     String path = getPath(ref);
     if (fs.exists(new Path(path))) {
       Hfs hfs = new Hfs(new SequenceFile(new Fields("data")), path);

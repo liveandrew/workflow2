@@ -2,12 +2,12 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import com.liveramp.java_support.workflow.ActionId;
 
-public class Resource<T> {
+public class OldResource<T> {
 
   private final String relativeId;
   private final ActionId parent;
 
-  protected Resource(String relativeId, ActionId parent) {
+  protected OldResource(String relativeId, ActionId parent) {
     this.relativeId = relativeId;
     this.parent = parent;
   }
@@ -33,11 +33,11 @@ public class Resource<T> {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof Resource)) {
+    if (!(o instanceof OldResource)) {
       return false;
     }
 
-    Resource resource = (Resource)o;
+    OldResource resource = (OldResource)o;
 
     if (parent != null ? !parent.equals(resource.parent) : resource.parent != null) {
       return false;
