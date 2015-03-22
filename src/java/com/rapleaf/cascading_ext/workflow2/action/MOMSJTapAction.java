@@ -66,6 +66,8 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
 
     tmpPartitioned = builder().getBucketDataStore("tmp_partitioned", BytesWritable.class);
 
+    createsTemporary(tmpPartitioned);
+
     for (StoreExtractor input : this.extractors) {
       readsFrom(input.getStore());
     }
