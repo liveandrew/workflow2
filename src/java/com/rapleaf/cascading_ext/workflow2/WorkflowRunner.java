@@ -119,7 +119,6 @@ public final class WorkflowRunner {
           try {
             if (StepStatus.NON_BLOCKING.contains(state.getState(stepToken).getStatus())) {
               LOG.info("Step " + stepToken + " was executed successfully in a prior run. Skipping.");
-              persistence.markStepSkipped(stepToken);
             } else {
 
               persistence.markStepRunning(stepToken);

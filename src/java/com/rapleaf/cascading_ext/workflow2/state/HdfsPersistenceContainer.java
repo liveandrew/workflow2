@@ -205,13 +205,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
         .setEndTimestamp(System.currentTimeMillis());
 
   }
-
-  @Override
-  public void markStepSkipped(String stepToken) throws IOException {
-    getState(stepToken)
-        .setStatus(StepStatus.SKIPPED);
-  }
-
+  
   @Override
   public void markStepCompleted(String stepToken) throws IOException {
     LOG.info("Writing out checkpoint token for " + stepToken);
