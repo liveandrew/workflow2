@@ -917,8 +917,6 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     TaskCounter mapIn = TaskCounter.MAP_INPUT_RECORDS;
     assertEquals(1l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
 
-    assertEquals(3, counters.size());
-
   }
 
   public static class IncrementCounter extends CascadingAction2 {
