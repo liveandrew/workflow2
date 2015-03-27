@@ -68,7 +68,7 @@ public class WorkflowDiagram {
   public static void verifyNoOrphanedTailSteps(Set<Step> tailSteps) {
     Set<Step> orphans = getOrphanedTailSteps(tailSteps);
     if (orphans.size() != 0) {
-      throw new RuntimeException("Orphaned tail steps:" + orphans);
+      throw new RuntimeException("Orphaned tail steps!");
     }
   }
 
