@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.action_operations;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.mapred.RunningJob;
@@ -16,6 +17,7 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.java_support.event_timer.FixedTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
+import com.rapleaf.cascading_ext.workflow2.EmptyListener;
 import com.rapleaf.cascading_ext.workflow2.Step;
 
 public class FlowOperation implements ActionOperation {
@@ -32,7 +34,22 @@ public class FlowOperation implements ActionOperation {
 
   @Override
   public void complete() {
+
+    final AtomicBoolean isComplete = new AtomicBoolean(false);
+
+    flow.addListener(new EmptyListener(){
+      @Override
+      public void onCompleted(Flow flow) {
+        isComplete.set(true);
+      }
+    });
+
     flow.complete();
+
+    if(!isComplete.get()){
+      throw new RuntimeException("Flow terminated but did not complete!  Possible shutdown hook invocation.");
+    }
+
   }
 
   @Override
