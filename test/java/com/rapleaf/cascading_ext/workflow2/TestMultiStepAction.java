@@ -1,11 +1,12 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import java.util.Arrays;
+import java.util.HashSet;
+
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import com.rapleaf.cascading_ext.CascadingExtTestCase;
 
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
@@ -62,7 +63,7 @@ public class TestMultiStepAction extends CascadingExtTestCase {
   @Test
   public void testNoDuplicateTokens() throws Exception {
     try {
-      new MultiStepAction("blah", Arrays.asList(a, a));
+      new MultiStepAction("blah", getTestRoot(), Arrays.asList(a, a));
       fail();
     } catch (Exception e) {
       // cool!

@@ -161,7 +161,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   public void testLoneMultiStepAction(WorkflowPersistenceFactory factory) throws Exception {
     // lone multi
-    Step s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(
+    Step s = new Step(new MultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(
         new IncrementAction("blah")))));
 
     buildWfr(factory, s).run();
@@ -181,7 +181,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   public void testMultiIntheMiddle(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
-    s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
+    s = new Step(new MultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
     s = new Step(new IncrementAction("last"), s);
 
@@ -203,7 +203,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   public void testMultiAtEnd(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
-    s = new Step(new MultiStepAction("lone", Arrays.asList(new Step(new IncrementAction("blah")))),
+    s = new Step(new MultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
 
     buildWfr(factory, s).run();
@@ -408,8 +408,8 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
   public void testMultiInMultiEnd(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     // please, never do this in real code
-    s = new Step(new MultiStepAction("depth 1", Arrays.asList(new Step(new MultiStepAction(
-        "depth 2", Arrays.asList(new Step(new IncrementAction("blah"))))))), s);
+    s = new Step(new MultiStepAction("depth 1", getTestRoot(), Arrays.asList(new Step(new MultiStepAction(
+        "depth 2", getTestRoot(), Arrays.asList(new Step(new IncrementAction("blah"))))))), s);
     s = new Step(new IncrementAction("last"), s);
 
     buildWfr(factory, s).run();
@@ -429,13 +429,13 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
   public void testMultiInMultiMiddle(WorkflowPersistenceFactory factory) throws IOException {
     Step b = new Step(new IncrementAction("b"));
-    Step innermost = new Step(new MultiStepAction("innermost", Arrays.asList(new Step(
+    Step innermost = new Step(new MultiStepAction("innermost", getTestRoot(), Arrays.asList(new Step(
         new IncrementAction("c")))), b);
     Step d = new Step(new IncrementAction("d"), b);
 
     Step a = new Step(new IncrementAction("a"));
 
-    Step outer = new Step(new MultiStepAction("outer", Arrays.asList(b, innermost, d)), a);
+    Step outer = new Step(new MultiStepAction("outer", getTestRoot(), Arrays.asList(b, innermost, d)), a);
 
     buildWfr(factory, outer).run();
 
@@ -482,10 +482,10 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     Step bottom1 = new Step(new IncrementAction("bottom1"));
     Step bottom2 = new Step(new IncrementAction("bottom2"));
 
-    Step multiMiddle = new Step(new MultiStepAction("middle", Arrays.asList(bottom1, bottom2)));
+    Step multiMiddle = new Step(new MultiStepAction("middle", getTestRoot(), Arrays.asList(bottom1, bottom2)));
     Step flatMiddle = new Step(new IncrementAction("flatMiddle"));
 
-    Step top = new Step(new MultiStepAction("Tom's first test dude", Arrays.asList(multiMiddle, flatMiddle)));
+    Step top = new Step(new MultiStepAction("Tom's first test dude", getTestRoot(), Arrays.asList(multiMiddle, flatMiddle)));
 
     WorkflowRunner testWorkflow = buildWfr(factory, top);
     testWorkflow.run();

@@ -22,8 +22,8 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
   }
 
   public static final class ExampleMultistepAction extends MultiStepAction {
-    public ExampleMultistepAction(String checkpointToken, Step[] steps) {
-      super(checkpointToken, Arrays.asList(steps));
+    public ExampleMultistepAction(String checkpointToken, String tmpRoot, Step[] steps) {
+      super(checkpointToken, tmpRoot, Arrays.asList(steps));
     }
   }
 
@@ -100,14 +100,14 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
         new DataStore[] { id2 }));
     Step s4_3 = new Step(new ExampleAction("sub-step 3", new DataStore[] { d1, id1, id2 },
         new DataStore[] { d4 }), s4_1, s4_2);
-    Step s4 = new Step(new ExampleMultistepAction("Multistep-1", new Step[] { s4_1, s4_2, s4_3 }),
+    Step s4 = new Step(new ExampleMultistepAction("Multistep-1", LONG_RUNNING_WORKFLOW_PATH, new Step[] { s4_1, s4_2, s4_3 }),
         s2);
 
     Step s5_1_1 = new Step(new ExampleAction("sub-sub-step 1", new DataStore[] { d2, d3 },
         new DataStore[] { d3 }));
     Step s5_1_2 = new Step(new TakeSomeTime(0, "sub-sub-step 2", new DataStore[] { d3 },
         new DataStore[] { id3 }), s5_1_1);
-    Step s5_1 = new Step(new ExampleMultistepAction("sub-multistep", new Step[] { s5_1_1, s5_1_2 }));
+    Step s5_1 = new Step(new ExampleMultistepAction("sub-multistep", LONG_RUNNING_WORKFLOW_PATH, new Step[] { s5_1_1, s5_1_2 }));
 
     Step s5_2 = new Step(new ExampleAction("sub-step 2", new DataStore[] { d3 },
         new DataStore[] { id4 }), s3);
@@ -115,7 +115,7 @@ public class LongRunningWorkflow extends CascadingExtTestCase {
         new DataStore[] { d6 }), s5_2);
     Step s5_4 = new Step(new ExampleAction("sub-step 4", new DataStore[] { id3, id4 },
         new DataStore[] { d5 }), s5_1, s5_2);
-    Step s5 = new Step(new ExampleMultistepAction("Multistep-2", new Step[] { s5_1, s5_2, s5_3,
+    Step s5 = new Step(new ExampleMultistepAction("Multistep-2", LONG_RUNNING_WORKFLOW_PATH, new Step[] { s5_1, s5_2, s5_3,
         s5_4 }), s2, s3);
 
     Step s6 = new Step(new FailBang(new DataStore[] { d5, d6 }, new DataStore[] { d7 }), s5);

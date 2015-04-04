@@ -12,8 +12,8 @@ public class Example {
   
   public static class SlightlyLessComplex extends MultiStepAction {
     
-    public SlightlyLessComplex(String checkpointToken) {
-      super(checkpointToken, steps());
+    public SlightlyLessComplex(String checkpointToken, String tmpRoot) {
+      super(checkpointToken, tmpRoot, steps());
     }
     
     private static Collection<Step> steps() {
@@ -26,18 +26,20 @@ public class Example {
   }
   
   public static class ComplexAction extends MultiStepAction {
-    public ComplexAction() {
-      super("complex", steps());
+    public ComplexAction(String tmpRoot) {
+      super("complex", tmpRoot);
+
+      setSubStepsFromTails(steps());
     }
     
-    private static Collection<Step> steps() {
+    private Collection<Step> steps() {
       Collection<Step> steps = new ArrayList<Step>();
       Step s = new Step(new PrintAction("1"));
       steps.add(s);
       s = new Step(new PrintAction("2"), s);
       steps.add(s);
       steps.add(new Step(new PrintAction("3"), s));
-      steps.add(new Step(new SlightlyLessComplex("4"), s));
+      steps.add(new Step(new SlightlyLessComplex("4", getTmpRoot()), s));
       return steps;
     }
   }
@@ -57,10 +59,13 @@ public class Example {
   }
   
   public static void main(String[] args) throws IOException {
+
+    final String tmpRoot = "/tmp/examples/";
+
     Step s = new Step(new PrintAction("first"));
     new Step(new PrintAction("not dependent on second"), s);
     s = new Step(new PrintAction("second"), s);
-    s = new Step(new ComplexAction(), s);
+    s = new Step(new ComplexAction(tmpRoot), s);
     s = new Step(new PrintAction("last"), s);
     
     new WorkflowRunner(
