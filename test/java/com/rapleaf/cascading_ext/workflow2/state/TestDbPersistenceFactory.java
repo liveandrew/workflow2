@@ -1,5 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
+import java.util.Set;
+
 import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +13,7 @@ import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
@@ -18,6 +21,7 @@ import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
+import com.rapleaf.support.collections.Accessors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -59,6 +63,35 @@ public class TestDbPersistenceFactory extends CascadingExtTestCase {
 
     assertEquals(StepStatus.FAILED.ordinal(),
         rldb.stepAttempts().find(stepAttempt.getId()).getStepStatus());
+
+  }
+
+  @Test
+  public void testApplicationCreation() throws Exception {
+
+
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+    rldb.disableCaching();
+
+    WorkflowRunner workflowRunner = new WorkflowRunner("Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions(),
+        Sets.newHashSet(new Step(new NoOpAction("step1"))));
+    workflowRunner.run();
+
+    assertEquals(1, rldb.applications().findByName("Workflow").size());
+
+    WorkflowRunner workflowRunner2 = new WorkflowRunner("Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions(),
+        Sets.newHashSet(new Step(new NoOpAction("step1"))));
+    workflowRunner2.run();
+
+    Set<Application> applications = rldb.applications().findByName("Workflow");
+    assertEquals(1, applications.size());
+
+    Application app = Accessors.only(applications);
+    assertEquals(2, app.getWorkflowExecution().size());
 
   }
 

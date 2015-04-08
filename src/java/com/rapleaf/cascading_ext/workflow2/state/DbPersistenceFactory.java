@@ -7,15 +7,17 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.liveramp.importer.generated.AppType;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
@@ -27,6 +29,7 @@ import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
+import com.rapleaf.support.collections.Accessors;
 
 public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
@@ -52,7 +55,10 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
     try {
 
-      WorkflowExecution execution = getExecution(name, scopeId, appType);
+      Application application = getApplication(name, appType);
+      LOG.info("Using application: "+application);
+
+      WorkflowExecution execution = getExecution(application, name, appType, scopeId);
       LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
       cleanUpRunningAttempts(execution);
@@ -126,15 +132,36 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private String getPool(Optional<WorkflowAttempt> last, String provided){
-    if(last.isPresent()){
+  private Application getApplication(String name, AppType appType) throws IOException {
+
+    Optional<Application> application = Accessors.firstOrAbsent(rldb.applications().findByName(name));
+
+    if (application.isPresent()) {
+      LOG.info("Using existing application");
+
+      return application.get();
+    } else {
+      LOG.info("Creating new application for name: "+name+", app type "+appType);
+
+      Application app = rldb.applications().create(name);
+      if (appType != null) {
+        app.setAppType(appType.getValue());
+      }
+      rldb.applications().save(app);
+      return app;
+    }
+
+  }
+
+  private String getPool(Optional<WorkflowAttempt> last, String provided) {
+    if (last.isPresent()) {
       return last.get().getPool();
     }
     return provided;
   }
 
-  private String getPriority(Optional<WorkflowAttempt> last, String priority){
-    if(last.isPresent()){
+  private String getPriority(Optional<WorkflowAttempt> last, String priority) {
+    if (last.isPresent()) {
       return last.get().getPriority();
     }
     return priority;
@@ -148,12 +175,12 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     for (WorkflowAttempt attempt : prevAttempts) {
 
       //  check to see if any of these workflows are still marked as alive
-      if(AttemptStatus.LIVE_STATUSES.contains(attempt.getStatus())){
+      if (AttemptStatus.LIVE_STATUSES.contains(attempt.getStatus())) {
 
         Assertions.assertDead(attempt);
 
         //  otherwise it is safe to clean up
-        LOG.info("Marking old running attempt as FAILED: "+attempt);
+        LOG.info("Marking old running attempt as FAILED: " + attempt);
         attempt
             .setStatus(AttemptStatus.FAILED.ordinal())
             .setEndTime(System.currentTimeMillis())
@@ -163,8 +190,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       //  and mark any step that was still running as failed
       for (StepAttempt step : attempt.getStepAttempt()) {
-        if(step.getStepStatus() == StepStatus.RUNNING.ordinal()){
-          LOG.info("Marking old runing step as FAILED: "+step);
+        if (step.getStepStatus() == StepStatus.RUNNING.ordinal()) {
+          LOG.info("Marking old runing step as FAILED: " + step);
           step
               .setStepStatus(StepStatus.FAILED.ordinal())
               .setFailureCause("Unknown, failed by cleanup.")
@@ -209,13 +236,20 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     return StepStatus.WAITING;
   }
 
-  private WorkflowExecution getExecution(String name, String scopeId, AppType appType) throws IOException {
+  private WorkflowExecution getExecution(Application app, String name, AppType appType, String scopeId) throws IOException {
 
+    //  TODO remove this query after migration
     Set<WorkflowExecution> incompleteExecutions = rldb.workflowExecutions().query()
         .name(name)
         .scopeIdentifier(scopeId)
         .status(WorkflowExecutionStatus.INCOMPLETE.ordinal())
         .find();
+
+    incompleteExecutions.addAll(rldb.workflowExecutions().query()
+        .applicationId((int)app.getId())
+        .scopeIdentifier(scopeId)
+        .status(WorkflowExecutionStatus.INCOMPLETE.ordinal())
+        .findWithOrder());
 
     if (incompleteExecutions.size() > 1) {
       throw new RuntimeException("Found multiple incomplete workflow executions!");
@@ -226,6 +260,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       //  new execution
       WorkflowExecution ex = rldb.workflowExecutions().create(name, WorkflowExecutionStatus.INCOMPLETE.ordinal())
+          .setApplicationId((int)app.getId())
           .setScopeIdentifier(scopeId)
           .setStartTime(System.currentTimeMillis());
 
