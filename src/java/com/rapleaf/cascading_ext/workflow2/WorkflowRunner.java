@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
@@ -80,90 +81,6 @@ public final class WorkflowRunner {
   private NestedProperties workflowJobProperties;
 
   /**
-   * StepRunner keeps track of some extra state for each component, as
-   * well as manages the actual execution thread. Note that it is itself *not*
-   * a Thread.
-   */
-  private final class StepRunner {
-    public final Step step;
-    private final WorkflowStatePersistence state;
-    public Thread thread;
-
-    public StepRunner(Step c, WorkflowStatePersistence state) {
-      this.step = c;
-      this.state = state;
-    }
-
-    private NestedProperties buildInheritedProperties() throws IOException {
-      HadoopProperties.Builder uiPropertiesBuilder = new HadoopProperties.Builder();
-      String priority = persistence.getPriority();
-      String pool = persistence.getPool();
-
-      if (priority != null) {
-        uiPropertiesBuilder.setProperty(JOB_PRIORITY_PARAM, priority, true);
-      }
-
-      if (pool != null) {
-        uiPropertiesBuilder.setProperty(JOB_POOL_PARAM, pool, true);
-      }
-
-      return new NestedProperties(workflowJobProperties, uiPropertiesBuilder.build());
-    }
-
-    public void start() {
-      CascadingHelper.get().getJobConf();
-      Runnable r = new Runnable() {
-        @Override
-        public void run() {
-          String stepToken = step.getCheckpointToken();
-          try {
-            if (StepStatus.NON_BLOCKING.contains(state.getState(stepToken).getStatus())) {
-              LOG.info("Step " + stepToken + " was executed successfully in a prior run. Skipping.");
-            } else {
-
-              persistence.markStepRunning(stepToken);
-
-              LOG.info("Executing step " + stepToken);
-              step.run(buildInheritedProperties());
-
-              persistence.markStepCompleted(stepToken);
-            }
-          } catch (Throwable e) {
-
-            LOG.error("Step " + stepToken + " failed!", e);
-
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-
-            try {
-              persistence.markStepFailed(stepToken, e);
-            } catch (Exception e2) {
-              LOG.error("Could not update step " + stepToken + " to failed! ", e2);
-              internalErrors.add(e2);
-            }
-
-          } finally {
-            semaphore.release();
-          }
-        }
-      };
-      thread = new Thread(r, "Step Runner for " + step.getCheckpointToken());
-      thread.start();
-    }
-
-    public boolean allDependenciesCompleted() throws IOException {
-      for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
-        Step dep = dependencyGraph.getEdgeTarget(edge);
-        if (!StepStatus.NON_BLOCKING.contains(state.getState(dep.getCheckpointToken()).getStatus())) {
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-
-  /**
    * how many components will we allow to execute simultaneously?
    */
   private final int maxConcurrentSteps;
@@ -196,6 +113,7 @@ public final class WorkflowRunner {
   private final AlertsHandler alertsHandler;
   private final Set<WorkflowRunnerNotification> enabledNotifications;
   private final CounterFilter counterFilter;
+  private final ResourceManager<?, ?, WorkflowStatePersistence> resourceManager;
   private String sandboxDir;
 
   public String getSandboxDir() {
@@ -271,7 +189,7 @@ public final class WorkflowRunner {
     this(workflowName, persistence, new ProductionWorkflowOptions(), Sets.newHashSet(tail));
   }
 
-  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) {
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistenceFactory, WorkflowOptions options, Set<Step> tailSteps) {
 
     //  TODO we can move name into WorkflowOptions and do this verification when setting it there.  eliminate contructors here
     verifyName(workflowName, options);
@@ -286,11 +204,12 @@ public final class WorkflowRunner {
     this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.stepPollInterval = options.getStepPollInterval();
+    this.resourceManager = options.getResourceManager();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps, timer);
 
-    this.persistence = persistence.prepare(dependencyGraph,
+    this.persistence = persistenceFactory.prepare(dependencyGraph,
         workflowName,
         options.getScopeIdentifier(),
         options.getAppType(),
@@ -301,6 +220,8 @@ public final class WorkflowRunner {
         System.getProperty("user.dir"),
         HadoopJarUtil.getLanuchJarName()
     );
+
+    linkPersistence();
 
     removeRedundantEdges(dependencyGraph);
     setStepContextObjects(dependencyGraph);
@@ -314,6 +235,16 @@ public final class WorkflowRunner {
     }
 
     this.shutdownHook = new Thread(new ShutdownHook());
+  }
+
+  private void linkPersistence() {
+    if (resourceManager != null) {
+      try {
+        resourceManager.linkResourceRoot(persistence);
+      } catch (IOException e) {
+        throw new RuntimeException("Could not link resource root to persistence: " + e);
+      }
+    }
   }
 
   private void verifyName(String name, WorkflowOptions options) {
@@ -353,7 +284,8 @@ public final class WorkflowRunner {
           this.lockProvider,
           this.persistence,
           this.storage,
-          this.counterFilter
+          this.counterFilter,
+          this.resourceManager
       );
     }
   }
@@ -814,5 +746,89 @@ public final class WorkflowRunner {
       counterMap.get(counter.getGroup()).put(counter.getName(), counter.getValue());
     }
     return counterMap;
+  }
+
+  /**
+   * StepRunner keeps track of some extra state for each component, as
+   * well as manages the actual execution thread. Note that it is itself *not*
+   * a Thread.
+   */
+  private final class StepRunner {
+    public final Step step;
+    private final WorkflowStatePersistence state;
+    public Thread thread;
+
+    public StepRunner(Step c, WorkflowStatePersistence state) {
+      this.step = c;
+      this.state = state;
+    }
+
+    private NestedProperties buildInheritedProperties() throws IOException {
+      HadoopProperties.Builder uiPropertiesBuilder = new HadoopProperties.Builder();
+      String priority = persistence.getPriority();
+      String pool = persistence.getPool();
+
+      if (priority != null) {
+        uiPropertiesBuilder.setProperty(JOB_PRIORITY_PARAM, priority, true);
+      }
+
+      if (pool != null) {
+        uiPropertiesBuilder.setProperty(JOB_POOL_PARAM, pool, true);
+      }
+
+      return new NestedProperties(workflowJobProperties, uiPropertiesBuilder.build());
+    }
+
+    public void start() {
+      CascadingHelper.get().getJobConf();
+      Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          String stepToken = step.getCheckpointToken();
+          try {
+            if (StepStatus.NON_BLOCKING.contains(state.getState(stepToken).getStatus())) {
+              LOG.info("Step " + stepToken + " was executed successfully in a prior run. Skipping.");
+            } else {
+
+              persistence.markStepRunning(stepToken);
+
+              LOG.info("Executing step " + stepToken);
+              step.run(buildInheritedProperties());
+
+              persistence.markStepCompleted(stepToken);
+            }
+          } catch (Throwable e) {
+
+            LOG.error("Step " + stepToken + " failed!", e);
+
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+
+            try {
+              persistence.markStepFailed(stepToken, e);
+            } catch (Exception e2) {
+              LOG.error("Could not update step " + stepToken + " to failed! ", e2);
+              internalErrors.add(e2);
+            }
+
+          } finally {
+            semaphore.release();
+          }
+        }
+      };
+      thread = new Thread(r, "Step Runner for " + step.getCheckpointToken());
+      thread.start();
+    }
+
+    public boolean allDependenciesCompleted() throws IOException {
+      for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
+        Step dep = dependencyGraph.getEdgeTarget(edge);
+        if (!StepStatus.NON_BLOCKING.contains(state.getState(dep.getCheckpointToken()).getStatus())) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 }

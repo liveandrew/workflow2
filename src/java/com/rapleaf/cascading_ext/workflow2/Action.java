@@ -29,9 +29,15 @@ import com.liveramp.cascading_ext.flow_step_strategy.MultiFlowStepStrategy;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.resource.ReadResourceContainer;
+import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.cascading_ext.util.OperationStatsUtils;
+import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.cascading_ext.resource.ReadResource;
+import com.liveramp.cascading_ext.resource.Resource;
+import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
@@ -51,8 +57,13 @@ public abstract class Action {
   private final String tmpRoot;
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
+  private final Map<Resource, ReadResourceContainer> readResources = Maps.newHashMap();
+  private final Map<Resource, WriteResourceContainer> writeResources = Maps.newHashMap();
   private final ResourceFactory resourceFactory;
   private final DataStoreBuilder builder;
+
+  private ResourceManager resourceManager;
+
 
   //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
   //  which actually make sense...
@@ -76,6 +87,11 @@ public abstract class Action {
   private transient ContextStorage storage;
   private transient WorkflowStatePersistence persistence;
   private transient CounterFilter counterFilter;
+
+  public Action(String checkpointToken, ResourceManager tool) {
+    this(checkpointToken, Maps.newHashMap());
+    this.resourceManager = tool;
+  }
 
   public Action(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
@@ -129,14 +145,17 @@ public abstract class Action {
 
   //  resource actions
 
+  @Deprecated
   protected void creates(OldResource resource) {
     mark(ResourceAction.CREATES, resource);
   }
 
+  @Deprecated
   protected void uses(OldResource resource) {
     mark(ResourceAction.USES, resource);
   }
 
+  @Deprecated
   private void mark(ResourceAction action, OldResource resource) {
     resources.put(action, resource);
   }
@@ -164,6 +183,18 @@ public abstract class Action {
     mark(DSAction.CONSUMES, store);
   }
 
+  protected <T> ReadResource<T> readsFrom(Resource<T> resource) {
+    ReadResourceContainer<T> container = new ReadResourceContainer<T>();
+    readResources.put(resource, container);
+    return container;
+  }
+
+  protected <T> WriteResource<T> creates(Resource<T> resource) {
+    WriteResourceContainer<T> container = new WriteResourceContainer<T>();
+    writeResources.put(resource, container);
+    return container;
+  }
+
   private void mark(DSAction action, DataStore store) {
     datastores.put(action, store);
   }
@@ -184,6 +215,7 @@ public abstract class Action {
   }
 
 
+  @Deprecated
   protected <T> T get(OldResource<T> resource) throws IOException {
     if (!resources.get(ResourceAction.USES).contains(resource)) {
       throw new RuntimeException("Cannot use resource without declaring it with uses()");
@@ -192,8 +224,22 @@ public abstract class Action {
     return storage.get(resource);
   }
 
-  protected <T> void set(OldResource<T> resource, T value) throws IOException {
+  protected <T> T get(ReadResource<T> resource) {
+    if (resourceManager == null) {
+      throw new RuntimeException("Cannot call get() without providing a ResourceManager to the WorkflowRunner.");
+    }
+    return (T)resourceManager.read(resource);
+  }
 
+  protected <T, R extends WriteResource<T>> void set(R resource, T value) {
+    if (resourceManager == null) {
+      throw new RuntimeException("Cannot call set() without providing a ResourceManager to the WorkflowRunner.");
+    }
+    resourceManager.write(resource, value);
+  }
+
+  @Deprecated
+  protected <T> void set(OldResource<T> resource, T value) throws IOException {
     if (!resources.get(ResourceAction.CREATES).contains(resource)) {
       throw new RuntimeException("Cannot set resource without declaring it with creates()");
     }
@@ -220,6 +266,17 @@ public abstract class Action {
       locks = lockReadsFromStores();
       LOG.info("Acquired locks for " + getDatastores(DSAction.READS_FROM));
       LOG.info("Locks " + locks);
+
+      LOG.info("Setting read resources");
+      for(Resource resource: readResources.keySet()) {
+        readResources.get(resource).setResource(resourceManager.getReadPermission(resource));
+      }
+
+      LOG.info("Setting write resources");
+      for(Resource resource: writeResources.keySet()) {
+        writeResources.get(resource).setResource(resourceManager.getWritePermission(resource));
+      }
+
       execute();
 
       jobPoller.shutdown();
@@ -322,11 +379,13 @@ public abstract class Action {
   protected void setOptionObjects(StoreReaderLockProvider lockProvider,
                                   WorkflowStatePersistence persistence,
                                   ContextStorage storage,
-                                  CounterFilter counterFilter) {
+                                  CounterFilter counterFilter,
+                                  ResourceManager resourceManager) {
     this.lockProvider = lockProvider;
     this.persistence = persistence;
     this.storage = storage;
     this.counterFilter = counterFilter;
+    this.resourceManager = resourceManager;
   }
 
   protected StoreReaderLockProvider getLockProvider() {

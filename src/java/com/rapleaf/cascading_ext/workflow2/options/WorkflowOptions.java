@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.options;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
+import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.CascadingHelper;
@@ -23,6 +24,7 @@ public class WorkflowOptions {
   private AppType appType;
   private Integer stepPollInterval;
   private CounterFilter counterFilter;
+  private ResourceManager resourceManager;
 
   protected WorkflowOptions(){}
 
@@ -73,6 +75,15 @@ public class WorkflowOptions {
                                                              WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = WorkflowRunnerNotificationSet.except(enabledNotification, enabledNotifications);
     return this;
+  }
+
+  public WorkflowOptions setResourceManager(ResourceManager resourceManager) {
+    this.resourceManager = resourceManager;
+    return this;
+  }
+
+  public ResourceManager getResourceManager() {
+    return this.resourceManager;
   }
 
   public WorkflowRunnerNotificationSet getEnabledNotifications() {
