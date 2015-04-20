@@ -16,6 +16,7 @@ import org.apache.hadoop.mapreduce.TaskCounter;
 import org.junit.Before;
 import org.junit.Test;
 
+import cascading.flow.Flow;
 import cascading.flow.FlowProcess;
 import cascading.operation.BaseOperation;
 import cascading.operation.Filter;
@@ -30,6 +31,7 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.event_timer.TimedEvent;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
@@ -755,7 +757,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
     assertEquals(StepStatus.REVERTED.ordinal(), persistence.getState("step1").getStatus().ordinal());
     assertEquals(StepStatus.FAILED.ordinal(), persistence.getState("step2").getStatus().ordinal());
-    
+
     //  restart workflow
     step1 = new Step(new IncrementAction2("step1", step1Count));
     step2 = new Step(new IncrementAction2("step2", step2Count), step1);
@@ -900,11 +902,13 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     Step step = new Step(new IncrementCounter("step1", getTestRoot(), input, output));
 
+    Step step2 = new Step(new IncrementCounter2("step2", getTestRoot(), input, output));
+
     WorkflowRunner runner = new WorkflowRunner("Test Workflow",
         new DbPersistenceFactory(),
         new TestWorkflowOptions()
-            .setCounterFilter(CounterFilters.userGroups(Sets.newHashSet("CUSTOM_COUNTER"))),
-        step
+            .setCounterFilter(CounterFilters.userGroups(Sets.newHashSet("CUSTOM_COUNTER", "CUSTOM_COUNTER2"))),
+        Sets.newHashSet(step, step2)
     );
 
     runner.run();
@@ -914,10 +918,63 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     assertEquals(1l, counters.get("CUSTOM_COUNTER", "NAME").longValue());
     assertFalse(counters.containsKey("OTHER_COUNTER", "NAME"));
 
+    assertEquals(1l, counters.get("CUSTOM_COUNTER2", "NAME").longValue());
+    assertFalse(counters.containsKey("OTHER_COUNTER2", "NAME"));
+
     TaskCounter mapIn = TaskCounter.MAP_INPUT_RECORDS;
-    assertEquals(1l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
+    assertEquals(2l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
 
   }
+
+  // methods to evade PMD in test
+
+  private static CascadingHelper hideGetBuilder() {
+    return CascadingHelper.get();
+  }
+
+  private static void hideComplete(Flow f) {
+    f.complete();
+  }
+
+  public static class IncrementCounter2 extends Action {
+
+    private final TupleDataStore in;
+    private final TupleDataStore out;
+
+    public IncrementCounter2(String checkpointToken, String tmpRoot,
+                             TupleDataStore in,
+                             TupleDataStore out) {
+      super(checkpointToken, tmpRoot);
+
+      this.in = in;
+      this.out = out;
+
+      readsFrom(in);
+      creates(out);
+
+    }
+
+    @Override
+    protected void execute() throws Exception {
+
+      Pipe pipe = new Pipe("input");
+      pipe = new Each(pipe, new Count());
+
+      Flow flow = hideGetBuilder().getFlowConnector().connect(in.getTap(), out.getTap(), pipe);
+      hideComplete(flow);
+      runningFlow(flow);
+    }
+
+    private static class Count extends BaseOperation implements Filter {
+      @Override
+      public boolean isRemove(FlowProcess flowProcess, FilterCall filterCall) {
+        flowProcess.increment("CUSTOM_COUNTER2", "NAME", 1);
+        flowProcess.increment("OTHER_COUNTER2", "NAME", 1);
+        return false;
+      }
+    }
+  }
+
 
   public static class IncrementCounter extends CascadingAction2 {
 

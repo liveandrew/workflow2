@@ -31,6 +31,7 @@ import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
+import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
@@ -700,12 +701,12 @@ public final class WorkflowRunner {
   public TwoNestedMap<String, String, Long> getFlatCounters(IRlDb db) throws IOException {
     long executionId = persistence.getExecutionId();
 
-    TwoNestedMap<String, String, Long> counters = new TwoNestedMap<String, String, Long>();
+    TwoNestedCountingMap<String, String> counters = new TwoNestedCountingMap<String, String>(0l);
     for (WorkflowAttempt attempt : db.workflowExecutions().find(executionId).getWorkflowAttempt()) {
       for (StepAttempt step : attempt.getStepAttempt()) {
         for (MapreduceJob job : step.getMapreduceJobs()) {
           for (MapreduceCounter counter : job.getMapreduceCounters()) {
-            counters.put(counter.getGroup(), counter.getName(), counter.getValue());
+            counters.incrementAndGet(counter.getGroup(), counter.getName(), counter.getValue());
           }
         }
       }

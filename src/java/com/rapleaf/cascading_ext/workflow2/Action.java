@@ -268,12 +268,12 @@ public abstract class Action {
       LOG.info("Locks " + locks);
 
       LOG.info("Setting read resources");
-      for(Resource resource: readResources.keySet()) {
+      for (Resource resource : readResources.keySet()) {
         readResources.get(resource).setResource(resourceManager.getReadPermission(resource));
       }
 
       LOG.info("Setting write resources");
-      for(Resource resource: writeResources.keySet()) {
+      for (Resource resource : writeResources.keySet()) {
         writeResources.get(resource).setResource(resourceManager.getWritePermission(resource));
       }
 
@@ -287,8 +287,15 @@ public abstract class Action {
     } finally {
       unlock(locks);
       if (jobPoller != null) {
+
+        //  make sure each MR job exists in the DB
         //  try to refresh info in case of fast failures
         jobPoller.updateRunningJobs();
+
+        for (ActionOperation operation : operations) {
+          recordCounters(operation);
+        }
+
         jobPoller.shutdown();
       }
     }
@@ -453,20 +460,11 @@ public abstract class Action {
 
     runningFlow(operation);
     operation.start();
-
     operation.complete();
-
-    //  TODO this is because some things call execute() directly... really want to prevent that eventually
-    if (persistence != null) {
-      recordCounters(operation);
-    }
 
   }
 
   private void recordCounters(ActionOperation operation) {
-
-    //  make sure each MR job exists in the DB
-    jobPoller.updateRunningJobs();
 
     ThreeNestedMap<String, String, String, Long> counters = operation.getJobCounters();
 
