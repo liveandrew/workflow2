@@ -5,6 +5,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
@@ -21,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
 import cascading.flow.FlowStepStrategy;
+import cascading.pipe.Pipe;
+import cascading.tap.Tap;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.flow.LoggingFlowConnector;
@@ -47,6 +50,7 @@ import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;
 import com.rapleaf.cascading_ext.workflow2.action_operations.HadoopOperation;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
+import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
@@ -447,6 +451,17 @@ public abstract class Action {
     Flow flow = flowc.buildFlow();
     completeWithProgress(new FlowOperation(flow));
     return flow;
+  }
+
+  protected FlowRunner completeWithProgressClosure(){
+    return new ActionFlowRunner();
+  }
+
+  private class ActionFlowRunner implements FlowRunner {
+    @Override
+    public Flow complete(Properties properties, String name, Tap source, Tap sink, Pipe tail) {
+      return completeWithProgress(buildFlow(properties).connect(name, source, sink, tail));
+    }
   }
 
   /**
