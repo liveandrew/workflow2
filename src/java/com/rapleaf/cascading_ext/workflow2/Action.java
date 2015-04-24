@@ -92,9 +92,9 @@ public abstract class Action {
   private transient WorkflowStatePersistence persistence;
   private transient CounterFilter counterFilter;
 
-  public Action(String checkpointToken, ResourceManager tool) {
+  public Action(String checkpointToken, ResourceManager resourceManager) {
     this(checkpointToken, Maps.newHashMap());
-    this.resourceManager = tool;
+    this.resourceManager = resourceManager;
   }
 
   public Action(String checkpointToken) {
