@@ -271,6 +271,10 @@ public abstract class Action {
       LOG.info("Acquired locks for " + getDatastores(DSAction.READS_FROM));
       LOG.info("Locks " + locks);
 
+      if (!(readResources.isEmpty() && writeResources.isEmpty()) && resourceManager == null) {
+        throw new RuntimeException("Cannot call readsFrom() or creates() on resources without setting a ResourceManager in the WorkflowOptions!");
+      }
+
       LOG.info("Setting read resources");
       for (Resource resource : readResources.keySet()) {
         readResources.get(resource).setResource(resourceManager.getReadPermission(resource));
