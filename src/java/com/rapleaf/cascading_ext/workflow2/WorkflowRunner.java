@@ -114,7 +114,7 @@ public final class WorkflowRunner {
   private final AlertsHandler alertsHandler;
   private final Set<WorkflowRunnerNotification> enabledNotifications;
   private final CounterFilter counterFilter;
-  private final ResourceManager<?, ?, WorkflowStatePersistence> resourceManager;
+  private final ResourceManager<?, ?> resourceManager;
   private String sandboxDir;
 
   public String getSandboxDir() {
