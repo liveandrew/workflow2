@@ -1,6 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
-import java.util.Set;
+import java.util.List;
 
 import com.google.common.collect.Sets;
 import org.junit.Before;
@@ -87,7 +87,7 @@ public class TestDbPersistenceFactory extends CascadingExtTestCase {
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
     workflowRunner2.run();
 
-    Set<Application> applications = rldb.applications().findByName("Workflow");
+    List<Application> applications = rldb.applications().findByName("Workflow");
     assertEquals(1, applications.size());
 
     Application app = Accessors.only(applications);

@@ -767,7 +767,7 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
     WorkflowStatePersistence newPeristence = restartedWorkflow.getPersistence();
 
     //  nothing changed for first execution
-    List<WorkflowExecution> executions = rldb.workflowExecutions().query().order(QueryOrder.ASC).findWithOrder();
+    List<WorkflowExecution> executions = rldb.workflowExecutions().query().order(QueryOrder.ASC).find();
     ex = Accessors.first(executions);
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
     assertEquals(StepStatus.REVERTED.ordinal(), persistence.getState("step1").getStatus().ordinal());

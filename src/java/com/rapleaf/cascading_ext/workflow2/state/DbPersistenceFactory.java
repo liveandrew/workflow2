@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -169,7 +170,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   private void cleanUpRunningAttempts(WorkflowExecution execution) throws IOException {
 
-    Set<WorkflowAttempt> prevAttempts = execution.getWorkflowAttempt();
+    List<WorkflowAttempt> prevAttempts = execution.getWorkflowAttempt();
     LOG.info("Found previous attempts: " + prevAttempts);
 
     for (WorkflowAttempt attempt : prevAttempts) {
@@ -239,17 +240,17 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private WorkflowExecution getExecution(Application app, String name, AppType appType, String scopeId) throws IOException {
 
     //  TODO remove this query after migration
-    Set<WorkflowExecution> incompleteExecutions = rldb.workflowExecutions().query()
+    Set<WorkflowExecution> incompleteExecutions = Sets.newHashSet(rldb.workflowExecutions().query()
         .name(name)
         .scopeIdentifier(scopeId)
         .status(WorkflowExecutionStatus.INCOMPLETE.ordinal())
-        .find();
+        .find());
 
     incompleteExecutions.addAll(rldb.workflowExecutions().query()
         .applicationId((int)app.getId())
         .scopeIdentifier(scopeId)
         .status(WorkflowExecutionStatus.INCOMPLETE.ordinal())
-        .findWithOrder());
+        .find());
 
     if (incompleteExecutions.size() > 1) {
       throw new RuntimeException("Found multiple incomplete workflow executions!");
