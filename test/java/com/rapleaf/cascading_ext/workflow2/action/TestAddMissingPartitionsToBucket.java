@@ -25,7 +25,8 @@ public class TestAddMissingPartitionsToBucket extends CascadingExtTestCase {
     Bucket bucket = Bucket.open(fs, dataStore.getBucket().getRoot().toString(), BytesWritable.class);
     write(bucket, "part-00012_0", "a", "b", "c");
     write(bucket, "part-00061_0", "d", "e", "f");
-    new AddMissingPartitionsToBucket<BytesWritable>("add-missing-partitions", 70, dataStore, BytesWritable.class).execute();
+
+    execute(new AddMissingPartitionsToBucket<BytesWritable>("add-missing-partitions", 70, dataStore, BytesWritable.class));
     assertEquals(Sets.newHashSet("a", "b", "c", "d", "e", "f"), readRecords(bucket));
     assertEquals(70, bucket.getStoredFiles().length);
   }

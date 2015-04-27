@@ -1,17 +1,18 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
-import com.rapleaf.cascading_ext.datastore.BucketDataStore;
-import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.types.new_person_data.PIN;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.Path;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.Path;
+import org.junit.Test;
+
+import com.rapleaf.cascading_ext.CascadingExtTestCase;
+import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.types.new_person_data.PIN;
 
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -38,7 +39,7 @@ public class TestCreateEmptyBucket extends CascadingExtTestCase {
   public void createBucketWithNumPartitions(BucketDataStore ds, int numPartitions, Class recordType) throws Exception {
     CreateEmptyBucket action = new CreateEmptyBucket(new Path(ds.getPath()).getName(), ds, numPartitions, true, recordType);
 
-    action.execute();
+    execute(action);
 
     verifyPartitions(ds, numPartitions);
     
