@@ -408,10 +408,23 @@ public abstract class Action {
   }
 
   protected FlowBuilder buildFlow(Map<Object, Object> properties) {
-    if (nestedProperties == null) {
-      throw new RuntimeException("Cannot call execute() directly!");
+    NestedProperties flowProperties;
+    //TODO Sweep direct calls to execute() so we don't have to do this!
+    if (nestedProperties != null) {
+      flowProperties = new NestedProperties(nestedProperties, properties);
+    } else {
+      flowProperties =
+          new NestedProperties(
+              new NestedProperties(
+                  new NestedProperties(
+                      null,
+                      CascadingHelper.get().getDefaultHadoopProperties()
+                  ),
+                  stepProperties
+              ),
+              properties
+          );
     }
-    NestedProperties flowProperties = new NestedProperties(nestedProperties, properties);
     return new FlowBuilder(buildFlowConnector(flowProperties.getPropertiesMap()), getClass());
   }
 
