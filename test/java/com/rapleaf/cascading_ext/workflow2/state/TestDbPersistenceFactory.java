@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.state;
 import java.util.List;
 
 import com.google.common.collect.Sets;
+import org.apache.hadoop.util.Time;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,18 +40,18 @@ public class TestDbPersistenceFactory extends CascadingExtTestCase {
     IRlDb rldb = new DatabasesImpl().getRlDb();
     rldb.disableCaching();
 
-    WorkflowExecution ex = rldb.workflowExecutions().create(
-        "Workflow", WorkflowExecutionStatus.INCOMPLETE.ordinal()
-    );
+    Application app = rldb.applications().create("Workflow");
+
+    WorkflowExecution ex = rldb.workflowExecutions().create(null, "Workflow", null, WorkflowExecutionStatus.INCOMPLETE.ordinal(), Time.now(), Time.now() + 1, app.getIntId());
 
     long currentTime = System.currentTimeMillis();
 
-    WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create((int)ex.getId(), "bpodgursky", "default", "default", "localhost")
+    WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create(ex.getIntId(), "bpodgursky", "default", "default", "localhost")
         .setStatus(AttemptStatus.RUNNING.ordinal())
         .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 2));
     workflowAttempt.save();
 
-    StepAttempt stepAttempt = rldb.stepAttempts().create((int)workflowAttempt.getId(), "step1", StepStatus.RUNNING.ordinal(), Object.class.getName());
+    StepAttempt stepAttempt = rldb.stepAttempts().create(workflowAttempt.getIntId(), "step1", StepStatus.RUNNING.ordinal(), Object.class.getName());
 
     WorkflowRunner workflowRunner = new WorkflowRunner("Workflow",
         new DbPersistenceFactory(),
@@ -101,9 +102,9 @@ public class TestDbPersistenceFactory extends CascadingExtTestCase {
     IRlDb rldb = new DatabasesImpl().getRlDb();
     rldb.disableCaching();
 
-    WorkflowExecution ex = rldb.workflowExecutions().create(
-        "Workflow", WorkflowExecutionStatus.INCOMPLETE.ordinal()
-    );
+    Application app = rldb.applications().create("Workflow");
+
+    WorkflowExecution ex = rldb.workflowExecutions().create(null, "Workflow", null, WorkflowExecutionStatus.INCOMPLETE.ordinal(), Time.now(), Time.now() + 1, app.getIntId());
 
     long currentTime = System.currentTimeMillis();
 

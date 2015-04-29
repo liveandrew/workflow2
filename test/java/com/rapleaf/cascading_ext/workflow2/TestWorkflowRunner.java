@@ -45,6 +45,7 @@ import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
@@ -642,14 +643,17 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     WorkflowStatePersistence origPersistence = testWorkflow.getPersistence();
 
+    List<Application> applications = rldb.applications().query().name("Test Workflow").find();
+    assertEquals(1, applications.size());
+
     assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(), rldb.workflowExecutions().query()
-        .name("Test Workflow")
+        .applicationId(Accessors.only(applications).getIntId())
         .find().iterator().next().getStatus());
 
     origPersistence.markStepReverted("step1");
 
     assertEquals(WorkflowExecutionStatus.INCOMPLETE.ordinal(), rldb.workflowExecutions().query()
-        .name("Test Workflow")
+        .applicationId(Accessors.only(applications).getIntId())
         .find().iterator().next().getStatus());
 
 

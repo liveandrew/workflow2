@@ -17,12 +17,14 @@ import com.liveramp.importer.generated.AppType;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.db_schemas.DatabasesImpl;
+import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
+import com.rapleaf.db_schemas.rldb.util.JackUtil;
 import com.rapleaf.db_schemas.rldb.workflow.Assertions;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
@@ -30,15 +32,19 @@ import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
+import com.rapleaf.jack.queries.Record;
+import com.rapleaf.jack.queries.Records;
 import com.rapleaf.support.collections.Accessors;
 
 public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
 
+  private final IDatabases databases;
   private final IRlDb rldb;
 
   public DbPersistenceFactory() {
-    this.rldb = new DatabasesImpl().getRlDb();
+    this.databases = new DatabasesImpl();
+    this.rldb = databases.getRlDb();
     this.rldb.disableCaching();
   }
 
@@ -239,18 +245,19 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   private WorkflowExecution getExecution(Application app, String name, AppType appType, String scopeId) throws IOException {
 
-    //  TODO remove this query after migration
-    Set<WorkflowExecution> incompleteExecutions = Sets.newHashSet(rldb.workflowExecutions().query()
-        .name(name)
-        .scopeIdentifier(scopeId)
-        .status(WorkflowExecutionStatus.INCOMPLETE.ordinal())
-        .find());
+    Set<WorkflowExecution> incompleteExecutions = Sets.newHashSet();
+    Records records = rldb.createQuery()
+        .from(Application.TBL)
+        .innerJoin(WorkflowExecution.TBL)
+        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID))
+        .where(Application.NAME.equalTo(name))
+        .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeId))
+        .where(WorkflowExecution.STATUS.equalTo(WorkflowExecutionStatus.INCOMPLETE.ordinal()))
+        .fetch();
 
-    incompleteExecutions.addAll(rldb.workflowExecutions().query()
-        .applicationId((int)app.getId())
-        .scopeIdentifier(scopeId)
-        .status(WorkflowExecutionStatus.INCOMPLETE.ordinal())
-        .find());
+    for (Record record : records) {
+      incompleteExecutions.add(new WorkflowExecution(JackUtil.getModel(WorkflowExecution.Attributes.class, record), databases));
+    }
 
     if (incompleteExecutions.size() > 1) {
       throw new RuntimeException("Found multiple incomplete workflow executions!");
