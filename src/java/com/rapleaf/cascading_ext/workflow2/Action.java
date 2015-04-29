@@ -16,6 +16,7 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.scribe.utils.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -200,6 +201,7 @@ public abstract class Action {
   }
 
   private void mark(DSAction action, DataStore store) {
+    Preconditions.checkNotNull(store, "Cannot mark a null datastore as used!");
     datastores.put(action, store);
   }
 
