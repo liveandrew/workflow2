@@ -8,6 +8,7 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.util.Time;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
@@ -267,10 +268,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       LOG.info("No incomplete execution found, creating new execution");
 
       //  new execution
-      WorkflowExecution ex = rldb.workflowExecutions().create(name, WorkflowExecutionStatus.INCOMPLETE.ordinal())
-          .setApplicationId((int)app.getId())
-          .setScopeIdentifier(scopeId)
-          .setStartTime(System.currentTimeMillis());
+      WorkflowExecution ex = rldb.workflowExecutions().create(null, name, scopeId, WorkflowExecutionStatus.INCOMPLETE.ordinal(), Time.now(), null, app.getIntId());
 
       if (appType != null) {
         ex.setAppType(appType.getValue());
