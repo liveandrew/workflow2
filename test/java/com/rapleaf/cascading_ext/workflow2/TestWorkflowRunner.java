@@ -28,6 +28,7 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.event_timer.TimedEvent;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
@@ -802,6 +803,24 @@ public class TestWorkflowRunner extends CascadingExtTestCase {
 
     assertTrue(cancelNonLatest.getMessage().startsWith("Cannot revert steps or cancel execution"));
 
+  }
+
+  @Test
+  public void testCancelApplication() throws Exception {
+
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+
+    Step step1 = new Step(new NoOpAction("step1"));
+
+    WorkflowRunner restartedWorkflow = new WorkflowRunner("HUMAN_INTERVENTION",
+        dbPersistenceFactory,
+        new TestWorkflowOptions().setAppType(AppType.HUMAN_INTERVENTION),
+        Sets.newHashSet(step1)
+    );
+
+    restartedWorkflow.run();
+
+    ApplicationController.cancelLatestExecution(rldb, AppType.HUMAN_INTERVENTION, null);
   }
 
   @Test
