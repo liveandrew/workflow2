@@ -12,11 +12,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.liveramp.cascading_ext.mockery.Mockery;
+import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.util.generated.StringOrNone;
 import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
+import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.VersionedThriftBucketDataStoreHelper;
 import com.rapleaf.cascading_ext.serialization.ThriftRawComparator;
 import com.rapleaf.cascading_ext.workflow2.Action;
@@ -77,8 +78,9 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
   public void testWorkflowInterop() throws Exception {
 
     VersionedBucketDataStore<StringOrNone> versionedStore =
-        Mockery.versionBucket(getTestRoot() + "/store", StringOrNone.string_value("version1"));
+       new VersionedBucketDataStoreImpl<StringOrNone>(FileSystemHelper.getFS(), "store", getTestRoot(), "input", StringOrNone.class);
 
+    VersionedThriftBucketDataStoreHelper.writeToNewVersion(versionedStore, StringOrNone.string_value("version1"));
     assertEquals(1, versionedStore.getAllCompleteVersions().length);
 
 
