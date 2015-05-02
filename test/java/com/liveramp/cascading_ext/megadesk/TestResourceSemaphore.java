@@ -78,7 +78,7 @@ public class TestResourceSemaphore extends CascadingExtTestCase {
   public void testWorkflowInterop() throws Exception {
 
     VersionedBucketDataStore<StringOrNone> versionedStore =
-       new VersionedBucketDataStoreImpl<StringOrNone>(FileSystemHelper.getFS(), "store", getTestRoot(), "input", StringOrNone.class);
+        new VersionedBucketDataStoreImpl<StringOrNone>(FileSystemHelper.getFS(), "store", getTestRoot() + "/input", "", StringOrNone.class);
 
     VersionedThriftBucketDataStoreHelper.writeToNewVersion(versionedStore, StringOrNone.string_value("version1"));
     assertEquals(1, versionedStore.getAllCompleteVersions().length);
