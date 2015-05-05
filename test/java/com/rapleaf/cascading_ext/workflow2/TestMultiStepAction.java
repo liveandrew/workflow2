@@ -6,12 +6,11 @@ import java.util.HashSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
-public class TestMultiStepAction extends CascadingExtTestCase {
+public class TestMultiStepAction extends WorkflowTestCase {
   private Step a;
   private Step b;
   private Step g;

@@ -9,15 +9,15 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-public class TestCreateEmptyBucket extends CascadingExtTestCase {
+public class TestCreateEmptyBucket extends WorkflowTestCase {
   private final DataStoreBuilder builder = new DataStoreBuilder(getTestRoot());
   private Pattern partPattern = Pattern.compile("part\\-\\d+\\.bucketfile");
 

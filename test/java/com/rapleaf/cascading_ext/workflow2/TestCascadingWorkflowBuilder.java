@@ -24,7 +24,6 @@ import cascading.tuple.Tuple;
 import com.liveramp.cascading_ext.assembly.BloomJoin;
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.liveramp.commons.collections.list.ListBuilder;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.assembly.Distinct;
 import com.rapleaf.cascading_ext.assembly.FastSum;
@@ -53,7 +52,7 @@ import com.rapleaf.types.person_data.GenderType;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-public class TestCascadingWorkflowBuilder extends CascadingExtTestCase {
+public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
   private TupleDataStore input;
   private TupleDataStore input2;

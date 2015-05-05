@@ -4,11 +4,11 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 
-public class TestAcquireLock extends CascadingExtTestCase{
+public class TestAcquireLock extends WorkflowTestCase {
 
   @Test
   public void testExclusion() throws IOException {

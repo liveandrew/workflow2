@@ -11,7 +11,7 @@ import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
 @Ignore
-public class LongRunningWorkflow extends CascadingExtTestCase {
+public class LongRunningWorkflow extends WorkflowTestCase {
 
   private final String LONG_RUNNING_WORKFLOW_PATH = getTestRoot() + "/LongRunningHadoopWorkflow";
 

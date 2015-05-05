@@ -10,11 +10,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.liveramp.identity_resolver.generated.DirectedPinPair;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
-import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PinToPinList;
@@ -22,7 +21,7 @@ import com.rapleaf.types.new_person_data.PinToPinList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class TestSortStoreByThriftField extends CascadingExtTestCase {
+public class TestSortStoreByThriftField extends WorkflowTestCase {
   private static DustinInternalEquiv die1 = new DustinInternalEquiv(ByteBuffer.wrap("01".getBytes()), PIN.email("email1@gmail.com"), 12);
   private static DustinInternalEquiv die2 = new DustinInternalEquiv(ByteBuffer.wrap("02".getBytes()), PIN.email("email0@gmail.com"), 11);
   private static DustinInternalEquiv die3 = new DustinInternalEquiv(ByteBuffer.wrap("03".getBytes()), PIN.email("email4@gmail.com"), 10);

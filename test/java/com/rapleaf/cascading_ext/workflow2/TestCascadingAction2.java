@@ -19,7 +19,6 @@ import cascading.tuple.Tuple;
 
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.liveramp.commons.collections.list.ListBuilder;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -34,7 +33,7 @@ import com.rapleaf.types.new_person_data.IdentitySumm;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestCascadingAction2 extends CascadingExtTestCase {
+public class TestCascadingAction2 extends WorkflowTestCase {
 
   public static class SimpleExampleAction extends CascadingAction2 {
     public SimpleExampleAction(String checkpointToken, String tmpRoot,

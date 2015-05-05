@@ -8,16 +8,16 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.io.BytesWritable;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
 import com.rapleaf.support.Strings;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestAddMissingPartitionsToBucket extends CascadingExtTestCase {
+public class TestAddMissingPartitionsToBucket extends WorkflowTestCase {
 
   @Test
   public void testIt() throws Exception {

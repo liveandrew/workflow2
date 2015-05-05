@@ -7,9 +7,9 @@ import org.apache.hadoop.util.Time;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.db_schemas.DatabasesImpl;
@@ -27,7 +27,7 @@ import com.rapleaf.support.collections.Accessors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TestDbPersistenceFactory extends CascadingExtTestCase {
+public class TestDbPersistenceFactory extends WorkflowTestCase {
 
   @Before
   public void setUp() throws Exception {

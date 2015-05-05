@@ -11,10 +11,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.TMSJDataStoreHelper;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TBinaryExtractor;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.PIN;
 
@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-public class TestCleanUpMsjStores extends CascadingExtTestCase {
+public class TestCleanUpMsjStores extends WorkflowTestCase {
 
   private TMSJDataStore<DustinInternalEquiv> store;
   private AlertsHandler alertsHandler;

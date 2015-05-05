@@ -9,7 +9,6 @@ import org.apache.thrift.TException;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.TMSJDataStoreHelper;
@@ -17,10 +16,11 @@ import com.rapleaf.cascading_ext.map_side_join.extractors.TStringBytesExtractor;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import com.rapleaf.cascading_ext.test.ByteArrayExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.types.new_person_data.SPEL;
 
-public class TestTMSJDelete extends CascadingExtTestCase {
+public class TestTMSJDelete extends WorkflowTestCase {
   private TMSJDataStore<SPEL> spelDataStore;
   private BucketDataStore<SPEL> deletionDelta;
 

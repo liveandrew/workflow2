@@ -4,18 +4,18 @@ import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.workflow2.FailingAction;
 import com.rapleaf.cascading_ext.workflow2.IncrementAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
-public class TestHdfsCheckpointPersistence extends CascadingExtTestCase {
+public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
 
   private final String checkpointDir = getTestRoot() + "/checkpoints";
 

@@ -14,7 +14,6 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
@@ -22,7 +21,7 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
-public class TestWorkflowDiagram extends CascadingExtTestCase {
+public class TestWorkflowDiagram extends WorkflowTestCase {
 
   public static class FakeAction extends Action {
 

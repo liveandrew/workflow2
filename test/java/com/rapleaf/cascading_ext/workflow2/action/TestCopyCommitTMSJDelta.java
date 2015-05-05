@@ -8,15 +8,15 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.map_side_join.extractors.BytesWritableFromByteArray;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.types.new_person_data.PIN;
 
-public class TestCopyCommitTMSJDelta extends CascadingExtTestCase {
+public class TestCopyCommitTMSJDelta extends WorkflowTestCase {
   private TMSJDataStore<PIN> pins;
   private BucketDataStore<PIN> delta;
 

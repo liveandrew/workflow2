@@ -16,7 +16,6 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.commons.collections.list.ListBuilder;
 import com.liveramp.commons.collections.map.MapBuilder;
 import com.liveramp.util.generated.StringOrNone;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.map_side_join.partitioning.IdentityAggregator;
@@ -26,7 +25,7 @@ import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.tap.bucket2.partitioner.AudienceVersion;
 import com.rapleaf.cascading_ext.workflow2.action.CreatePartitionStructure;
 
-public class TestCreatePartitionStructure extends CascadingExtTestCase {
+public class TestCreatePartitionStructure extends WorkflowTestCase {
 
 
   @Test

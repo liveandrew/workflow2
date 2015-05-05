@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import com.liveramp.cascading_ext.Bytes;
 import com.liveramp.commons.collections.map.MapBuilder;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.map_side_join.TIterator;
@@ -16,12 +15,13 @@ import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.msj_tap.operation.MOMSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.operation.functioncall.MOMSJFunctionCall;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJFixtures;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.support.Strings;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.PIN;
 
-public class TestMOMSJTapAction extends CascadingExtTestCase {
+public class TestMOMSJTapAction extends WorkflowTestCase {
 
   private static final ByteBuffer EID1 = ByteBuffer.wrap(Strings.toBytes("1"));
   private static final ByteBuffer EID2 = ByteBuffer.wrap(Strings.toBytes("2"));

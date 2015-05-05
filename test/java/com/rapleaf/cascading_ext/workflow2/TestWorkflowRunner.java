@@ -31,7 +31,6 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.event_timer.TimedEvent;
 import com.liveramp.java_support.workflow.ActionId;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -63,7 +62,7 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
-public class TestWorkflowRunner extends CascadingExtTestCase {
+public class TestWorkflowRunner extends WorkflowTestCase {
 
   private WorkflowPersistenceFactory hdfsPersistenceFactory = new HdfsCheckpointPersistence(getTestRoot() + "/hdfs_root");
 

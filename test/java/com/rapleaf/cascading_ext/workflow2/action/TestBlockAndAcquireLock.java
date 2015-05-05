@@ -5,11 +5,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 
-public class TestBlockAndAcquireLock extends CascadingExtTestCase{
+public class TestBlockAndAcquireLock extends WorkflowTestCase {
 
   @Test
   public void testRelease() throws IOException {
