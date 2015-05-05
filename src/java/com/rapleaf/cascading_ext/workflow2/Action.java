@@ -33,15 +33,15 @@ import com.liveramp.cascading_ext.flow_step_strategy.MultiFlowStepStrategy;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.ReadResourceContainer;
+import com.liveramp.cascading_ext.resource.Resource;
+import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.cascading_ext.util.OperationStatsUtils;
-import com.liveramp.cascading_ext.resource.ResourceManager;
-import com.liveramp.cascading_ext.resource.ReadResource;
-import com.liveramp.cascading_ext.resource.Resource;
-import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
@@ -460,7 +460,7 @@ public abstract class Action {
     return flow;
   }
 
-  protected FlowRunner completeWithProgressClosure(){
+  protected FlowRunner completeWithProgressClosure() {
     return new ActionFlowRunner();
   }
 
