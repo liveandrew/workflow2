@@ -7,7 +7,7 @@ import cascading.tap.Tap;
 
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding;
-import com.rapleaf.cascading_ext.workflow2.TapFactory;
+import com.rapleaf.cascading_ext.tap.TapFactory;
 
 public class PartitionAssemblySinkBinding implements SinkBinding.DataStoreSink, SinkBinding {
   private final PartitionedDataStore store;

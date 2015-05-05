@@ -46,6 +46,7 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingHelper;
+import com.rapleaf.cascading_ext.RunnableJob;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.action_operations.FlowOperation;

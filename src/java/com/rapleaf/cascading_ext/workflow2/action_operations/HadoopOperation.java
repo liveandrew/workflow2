@@ -16,7 +16,7 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.java_support.event_timer.FixedTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.ActionOperation;
-import com.rapleaf.cascading_ext.workflow2.RunnableJob;
+import com.rapleaf.cascading_ext.RunnableJob;
 import com.rapleaf.cascading_ext.workflow2.Step;
 
 public class HadoopOperation implements ActionOperation {

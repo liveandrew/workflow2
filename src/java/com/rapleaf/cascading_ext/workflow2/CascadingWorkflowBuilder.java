@@ -35,8 +35,9 @@ import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
+import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
-import com.rapleaf.cascading_ext.workflow2.TapFactory.SimpleFactory;
+import com.rapleaf.cascading_ext.tap.TapFactory.SimpleFactory;
 import com.rapleaf.cascading_ext.workflow2.action.FutureCascadingAction;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 

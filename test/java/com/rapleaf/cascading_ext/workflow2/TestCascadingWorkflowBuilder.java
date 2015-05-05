@@ -38,6 +38,7 @@ import com.rapleaf.cascading_ext.function.ExpandThrift;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJFixtures;
+import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;

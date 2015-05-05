@@ -14,7 +14,7 @@ import cascading.tap.Tap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.FlowBuilder;
-import com.rapleaf.cascading_ext.workflow2.TapFactory;
+import com.rapleaf.cascading_ext.tap.TapFactory;
 
 public class FutureCascadingAction extends Action {
 

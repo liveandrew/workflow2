@@ -19,7 +19,7 @@ import cascading.tuple.Tuple;
 
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
-import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction; import com.rapleaf.cascading_ext.msj_tap.operation.functioncall.MSJFunctionCall;
+import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
@@ -28,7 +28,7 @@ import com.rapleaf.cascading_ext.tap.bucket2.PartitionedBucketScheme;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.workflow2.CascadingAction2;
 import com.rapleaf.cascading_ext.workflow2.PartitionFactory;
-import com.rapleaf.cascading_ext.workflow2.TapFactory;
+import com.rapleaf.cascading_ext.tap.TapFactory;
 
 public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
 
