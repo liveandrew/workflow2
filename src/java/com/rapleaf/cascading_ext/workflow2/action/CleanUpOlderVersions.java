@@ -6,6 +6,7 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.datastore.VersionedStore;
+import com.rapleaf.formats.datastore.VersionDeletionDeterminer;
 
 public class CleanUpOlderVersions extends Action {
   private final int numVersionsToKeep;
@@ -25,11 +26,11 @@ public class CleanUpOlderVersions extends Action {
   @Override
   protected void execute() throws Exception {
     for (VersionedBucketDataStore versionedDataStore : versionedDataStores) {
-      versionedDataStore.getVersionedStore().deleteOlderVersions(numVersionsToKeep, new StoreLockDeletionDeterminer(this.getLockProvider()), true);
+      versionedDataStore.getVersionedStore().deleteOlderVersions(numVersionsToKeep, (VersionDeletionDeterminer)new StoreLockDeletionDeterminer(this.getLockProvider()), true);
     }
   }
 
-  private static class StoreLockDeletionDeterminer implements VersionedStore.VersionDeletionDeterminer {
+  private static class StoreLockDeletionDeterminer implements VersionDeletionDeterminer {
 
     private final StoreReaderLockProvider provider;
 
@@ -37,7 +38,6 @@ public class CleanUpOlderVersions extends Action {
       this.provider = provider;
     }
 
-    @Override
     public boolean canDelete(VersionedStore store, long version) {
       return !provider.createLock(store, version).hasReaders();
     }
