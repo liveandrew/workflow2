@@ -25,12 +25,13 @@ import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.types.spruce.LogApp;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestCompressLogsAction extends CascadingExtTestCase {
+public class TestCompressLogsAction extends WorkflowTestCasees {
   private final String INPUT_PATH = getTestRoot() + "/input-lines";
   private static final String COMPRESSION_EXTENSION = readCompressionExtension();
 
