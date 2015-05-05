@@ -11,18 +11,43 @@ import com.liveramp.commons.collections.map.MapBuilder;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.map_side_join.TIterator;
+import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.msj_tap.operation.MOMSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.operation.functioncall.MOMSJFunctionCall;
-import com.rapleaf.cascading_ext.msj_tap.tap.MSJFixtures;
+import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.support.Strings;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
+import com.rapleaf.types.new_person_data.IdentitySumm;
 import com.rapleaf.types.new_person_data.PIN;
+import com.rapleaf.types.new_person_data.PINAndOwners;
 
 public class TestMOMSJTapAction extends WorkflowTestCase {
 
+  public static final TByteArrayExtractor DIE_EID_EXTRACTOR = new TByteArrayExtractor(DustinInternalEquiv._Fields.EID);
+  public static final TByteArrayExtractor ID_SUMM_EID_EXTRACTOR = new TByteArrayExtractor(IdentitySumm._Fields.EID);
+  public static final TExtractorComparator<DustinInternalEquiv, BytesWritable> DIE_EID_COMPARATOR =
+      new TExtractorComparator<DustinInternalEquiv, BytesWritable>(DIE_EID_EXTRACTOR);
+  public static final TExtractorComparator<IdentitySumm, BytesWritable> ID_SUMM_EID_COMPARATOR =
+      new TExtractorComparator<IdentitySumm, BytesWritable>(ID_SUMM_EID_EXTRACTOR);
+
+  public static final PIN PIN1 = PIN.email("ben@gmail.com");
+  public static final PIN PIN2 = PIN.email("ben@liveramp.com");
+  public static final PIN PIN3 = PIN.email("ben@yahoo.com");
+
+
+  public static final DustinInternalEquiv die1 = new DustinInternalEquiv(ByteBuffer.wrap("1".getBytes()), PIN1, 0);
+  public static final DustinInternalEquiv die2 = new DustinInternalEquiv(ByteBuffer.wrap("2".getBytes()), PIN2, 0);
+  public static final DustinInternalEquiv die3 = new DustinInternalEquiv(ByteBuffer.wrap("1".getBytes()), PIN3, 0);
+
+  public static final IdentitySumm SUMM = new IdentitySumm(ByteBuffer.wrap("1".getBytes()), Lists.<PINAndOwners>newArrayList());
+  public static final IdentitySumm SUMM_AFTER = new IdentitySumm(ByteBuffer.wrap("1".getBytes()), Lists.<PINAndOwners>newArrayList(
+      new PINAndOwners(PIN1),
+      new PINAndOwners(PIN3)
+  ));
+  
   private static final ByteBuffer EID1 = ByteBuffer.wrap(Strings.toBytes("1"));
   private static final ByteBuffer EID2 = ByteBuffer.wrap(Strings.toBytes("2"));
 
@@ -49,13 +74,13 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
     BucketDataStore<DustinInternalEquiv> pins2 = builder().getBucketDataStore("pin2", DustinInternalEquiv.class);
 
     ThriftBucketHelper.writeToBucketAndSort(pins1.getBucket(),
-        MSJFixtures.DIE_EID_COMPARATOR,
+        DIE_EID_COMPARATOR,
         DIE1,
         DIE2
     );
 
     ThriftBucketHelper.writeToBucketAndSort(pins2.getBucket(),
-        MSJFixtures.DIE_EID_COMPARATOR,
+        DIE_EID_COMPARATOR,
         DIE3,
         DIE4
     );
@@ -67,8 +92,8 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
         "token",
         getTestRoot() + "/tmp",
         new ExtractorsList<BytesWritable>()
-            .add(pins1, MSJFixtures.DIE_EID_EXTRACTOR)
-            .add(pins2, MSJFixtures.DIE_EID_EXTRACTOR),
+            .add(pins1, DIE_EID_EXTRACTOR)
+            .add(pins2, DIE_EID_EXTRACTOR),
         new TestFunction(),
         new MapBuilder<Outputs, BucketDataStore>()
             .put(Outputs.ONE, output1)

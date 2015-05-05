@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,10 +36,11 @@ import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedThriftBucketDataStoreHelper;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.function.ExpandThrift;
+import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
-import com.rapleaf.cascading_ext.msj_tap.tap.MSJFixtures;
 import com.rapleaf.cascading_ext.tap.TapFactory;
+import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
@@ -48,6 +50,7 @@ import com.rapleaf.types.new_person_data.DataUnitValueUnion._Fields;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
 import com.rapleaf.types.new_person_data.PIN;
+import com.rapleaf.types.new_person_data.PINAndOwners;
 import com.rapleaf.types.person_data.GenderType;
 
 import static junit.framework.Assert.assertTrue;
@@ -55,6 +58,28 @@ import static org.junit.Assert.assertEquals;
 
 public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
+  public static final TByteArrayExtractor DIE_EID_EXTRACTOR = new TByteArrayExtractor(DustinInternalEquiv._Fields.EID);
+  public static final TByteArrayExtractor ID_SUMM_EID_EXTRACTOR = new TByteArrayExtractor(IdentitySumm._Fields.EID);
+  public static final TExtractorComparator<DustinInternalEquiv, BytesWritable> DIE_EID_COMPARATOR =
+      new TExtractorComparator<DustinInternalEquiv, BytesWritable>(DIE_EID_EXTRACTOR);
+  public static final TExtractorComparator<IdentitySumm, BytesWritable> ID_SUMM_EID_COMPARATOR =
+      new TExtractorComparator<IdentitySumm, BytesWritable>(ID_SUMM_EID_EXTRACTOR);
+
+  public static final PIN PIN1 = PIN.email("ben@gmail.com");
+  public static final PIN PIN2 = PIN.email("ben@liveramp.com");
+  public static final PIN PIN3 = PIN.email("ben@yahoo.com");
+
+
+  public static final DustinInternalEquiv die1 = new DustinInternalEquiv(ByteBuffer.wrap("1".getBytes()), PIN1, 0);
+  public static final DustinInternalEquiv die2 = new DustinInternalEquiv(ByteBuffer.wrap("2".getBytes()), PIN2, 0);
+  public static final DustinInternalEquiv die3 = new DustinInternalEquiv(ByteBuffer.wrap("1".getBytes()), PIN3, 0);
+
+  public static final IdentitySumm SUMM = new IdentitySumm(ByteBuffer.wrap("1".getBytes()), Lists.<PINAndOwners>newArrayList());
+  public static final IdentitySumm SUMM_AFTER = new IdentitySumm(ByteBuffer.wrap("1".getBytes()), Lists.<PINAndOwners>newArrayList(
+      new PINAndOwners(PIN1),
+      new PINAndOwners(PIN3)
+  ));
+  
   private TupleDataStore input;
   private TupleDataStore input2;
 
@@ -240,15 +265,15 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     BucketDataStore<DustinInternalEquiv> deltaStore = builder().getBucketDataStore("delta", DustinInternalEquiv.class);
     BucketDataStore<DustinInternalEquiv> output = builder().getBucketDataStore("output", DustinInternalEquiv.class);
 
-    ThriftBucketHelper.writeToBucketAndSort(baseStore.getBucket(), MSJFixtures.DIE_EID_COMPARATOR,
-        MSJFixtures.die1
+    ThriftBucketHelper.writeToBucketAndSort(baseStore.getBucket(), DIE_EID_COMPARATOR,
+        die1
     );
 
-    ThriftBucketHelper.writeToBucketAndSort(deltaStore.getBucket(), MSJFixtures.DIE_EID_COMPARATOR,
-        MSJFixtures.die2
+    ThriftBucketHelper.writeToBucketAndSort(deltaStore.getBucket(), DIE_EID_COMPARATOR,
+        die2
     );
 
-    MSJDataStore msjStore = new TMSJDataStore<DustinInternalEquiv>(getTestRoot() + "/msj_store", DustinInternalEquiv.class, MSJFixtures.DIE_EID_EXTRACTOR, 100.0);
+    MSJDataStore msjStore = new TMSJDataStore<DustinInternalEquiv>(getTestRoot() + "/msj_store", DustinInternalEquiv.class, DIE_EID_EXTRACTOR, 100.0);
 
     msjStore.commitBase(baseStore.getPath());
     msjStore.commitDelta(deltaStore.getPath());
@@ -266,7 +291,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
     execute(builder.buildTail(pipe, output));
 
-    assertCollectionEquivalent(Lists.newArrayList(MSJFixtures.die1, MSJFixtures.die2),
+    assertCollectionEquivalent(Lists.newArrayList(die1, die2),
         HRap.<DustinInternalEquiv>getValuesFromBucket(output));
 
   }
@@ -300,20 +325,20 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     BucketDataStore<IdentitySumm> store2   = builder().getBucketDataStore("delta", IdentitySumm.class);
     BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
 
-    ThriftBucketHelper.writeToBucketAndSort(store1.getBucket(), MSJFixtures.DIE_EID_COMPARATOR,
-        MSJFixtures.die1,
-        MSJFixtures.die3
+    ThriftBucketHelper.writeToBucketAndSort(store1.getBucket(), DIE_EID_COMPARATOR,
+        die1,
+        die3
     );
 
-    ThriftBucketHelper.writeToBucketAndSort(store2.getBucket(), MSJFixtures.ID_SUMM_EID_COMPARATOR,
-        MSJFixtures.SUMM
+    ThriftBucketHelper.writeToBucketAndSort(store2.getBucket(), ID_SUMM_EID_COMPARATOR,
+        SUMM
     );
 
     CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
 
     Pipe pipe1 = builder.msj("pipe1", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new SourceMSJBinding<BytesWritable>(MSJFixtures.DIE_EID_EXTRACTOR, store1))
-        .add(new SourceMSJBinding<BytesWritable>(MSJFixtures.ID_SUMM_EID_EXTRACTOR, store2)).get(),
+        .add(new SourceMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, store1))
+        .add(new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
         new ExampleMultiJoiner());
 
     pipe1 = new Increment(pipe1, "COUNTER1", "VALUE");
@@ -322,7 +347,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
     assertEquals(new Long(1), workflowRunner.getCounterMap().get("COUNTER1").get("VALUE"));
 
-    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(MSJFixtures.SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
   }
 
   @Test
@@ -333,12 +358,12 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
 
     ThriftBucketHelper.writeToBucket(store1.getBucket(),
-        MSJFixtures.die1,
-        MSJFixtures.die3
+        die1,
+        die3
     );
 
     ThriftBucketHelper.writeToBucket(store2.getBucket(),
-        MSJFixtures.SUMM
+        SUMM
     );
 
     CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
@@ -358,8 +383,8 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     pipe2 = new GroupBy(pipe2, new Fields("eid"));
 
     Pipe die = builder.msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
-        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
+        .add(new FlowMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
+        .add(new FlowMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
         new ExampleMultiJoiner());
     die = new Increment(die, "AFTER", "COUNT");
 
@@ -369,7 +394,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     assertEquals(new Long(1), output1.getCounterMap().get("SUMMS").get("COUNT"));
     assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
 
-    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(MSJFixtures.SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
   }
 
   @Test
@@ -380,12 +405,12 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
 
     ThriftBucketHelper.writeToBucket(store1.getBucket(),
-        MSJFixtures.die1,
-        MSJFixtures.die3
+        die1,
+        die3
     );
 
-    ThriftBucketHelper.writeToBucketAndSort(store2.getBucket(), MSJFixtures.ID_SUMM_EID_COMPARATOR,
-        MSJFixtures.SUMM
+    ThriftBucketHelper.writeToBucketAndSort(store2.getBucket(), ID_SUMM_EID_COMPARATOR,
+        SUMM
     );
 
     CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
@@ -398,8 +423,8 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     pipe1 = new GroupBy(pipe1, new Fields("eid"));
 
     Pipe die = builder.msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new FlowMSJBinding<BytesWritable>(MSJFixtures.DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
-        .add(new SourceMSJBinding<BytesWritable>(MSJFixtures.ID_SUMM_EID_EXTRACTOR, store2)).get(),
+        .add(new FlowMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
+        .add(new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
         new ExampleMultiJoiner());
     die = new Increment(die, "AFTER", "COUNT");
 
@@ -408,7 +433,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
     assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
 
-    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(MSJFixtures.SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
   }
 
   @Test
@@ -417,8 +442,8 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
 
     ThriftBucketHelper.writeToBucket(store1.getBucket(),
-        MSJFixtures.die1,
-        MSJFixtures.die3
+        die1,
+        die3
     );
 
     CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");

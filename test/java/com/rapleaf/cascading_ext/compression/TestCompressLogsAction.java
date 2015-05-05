@@ -31,7 +31,7 @@ import com.rapleaf.types.spruce.LogApp;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestCompressLogsAction extends WorkflowTestCasees {
+public class TestCompressLogsAction extends WorkflowTestCase {
   private final String INPUT_PATH = getTestRoot() + "/input-lines";
   private static final String COMPRESSION_EXTENSION = readCompressionExtension();
 
