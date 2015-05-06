@@ -26,7 +26,8 @@ public class CleanUpOlderVersions extends Action {
   @Override
   protected void execute() throws Exception {
     for (VersionedBucketDataStore versionedDataStore : versionedDataStores) {
-      versionedDataStore.getVersionedStore().deleteOlderVersions(numVersionsToKeep, (VersionDeletionDeterminer)new StoreLockDeletionDeterminer(this.getLockProvider()), true);
+      versionedDataStore.getVersionedStore().deleteOlderVersions(
+          numVersionsToKeep, new StoreLockDeletionDeterminer(this.getLockProvider()), true);
     }
   }
 
@@ -39,7 +40,7 @@ public class CleanUpOlderVersions extends Action {
     }
 
     public boolean canDelete(VersionedStore store, long version) {
-      return !provider.createLock(store, version).hasReaders();
+      return provider == null || !provider.createLock(store, version).hasReaders();
     }
   }
 }

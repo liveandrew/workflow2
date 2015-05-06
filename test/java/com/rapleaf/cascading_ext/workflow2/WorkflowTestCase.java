@@ -6,7 +6,7 @@ import org.junit.Before;
 import com.rapleaf.cascading_ext.workflow2.test.BaseWorkflowTestCase;
 import com.rapleaf.db_schemas.DatabasesImpl;
 
-public class WorkflowTestCase extends BaseWorkflowTestCase{
+public class WorkflowTestCase extends BaseWorkflowTestCase {
   public WorkflowTestCase() {
     super(Level.ALL, "workflow");
   }
