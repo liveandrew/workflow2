@@ -14,7 +14,6 @@ import org.junit.Test;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.util.generated.StringOrNone;
-import com.rapleaf.cascading_ext.CascadingExtTestCase;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStoreImpl;
