@@ -235,7 +235,7 @@ public final class WorkflowRunner {
       pendingSteps.add(runner);
     }
 
-    this.shutdownHook = new Thread(new ShutdownHook());
+    this.shutdownHook = new Thread(new ShutdownHook(), "Shutdown Hook for " + workflowName);
   }
 
   private void linkPersistence() {
