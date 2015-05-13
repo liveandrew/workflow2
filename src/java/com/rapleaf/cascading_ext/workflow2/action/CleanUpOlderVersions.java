@@ -40,7 +40,7 @@ public class CleanUpOlderVersions extends Action {
     }
 
     public boolean canDelete(VersionedStore store, long version) {
-      return provider == null || !provider.createLock(store, version).hasReaders();
+      return !provider.hasReaders(store, version);
     }
   }
 }

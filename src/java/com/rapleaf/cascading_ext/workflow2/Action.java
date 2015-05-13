@@ -31,7 +31,6 @@ import com.liveramp.cascading_ext.flow.LoggingFlowConnector;
 import com.liveramp.cascading_ext.flow_step_strategy.FlowStepStrategyFactory;
 import com.liveramp.cascading_ext.flow_step_strategy.MultiFlowStepStrategy;
 import com.liveramp.cascading_ext.fs.TrashHelper;
-import com.liveramp.cascading_ext.megadesk.ResourceSemaphore;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.ReadResourceContainer;
@@ -81,6 +80,7 @@ public abstract class Action {
   private final Multimap<ResourceAction, OldResource> resources = HashMultimap.create();
 
   private StoreReaderLockProvider lockProvider;
+  private StoreReaderLockProvider.LockManager lockManager;
   private HadoopProperties stepProperties;
   private NestedProperties nestedProperties;
 
@@ -259,7 +259,6 @@ public abstract class Action {
   }
 
   protected final void internalExecute(NestedProperties parentProperties) {
-    List<ResourceSemaphore> locks = Lists.newArrayList();
 
     try {
 
@@ -270,9 +269,8 @@ public abstract class Action {
       jobPoller.start();
 
       prepDirs();
-      locks = lockReadsFromStores();
-      LOG.info("Acquired locks for " + getDatastores(DSAction.READS_FROM));
-      LOG.info("Locks " + locks);
+
+      lockManager.lockConsumeStart();
 
       if (!(readResources.isEmpty() && writeResources.isEmpty()) && resourceManager == null) {
         throw new RuntimeException("Cannot call readsFrom() or creates() on resources without setting a ResourceManager in the WorkflowOptions!");
@@ -296,7 +294,9 @@ public abstract class Action {
       LOG.error("Action " + fullId() + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
     } finally {
-      unlock(locks);
+
+      lockManager.release();
+
       if (jobPoller != null) {
 
         //  make sure each MR job exists in the DB
@@ -310,24 +310,6 @@ public abstract class Action {
         jobPoller.shutdown();
       }
     }
-  }
-
-  private void unlock(List<ResourceSemaphore> locks) {
-    for (ResourceSemaphore lock : locks) {
-      lock.release();
-    }
-  }
-
-  private List<ResourceSemaphore> lockReadsFromStores() {
-    List<ResourceSemaphore> locks = Lists.newArrayList();
-    if (lockProvider != null) {
-      for (DataStore readsFromDatastore : getDatastores(DSAction.READS_FROM)) {
-        ResourceSemaphore lock = lockProvider.createLock(readsFromDatastore);
-        lock.lock();
-        locks.add(lock);
-      }
-    }
-    return locks;
   }
 
   private static RuntimeException wrapRuntimeException(Throwable t) {
@@ -404,6 +386,9 @@ public abstract class Action {
     this.storage = storage;
     this.counterFilter = counterFilter;
     this.resourceManager = resourceManager;
+    this.lockManager = lockProvider
+        .createManager(getDatastores(DSAction.READS_FROM))
+        .lockProcessStart();
   }
 
   protected StoreReaderLockProvider getLockProvider() {

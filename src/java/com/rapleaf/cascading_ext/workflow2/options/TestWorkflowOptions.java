@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
+import com.liveramp.cascading_ext.megadesk.MockStoreReaderLockProvider;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
@@ -14,7 +15,7 @@ public class TestWorkflowOptions extends WorkflowOptions {
     setMaxConcurrentSteps(1);
     setAlertsHandler(new LoggingAlertsHandler());
     setEnabledNotifications(WorkflowRunnerNotificationSet.all());
-    setLockProvider(null);
+    setLockProvider(new MockStoreReaderLockProvider());
     setStorage(new ContextStorage.None());
     setStepPollInterval(100);
     setCounterFilter(CounterFilters.defaultCounters()); //  TODO we can probably switch this to all user counters by default
