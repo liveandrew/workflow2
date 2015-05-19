@@ -464,11 +464,8 @@ public abstract class Action {
    * @param operation
    */
   private void completeWithProgress(ActionOperation operation) {
-
     runningFlow(operation);
-    operation.start();
     operation.complete();
-
   }
 
   private void recordCounters(ActionOperation operation) {

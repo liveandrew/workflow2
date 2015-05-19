@@ -28,11 +28,6 @@ public class FlowOperation implements ActionOperation {
   }
 
   @Override
-  public void start() {
-    flow.start();
-  }
-
-  @Override
   public void complete() {
 
     final AtomicBoolean isComplete = new AtomicBoolean(false);

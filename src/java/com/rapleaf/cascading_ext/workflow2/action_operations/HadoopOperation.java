@@ -28,28 +28,22 @@ public class HadoopOperation implements ActionOperation {
   private RunningJob runningJob = null;
   private Long startTime = null;
   private Long finishTime = null;
-  private JobClient jobClient = null;
 
   public HadoopOperation(RunnableJob job) {
     this.runnableJob = job;
   }
 
   @Override
-  public void start() {
-    try {
-      markStarted();
-      conf = runnableJob.configure();
-      jobClient = new JobClient(conf);
-      runningJob = jobClient.submitJob(conf);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
   public void complete() {
     try {
+
+      markStarted();
+      conf = runnableJob.configure();
+      JobClient jobClient = new JobClient(conf);
+
+      runningJob = jobClient.submitJob(conf);
       runningJob.waitForCompletion();
+
       LOG.info(com.liveramp.cascading_ext.counters.Counters.prettyCountersString(runningJob));
       if (!runningJob.isSuccessful()) {
         throw new RuntimeException("Job " + getName() + " failed!: " + runningJob.getFailureInfo());

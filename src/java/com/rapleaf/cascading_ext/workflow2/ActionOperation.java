@@ -9,8 +9,6 @@ import com.rapleaf.cascading_ext.counters.NestedCounter;
 
 public interface ActionOperation {
 
-  public void start();
-
   public void complete();
 
   public String getName();
