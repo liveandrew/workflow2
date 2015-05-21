@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.hadoop.mapred.RunningJob;
 
+import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 class JobPoller extends Thread {

@@ -1,7 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.action_operations;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.Lists;
@@ -11,14 +10,10 @@ import cascading.flow.Flow;
 import cascading.stats.FlowStepStats;
 import cascading.stats.hadoop.HadoopStepStats;
 
-import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.counters.Counters;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
-import com.liveramp.java_support.event_timer.FixedTimedEvent;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
-import com.rapleaf.cascading_ext.workflow2.ActionOperation;
+import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.rapleaf.cascading_ext.workflow2.EmptyListener;
-import com.rapleaf.cascading_ext.workflow2.Step;
 
 public class FlowOperation implements ActionOperation {
   private final Flow flow;

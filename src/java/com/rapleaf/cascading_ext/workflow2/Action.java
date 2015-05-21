@@ -41,6 +41,7 @@ import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.cascading_ext.util.OperationStatsUtils;
+import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;

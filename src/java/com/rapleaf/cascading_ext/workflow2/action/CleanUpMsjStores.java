@@ -13,6 +13,7 @@ import org.apache.hadoop.fs.Path;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.rapleaf.cascading_ext.msj_tap.compaction.Compactor;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
