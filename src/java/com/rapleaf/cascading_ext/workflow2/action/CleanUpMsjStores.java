@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
@@ -13,7 +14,8 @@ import org.apache.hadoop.fs.Path;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.rapleaf.cascading_ext.msj_tap.compaction.Compactor;
+import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.msj_tap.compaction.CompactionUtil;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
@@ -25,19 +27,19 @@ public class CleanUpMsjStores extends MultiStepAction {
   public class MSJDataStoreCompactionAction extends Action {
 
     private final MSJDataStore store;
-    private final AlertsHandler alertsHandler;
+    private final BucketDataStore tmpStore;
 
-    public MSJDataStoreCompactionAction(MSJDataStore store, AlertsHandler alertsHAndler) {
-      super("compact_" + store.getPath().replaceAll("/", "_"));
+    public MSJDataStoreCompactionAction(MSJDataStore store, String tmpPath, AlertsHandler alertsHAndler) throws IOException {
+      super("compact_" + store.getPath().replaceAll("/", "_"), tmpPath);
       this.store = store;
-      this.alertsHandler = alertsHAndler;
+      this.tmpStore = builder().getBytesDataStore("tmp_base");
+
+      createsTemporary(tmpStore);
     }
 
     @Override
     protected void execute() throws Exception {
-      Compactor compactor = new Compactor(alertsHandler);
-      compactor.add(store.getCompactionTask());
-      compactor.run();
+      CompactionUtil.tryCompact(store, completeCallback(), tmpStore);
     }
   }
 
@@ -75,13 +77,13 @@ public class CleanUpMsjStores extends MultiStepAction {
     }
   }
 
-  public CleanUpMsjStores(String checkpointToken, String tmpRoot, int numVersionsToKeep, boolean runCompaction, AlertsHandler alertsHandler, TMSJDataStore... stores) {
+  public CleanUpMsjStores(String checkpointToken, String tmpRoot, int numVersionsToKeep, boolean runCompaction, AlertsHandler alertsHandler, TMSJDataStore... stores) throws IOException {
     super(checkpointToken, tmpRoot);
 
     List<Step> steps = Lists.newArrayList();
     for (TMSJDataStore store : stores) {
       if (runCompaction) {
-        steps.add(new Step(new MSJDataStoreCompactionAction(store, alertsHandler)));
+        steps.add(new Step(new MSJDataStoreCompactionAction(store, getTmpRoot(), alertsHandler)));
       }
       steps.add(new Step(new DeleteOldVersions(store, numVersionsToKeep)));
     }

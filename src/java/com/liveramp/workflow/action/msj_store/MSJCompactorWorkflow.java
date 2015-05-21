@@ -1,10 +1,11 @@
-package com.liveramp.workflow.msj_store;
+package com.liveramp.workflow.action.msj_store;
 
 import java.io.IOException;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import com.liveramp.workflow.msj_store.CompactionAction;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
