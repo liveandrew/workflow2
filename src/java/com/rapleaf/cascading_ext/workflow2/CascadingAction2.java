@@ -11,6 +11,7 @@ import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tuple.Fields;
 
+import com.liveramp.cascading_tools.EmptyListener;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;

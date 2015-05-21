@@ -24,6 +24,7 @@ import cascading.tuple.Tuple;
 
 import com.liveramp.cascading_ext.assembly.BloomJoin;
 import com.liveramp.cascading_ext.assembly.Increment;
+import com.liveramp.cascading_tools.EmptyListener;
 import com.liveramp.commons.collections.list.ListBuilder;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.assembly.Distinct;

@@ -23,6 +23,7 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
 import com.liveramp.cascading_ext.counters.Counter;
+import com.liveramp.cascading_tools.EmptyListener;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
