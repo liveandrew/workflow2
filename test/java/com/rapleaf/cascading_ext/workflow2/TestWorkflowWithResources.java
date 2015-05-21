@@ -76,7 +76,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     final Resource<Set<Integer>> someNumbers = resourceManager.resource(context.resourceNumbers());
 
 
-    Step writesResource = new Step(new Action("check", resourceManager) {
+    Step writesResource = new Step(new Action("check") {
       WriteResource<Set<Integer>> numbers;
 
       {
@@ -91,7 +91,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
       }
     });
 
-    Step readsResource = new Step(new Action("check2", resourceManager) {
+    Step readsResource = new Step(new Action("check2") {
       ReadResource<Set<Integer>> numbers;
 
       {
