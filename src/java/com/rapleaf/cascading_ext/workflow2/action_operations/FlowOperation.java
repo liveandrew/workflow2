@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action_operations;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.Lists;
@@ -10,9 +11,11 @@ import cascading.flow.Flow;
 import cascading.stats.FlowStepStats;
 import cascading.stats.hadoop.HadoopStepStats;
 
+import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.counters.Counters;
-import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
+import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
+import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.workflow2.EmptyListener;
 
 public class FlowOperation implements ActionOperation {
@@ -70,4 +73,18 @@ public class FlowOperation implements ActionOperation {
     return Counters.getCounterMap(flow.getFlowStats());
   }
 
+  @Override
+  public void timeOperation(String checkpointToken, List<NestedCounter> nestedCounters) {
+    Map<FlowStepStats, List<Counter>> counters = Counters.getCountersByStep(flow);
+
+    // add timers and counters from flows the action executed
+    for (FlowStepStats stepStats : flow.getFlowStats().getFlowStepStats()) {
+      if (counters.containsKey(stepStats)) {
+        for (Counter c : counters.get(stepStats)) {
+          NestedCounter nc = new NestedCounter(c);
+          nestedCounters.add(nc);
+        }
+      }
+    }
+  }
 }

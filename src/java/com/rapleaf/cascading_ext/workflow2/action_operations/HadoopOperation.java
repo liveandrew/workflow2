@@ -4,15 +4,18 @@ import java.io.IOException;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
+import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
+import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.rapleaf.cascading_ext.RunnableJob;
+import com.rapleaf.cascading_ext.counters.NestedCounter;
 
 public class HadoopOperation implements ActionOperation {
   private static Logger LOG = LoggerFactory.getLogger(HadoopOperation.class);
@@ -72,6 +75,31 @@ public class HadoopOperation implements ActionOperation {
     ThreeNestedMap<String, String, String, Long> toRet = new ThreeNestedMap<String, String, String, Long>();
     toRet.put(runningJob.getID().toString(), com.liveramp.cascading_ext.counters.Counters.getCounterMap(runningJob));
     return toRet;
+  }
+
+  @Override
+  public void timeOperation(String checkpointToken, List<NestedCounter> nestedCounters) {
+    Counters counterGroups;
+
+    try {
+      counterGroups = runningJob.getCounters();
+    } catch (NullPointerException e) {
+      counterGroups = new Counters();
+    } catch (IOException e) {
+      counterGroups = new Counters();
+    }
+
+    for (Counters.Group counterGroup : counterGroups) {
+      final String groupName = counterGroup.getName();
+
+      for (Counters.Counter c : counterGroup) {
+        if (c.getValue() > 0) {
+          Counter singleValueCounter = new Counter(groupName, c.getName(), c.getValue());
+          nestedCounters.add(new NestedCounter(singleValueCounter));
+        }
+      }
+    }
+
   }
 
   private void markStarted() {

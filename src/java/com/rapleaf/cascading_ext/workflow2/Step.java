@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.liveramp.cascading_ext.util.NestedProperties;
+import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 
 public final class Step {
@@ -71,6 +72,14 @@ public final class Step {
   }
 
   public void run(NestedProperties properties) {
-    action.internalExecute(properties);
+
+    try {
+      action.internalExecute(properties);
+    } finally {
+      for (ActionOperation operation : action.getRunFlows()) {
+        operation.timeOperation(getCheckpointToken(), nestedCounters);
+      }
+
+    }
   }
 }

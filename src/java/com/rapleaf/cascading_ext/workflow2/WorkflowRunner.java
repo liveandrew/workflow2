@@ -40,6 +40,7 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.java_support.event_timer.EventTimer;
+import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -371,6 +372,7 @@ public final class WorkflowRunner {
       throw new IllegalStateException("The workflow is already running (or finished)!");
     }
     alreadyRun = true;
+    timer.start();
     try {
       LOG.info("Checking that no action goes outside sandboxDir \"" + getSandboxDir() + "\"");
       checkStepsSandboxViolation(getPhsyicalDependencyGraph().vertexSet());
@@ -392,8 +394,8 @@ public final class WorkflowRunner {
       LOG.info(getSuccessMessage());
     } finally {
       Runtime.getRuntime().removeShutdownHook(shutdownHook);
-      LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));
-    }
+      timer.stop();
+      LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));    }
   }
 
   private class ShutdownHook implements Runnable {
@@ -548,6 +550,17 @@ public final class WorkflowRunner {
       }
     }
     return sw.toString();
+  }
+
+  public LiveWorkflowMeta getMeta() throws IOException {
+    return new LiveWorkflowMeta()
+        .set_uuid(persistence.getId())
+        .set_name(persistence.getName())
+        .set_host(InetAddress.getLocalHost().getHostName())
+        .set_username(System.getProperty("user.name"))
+        .set_working_dir(System.getProperty("user.dir"))
+        .set_jar(HadoopJarUtil.getLanuchJarName())
+        .set_start_time(getTimer().getEventStartTime());
   }
 
   //  TODO use AttemptStatus when migration done
