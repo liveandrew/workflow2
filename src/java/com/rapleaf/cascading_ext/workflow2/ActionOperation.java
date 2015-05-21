@@ -18,4 +18,9 @@ public interface ActionOperation {
   public ThreeNestedMap<String, String, String, Long> getJobCounters() ;
 
   public void timeOperation(Step.StepTimer stepTimer, String checkpointToken, List<NestedCounter> nestedCounters);
+
+  public interface Complete {
+    public void complete(ActionOperation operation);
+  }
+
 }
