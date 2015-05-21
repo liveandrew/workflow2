@@ -18,7 +18,6 @@ import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 public class MultiStepAction extends Action {
 
   private Collection<Step> steps;
-  private final MultiStepActionTimer timer = new MultiStepActionTimer();
 
   private class MultiStepActionTimer extends MultiTimedEvent {
 
@@ -56,7 +55,6 @@ public class MultiStepAction extends Action {
             + " is used more than once in " + this);
       }
       tokens.add(s.getSimpleCheckpointToken());
-      timer.addChild(s.getTimer());
     }
     this.steps = steps;
   }
@@ -150,10 +148,6 @@ public class MultiStepAction extends Action {
     }
 
     return combined;
-  }
-
-  public MultiStepActionTimer getMultiStepActionTimer() {
-    return timer;
   }
 
   public List<NestedCounter> getCounters() {

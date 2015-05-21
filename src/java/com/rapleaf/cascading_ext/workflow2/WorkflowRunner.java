@@ -40,8 +40,6 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.java_support.event_timer.EventTimer;
-import com.liveramp.java_support.event_timer.TimedEventHelper;
-import com.liveramp.types.workflow.LiveWorkflowMeta;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -49,6 +47,7 @@ import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
+import com.rapleaf.cascading_ext.workflow2.util.TimeFormatting;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
@@ -208,7 +207,7 @@ public final class WorkflowRunner {
     this.resourceManager = options.getResourceManager();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
-    this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps, timer);
+    this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps);
 
     this.persistence = persistenceFactory.prepare(dependencyGraph,
         workflowName,
@@ -372,7 +371,6 @@ public final class WorkflowRunner {
       throw new IllegalStateException("The workflow is already running (or finished)!");
     }
     alreadyRun = true;
-    timer.start();
     try {
       LOG.info("Checking that no action goes outside sandboxDir \"" + getSandboxDir() + "\"");
       checkStepsSandboxViolation(getPhsyicalDependencyGraph().vertexSet());
@@ -394,8 +392,7 @@ public final class WorkflowRunner {
       LOG.info(getSuccessMessage());
     } finally {
       Runtime.getRuntime().removeShutdownHook(shutdownHook);
-      timer.stop();
-      LOG.info("Timing statistics:\n" + TimedEventHelper.toTextSummary(timer));
+      LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));
     }
   }
 
@@ -551,17 +548,6 @@ public final class WorkflowRunner {
       }
     }
     return sw.toString();
-  }
-
-  public LiveWorkflowMeta getMeta() throws IOException {
-    return new LiveWorkflowMeta()
-        .set_uuid(persistence.getId())
-        .set_name(persistence.getName())
-        .set_host(InetAddress.getLocalHost().getHostName())
-        .set_username(System.getProperty("user.name"))
-        .set_working_dir(System.getProperty("user.dir"))
-        .set_jar(HadoopJarUtil.getLanuchJarName())
-        .set_start_time(getTimer().getEventStartTime());
   }
 
   //  TODO use AttemptStatus when migration done

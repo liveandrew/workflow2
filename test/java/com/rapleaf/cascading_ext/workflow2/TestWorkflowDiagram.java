@@ -194,7 +194,7 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
   private void setupWorkflowGraph(Step tailStep) throws IOException {
     HashSet<Step> tail = Sets.newHashSet(tailStep);
     WorkflowUtil.setCheckpointPrefixes(tail);
-    graph = new EdgeReversedGraph<Step, DefaultEdge>(WorkflowDiagram.dependencyGraphFromTailSteps(tail, null));
+    graph = new EdgeReversedGraph<Step, DefaultEdge>(WorkflowDiagram.dependencyGraphFromTailSteps(tail));
 
     populateNameToVertex(graph);
   }

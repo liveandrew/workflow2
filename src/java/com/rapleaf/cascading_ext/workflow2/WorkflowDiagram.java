@@ -10,20 +10,17 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
-import com.liveramp.java_support.event_timer.EventTimer;
-
 
 public class WorkflowDiagram {
 
-  public static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps, EventTimer workflowTimer) {
+  public static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps) {
     verifyNoOrphanedTailSteps(tailSteps);
-    return dependencyGraphFromTailStepsNoVerification(tailSteps, workflowTimer);
+    return dependencyGraphFromTailStepsNoVerification(tailSteps);
   }
 
-  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailStepsNoVerification(Set<Step> tailSteps, EventTimer workflowTimer) {
+  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailStepsNoVerification(Set<Step> tailSteps) {
 
     Set<Step> tailsAndDependencies = addDependencies(tailSteps);
-    addToWorkflowTimer(tailsAndDependencies, workflowTimer);
     Queue<Step> multiSteps = new LinkedList<Step>(filterMultiStep(tailsAndDependencies));
     verifyUniqueCheckpointTokens(tailsAndDependencies);
     DirectedGraph<Step, DefaultEdge> dependencyGraph = createGraph(tailsAndDependencies);
@@ -89,7 +86,7 @@ public class WorkflowDiagram {
 
   static Set<Step> getOrphanedTailSteps(Set<Step> tailSteps) {
     return getOrphanedTailSteps(
-        dependencyGraphFromTailStepsNoVerification(tailSteps, null),
+        dependencyGraphFromTailStepsNoVerification(tailSteps),
         reachableSteps(tailSteps)
     );
   }
@@ -142,15 +139,6 @@ public class WorkflowDiagram {
       }
     }
     return multiSteps;
-  }
-
-  private static void addToWorkflowTimer(Set<Step> tailsAndDependencies,
-                                         EventTimer workflowTimer) {
-    if (workflowTimer != null) {
-      for (Step step : tailsAndDependencies) {
-        workflowTimer.addChild(step.getTimer());
-      }
-    }
   }
 
   private static void copyOutgoingEdges(DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s, MultiStepAction msa) {

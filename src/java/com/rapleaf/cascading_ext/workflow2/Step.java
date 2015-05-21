@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.liveramp.cascading_ext.util.NestedProperties;
-import com.liveramp.java_support.event_timer.EventTimer;
-import com.liveramp.java_support.event_timer.TimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 
 public final class Step {
@@ -18,20 +16,7 @@ public final class Step {
   private final Action action;
   private final Set<Step> dependencies;
   private Set<Step> children;
-  private final StepTimer timer = new StepTimer();
   private final List<NestedCounter> nestedCounters = new ArrayList<NestedCounter>();
-
-  public class StepTimer extends EventTimer {
-
-    public StepTimer() {
-      super(null);
-    }
-
-    @Override
-    public String getEventName() {
-      return getSimpleCheckpointToken();
-    }
-  }
 
   public Step(Action action, Step... dependencies) {
     this(action, Arrays.asList(dependencies));
@@ -81,30 +66,11 @@ public final class Step {
     return "Step " + getCheckpointToken() + " " + action + " deps=" + dependencies;
   }
 
-  public TimedEvent getTimer() {
-    if (action instanceof MultiStepAction) {
-      return ((MultiStepAction)action).getMultiStepActionTimer();
-    } else {
-      return timer;
-    }
-  }
-
   public List<NestedCounter> getCounters() {
     return nestedCounters;
   }
 
   public void run(NestedProperties properties) {
-
-    timer.start();
-    try {
-      action.internalExecute(properties);
-    } finally {
-      for (ActionOperation operation : action.getRunFlows()) {
-        operation.timeOperation(timer, getCheckpointToken(), nestedCounters);
-      }
-
-      timer.stop();
-
-    }
+    action.internalExecute(properties);
   }
 }

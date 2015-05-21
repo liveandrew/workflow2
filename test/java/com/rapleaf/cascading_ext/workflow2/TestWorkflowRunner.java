@@ -29,7 +29,6 @@ import cascading.tuple.Tuple;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
-import com.liveramp.java_support.event_timer.TimedEvent;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.HRap;
@@ -468,51 +467,6 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     } catch (IllegalArgumentException e) {
       // expected
     }
-  }
-
-  @Test
-  public void testTimingMultiStep1() throws Exception {
-    testTimingMultiStep(hdfsPersistenceFactory);
-  }
-
-  @Test
-  public void testTimingMultiStep2() throws Exception {
-    testTimingMultiStep(dbPersistenceFactory);
-  }
-
-  public void testTimingMultiStep(WorkflowPersistenceFactory factory) throws Exception {
-
-    Step bottom1 = new Step(new IncrementAction("bottom1"));
-    Step bottom2 = new Step(new IncrementAction("bottom2"));
-
-    Step multiMiddle = new Step(new MultiStepAction("middle", getTestRoot(), Arrays.asList(bottom1, bottom2)));
-    Step flatMiddle = new Step(new IncrementAction("flatMiddle"));
-
-    Step top = new Step(new MultiStepAction("Tom's first test dude", getTestRoot(), Arrays.asList(multiMiddle, flatMiddle)));
-
-    WorkflowRunner testWorkflow = buildWfr(factory, top);
-    testWorkflow.run();
-
-    assertTrue(testWorkflow.getTimer() != null);
-
-    // Goal here is to detect whether nested MultiTimedEvents ever have "-1"s in their timing and to FAIL if this occurs.
-
-    // Assert that none of the timer.EventStartTime values are -1
-    assertTrue(testWorkflow.getTimer().getEventStartTime() != -1);
-
-    TimedEvent middleTimer = multiMiddle.getTimer();
-    TimedEvent flatMiddleTimer = flatMiddle.getTimer();
-
-    //    System.out.println("CHILDREN:");
-    assertTrue(middleTimer.getEventStartTime() != -1);
-    assertTrue(flatMiddleTimer.getEventStartTime() != -1);
-
-    TimedEvent bottom1Timer = bottom1.getTimer();
-    TimedEvent bottom2Timer = bottom1.getTimer();
-
-    //    System.out.println("SUBCHILDREN:");
-    assertTrue(bottom1Timer.getEventStartTime() != -1);
-    assertTrue(bottom2Timer.getEventStartTime() != -1);
   }
 
   @Test

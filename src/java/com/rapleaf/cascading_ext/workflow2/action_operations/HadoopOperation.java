@@ -79,34 +79,6 @@ public class HadoopOperation implements ActionOperation {
     return toRet;
   }
 
-  @Override
-  public void timeOperation(Step.StepTimer stepTimer, String checkpointToken, List<NestedCounter> nestedCounters) {
-    Counters counterGroups;
-
-    try {
-      counterGroups = runningJob.getCounters();
-    } catch (NullPointerException e) {
-      counterGroups = new Counters();
-    } catch (IOException e) {
-      counterGroups = new Counters();
-    }
-
-    for (Counters.Group counterGroup : counterGroups) {
-      final String groupName = counterGroup.getName();
-
-      for (Counters.Counter c : counterGroup) {
-        if (c.getValue() > 0) {
-          Counter singleValueCounter = new Counter(groupName, c.getName(), c.getValue());
-          nestedCounters.add(new NestedCounter(singleValueCounter));
-        }
-      }
-    }
-
-    if (runningJob != null) {
-      stepTimer.addChild(new FixedTimedEvent(runningJob.getJobName(), startTime, finishTime));
-    }
-  }
-
   private void markStarted() {
     startTime = System.currentTimeMillis();
   }

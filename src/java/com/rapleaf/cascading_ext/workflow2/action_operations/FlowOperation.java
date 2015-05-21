@@ -75,20 +75,4 @@ public class FlowOperation implements ActionOperation {
     return Counters.getCounterMap(flow.getFlowStats());
   }
 
-  @Override
-  public void timeOperation(Step.StepTimer stepTimer, String checkpointToken, List<NestedCounter> nestedCounters) {
-    Map<FlowStepStats, List<Counter>> counters = Counters.getCountersByStep(flow);
-
-    // add timers and counters from flows the action executed
-    for (FlowStepStats stepStats : flow.getFlowStats().getFlowStepStats()) {
-      stepTimer.addChild(new FixedTimedEvent(stepStats.getName(), stepStats.getStartTime(), stepStats.getFinishedTime()));
-
-      if (counters.containsKey(stepStats)) {
-        for (Counter c : counters.get(stepStats)) {
-          NestedCounter nc = new NestedCounter(c);
-          nestedCounters.add(nc);
-        }
-      }
-    }
-  }
 }
