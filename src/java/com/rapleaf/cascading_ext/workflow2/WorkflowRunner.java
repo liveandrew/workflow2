@@ -49,12 +49,8 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.util.TimeFormatting;
-import com.rapleaf.db_schemas.rldb.IRlDb;
-import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
-import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
-import com.rapleaf.db_schemas.rldb.models.StepAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
+import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
@@ -697,16 +693,13 @@ public final class WorkflowRunner {
   }
 
 
-  public TwoNestedMap<String, String, Long> getFlatCounters(IRlDb db) throws IOException {
-    long executionId = persistence.getExecutionId();
+  public TwoNestedMap<String, String, Long> getFlatCounters() throws IOException {
 
     TwoNestedCountingMap<String, String> counters = new TwoNestedCountingMap<String, String>(0l);
-    for (WorkflowAttempt attempt : db.workflowExecutions().find(executionId).getWorkflowAttempt()) {
-      for (StepAttempt step : attempt.getStepAttempt()) {
-        for (MapreduceJob job : step.getMapreduceJobs()) {
-          for (MapreduceCounter counter : job.getMapreduceCounters()) {
-            counters.incrementAndGet(counter.getGroup(), counter.getName(), counter.getValue());
-          }
+    for (StepState state : persistence.getStepStatuses().values()) {
+      for (MapReduceJob job : state.getMrJobsByID().values()) {
+        for (MapReduceJob.Counter counter : job.getCounters()) {
+          counters.incrementAndGet(counter.getGroup(), counter.getName(), counter.getValue());
         }
       }
     }

@@ -862,8 +862,6 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testCounters() throws IOException {
 
-    IRlDb rldb = new DatabasesImpl().getRlDb();
-
     TupleDataStore input = builder().getTupleDataStore("input",
         new Fields("string")
     );
@@ -889,7 +887,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     runner.run();
 
-    TwoNestedMap<String, String, Long> counters = runner.getFlatCounters(rldb);
+    TwoNestedMap<String, String, Long> counters = runner.getFlatCounters();
 
     assertEquals(1l, counters.get("CUSTOM_COUNTER", "NAME").longValue());
     assertFalse(counters.containsKey("OTHER_COUNTER", "NAME"));
