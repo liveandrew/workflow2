@@ -113,6 +113,8 @@ public final class WorkflowRunner {
   private final ResourceManager<?, ?> resourceManager;
   private String sandboxDir;
 
+  private final String scopeIdentifier;
+
   public String getSandboxDir() {
     return sandboxDir;
   }
@@ -202,6 +204,7 @@ public final class WorkflowRunner {
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.stepPollInterval = options.getStepPollInterval();
     this.resourceManager = options.getResourceManager();
+    this.scopeIdentifier = options.getScopeIdentifier();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps);
@@ -596,24 +599,28 @@ public final class WorkflowRunner {
     }
   }
 
+  private String getDisplayName() throws IOException {
+    return persistence.getName() + (this.scopeIdentifier == null ? "" : " (" + this.scopeIdentifier + ")");
+  }
+
   private String getStartMessage() throws IOException {
-    return "Started: " + persistence.getName();
+    return "Started: " + getDisplayName();
   }
 
   private String getSuccessMessage() throws IOException {
-    return "Succeeded: " + persistence.getName();
+    return "Succeeded: " + getDisplayName();
   }
 
   private String getFailureMessage() throws IOException {
-    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + persistence.getName();
+    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + getDisplayName();
   }
 
   private String getShutdownMessage(String reason) throws IOException {
-    return "Shutdown requested: " + persistence.getName() + ". Reason: " + reason;
+    return "Shutdown requested: " + getDisplayName() + ". Reason: " + reason;
   }
 
   private void mail(String subject, AlertRecipient recipient) throws IOException {
-    mail(subject, "", recipient);
+      mail(subject, "", recipient);
   }
 
   private void mail(String subject, String body, AlertRecipient recipient) throws IOException {
