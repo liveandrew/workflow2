@@ -42,6 +42,8 @@ import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.cascading_ext.util.OperationStatsUtils;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
+import com.liveramp.cascading_tools.jobs.FlowOperation;
+import com.liveramp.cascading_tools.jobs.HadoopOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
@@ -49,8 +51,6 @@ import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.RunnableJob;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.liveramp.cascading_tools.jobs.FlowOperation;
-import com.liveramp.cascading_tools.jobs.HadoopOperation;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
@@ -438,6 +438,13 @@ public abstract class Action {
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc) {
     Flow flow = flowc.buildFlow();
     completeWithProgress(new FlowOperation(flow));
+    return flow;
+  }
+
+  //  TODO sweep when we figure out cascading npe (prolly upgrade past 2.5.1)
+  protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
+    Flow flow = flowc.buildFlow();
+    completeWithProgress(new FlowOperation(flow, skipCompleteListener));
     return flow;
   }
 
