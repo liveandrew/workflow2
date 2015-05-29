@@ -43,7 +43,6 @@ public class CompressLogsAction extends Action {
   private static final Logger LOG = LoggerFactory.getLogger(CompressLogsAction.class);
 
   private static final Pattern FILE_PART_PATTERN = Pattern.compile("part(?:\\-|_)(\\d+)");
-  private static final String TMP_EXTENSION = "__tmp";
 
   private static final Map<String, Class<? extends CompressionCodec>> SUPPORTED_CODECS;
   private final FileSystem fs;
@@ -53,7 +52,7 @@ public class CompressLogsAction extends Action {
   private String tmpPath;
 
   static {
-    SUPPORTED_CODECS = new HashMap<String, Class<? extends CompressionCodec>>();
+    SUPPORTED_CODECS = new HashMap<>();
     SUPPORTED_CODECS.put("gzip", GzipCodec.class);
     SUPPORTED_CODECS.put("lzo", LzoCodec.class);
     SUPPORTED_CODECS.put("lzo_deflate", LzoCodec.class);
@@ -158,8 +157,6 @@ public class CompressLogsAction extends Action {
       partNumToSourcePath.put(renameAction.get_task_num(), renameAction.get_src_path());
     }
 
-    final Map<Path, Path> tmpDestToActualDest = new HashMap<Path, Path>();
-
     for (FileStatus status : fs.listStatus(new Path(dir))) {
       Path path = status.getPath();
 
@@ -169,23 +166,10 @@ public class CompressLogsAction extends Action {
       }
 
       String sourcePath = getSourcePathForFile(path, partNumToSourcePath);
-
       Path destPath = new Path(path.getParent(), config.getDestFileName(sourcePath));
 
-      Path tmpDestPath = new Path(destPath.toString() + TMP_EXTENSION);
-
-      LOG.info("Renaming: " + path + " to " + tmpDestPath);
-
-      FileSystemHelper.safeRename(fs, path, tmpDestPath);
-
-      tmpDestToActualDest.put(tmpDestPath, destPath);
-    }
-
-    for (Map.Entry<Path, Path> entry : tmpDestToActualDest.entrySet()) {
-
-      LOG.info("Renaming: " + entry.getKey() + " to " + entry.getValue());
-
-      FileSystemHelper.safeRename(entry.getKey(), entry.getValue());
+      LOG.info("Renaming: {} to {}", path, destPath);
+      FileSystemHelper.safeRename(fs, path, destPath);
     }
   }
 
