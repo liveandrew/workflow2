@@ -23,6 +23,7 @@ public class FutureCascadingAction extends Action {
   private final Map<String, TapFactory> sinkTaps;
   private final List<Pipe> tails;
   private final FlowListener listener;
+  private final boolean skipCompleteListener;
 
   public FutureCascadingAction(String checkpointToken,
                                String flowName,
@@ -32,7 +33,8 @@ public class FutureCascadingAction extends Action {
                                Collection<DataStore> readStores,
                                Collection<DataStore> createStores,
                                Map<Object, Object> properties,
-                               FlowListener listener) {
+                               FlowListener listener,
+                               boolean skipCompleteListener) {
     super(checkpointToken, properties);
 
     this.flowName = flowName;
@@ -40,6 +42,7 @@ public class FutureCascadingAction extends Action {
     this.sinkTaps = sinkTapFactories;
     this.tails = tails;
     this.listener = listener;
+    this.skipCompleteListener = skipCompleteListener;
 
     for (DataStore readStore : readStores) {
       readsFrom(readStore);
@@ -73,6 +76,6 @@ public class FutureCascadingAction extends Action {
       f.addListener(listener);
     }
 
-    completeWithProgress(f);
+    completeWithProgress(f, skipCompleteListener);
   }
 }

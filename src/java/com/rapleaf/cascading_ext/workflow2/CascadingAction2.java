@@ -29,7 +29,13 @@ public class CascadingAction2 extends MultiStepAction {
 
   public CascadingAction2(String checkpointToken, String tmpRoot, Map<Object, Object> flowProperties) {
     super(checkpointToken, tmpRoot);
-    workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), getClass().getSimpleName(), flowProperties);
+    workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), getClass().getSimpleName(), flowProperties, false);
+  }
+
+  //  TODO kill this once we figure out the cascading internal NPE (upgrade past 2.5.1 maybe?)
+  public CascadingAction2(String checkpointToken, String tmpRoot, Map<Object, Object> flowProperties, boolean skipCompleteListener) {
+    super(checkpointToken, tmpRoot);
+    workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), getClass().getSimpleName(), flowProperties, skipCompleteListener);
   }
 
   protected void complete(String stepName, List<? extends SinkBinding> sinkBindings) {

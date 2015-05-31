@@ -56,17 +56,21 @@ public class CascadingWorkflowBuilder {
   private Map<Object, Object> flowProperties;
   private int checkpointCount = 0;
 
+  //  TODO kill this once we figure out the cascading internal NPE (upgrade past 2.5.1 maybe?)
+  private boolean skipCompleteListener = false;
+
   public CascadingWorkflowBuilder(String workingDir, String flowName) {
-    this(workingDir, flowName, Maps.newHashMap());
+    this(workingDir, flowName, Maps.newHashMap(), false);
   }
 
-  public CascadingWorkflowBuilder(String workingDir, String flowName, Map<Object, Object> flowProperties) {
+  public CascadingWorkflowBuilder(String workingDir, String flowName, Map<Object, Object> flowProperties, boolean skipCompleteListener) {
     this.dsBuilder = new DataStoreBuilder(workingDir + "/temp-stores");
     this.flowName = flowName;
     this.flowProperties = Maps.newHashMap(flowProperties);
     this.pipenameToParentStep = HashMultimap.create();
     this.pipenameToSourceStore = HashMultimap.create();
     this.pipenameToTap = Maps.newHashMap();
+    this.skipCompleteListener = skipCompleteListener;
   }
 
   //  bind source and sink taps to the flow.  This will set the creates / readsFrom datastores as well as
@@ -311,7 +315,8 @@ public class CascadingWorkflowBuilder {
         inputs,
         sinkStores,
         flowProperties,
-        flowListener
+        flowListener,
+        skipCompleteListener
     );
 
     return new Step(action, previousSteps);
