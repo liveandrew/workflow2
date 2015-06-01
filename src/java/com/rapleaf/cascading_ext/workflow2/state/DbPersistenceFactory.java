@@ -254,6 +254,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
         .where(Application.NAME.equalTo(name))
         .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeId))
         .where(WorkflowExecution.STATUS.equalTo(WorkflowExecutionStatus.INCOMPLETE.ordinal()))
+        .select(WorkflowExecution.TBL.getAllColumns())
         .fetch();
 
     for (Record record : records) {
