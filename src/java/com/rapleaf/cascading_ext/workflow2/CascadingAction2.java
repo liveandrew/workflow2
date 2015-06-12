@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -78,11 +79,11 @@ public class CascadingAction2 extends MultiStepAction {
     return workflowHelper.bindSource(name, input);
   }
 
-  protected Pipe bindSource(String name, List<? extends DataStore> inputs) {
+  protected Pipe bindSource(String name, Collection<? extends DataStore> inputs) {
     return workflowHelper.bindSource(name, inputs);
   }
 
-  protected Pipe bindSource(String name, List<? extends DataStore> inputs, TapFactory sourceTap) {
+  protected Pipe bindSource(String name, Collection<? extends DataStore> inputs, TapFactory sourceTap) {
     return workflowHelper.bindSource(name, inputs, sourceTap);
   }
 
