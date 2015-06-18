@@ -223,7 +223,7 @@ public abstract class HankDomainBuilderAction extends Action {
 
   protected abstract Map<String, Tap> getSources() throws IOException;
 
-  protected void postProcessFlow(Flow flow) {
+  protected void postProcessFlow(Flow flow) throws IOException {
     // Default is no-op
   }
 
