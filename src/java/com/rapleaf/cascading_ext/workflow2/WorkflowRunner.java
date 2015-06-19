@@ -31,8 +31,6 @@ import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
-import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
-import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
@@ -49,7 +47,6 @@ import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.util.TimeFormatting;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
-import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
@@ -684,22 +681,6 @@ public final class WorkflowRunner {
 
   public EventTimer getTimer() {
     return timer;
-  }
-
-
-  public TwoNestedMap<String, String, Long> getFlatCounters() throws IOException {
-
-    TwoNestedCountingMap<String, String> counters = new TwoNestedCountingMap<String, String>(0l);
-    for (StepState state : persistence.getStepStatuses().values()) {
-      for (MapReduceJob job : state.getMrJobsByID().values()) {
-        for (MapReduceJob.Counter counter : job.getCounters()) {
-          counters.incrementAndGet(counter.getGroup(), counter.getName(), counter.getValue());
-        }
-      }
-    }
-
-    return counters;
-
   }
 
   @Deprecated

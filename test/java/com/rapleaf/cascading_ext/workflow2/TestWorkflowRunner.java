@@ -27,6 +27,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
+import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.workflow.ActionId;
@@ -875,8 +876,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     );
 
     Step step = new Step(new IncrementCounter("step1", getTestRoot(), input, output));
-
-    Step step2 = new Step(new IncrementCounter2("step2", getTestRoot(), input, output));
+    Step step2 = new Step(new IncrementCounter2("step2", getTestRoot(), input, output), step);
 
     WorkflowRunner runner = new WorkflowRunner("Test Workflow",
         new DbPersistenceFactory(),
@@ -887,7 +887,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     runner.run();
 
-    TwoNestedMap<String, String, Long> counters = runner.getFlatCounters();
+    TwoNestedMap<String, String, Long> counters = runner.getPersistence().getFlatCounters();
 
     assertEquals(1l, counters.get("CUSTOM_COUNTER", "NAME").longValue());
     assertFalse(counters.containsKey("OTHER_COUNTER", "NAME"));
@@ -899,6 +899,72 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(2l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
 
   }
+
+  @Test
+  public void testCountersOnRestart() throws IOException {
+
+
+    TupleDataStore input = builder().getTupleDataStore("input",
+        new Fields("string")
+    );
+
+    TupleDataStoreHelper.writeToStore(input,
+        new Tuple("1")
+    );
+
+    TupleDataStore output = builder().getTupleDataStore("output",
+        new Fields("string")
+    );
+
+    Step step = new Step(new IncrementCounter("step1", getTestRoot(), input, output));
+    Step step2 = new Step(new FailingAction("step2"), step);
+
+    WorkflowRunner runner = new WorkflowRunner("Test Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions()
+            .setCounterFilter(CounterFilters.userGroups(Sets.newHashSet("CUSTOM_COUNTER", "CUSTOM_COUNTER2"))),
+        Sets.newHashSet(step2)
+    );
+
+    try {
+      runner.run();
+    }catch(Exception e){
+      // expected
+    }
+
+    step = new Step(new IncrementCounter("step1", getTestRoot(), input, output));
+    step2 = new Step(new IncrementCounter2("step2", getTestRoot(), input, output), step);
+
+    runner = new WorkflowRunner("Test Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions()
+            .setCounterFilter(CounterFilters.userGroups(Sets.newHashSet("CUSTOM_COUNTER", "CUSTOM_COUNTER2"))),
+        Sets.newHashSet(step2)
+    );
+
+    runner.run();
+
+    //  test flat
+
+    TwoNestedMap<String, String, Long> counters = runner.getPersistence().getFlatCounters();
+
+    assertEquals(1l, counters.get("CUSTOM_COUNTER", "NAME").longValue());
+    assertFalse(counters.containsKey("OTHER_COUNTER", "NAME"));
+
+    assertEquals(1l, counters.get("CUSTOM_COUNTER2", "NAME").longValue());
+    assertFalse(counters.containsKey("OTHER_COUNTER2", "NAME"));
+
+    TaskCounter mapIn = TaskCounter.MAP_INPUT_RECORDS;
+    assertEquals(2l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
+
+    //  test by step
+
+    ThreeNestedMap<String, String, String, Long> countersByStep = runner.getPersistence().getCountersByStep();
+    assertEquals(1l, countersByStep.get("step1__step", mapIn.getClass().getName(), mapIn.name()).longValue());
+
+
+  }
+
 
   // methods to evade PMD in test
 
@@ -937,6 +1003,10 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       Flow flow = hideGetBuilder().getFlowConnector().connect(in.getTap(), out.getTap(), pipe);
       hideComplete(flow);
       runningFlow(flow);
+
+      //  make sure counter from previous step is accessible
+      assertEquals(1l, (long) getFlatCounters().get("CUSTOM_COUNTER", "NAME"));
+
     }
 
     private static class Count extends BaseOperation implements Filter {

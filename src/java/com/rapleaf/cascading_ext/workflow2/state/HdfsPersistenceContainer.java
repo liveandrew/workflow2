@@ -16,6 +16,7 @@ import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
@@ -161,6 +162,16 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public AttemptStatus getStatus() throws IOException {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public ThreeNestedMap<String, String, String, Long> getCountersByStep() throws IOException {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public TwoNestedMap<String, String, Long> getFlatCounters() {
     throw new NotImplementedException();
   }
 

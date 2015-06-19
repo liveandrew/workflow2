@@ -506,4 +506,12 @@ public abstract class Action {
     return persistence.getExecutionId();
   }
 
+  protected TwoNestedMap<String, String, Long> getFlatCounters() throws IOException {
+    return persistence.getFlatCounters();
+  }
+
+  protected ThreeNestedMap<String, String, String, Long> getCountersByStep() throws IOException {
+    return persistence.getCountersByStep();
+  }
+
 }
