@@ -471,7 +471,7 @@ public abstract class Action {
     operation.complete();
   }
 
-  protected ActionOperation.Complete completeCallback(){
+  protected ActionOperation.Complete completeCallback() {
     return new ActionOperation.Complete() {
       @Override
       public void complete(ActionOperation operation) {
@@ -482,23 +482,25 @@ public abstract class Action {
 
   private void recordCounters(ActionOperation operation) {
 
-    ThreeNestedMap<String, String, String, Long> counters = operation.getJobCounters();
+    try {
+      ThreeNestedMap<String, String, String, Long> counters = operation.getJobCounters();
 
-    for (String job : counters.key1Set()) {
-      TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
-      for (String group : counters.key2Set(job)) {
-        for (String name : counters.key3Set(job, group)) {
-          if (counterFilter.isRecord(group, name)) {
-            toRecord.put(group, name, counters.get(job, group, name));
+      for (String job : counters.key1Set()) {
+        TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
+        for (String group : counters.key2Set(job)) {
+          for (String name : counters.key3Set(job, group)) {
+            if (counterFilter.isRecord(group, name)) {
+              toRecord.put(group, name, counters.get(job, group, name));
+            }
           }
         }
-      }
-      try {
         persistence.markJobCounters(fullId(), job, toRecord);
-      } catch (IOException e) {
-        LOG.error("Failed to capture stats for job: " + job);
       }
+
+    } catch (IOException e) {
+      LOG.error("Failed to capture stats for step!");
     }
+
 
   }
 
