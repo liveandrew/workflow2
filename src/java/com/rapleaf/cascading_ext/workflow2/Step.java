@@ -67,6 +67,7 @@ public final class Step {
     return "Step " + getCheckpointToken() + " " + action + " deps=" + dependencies;
   }
 
+  @Deprecated
   public List<NestedCounter> getCounters() {
     return nestedCounters;
   }
