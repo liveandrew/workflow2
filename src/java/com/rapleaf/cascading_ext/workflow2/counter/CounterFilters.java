@@ -33,6 +33,10 @@ public class CounterFilters {
 
   }
 
+  public static CounterFilter all(){
+    return new AllFilter();
+  }
+
   public static CounterFilter defaultCounters(){
     return new DefaultFilter();
   }
@@ -45,7 +49,14 @@ public class CounterFilters {
     return DEFAULT_AS_MAP.get(group).contains(name);
   }
 
-  private static class DefaultFilter implements CounterFilter {
+  private static class AllFilter implements CounterFilter {
+    @Override
+    public boolean isRecord(String group, String name) {
+      return true;
+    }
+  }
+
+    private static class DefaultFilter implements CounterFilter {
     @Override
     public boolean isRecord(String group, String name) {
       return isDefault(group, name);
