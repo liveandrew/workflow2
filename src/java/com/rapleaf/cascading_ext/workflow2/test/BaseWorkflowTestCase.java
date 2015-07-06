@@ -55,10 +55,18 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(steps, context);
   }
 
+  public WorkflowRunner execute(Action action, TestWorkflowOptions options) throws IOException {
+    return execute(Sets.newHashSet(new Step(action)), options, context);
+  }
+
   public WorkflowRunner execute(Set<Step> steps, ContextStorage storage) throws IOException {
+    return execute(steps, new TestWorkflowOptions(), storage);
+  }
+
+  public WorkflowRunner execute(Set<Step> steps, TestWorkflowOptions options, ContextStorage storage) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner("Test workflow",
         new DbPersistenceFactory(),
-        new TestWorkflowOptions()
+        options
             .setStorage(storage)
             .setResourceManager(ResourceManagers.inMemoryResourceManager("Test Workflow", null, new DatabasesImpl().getRlDb())),
         steps);
