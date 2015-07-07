@@ -512,8 +512,12 @@ public abstract class Action {
     return persistence.getFlatCounters();
   }
 
-  protected ThreeNestedMap<String, String, String, Long> getCountersByStep() throws IOException {
+  protected ThreeNestedMap<String, String, String, Long> getAllCountersByStep() throws IOException {
     return persistence.getCountersByStep();
+  }
+
+  TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
+    return persistence.getCountersByStep().get(actionId.resolve());
   }
 
 }

@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -7,9 +8,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 
 public final class Step {
@@ -70,6 +73,15 @@ public final class Step {
   @Deprecated
   public List<NestedCounter> getCounters() {
     return nestedCounters;
+  }
+
+  public Callable<TwoNestedMap<String, String, Long>> getCountersFuture() throws IOException {
+    return new Callable<TwoNestedMap<String, String, Long>>() {
+      @Override
+      public TwoNestedMap<String, String, Long> call() throws Exception {
+        return action.getStepCounters();
+      }
+    };
   }
 
   public void run(NestedProperties properties) {
