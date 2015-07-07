@@ -26,6 +26,7 @@ import com.liveramp.cascading_ext.assembly.BloomJoin;
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.liveramp.cascading_tools.EmptyListener;
 import com.liveramp.commons.collections.list.ListBuilder;
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.assembly.Distinct;
 import com.rapleaf.cascading_ext.assembly.FastSum;
@@ -43,6 +44,8 @@ import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
+import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.support.test.NPDH;
@@ -338,17 +341,20 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
 
     Pipe pipe1 = builder.msj("pipe1", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new SourceMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, store1))
-        .add(new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
+        .add(new SourceMSJBinding<>(DIE_EID_EXTRACTOR, store1))
+        .add(new SourceMSJBinding<>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
         new ExampleMultiJoiner());
 
     pipe1 = new Increment(pipe1, "COUNTER1", "VALUE");
 
-    WorkflowRunner workflowRunner = execute(builder.buildTail(pipe1, output));
+    WorkflowRunner workflowRunner = execute(builder.buildTail(pipe1, output),
+        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
 
-    assertEquals(new Long(1), workflowRunner.getCounterMap().get("COUNTER1").get("VALUE"));
+    TwoNestedMap<String, String, Long> counters = workflowRunner.getPersistence().getFlatCounters();
 
-    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertEquals(new Long(1), counters.get("COUNTER1").get("VALUE"));
+
+    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.getValuesFromBucket(output));
   }
 
   @Test
@@ -384,16 +390,19 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     pipe2 = new GroupBy(pipe2, new Fields("eid"));
 
     Pipe die = builder.msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new FlowMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
-        .add(new FlowMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
+        .add(new FlowMSJBinding<>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
+        .add(new FlowMSJBinding<>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
         new ExampleMultiJoiner());
     die = new Increment(die, "AFTER", "COUNT");
 
-    WorkflowRunner output1 = execute(builder.buildTail("output", die, output));
+    WorkflowRunner output1 = execute(builder.buildTail("output", die, output),
+        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
 
-    assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
-    assertEquals(new Long(1), output1.getCounterMap().get("SUMMS").get("COUNT"));
-    assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
+    TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
+
+    assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
+    assertEquals(new Long(1), counters.get("SUMMS").get("COUNT"));
+    assertEquals(new Long(1), counters.get("AFTER").get("COUNT"));
 
     assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
   }
@@ -424,17 +433,20 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     pipe1 = new GroupBy(pipe1, new Fields("eid"));
 
     Pipe die = builder.msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new FlowMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
-        .add(new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
+        .add(new FlowMSJBinding<>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
+        .add(new SourceMSJBinding<>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
         new ExampleMultiJoiner());
     die = new Increment(die, "AFTER", "COUNT");
 
-    WorkflowRunner output1 = execute(builder.buildTail("output", die, output));
+    WorkflowRunner output1 = execute(builder.buildTail("output", die, output),
+        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
 
-    assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
-    assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
+    TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
 
-    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
+    assertEquals(new Long(1), counters.get("AFTER").get("COUNT"));
+
+    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.getValuesFromBucket(output));
   }
 
   @Test
@@ -452,8 +464,11 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     Pipe pipe1 = builder.bindSource("pipe1", store1);
     pipe1 = new Increment(pipe1, "DIES", "COUNT");
 
-    WorkflowRunner output1 = execute(builder.buildNullTail(pipe1));
-    assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
+    WorkflowRunner output1 = execute(builder.buildNullTail(pipe1),
+        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
+
+    TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
+    assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
 
   }
 }

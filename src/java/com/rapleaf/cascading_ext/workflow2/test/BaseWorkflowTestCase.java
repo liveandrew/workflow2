@@ -15,6 +15,7 @@ import com.rapleaf.cascading_ext.workflow2.InMemoryContext;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.db_schemas.DatabasesImpl;
 
@@ -55,15 +56,19 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(steps, context);
   }
 
-  public WorkflowRunner execute(Action action, TestWorkflowOptions options) throws IOException {
+  public WorkflowRunner execute(Action action, WorkflowOptions options) throws IOException {
     return execute(Sets.newHashSet(new Step(action)), options, context);
+  }
+
+  public WorkflowRunner execute(Step step, WorkflowOptions options) throws IOException {
+    return execute(Sets.newHashSet(step), options, context);
   }
 
   public WorkflowRunner execute(Set<Step> steps, ContextStorage storage) throws IOException {
     return execute(steps, new TestWorkflowOptions(), storage);
   }
 
-  public WorkflowRunner execute(Set<Step> steps, TestWorkflowOptions options, ContextStorage storage) throws IOException {
+  public WorkflowRunner execute(Set<Step> steps, WorkflowOptions options, ContextStorage storage) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner("Test workflow",
         new DbPersistenceFactory(),
         options

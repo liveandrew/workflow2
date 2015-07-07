@@ -20,6 +20,7 @@ import cascading.tuple.Tuple;
 
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.liveramp.commons.collections.list.ListBuilder;
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -28,6 +29,8 @@ import com.rapleaf.cascading_ext.function.ExpandThrift;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
+import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
@@ -103,8 +106,8 @@ public class TestCascadingAction2 extends WorkflowTestCase {
       super(checkpointToken, tmpRoot, flowProperties);
 
       Pipe input = msj("msj-source", new ListBuilder<MSJBinding<BytesWritable>>()
-          .add(new SourceMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, store1))
-          .add(new SourceMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
+          .add(new SourceMSJBinding<>(DIE_EID_EXTRACTOR, store1))
+          .add(new SourceMSJBinding<>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
           new ExampleMultiJoiner());
 
       input = new Increment(input, "COUNTER", "INCREMENT");
@@ -137,8 +140,8 @@ public class TestCascadingAction2 extends WorkflowTestCase {
       pipe2 = new GroupBy(pipe2, new Fields("eid"));
 
       Pipe summ = msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-          .add(new FlowMSJBinding<BytesWritable>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
-          .add(new FlowMSJBinding<BytesWritable>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
+          .add(new FlowMSJBinding<>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
+          .add(new FlowMSJBinding<>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
           new ExampleMultiJoiner());
       summ = new Increment(summ, "AFTER", "COUNT");
 
@@ -175,7 +178,8 @@ public class TestCascadingAction2 extends WorkflowTestCase {
     List<Tuple> data = Lists.<Tuple>newArrayList(new Tuple("data"));
     TupleDataStoreHelper.writeToStore(input, data);
 
-    execute(new SimpleExampleAction("token", getTestRoot() + "/tmp", input, output));
+    execute(new SimpleExampleAction("token", getTestRoot() + "/tmp", input, output),
+        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
 
     assertCollectionEquivalent(data, HRap.getAllTuples(input.getTap()));
     assertCollectionEquivalent(data, HRap.getAllTuples(output.getTap()));
@@ -191,10 +195,11 @@ public class TestCascadingAction2 extends WorkflowTestCase {
     List<Tuple> data = Lists.<Tuple>newArrayList(new Tuple("data"));
     TupleDataStoreHelper.writeToStore(input, data);
 
-    WorkflowRunner token = execute(new SimpleTwoSinkAction("token", getTestRoot() + "/tmp", input, output, output1));
+    WorkflowRunner token = execute(new SimpleTwoSinkAction("token", getTestRoot() + "/tmp", input, output, output1),
+        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
 
     //  make sure counter only got incremented once
-    assertEquals(Collections.singletonMap("Counter", 1l), token.getCounterMap().get("Group"));
+    assertEquals(Collections.singletonMap("Counter", 1l), token.getPersistence().getFlatCounters().get("Group"));
 
     assertCollectionEquivalent(data, HRap.getAllTuples(output.getTap()));
     assertCollectionEquivalent(data, HRap.getAllTuples(output1.getTap()));
@@ -233,10 +238,11 @@ public class TestCascadingAction2 extends WorkflowTestCase {
         SUMM
     );
 
-    WorkflowRunner token = execute(new SimpleMSJAction("token", getTestRoot() + "/tmp", store1, store2, output, Collections.emptyMap()));
+    WorkflowRunner token = execute(new SimpleMSJAction("token", getTestRoot() + "/tmp", store1, store2, output, Collections.emptyMap()),
+        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
 
-    assertEquals(new Long(1l), token.getCounterMap().get("COUNTER").get("INCREMENT"));
-    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertEquals(new Long(1l), token.getPersistence().getFlatCounters().get("COUNTER").get("INCREMENT"));
+    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.getValuesFromBucket(output));
 
   }
 
@@ -256,13 +262,15 @@ public class TestCascadingAction2 extends WorkflowTestCase {
         SUMM
     );
 
-    WorkflowRunner output1 = execute(new MidMSJAction("token", store1, store2, output, getTestRoot()+"/tmp", Collections.emptyMap()));
+    WorkflowRunner output1 = execute(new MidMSJAction("token", store1, store2, output, getTestRoot()+"/tmp", Collections.emptyMap()),
+        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
 
-    assertEquals(new Long(2), output1.getCounterMap().get("DIES").get("COUNT"));
-    assertEquals(new Long(1), output1.getCounterMap().get("SUMMS").get("COUNT"));
-    assertEquals(new Long(1), output1.getCounterMap().get("AFTER").get("COUNT"));
+    TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
+    assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
+    assertEquals(new Long(1), counters.get("SUMMS").get("COUNT"));
+    assertEquals(new Long(1), counters.get("AFTER").get("COUNT"));
 
-    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
+    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.getValuesFromBucket(output));
   }
 
 
