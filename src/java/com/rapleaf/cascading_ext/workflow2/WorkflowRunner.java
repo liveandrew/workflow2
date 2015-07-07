@@ -8,7 +8,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -107,17 +106,8 @@ public final class WorkflowRunner {
   private final Set<WorkflowRunnerNotification> enabledNotifications;
   private final CounterFilter counterFilter;
   private final ResourceManager<?, ?> resourceManager;
-  private String sandboxDir;
 
   private final String scopeIdentifier;
-
-  public String getSandboxDir() {
-    return sandboxDir;
-  }
-
-  public void setSandboxDir(String sandboxDir) {
-    this.sandboxDir = sandboxDir;
-  }
 
   public WorkflowRunner(Class klass, Step tail) {
     this(klass, new DbPersistenceFactory(), tail);
@@ -204,6 +194,8 @@ public final class WorkflowRunner {
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps);
+
+    assertSandbox(options.getSandboxDir());
 
     this.persistence = persistenceFactory.prepare(dependencyGraph,
         workflowName,
@@ -334,25 +326,30 @@ public final class WorkflowRunner {
     return persistence;
   }
 
-  private void checkStepsSandboxViolation(Set<DataStore> dataStores) throws IOException {
+  private void checkStepsSandboxViolation(Set<DataStore> dataStores, String sandboxDir) throws IOException {
     if (dataStores != null) {
       for (DataStore dataStore : dataStores) {
-        if (!isSubPath(getSandboxDir(), dataStore.getPath())) {
+        if (!isSubPath(sandboxDir, dataStore.getPath())) {
           throw new IOException("Step wants to write outside of sandbox \""
-              + getSandboxDir() + "\"" + " into \"" + dataStore.getPath() + "\"");
+              + sandboxDir + "\"" + " into \"" + dataStore.getPath() + "\"");
         }
       }
     }
   }
 
-  public void checkStepsSandboxViolation(Collection<Step> steps) throws IOException {
-    if (getSandboxDir() != null) {
-      for (Step step : steps) {
-        Action stepAction = step.getAction();
-        if (stepAction != null) { // TODO: check if this check is necessary, it shouldn't be
-          checkStepsSandboxViolation(stepAction.getDatastores(DSAction.CREATES));
-          checkStepsSandboxViolation(stepAction.getDatastores(DSAction.CREATES_TEMPORARY));
+  private void assertSandbox(String sandboxDir) {
+    if(sandboxDir != null) {
+      LOG.info("Checking that no action writes outside sandboxDir \"" + sandboxDir + "\"");
+      try {
+        for (Step step : getPhsyicalDependencyGraph().vertexSet()) {
+          Action stepAction = step.getAction();
+          if (stepAction != null) { // TODO: check if this check is necessary, it shouldn't be
+            checkStepsSandboxViolation(stepAction.getDatastores(DSAction.CREATES), sandboxDir);
+            checkStepsSandboxViolation(stepAction.getDatastores(DSAction.CREATES_TEMPORARY), sandboxDir);
+          }
         }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
     }
   }
@@ -362,6 +359,7 @@ public final class WorkflowRunner {
    *
    * @throws IOException
    */
+
   public synchronized void run() throws IOException {
     if (alreadyRun) {
       throw new IllegalStateException("The workflow is already running (or finished)!");
@@ -369,8 +367,6 @@ public final class WorkflowRunner {
     alreadyRun = true;
     timer.start();
     try {
-      LOG.info("Checking that no action goes outside sandboxDir \"" + getSandboxDir() + "\"");
-      checkStepsSandboxViolation(getPhsyicalDependencyGraph().vertexSet());
 
       // Notify
       LOG.info(getStartMessage());
@@ -390,7 +386,8 @@ public final class WorkflowRunner {
     } finally {
       Runtime.getRuntime().removeShutdownHook(shutdownHook);
       timer.stop();
-      LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));    }
+      LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));
+    }
   }
 
   private class ShutdownHook implements Runnable {
@@ -604,7 +601,7 @@ public final class WorkflowRunner {
   }
 
   private void mail(String subject, AlertRecipient recipient) throws IOException {
-      mail(subject, "", recipient);
+    mail(subject, "", recipient);
   }
 
   private void mail(String subject, String body, AlertRecipient recipient) throws IOException {

@@ -25,6 +25,7 @@ public class WorkflowOptions {
   private Integer stepPollInterval;
   private CounterFilter counterFilter;
   private ResourceManager resourceManager;
+  private String sandboxDir;
 
   protected WorkflowOptions(){}
 
@@ -139,4 +140,14 @@ public class WorkflowOptions {
     this.counterFilter = filter;
     return this;
   }
+
+  public String getSandboxDir(){
+    return sandboxDir;
+  }
+
+  public WorkflowOptions setSandboxDir(String sandboxDir){
+    this.sandboxDir = sandboxDir;
+    return this;
+  }
+
 }

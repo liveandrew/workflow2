@@ -128,4 +128,30 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
     assertTrue(exception.getCause().getMessage().startsWith("Cannot start, a previous attempt is still alive!"));
 
   }
+
+  @Test
+  public void testCleanupNullStatus() throws Exception {
+
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+    rldb.disableCaching();
+
+    Application app = rldb.applications().create("Workflow");
+
+    WorkflowExecution ex = rldb.workflowExecutions().create(null, "Workflow", null, WorkflowExecutionStatus.INCOMPLETE.ordinal(), Time.now(), Time.now() + 1, app.getIntId());
+
+    long currentTime = System.currentTimeMillis();
+
+    WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create((int)ex.getId(), "bpodgursky", "default", "default", "localhost")
+        .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * 2));
+    workflowAttempt.save();
+
+    rldb.stepAttempts().create((int)workflowAttempt.getId(), "step1", StepStatus.RUNNING.ordinal(), Object.class.getName());
+
+    new WorkflowRunner("Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions(),
+        Sets.newHashSet(new Step(new NoOpAction("step1"))));
+
+  }
+
 }

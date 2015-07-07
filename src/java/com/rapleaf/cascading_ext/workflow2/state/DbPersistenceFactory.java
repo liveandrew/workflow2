@@ -64,7 +64,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     try {
 
       Application application = getApplication(name, appType);
-      LOG.info("Using application: "+application);
+      LOG.info("Using application: " + application);
 
       WorkflowExecution execution = getExecution(application, name, appType, scopeId);
       LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
@@ -82,6 +82,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
           launchJar,
           execution
       );
+
+      assertOnlyLiveAttempt(execution, attempt);
 
       long workflowAttemptId = attempt.getId();
       LOG.info("Using new attempt: " + attempt + " id " + workflowAttemptId);
@@ -149,7 +151,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       return application.get();
     } else {
-      LOG.info("Creating new application for name: "+name+", app type "+appType);
+      LOG.info("Creating new application for name: " + name + ", app type " + appType);
 
       Application app = rldb.applications().create(name);
       if (appType != null) {
@@ -177,24 +179,20 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   private void cleanUpRunningAttempts(WorkflowExecution execution) throws IOException {
 
-    List<WorkflowAttempt> prevAttempts = execution.getWorkflowAttempt();
+    List<WorkflowAttempt> prevAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
     LOG.info("Found previous attempts: " + prevAttempts);
 
     for (WorkflowAttempt attempt : prevAttempts) {
 
       //  check to see if any of these workflows are still marked as alive
-      if (AttemptStatus.LIVE_STATUSES.contains(attempt.getStatus())) {
+      Assertions.assertDead(attempt);
 
-        Assertions.assertDead(attempt);
-
-        //  otherwise it is safe to clean up
-        LOG.info("Marking old running attempt as FAILED: " + attempt);
-        attempt
-            .setStatus(AttemptStatus.FAILED.ordinal())
-            .setEndTime(System.currentTimeMillis())
-            .save();
-
-      }
+      //  otherwise it is safe to clean up
+      LOG.info("Marking old running attempt as FAILED: " + attempt);
+      attempt
+          .setStatus(AttemptStatus.FAILED.ordinal())
+          .setEndTime(System.currentTimeMillis())
+          .save();
 
       //  and mark any step that was still running as failed
       for (StepAttempt step : attempt.getStepAttempt()) {
@@ -210,6 +208,14 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
     }
 
+  }
+
+  public void assertOnlyLiveAttempt(WorkflowExecution execution, WorkflowAttempt attempt) throws IOException {
+    List<WorkflowAttempt> liveAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
+    if (liveAttempts.size() != 1) {
+      attempt.setStatus(AttemptStatus.FAILED.ordinal()).save();
+      throw new RuntimeException("Multiple live attempts found for workflow execution! " + liveAttempts + " Not starting workflow.");
+    }
   }
 
   private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, WorkflowExecution execution) throws IOException {

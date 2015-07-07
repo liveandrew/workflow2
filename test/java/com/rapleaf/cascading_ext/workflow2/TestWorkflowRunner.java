@@ -483,26 +483,21 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testSandboxDir(WorkflowPersistenceFactory persistence) throws Exception {
     try {
       WorkflowRunner wfr = buildWfr(persistence,
+          new TestWorkflowOptions().setSandboxDir("//fake/path"),
           Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"), fakeStep("b", "/path/of/fakeness"))
       );
-      wfr.setSandboxDir("//fake/path");
       wfr.run();
       fail("There was an invalid path!");
-    } catch (IOException e) {
+    } catch (Exception e) {
       // expected
     }
 
-    try {
-      WorkflowRunner wfr = buildWfr(persistence,
-          Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"),
-              fakeStep("b", "/fake/./path")));
+    WorkflowRunner wfr = buildWfr(persistence,
+        new TestWorkflowOptions().setSandboxDir("//fake/path"),
+        Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"),
+            fakeStep("b", "/fake/./path")));
+    wfr.run();
 
-      wfr.setSandboxDir("//fake/path");
-      wfr.run();
-      // expected
-    } catch (IOException e) {
-      fail(e.getMessage());
-    }
   }
 
   public Step fakeStep(String checkpointToken, final String fakePath) {
@@ -928,7 +923,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     try {
       runner.run();
-    }catch(Exception e){
+    } catch (Exception e) {
       // expected
     }
 
@@ -1005,7 +1000,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       runningFlow(flow);
 
       //  make sure counter from previous step is accessible
-      assertEquals(1l, (long) getFlatCounters().get("CUSTOM_COUNTER", "NAME"));
+      assertEquals(1l, (long)getFlatCounters().get("CUSTOM_COUNTER", "NAME"));
 
     }
 
