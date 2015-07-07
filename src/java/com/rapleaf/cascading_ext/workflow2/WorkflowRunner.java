@@ -8,7 +8,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -24,7 +23,6 @@ import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
@@ -678,39 +676,6 @@ public final class WorkflowRunner {
 
   public EventTimer getTimer() {
     return timer;
-  }
-
-  @Deprecated
-  private List<NestedCounter> getCounters() {
-    try {
-      // we don't know what stage of execution we are in when this is called
-      // so get an up-to-date list of counters each time
-      List<NestedCounter> counters = new ArrayList<NestedCounter>();
-      for (StepRunner sr : completedSteps) {
-        for (NestedCounter c : sr.step.getCounters()) {
-          counters.add(c);
-        }
-      }
-      return counters;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Deprecated
-  public Map<String, Map<String, Long>> getCounterMap() {
-    // we don't know what stage of execution we are in when this is called
-    // so get an up-to-date list of counters each time
-    List<NestedCounter> counters = this.getCounters();
-    Map<String, Map<String, Long>> counterMap = new HashMap<String, Map<String, Long>>();
-    for (NestedCounter nestedCounter : counters) {
-      Counter counter = nestedCounter.getCounter();
-      if (counterMap.get(counter.getGroup()) == null) {
-        counterMap.put(counter.getGroup(), new HashMap<String, Long>());
-      }
-      counterMap.get(counter.getGroup()).put(counter.getName(), counter.getValue());
-    }
-    return counterMap;
   }
 
   /**
