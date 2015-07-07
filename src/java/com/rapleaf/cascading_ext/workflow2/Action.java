@@ -517,7 +517,9 @@ public abstract class Action {
   }
 
   TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
-    return persistence.getCountersByStep().get(actionId.resolve());
+    String actionId = this.actionId.resolve();
+    ThreeNestedMap<String, String, String, Long> allCounters = persistence.getCountersByStep();
+    return allCounters.get(actionId);
   }
 
 }
