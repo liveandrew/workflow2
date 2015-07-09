@@ -58,7 +58,7 @@ public final class WorkflowRunner {
   public static final String ERROR_EMAIL_SUBJECT_TAG = "ERROR";
 
   private static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
-  private static final String JOB_POOL_PARAM = "mapred.queue.name";
+  private static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
 
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLockProvider lockProvider;

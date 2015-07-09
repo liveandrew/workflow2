@@ -31,6 +31,12 @@ public class CounterFilters {
     DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.TOTAL_LAUNCHED_REDUCES.name());
 
 
+    DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.VCORES_MILLIS_MAPS.name());
+    DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.VCORES_MILLIS_REDUCES.name());
+
+    DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.MB_MILLIS_MAPS.name());
+    DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.MB_MILLIS_REDUCES.name());
+
   }
 
   public static CounterFilter all(){
