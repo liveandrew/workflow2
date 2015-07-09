@@ -3,7 +3,7 @@ package com.liveramp.cascading_ext.megadesk;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.curator.framework.CuratorFramework;
 
-import com.rapleaf.cascading_ext.queues.LiverampQueues;
+import com.rapleaf.cascading_ext.queues.ProductionCuratorProvider;
 import com.rapleaf.support.HashHelper;
 
 public class CuratorStoreReaderLockProvider extends StoreReaderLockProvider {
@@ -11,7 +11,7 @@ public class CuratorStoreReaderLockProvider extends StoreReaderLockProvider {
   public final CuratorFramework framework;
 
   public static CuratorStoreReaderLockProvider getProduction() {
-    return new CuratorStoreReaderLockProvider(LiverampQueues.getProduction().getFramework());
+    return new CuratorStoreReaderLockProvider(ProductionCuratorProvider.INSTANCE.getFramework());
   }
 
   public CuratorStoreReaderLockProvider(CuratorFramework framework) {

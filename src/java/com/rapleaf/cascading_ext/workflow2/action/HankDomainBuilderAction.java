@@ -1,9 +1,14 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
@@ -122,8 +127,8 @@ public abstract class HankDomainBuilderAction extends Action {
     public void run(Coordinator coordinator) throws IOException {
       Domain domain = DomainBuilderProperties.getDomain(coordinator, domainName);
 
-      if(!allowSimultaneousDeltas) {
-        if(Domains.hasOpenDelta(domain)){
+      if (!allowSimultaneousDeltas) {
+        if (Domains.hasOpenDelta(domain)) {
           throw new RuntimeException("Multiple deltas are open!.  Please mark defunct and delete any old deltas");
         }
       }
@@ -186,6 +191,7 @@ public abstract class HankDomainBuilderAction extends Action {
       }
     }
   }
+
   public HankDomainBuilderAction setDomainVersionStorage(DomainVersionStorage domainVersionStorage) {
     this.domainVersionStorage = domainVersionStorage;
     return this;
@@ -239,7 +245,7 @@ public abstract class HankDomainBuilderAction extends Action {
 
   }
 
-  public static class MockDomainStorage implements DomainVersionStorage{
+  public static class MockDomainStorage implements DomainVersionStorage {
 
     private final Map<String, Integer> memoryMap = Maps.newHashMap();
 
@@ -251,6 +257,62 @@ public abstract class HankDomainBuilderAction extends Action {
     @Override
     public Map<String, Integer> read() {
       return memoryMap;
+    }
+  }
+
+  public static class HdfsDomainVersionStorage implements DomainVersionStorage {
+
+    private Path path;
+    private FileSystem fs;
+
+    public HdfsDomainVersionStorage(String path, FileSystem fs) {
+      this.path = new Path(path);
+      this.fs = fs;
+    }
+
+    @Override
+    public void store(String domainName, Integer version) {
+      try {
+        Map<String, Integer> map;
+        if (fs.exists(path)) {
+          ObjectInputStream ois = new ObjectInputStream(fs.open(path));
+          map = (Map<String, Integer>)ois.readObject();
+          ois.close();
+        } else {
+          map = new HashMap<>();
+        }
+        map.put(domainName, version);
+
+        ObjectOutputStream oos = new ObjectOutputStream(fs.create(path, true));
+        oos.writeObject(map);
+        oos.close();
+
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+
+
+    }
+
+    @Override
+    public Map<String, Integer> read() {
+      try {
+        Map<String, Integer> map;
+        if (fs.exists(path)) {
+          ObjectInputStream ois = new ObjectInputStream(fs.open(path));
+          map = (Map<String, Integer>)ois.readObject();
+          ois.close();
+        } else {
+          map = new HashMap<>();
+        }
+        return map;
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }
