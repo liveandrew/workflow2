@@ -16,6 +16,7 @@ import com.rapleaf.cascading_ext.map_side_join.MapSideJoin;
 import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
+@Deprecated //  use MSJTapAction instead
 public abstract class MapSideJoinAction<T extends Comparable> extends Action {
 
   private final List<MapSideJoinableDataStore> inputStores = new ArrayList<MapSideJoinableDataStore>();
