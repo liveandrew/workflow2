@@ -88,7 +88,7 @@ public class CascadingAction2 extends MultiStepAction {
   }
 
   protected Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding) {
-    return bindSource(name, sourceStoreBinding.getStores(), sourceStoreBinding.getTapFactory());
+    return workflowHelper.bindSource(name, sourceStoreBinding);
   }
 
   protected <T extends Comparable, O extends TBase> Pipe msj(String name, List<MSJBinding<T>> bindings, TOutputMultiJoiner<T, O> joiner) throws IOException {

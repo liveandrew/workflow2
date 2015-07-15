@@ -36,6 +36,7 @@ import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
+import com.rapleaf.cascading_ext.pipe.PipeFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.tap.TapFactory.SimpleFactory;
@@ -94,9 +95,13 @@ public class CascadingWorkflowBuilder {
   }
 
   public Pipe bindSource(String name, Collection<? extends DataStore> sources, TapFactory tap) {
-    pipenameToSourceStore.putAll(name, sources);
-    pipenameToTap.put(name, tap);
-    return new Pipe(name);
+    return bindSource(name, new SourceStoreBinding(sources, tap, new PipeFactory.Fresh()));
+  }
+
+  public Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding) {
+    pipenameToSourceStore.putAll(name, sourceStoreBinding.getStores());
+    pipenameToTap.put(name, sourceStoreBinding.getTapFactory());
+    return sourceStoreBinding.getPipe(new Pipe(name));
   }
 
   public <T extends Comparable> Pipe msj(final String name, List<MSJBinding<T>> bindings, final TOutputMultiJoiner<T, ?> joiner) throws IOException {
