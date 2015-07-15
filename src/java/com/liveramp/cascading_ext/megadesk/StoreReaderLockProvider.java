@@ -96,9 +96,13 @@ public abstract class StoreReaderLockProvider {
     try {
       if (store instanceof VersionedBucketDataStore) {
         VersionedBucketDataStore versioned = (VersionedBucketDataStore)store;
-        return createLock(versioned.getLatestVersion().getPath());
+        String path = versioned.getLatestVersion().getPath();
+        LOG.info("Locking version path " + path + " against deletion.");
+        return createLock(path);
       } else {
-        return createLock(store.getPath());
+        String path = store.getPath();
+        LOG.info("Locking path " + path + " against deletion.");
+        return createLock(path);
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
