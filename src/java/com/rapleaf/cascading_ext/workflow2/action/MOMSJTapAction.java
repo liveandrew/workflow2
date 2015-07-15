@@ -3,9 +3,12 @@ package com.rapleaf.cascading_ext.workflow2.action;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 
@@ -29,8 +32,9 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
 
   private final MOMSJFunction<E, BytesWritable> function;
   private final List<StoreExtractor<BytesWritable>> extractors;
-  private final Map<E, ? extends BucketDataStore> outputCategories;
+  private final Map<E, BucketDataStore> outputCategories;
   private final BucketDataStore<BytesWritable> tmpPartitioned;
+  private final Set<String> unpartitionedOutputs;
 
   public interface PostFlow {
     public void callback(Flow flow);
@@ -48,20 +52,32 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
                         final ExtractorsList<BytesWritable> extractors,
                         MOMSJFunction<E, BytesWritable> function,
-                        Map<E, ? extends BucketDataStore> outputCategories) throws IOException {
-    this(checkpointToken, tmpRoot, extractors, function, outputCategories, new PostFlow.NoOp());
+                        Map<E, ? extends BucketDataStore> partitionedCategories,
+                        Map<E, ? extends BucketDataStore> unpartitionedCategories) throws IOException {
+    this(checkpointToken, tmpRoot, extractors, function, partitionedCategories, unpartitionedCategories, new PostFlow.NoOp());
   }
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
                         final ExtractorsList<BytesWritable> extractors,
                         MOMSJFunction<E, BytesWritable> function,
-                        Map<E, ? extends BucketDataStore> outputCategories,
+                        Map<E, ? extends BucketDataStore> outputCategories) throws IOException {
+    this(checkpointToken, tmpRoot, extractors, function, outputCategories, Maps.<E, BucketDataStore>newHashMap(), new PostFlow.NoOp());
+  }
+
+  public MOMSJTapAction(String checkpointToken, String tmpRoot,
+                        final ExtractorsList<BytesWritable> extractors,
+                        MOMSJFunction<E, BytesWritable> function,
+                        Map<E, ? extends BucketDataStore> partitionedCategories,
+                        Map<E, ? extends BucketDataStore> unpartitionedCategories,
                         PostFlow callback) throws IOException {
     super(checkpointToken, tmpRoot);
 
+    if (!CollectionUtils.intersection(partitionedCategories.keySet(), unpartitionedCategories.keySet()).isEmpty()) {
+      throw new RuntimeException("Partitioned and unpartitioned outputs cannot overlap!");
+    }
+
     this.function = function;
     this.extractors = extractors.get();
-    this.outputCategories = outputCategories;
     this.callback = callback;
 
     tmpPartitioned = builder().getBucketDataStore("tmp_partitioned", BytesWritable.class);
@@ -72,10 +88,27 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
       readsFrom(input.getStore());
     }
 
-    for (BucketDataStore store : outputCategories.values()) {
-      creates(store);
+    this.outputCategories = Maps.newHashMap();
+    this.unpartitionedOutputs = asStrings(unpartitionedCategories.keySet());
+
+    for (Map.Entry<E, ? extends BucketDataStore> entry : partitionedCategories.entrySet()) {
+      outputCategories.put(entry.getKey(), entry.getValue());
+      creates(entry.getValue());
     }
 
+    for (Map.Entry<E, ? extends BucketDataStore> entry : unpartitionedCategories.entrySet()) {
+      outputCategories.put(entry.getKey(), entry.getValue());
+      creates(entry.getValue());
+    }
+
+  }
+
+  private Set<String> asStrings(Set<E> values){
+    Set<String> out = Sets.newHashSet();
+    for (E value : values) {
+      out.add(value.toString());
+    }
+    return out;
   }
 
   @Override
@@ -88,9 +121,11 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
 
     Flow flow = completeWithProgress(buildFlow().connect(
         source,
-        new PartitionedBucketTap<BytesWritable>(tmpPartitioned.getPath(),
+        new PartitionedBucketTap<>(tmpPartitioned.getPath(),
             new BytesStorageStrategy(MOMSJFunction.RECORD_FIELD),
-            PartitionStructure.UNENFORCED),
+            PartitionStructure.UNENFORCED,
+            unpartitionedOutputs
+        ),
         pipe
     ));
 

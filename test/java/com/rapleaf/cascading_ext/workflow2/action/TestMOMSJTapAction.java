@@ -1,10 +1,13 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.io.BytesWritable;
 import org.junit.Test;
+
+import cascading.flow.FlowProcess;
 
 import com.liveramp.cascading_ext.Bytes;
 import com.liveramp.commons.collections.map.MapBuilder;
@@ -23,6 +26,9 @@ import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
 import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwners;
+import com.rapleaf.types.new_person_data.StringList;
+
+import static org.junit.Assert.assertFalse;
 
 public class TestMOMSJTapAction extends WorkflowTestCase {
 
@@ -47,7 +53,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
       new PINAndOwners(PIN1),
       new PINAndOwners(PIN3)
   ));
-  
+
   private static final ByteBuffer EID1 = ByteBuffer.wrap(Strings.toBytes("1"));
   private static final ByteBuffer EID2 = ByteBuffer.wrap(Strings.toBytes("2"));
 
@@ -64,7 +70,8 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
 
   enum Outputs {
     ONE,
-    TWO
+    TWO,
+    META
   }
 
   @Test
@@ -87,6 +94,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
 
     BucketDataStore<PIN> output1 = builder().getBucketDataStore("output1", PIN.class);
     BucketDataStore<BytesWritable> output2 = builder().getBucketDataStore("output2", BytesWritable.class);
+    BucketDataStore<StringList> metaOut = builder().getBucketDataStore("meta", StringList.class);
 
     MOMSJTapAction<Outputs> action = new MOMSJTapAction<Outputs>(
         "token",
@@ -97,8 +105,8 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
         new TestFunction(),
         new MapBuilder<Outputs, BucketDataStore>()
             .put(Outputs.ONE, output1)
-            .put(Outputs.TWO, output2).get()
-
+            .put(Outputs.TWO, output2).get(),
+        Collections.singletonMap(Outputs.META, metaOut)
     );
 
     execute(action);
@@ -111,6 +119,14 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
             Bytes.byteBufferToBytesWritable(EID1),
             Bytes.byteBufferToBytesWritable(EID2)),
         HRap.getValuesFromBucket(output2));
+
+    assertCollectionEquivalent(Lists.newArrayList(
+        new StringList(Lists.newArrayList("b")),
+        new StringList(Lists.newArrayList("b")),
+        new StringList(Lists.newArrayList("c"))
+    ), HRap.getValuesFromBucket(metaOut));
+
+    assertFalse(metaOut.getBucket().hasIndex());
 
   }
 
@@ -129,9 +145,17 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
       emitValues(functionCall, iter1);
       emitValues(functionCall, iter2);
 
+      functionCall.emit(Outputs.META, new StringList(Lists.newArrayList("b")));
+
+    }
+
+    @Override
+    public void flush(FlowProcess flowProcess, MOMSJFunctionCall<Outputs> msjFunctionCall) {
+      msjFunctionCall.emit(Outputs.META, new StringList(Lists.newArrayList("c")));
     }
 
   }
+
 
   private static void emitValues(MOMSJFunctionCall<Outputs> functionCall, TIterator<DustinInternalEquiv> iter1) {
     while (iter1.hasNext()) {
