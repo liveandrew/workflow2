@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,6 +11,7 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.event_timer.MultiTimedEvent;
 import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -161,4 +163,17 @@ public class MultiStepAction extends Action {
     }
     return counters;
   }
+
+  @Override
+  TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
+
+    TwoNestedMap<String, String, Long> map = new TwoNestedMap<>();
+
+    for (Step step : steps) {
+      map.putAll(step.getAction().getStepCounters());
+    }
+
+    return map;
+  }
+
 }
