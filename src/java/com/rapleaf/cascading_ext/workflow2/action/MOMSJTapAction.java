@@ -54,23 +54,32 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
                         MOMSJFunction<E, BytesWritable> function,
                         Map<E, ? extends BucketDataStore> partitionedCategories,
                         Map<E, ? extends BucketDataStore> unpartitionedCategories) throws IOException {
-    this(checkpointToken, tmpRoot, extractors, function, partitionedCategories, unpartitionedCategories, new PostFlow.NoOp());
+    this(checkpointToken, tmpRoot, extractors, function, partitionedCategories, unpartitionedCategories, new PostFlow.NoOp(), Maps.newHashMap());
   }
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
                         final ExtractorsList<BytesWritable> extractors,
                         MOMSJFunction<E, BytesWritable> function,
                         Map<E, ? extends BucketDataStore> outputCategories) throws IOException {
-    this(checkpointToken, tmpRoot, extractors, function, outputCategories, Maps.<E, BucketDataStore>newHashMap(), new PostFlow.NoOp());
+    this(checkpointToken, tmpRoot, extractors, function, outputCategories, Maps.<E, BucketDataStore>newHashMap(), new PostFlow.NoOp(), Maps.newHashMap());
   }
+
+  public MOMSJTapAction(String checkpointToken, String tmpRoot, Map<Object, Object> properties,
+                        final ExtractorsList<BytesWritable> extractors,
+                        MOMSJFunction<E, BytesWritable> function,
+                        Map<E, ? extends BucketDataStore> outputCategories) throws IOException {
+    this(checkpointToken, tmpRoot, extractors, function, outputCategories, Maps.<E, BucketDataStore>newHashMap(), new PostFlow.NoOp(), properties);
+  }
+
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
                         final ExtractorsList<BytesWritable> extractors,
                         MOMSJFunction<E, BytesWritable> function,
                         Map<E, ? extends BucketDataStore> partitionedCategories,
                         Map<E, ? extends BucketDataStore> unpartitionedCategories,
-                        PostFlow callback) throws IOException {
-    super(checkpointToken, tmpRoot);
+                        PostFlow callback,
+                        Map<Object, Object> properties) throws IOException {
+    super(checkpointToken, tmpRoot, properties);
 
     if (!CollectionUtils.intersection(partitionedCategories.keySet(), unpartitionedCategories.keySet()).isEmpty()) {
       throw new RuntimeException("Partitioned and unpartitioned outputs cannot overlap!");
