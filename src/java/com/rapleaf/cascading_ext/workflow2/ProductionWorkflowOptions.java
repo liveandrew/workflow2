@@ -22,7 +22,6 @@ public class ProductionWorkflowOptions extends WorkflowOptions {
     setLockProvider(new MockStoreReaderLockProvider());
     setStorage(new ContextStorage.None());
     setStepPollInterval(3000);  // be nice to production DB
-    setCounterFilter(CounterFilters.defaultCounters()); //  TODO we can probably switch this to all user counters by default
-                                                        //  after making sure it's not going to nuke the DB
+    setCounterFilter(CounterFilters.all());
   }
 }
