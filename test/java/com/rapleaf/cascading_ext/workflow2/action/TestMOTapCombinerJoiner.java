@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.io.ByteWritable;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.thrift.TBase;
@@ -55,10 +56,12 @@ public class TestMOTapCombinerJoiner extends WorkflowTestCase {
         getTestRoot()+"/tmp",
         new ExtractorsList<BytesWritable>().add(store, new BytesWritableFromByteArray()),
         new MockMOCombinerJoiner(),
+        Maps.<OutputType, BucketDataStore>newHashMap(),
         MapBuilder
             .<OutputType, BucketDataStore>of(OutputType.LIST1, output1)
             .put(OutputType.LIST2, output2)
             .get()
+
     );
 
     execute(msj);
