@@ -29,6 +29,7 @@ import com.rapleaf.types.new_person_data.PINAndOwners;
 import com.rapleaf.types.new_person_data.StringList;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 public class TestMOMSJTapAction extends WorkflowTestCase {
 
@@ -80,17 +81,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
     BucketDataStore<DustinInternalEquiv> pins1 = builder().getBucketDataStore("pin1", DustinInternalEquiv.class);
     BucketDataStore<DustinInternalEquiv> pins2 = builder().getBucketDataStore("pin2", DustinInternalEquiv.class);
 
-    ThriftBucketHelper.writeToBucketAndSort(pins1.getBucket(),
-        DIE_EID_COMPARATOR,
-        DIE1,
-        DIE2
-    );
-
-    ThriftBucketHelper.writeToBucketAndSort(pins2.getBucket(),
-        DIE_EID_COMPARATOR,
-        DIE3,
-        DIE4
-    );
+    setupInput(pins1, pins2);
 
     BucketDataStore<PIN> output1 = builder().getBucketDataStore("output1", PIN.class);
     BucketDataStore<BytesWritable> output2 = builder().getBucketDataStore("output2", BytesWritable.class);
@@ -128,6 +119,55 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
 
     assertFalse(metaOut.getBucket().hasIndex());
 
+  }
+
+  @Test
+  public void testFailInvalidPartition() throws Exception {
+
+    BucketDataStore<DustinInternalEquiv> pins1 = builder().getBucketDataStore("pin1", DustinInternalEquiv.class);
+    BucketDataStore<DustinInternalEquiv> pins2 = builder().getBucketDataStore("pin2", DustinInternalEquiv.class);
+
+    setupInput(pins1, pins2);
+
+    BucketDataStore<PIN> output1 = builder().getBucketDataStore("output1", PIN.class);
+    BucketDataStore<BytesWritable> output2 = builder().getBucketDataStore("output2", BytesWritable.class);
+    BucketDataStore<StringList> metaOut = builder().getBucketDataStore("meta", StringList.class);
+
+    MOMSJTapAction<Outputs> action = new MOMSJTapAction<Outputs>(
+        "token",
+        getTestRoot() + "/tmp",
+        new ExtractorsList<BytesWritable>()
+            .add(pins1, DIE_EID_EXTRACTOR)
+            .add(pins2, DIE_EID_EXTRACTOR),
+        new TestFunction(),
+        new MapBuilder<Outputs, BucketDataStore>()
+            .put(Outputs.ONE, output1)
+            .put(Outputs.TWO, output2)
+            .put(Outputs.META, metaOut)
+            .get()
+    );
+
+    try {
+      execute(action);
+      fail();
+    }catch(Exception e){
+      //  good
+    }
+
+  }
+
+  private void setupInput(BucketDataStore<DustinInternalEquiv> pins1, BucketDataStore<DustinInternalEquiv> pins2) throws java.io.IOException, org.apache.thrift.TException {
+    ThriftBucketHelper.writeToBucketAndSort(pins1.getBucket(),
+        DIE_EID_COMPARATOR,
+        DIE1,
+        DIE2
+    );
+
+    ThriftBucketHelper.writeToBucketAndSort(pins2.getBucket(),
+        DIE_EID_COMPARATOR,
+        DIE3,
+        DIE4
+    );
   }
 
   private static class TestFunction extends MOMSJFunction<Outputs, BytesWritable> {
