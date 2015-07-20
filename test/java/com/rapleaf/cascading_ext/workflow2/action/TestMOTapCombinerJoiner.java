@@ -29,7 +29,7 @@ import com.rapleaf.formats.test.BucketHelper;
 import com.rapleaf.types.new_person_data.EidList;
 
 public class TestMOTapCombinerJoiner extends WorkflowTestCase {
-  
+
   @Test
   public void testIt() throws IOException {
 
