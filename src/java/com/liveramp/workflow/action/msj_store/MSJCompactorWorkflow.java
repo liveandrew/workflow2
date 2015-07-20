@@ -20,7 +20,7 @@ public class MSJCompactorWorkflow extends MultiStepAction {
 
     for (MSJDataStore store : storesToCompact) {
       //noinspection unchecked
-      compactionSteps.add(new Step(new CompactionAction(store.getName(), getTmpRoot(), store)));
+      compactionSteps.add(new Step(new CompactionAction(store.getPath(), getTmpRoot(), store)));
     }
 
     setSubStepsFromTails(compactionSteps);
