@@ -34,7 +34,7 @@ public class PersistNewDatedVersion<E extends Enum<E>, T> extends Action {
   protected void execute() throws Exception {
     String version = versionedStore.openNewVersion(state.get(versionField));
     Bucket versionBucket = Bucket.create(getFS(), version, newVersion.getRecordsType());
-    versionBucket.absorb(newVersion.getBucket());
+    versionBucket.absorbIntoEmpty(newVersion.getBucket());
     if (newVersion.getBucket().isImmutable()) {
       versionBucket.markAsImmutable();
     }
