@@ -31,11 +31,12 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
 
   private final Map<E, ? extends BucketDataStore> partitionedCategories;
   private final Map<E, ? extends BucketDataStore> unpartitionedCategories;
+  private final PartitionStructure partitionStructure;
 
   public interface PostFlow {
-    public void callback(Flow flow);
+    void callback(Flow flow);
 
-    public class NoOp implements PostFlow {
+    class NoOp implements PostFlow {
       @Override
       public void callback(Flow flow) {
         // no op
@@ -67,7 +68,6 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
     this(checkpointToken, tmpRoot, extractors, function, outputCategories, Maps.<E, BucketDataStore>newHashMap(), new PostFlow.NoOp(), properties);
   }
 
-
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
                         final ExtractorsList<BytesWritable> extractors,
                         MOMSJFunction<E, BytesWritable> function,
@@ -75,6 +75,17 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
                         Map<E, ? extends BucketDataStore> unpartitionedCategories,
                         PostFlow callback,
                         Map<Object, Object> properties) throws IOException {
+    this(checkpointToken, tmpRoot, extractors, function, partitionedCategories, unpartitionedCategories, callback, properties, PartitionStructure.UNENFORCED);
+  }
+
+  public MOMSJTapAction(String checkpointToken, String tmpRoot,
+                        final ExtractorsList<BytesWritable> extractors,
+                        MOMSJFunction<E, BytesWritable> function,
+                        Map<E, ? extends BucketDataStore> partitionedCategories,
+                        Map<E, ? extends BucketDataStore> unpartitionedCategories,
+                        PostFlow callback,
+                        Map<Object, Object> properties,
+                        PartitionStructure partitionStructure) throws IOException {
     super(checkpointToken, tmpRoot, properties);
 
     if (!CollectionUtils.intersection(partitionedCategories.keySet(), unpartitionedCategories.keySet()).isEmpty()) {
@@ -84,6 +95,7 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
     this.function = function;
     this.extractors = extractors.get();
     this.callback = callback;
+    this.partitionStructure = partitionStructure;
 
     for (StoreExtractor input : this.extractors) {
       readsFrom(input.getStore());
@@ -108,13 +120,13 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
     Pipe pipe = new Pipe("pipe");
     pipe = new Each(pipe, function);
 
-    MSJTap<BytesWritable> source = new MSJTap<BytesWritable>(getConfs(extractors), new MSJScheme<BytesWritable>());
+    MSJTap<BytesWritable> source = new MSJTap<>(getConfs(extractors), new MSJScheme<BytesWritable>());
 
     Map<Object, BucketTap2> taps = Maps.newHashMap();
     Map<Object, String> tapToSinkFieldName = Maps.newHashMap();
 
     for (Map.Entry<E, ? extends BucketDataStore> entry : partitionedCategories.entrySet()) {
-      populate(taps, tapToSinkFieldName, entry, entry.getValue().getPartitionedSinkTap(PartitionStructure.UNENFORCED));
+      populate(taps, tapToSinkFieldName, entry, entry.getValue().getPartitionedSinkTap(partitionStructure));
     }
 
     for (Map.Entry<E, ? extends BucketDataStore> entry : unpartitionedCategories.entrySet()) {
