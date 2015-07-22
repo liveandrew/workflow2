@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Comparator;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.io.BytesWritable;
@@ -13,8 +14,10 @@ import com.liveramp.cascading_ext.Bytes;
 import com.liveramp.commons.collections.map.MapBuilder;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.map_side_join.Extractor;
 import com.rapleaf.cascading_ext.map_side_join.TIterator;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
+import com.rapleaf.cascading_ext.map_side_join.extractors.ThriftExtractor;
 import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.msj_tap.operation.MOMSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.operation.functioncall.MOMSJFunctionCall;
@@ -150,11 +153,66 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
     try {
       execute(action);
       fail();
-    }catch(Exception e){
+    } catch (Exception e) {
       //  good
     }
 
   }
+
+  @Test
+  public void testStrings() throws Exception {
+
+    BucketDataStore<DustinInternalEquiv> pins1 = builder().getBucketDataStore("pin1", DustinInternalEquiv.class);
+
+    ThriftBucketHelper.writeToBucketAndSort(pins1.getBucket(),
+        new StringComparator(),
+        DIE1,
+        DIE2
+    );
+
+    BucketDataStore<PIN> output1 = builder().getBucketDataStore("output1", PIN.class);
+
+    MOMSJTapAction<Outputs, String> action = new MOMSJTapAction<Outputs, String>(
+        "token",
+        getTestRoot() + "/tmp",
+        new ExtractorsList<String>()
+            .add(pins1, new StringExtractor()),
+        new TestStrings(),
+        new MapBuilder<Outputs, BucketDataStore>()
+            .put(Outputs.ONE, output1)
+            .get()
+    );
+
+    execute(action);
+
+  }
+
+  private static class StringComparator implements Comparator<DustinInternalEquiv> {
+
+    @Override
+    public int compare(DustinInternalEquiv o1, DustinInternalEquiv o2) {
+      return Strings.fromBytes(o1.get_eid()).compareTo(Strings.fromBytes(o1.get_eid()));
+    }
+  }
+
+  private static class StringExtractor extends ThriftExtractor<DustinInternalEquiv, String> {
+
+    @Override
+    public String extractThriftKey(DustinInternalEquiv thriftObject) {
+      return Strings.fromBytes(thriftObject.get_eid());
+    }
+
+    @Override
+    public DustinInternalEquiv getThriftObj() {
+      return new DustinInternalEquiv();
+    }
+
+    @Override
+    public Extractor<String> makeCopy() {
+      return new StringExtractor();
+    }
+  }
+
 
   private void setupInput(BucketDataStore<DustinInternalEquiv> pins1, BucketDataStore<DustinInternalEquiv> pins2) throws java.io.IOException, org.apache.thrift.TException {
     ThriftBucketHelper.writeToBucketAndSort(pins1.getBucket(),
@@ -169,6 +227,26 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
         DIE4
     );
   }
+
+  private static class TestStrings extends MOMSJFunction<Outputs, String> {
+
+    public TestStrings() {
+      super();
+    }
+
+    @Override
+    public void operate(MOMSJFunctionCall<Outputs> functionCall, MSJGroup<String> group) {
+
+      TIterator<DustinInternalEquiv> iter1 = group.getThriftIterator(0, new DustinInternalEquiv());
+
+      while (iter1.hasNext()) {
+        functionCall.emit(Outputs.ONE, iter1.toString());
+      }
+
+    }
+
+  }
+
 
   private static class TestFunction extends MOMSJFunction<Outputs, BytesWritable> {
 
