@@ -51,7 +51,7 @@ public class TestMOTapCombinerJoiner extends WorkflowTestCase {
         key3
     );
 
-    MOMSJTapAction<OutputType> msj = new MOMSJTapAction<OutputType>(
+    MOMSJTapAction<OutputType, BytesWritable> msj = new MOMSJTapAction<>(
         "test-combiner-joiner",
         getTestRoot()+"/tmp",
         new ExtractorsList<BytesWritable>().add(store, new BytesWritableFromByteArray()),

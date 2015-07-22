@@ -90,7 +90,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
     BucketDataStore<BytesWritable> output2 = builder().getBucketDataStore("output2", BytesWritable.class);
     BucketDataStore<StringList> metaOut = builder().getBucketDataStore("meta", StringList.class);
 
-    MOMSJTapAction<Outputs> action = new MOMSJTapAction<Outputs>(
+    MOMSJTapAction<Outputs, BytesWritable> action = new MOMSJTapAction<Outputs, BytesWritable>(
         "token",
         getTestRoot() + "/tmp",
         new ExtractorsList<BytesWritable>()
@@ -136,7 +136,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
     BucketDataStore<BytesWritable> output2 = builder().getBucketDataStore("output2", BytesWritable.class);
     BucketDataStore<StringList> metaOut = builder().getBucketDataStore("meta", StringList.class);
 
-    MOMSJTapAction<Outputs> action = new MOMSJTapAction<Outputs>(
+    MOMSJTapAction<Outputs, BytesWritable> action = new MOMSJTapAction<Outputs, BytesWritable>(
         "token",
         getTestRoot() + "/tmp",
         new ExtractorsList<BytesWritable>()
@@ -170,9 +170,9 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
         DIE2
     );
 
-    BucketDataStore<PIN> output1 = builder().getBucketDataStore("output1", PIN.class);
+    BucketDataStore<DustinInternalEquiv> output1 = builder().getBucketDataStore("output1", DustinInternalEquiv.class);
 
-    MOMSJTapAction<Outputs, String> action = new MOMSJTapAction<Outputs, String>(
+    MOMSJTapAction<Outputs, String> action = new MOMSJTapAction<>(
         "token",
         getTestRoot() + "/tmp",
         new ExtractorsList<String>()
@@ -240,7 +240,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
       TIterator<DustinInternalEquiv> iter1 = group.getThriftIterator(0, new DustinInternalEquiv());
 
       while (iter1.hasNext()) {
-        functionCall.emit(Outputs.ONE, iter1.toString());
+        functionCall.emit(Outputs.ONE, iter1.next());
       }
 
     }

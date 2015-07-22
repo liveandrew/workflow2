@@ -7,7 +7,6 @@ import java.util.Map;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.hadoop.io.BytesWritable;
 
 import cascading.flow.Flow;
 import cascading.pipe.Each;
@@ -79,8 +78,8 @@ public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends A
   }
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
-                        final ExtractorsList<BytesWritable> extractors,
-                        MOMSJFunction<E, BytesWritable> function,
+                        final ExtractorsList<Key> extractors,
+                        MOMSJFunction<E, Key> function,
                         Map<E, ? extends BucketDataStore> partitionedCategories,
                         Map<E, ? extends BucketDataStore> unpartitionedCategories,
                         PostFlow callback,
