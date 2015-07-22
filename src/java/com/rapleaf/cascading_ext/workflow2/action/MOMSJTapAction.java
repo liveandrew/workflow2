@@ -24,10 +24,10 @@ import com.rapleaf.cascading_ext.tap.bucket2.BucketTap2;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
-public class MOMSJTapAction<E extends Enum<E>> extends Action {
+public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends Action {
 
-  private final MOMSJFunction<E, BytesWritable> function;
-  private final List<StoreExtractor<BytesWritable>> extractors;
+  private final MOMSJFunction<E, Key> function;
+  private final List<StoreExtractor<Key>> extractors;
 
   private final Map<E, ? extends BucketDataStore> partitionedCategories;
   private final Map<E, ? extends BucketDataStore> unpartitionedCategories;
@@ -47,30 +47,30 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
   private final PostFlow callback;
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
-                        final ExtractorsList<BytesWritable> extractors,
-                        MOMSJFunction<E, BytesWritable> function,
+                        final ExtractorsList<Key> extractors,
+                        MOMSJFunction<E, Key> function,
                         Map<E, ? extends BucketDataStore> partitionedCategories,
                         Map<E, ? extends BucketDataStore> unpartitionedCategories) throws IOException {
     this(checkpointToken, tmpRoot, extractors, function, partitionedCategories, unpartitionedCategories, new PostFlow.NoOp(), Maps.newHashMap());
   }
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
-                        final ExtractorsList<BytesWritable> extractors,
-                        MOMSJFunction<E, BytesWritable> function,
+                        final ExtractorsList<Key> extractors,
+                        MOMSJFunction<E, Key> function,
                         Map<E, ? extends BucketDataStore> outputCategories) throws IOException {
     this(checkpointToken, tmpRoot, extractors, function, outputCategories, Maps.<E, BucketDataStore>newHashMap(), new PostFlow.NoOp(), Maps.newHashMap());
   }
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot, Map<Object, Object> properties,
-                        final ExtractorsList<BytesWritable> extractors,
-                        MOMSJFunction<E, BytesWritable> function,
+                        final ExtractorsList<Key> extractors,
+                        MOMSJFunction<E, Key> function,
                         Map<E, ? extends BucketDataStore> outputCategories) throws IOException {
     this(checkpointToken, tmpRoot, extractors, function, outputCategories, Maps.<E, BucketDataStore>newHashMap(), new PostFlow.NoOp(), properties);
   }
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,
-                        final ExtractorsList<BytesWritable> extractors,
-                        MOMSJFunction<E, BytesWritable> function,
+                        final ExtractorsList<Key> extractors,
+                        MOMSJFunction<E, Key> function,
                         Map<E, ? extends BucketDataStore> partitionedCategories,
                         Map<E, ? extends BucketDataStore> unpartitionedCategories,
                         PostFlow callback,
@@ -120,7 +120,7 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
     Pipe pipe = new Pipe("pipe");
     pipe = new Each(pipe, function);
 
-    MSJTap<BytesWritable> source = new MSJTap<>(getConfs(extractors), new MSJScheme<BytesWritable>());
+    MSJTap<Key> source = new MSJTap<Key>(getConfs(extractors), new MSJScheme<Key>());
 
     Map<Object, BucketTap2> taps = Maps.newHashMap();
     Map<Object, String> tapToSinkFieldName = Maps.newHashMap();
@@ -156,8 +156,8 @@ public class MOMSJTapAction<E extends Enum<E>> extends Action {
   }
 
 
-  private List<InputConf<BytesWritable>> getConfs(List<StoreExtractor<BytesWritable>> inputs) throws IOException {
-    List<InputConf<BytesWritable>> conf = Lists.newArrayList();
+  private List<InputConf<Key>> getConfs(List<StoreExtractor<Key>> inputs) throws IOException {
+    List<InputConf<Key>> conf = Lists.newArrayList();
     for (StoreExtractor input : inputs) {
       conf.add(input.getConf());
     }
