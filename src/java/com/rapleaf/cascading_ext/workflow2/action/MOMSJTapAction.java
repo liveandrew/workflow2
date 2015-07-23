@@ -115,6 +115,7 @@ public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends A
 
   @Override
   protected void execute() throws Exception {
+    init(function);
 
     Pipe pipe = new Pipe("pipe");
     pipe = new Each(pipe, function);
@@ -144,6 +145,10 @@ public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends A
 
     callback.callback(flow);
 
+  }
+
+  protected void init(MOMSJFunction<E, Key> function) throws Exception {
+    // Do nothing by default.
   }
 
   private void populate(Map<Object, BucketTap2> taps, Map<Object, String> tapToSinkFieldName, Map.Entry<E, ? extends BucketDataStore> entry, BucketTap2 tap) {
