@@ -67,6 +67,7 @@ public class CascadingAction2 extends MultiStepAction {
     setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, structure));
   }
 
+  @Deprecated
   protected void complete(String stepName, Pipe output, DataStore outputStore, TupleDataStore persistStatsStore) throws IOException {
     setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore, persistStatsStore));
   }
