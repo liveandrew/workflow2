@@ -14,7 +14,6 @@ import cascading.tuple.Fields;
 
 import com.liveramp.cascading_tools.EmptyListener;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.tap.TapFactory;
@@ -65,11 +64,6 @@ public class CascadingAction2 extends MultiStepAction {
 
   protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionFactory structure){
     setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, structure));
-  }
-
-  @Deprecated
-  protected void complete(String stepName, Pipe output, DataStore outputStore, TupleDataStore persistStatsStore) throws IOException {
-    setSubStepsFromTail(workflowHelper.buildTail(stepName, output, outputStore, persistStatsStore));
   }
 
   protected Pipe bindSource(String name, DataStore input, TapFactory sourceTap) {

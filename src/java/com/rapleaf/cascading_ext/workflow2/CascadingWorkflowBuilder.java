@@ -20,12 +20,9 @@ import cascading.flow.planner.Scope;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
 
-import com.liveramp.cascading_ext.counters.Counter;
 import com.liveramp.cascading_tools.EmptyListener;
 import com.rapleaf.cascading_ext.HRap;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
@@ -38,10 +35,9 @@ import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.pipe.PipeFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory;
-import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.tap.TapFactory.SimpleFactory;
+import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.workflow2.action.FutureCascadingAction;
-import com.rapleaf.formats.test.TupleDataStoreHelper;
 
 public class CascadingWorkflowBuilder {
   private static final Logger LOG = LoggerFactory.getLogger(CascadingWorkflowBuilder.class);
@@ -242,37 +238,7 @@ public class CascadingWorkflowBuilder {
     return tail;
   }
 
-  public Step buildTail(String stepName, Pipe output, DataStore outputStore, TupleDataStore persistStatsStore) throws IOException {
-    Step tail = buildTail(stepName, output, outputStore);
-
-    return new Step(new PersistStats("persist_stats", persistStatsStore, tail.getCounters()), tail);
-  }
-
   //  internal stuff
-
-  private static class PersistStats extends Action {
-    private TupleDataStore outputStats;
-    private List<NestedCounter> counters;
-
-    public PersistStats(String checkpointToken, TupleDataStore outputStats, List<NestedCounter> counters) {
-      super(checkpointToken);
-      this.outputStats = outputStats;
-      this.counters = counters;
-
-      creates(outputStats);
-    }
-
-    @Override
-    protected void execute() throws Exception {
-      List<Tuple> tuples = Lists.newArrayList();
-      for (NestedCounter counter1 : counters) {
-        Counter counter = counter1.getCounter();
-        Tuple tuple = new Tuple(counter.getGroup(), counter.getName(), counter.getValue().toString());
-        tuples.add(tuple);
-      }
-      TupleDataStoreHelper.writeToStore(outputStats, tuples);
-    }
-  }
 
   private String getNextStepName() {
     return "step-" + (checkpointCount++);
