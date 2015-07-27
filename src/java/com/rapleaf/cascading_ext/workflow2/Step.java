@@ -1,26 +1,21 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.liveramp.cascading_ext.util.NestedProperties;
-import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
 
 public final class Step {
 
   private final Action action;
   private final Set<Step> dependencies;
   private Set<Step> children;
-  private final List<NestedCounter> nestedCounters = new ArrayList<NestedCounter>();
 
   public Step(Action action, Step... dependencies) {
     this(action, Arrays.asList(dependencies));
@@ -70,11 +65,6 @@ public final class Step {
     return "Step " + getCheckpointToken() + " " + action + " deps=" + dependencies;
   }
 
-  @Deprecated
-  public List<NestedCounter> getCounters() {
-    return nestedCounters;
-  }
-
   public Callable<TwoNestedMap<String, String, Long>> getCountersFuture() throws IOException {
     return new Callable<TwoNestedMap<String, String, Long>>() {
       @Override
@@ -85,14 +75,6 @@ public final class Step {
   }
 
   public void run(NestedProperties properties) {
-
-    try {
-      action.internalExecute(properties);
-    } finally {
-      for (ActionOperation operation : action.getRunFlows()) {
-        operation.timeOperation(getCheckpointToken(), nestedCounters);
-      }
-
-    }
+    action.internalExecute(properties);
   }
 }

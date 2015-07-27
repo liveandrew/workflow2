@@ -13,7 +13,6 @@ import com.google.common.collect.Sets;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.event_timer.MultiTimedEvent;
-import com.rapleaf.cascading_ext.counters.NestedCounter;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 
@@ -150,18 +149,6 @@ public class MultiStepAction extends Action {
     }
 
     return combined;
-  }
-
-  public List<NestedCounter> getCounters() {
-    // we don't know what stage of execution we are in when this is called
-    // so get an up-to-date list of counters each time
-    List<NestedCounter> counters = new ArrayList<NestedCounter>();
-    for (Step s : steps) {
-      for (NestedCounter c : s.getCounters()) {
-        counters.add(c);
-      }
-    }
-    return counters;
   }
 
   @Override
