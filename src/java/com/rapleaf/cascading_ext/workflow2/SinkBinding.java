@@ -1,6 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
+import java.util.List;
+
+import com.google.common.collect.Lists;
 
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
@@ -16,11 +19,9 @@ public interface SinkBinding {
 
   public TapFactory getTapFactory();
 
-  interface DataStoreSink {
-    public DataStore getOutputStore();
-  }
+  public List<DataStore> getOutputStores();
 
-  public class DSSink implements SinkBinding, DataStoreSink {
+  public class DSSink implements SinkBinding {
     private final Pipe pipe;
     private final DataStore outputStore;
 
@@ -39,8 +40,40 @@ public interface SinkBinding {
       return new SimpleFactory(outputStore);
     }
 
-    public DataStore getOutputStore() {
-      return outputStore;
+    public List<DataStore> getOutputStores() {
+      return Lists.newArrayList(outputStore);
+    }
+  }
+
+  public class FutureTap implements SinkBinding {
+
+    private final Pipe pipe;
+    private final TapFactory tap;
+    private List<DataStore> dataStores;
+
+    public FutureTap(Pipe pipe, TapFactory tap) {
+      this(pipe, tap, Lists.<DataStore>newArrayList());
+    }
+
+    public FutureTap(Pipe pipe, TapFactory tap, List<DataStore> dataStores) {
+      this.pipe = pipe;
+      this.tap = tap;
+      this.dataStores = dataStores;
+    }
+
+    @Override
+    public Pipe getPipe() {
+      return pipe;
+    }
+
+    @Override
+    public TapFactory getTapFactory() {
+      return tap;
+    }
+
+    @Override
+    public List<DataStore> getOutputStores() {
+      return dataStores;
     }
   }
 
@@ -48,10 +81,16 @@ public interface SinkBinding {
 
     private final Pipe pipe;
     private final Tap tap;
+    private List<DataStore> dataStores;
 
     public RawTap(Pipe pipe, Tap tap) {
+      this(pipe, tap, Lists.<DataStore>newArrayList());
+    }
+
+    public RawTap(Pipe pipe, Tap tap, List<DataStore> dataStores) {
       this.pipe = pipe;
       this.tap = tap;
+      this.dataStores = dataStores;
     }
 
     @Override
@@ -68,15 +107,20 @@ public interface SinkBinding {
         }
       };
     }
+
+    @Override
+    public List<DataStore> getOutputStores() {
+      return dataStores;
+    }
   }
 
-  public class PartitionedSink implements SinkBinding, DataStoreSink {
+  public class PartitionedSink implements SinkBinding {
 
     private final Pipe pipe;
     private final PartitionableDataStore store;
     private final PartitionFactory structure;
 
-    public PartitionedSink(Pipe pipe, PartitionableDataStore store, PartitionFactory structure){
+    public PartitionedSink(Pipe pipe, PartitionableDataStore store, PartitionFactory structure) {
       this.pipe = pipe;
       this.store = store;
       this.structure = structure;
@@ -98,8 +142,8 @@ public interface SinkBinding {
     }
 
     @Override
-    public DataStore getOutputStore() {
-      return store;
+    public List<DataStore> getOutputStores() {
+      return Lists.<DataStore>newArrayList(store);
     }
   }
 
@@ -119,6 +163,11 @@ public interface SinkBinding {
     @Override
     public TapFactory getTapFactory() {
       return new NullTapFactory();
+    }
+
+    @Override
+    public List<DataStore> getOutputStores() {
+      return Lists.newArrayList();
     }
   }
 
