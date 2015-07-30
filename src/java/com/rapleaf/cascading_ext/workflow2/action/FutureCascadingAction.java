@@ -63,7 +63,8 @@ public class FutureCascadingAction extends Action {
 
     Map<String, Tap> sinkTaps = Maps.newHashMap();
     for (Entry<String, TapFactory> entry : this.sinkTaps.entrySet()) {
-      sinkTaps.put(entry.getKey(), entry.getValue().createTap());
+      Tap tap = entry.getValue().createTap();
+      sinkTaps.put(entry.getKey(), tap);
     }
 
     FlowBuilder.FlowClosure f = buildFlow().connect(
