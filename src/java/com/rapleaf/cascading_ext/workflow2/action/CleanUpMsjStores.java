@@ -2,8 +2,10 @@ package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.thrift.TBase;
 
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
@@ -19,10 +21,11 @@ public class CleanUpMsjStores<T extends TBase> extends MultiStepAction {
 
     List<Step> steps = Lists.newArrayList();
     for (TMSJDataStore store : stores) {
+      Set<Step> preClean = Sets.newHashSet();
       if (runCompaction) {
-        steps.add(new Step(CompactionAction2.build("compact_" + store.getPath().replaceAll("/", "_"), getTmpRoot(), store.getRecordClass(), store)));
+        preClean.add(new Step(CompactionAction2.build("compact_" + store.getPath().replaceAll("/", "_"), getTmpRoot(), store.getRecordClass(), store)));
       }
-      steps.add(new Step(new DeleteOldVersions(store, numVersionsToKeep)));
+      steps.add(new Step(new DeleteOldVersions(store, numVersionsToKeep), preClean));
     }
 
     setSubStepsFromTails(steps);
