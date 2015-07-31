@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.thrift.TBase;
 
@@ -36,6 +37,10 @@ public class CascadingAction2 extends MultiStepAction {
   public CascadingAction2(String checkpointToken, String tmpRoot, Map<Object, Object> flowProperties, boolean skipCompleteListener) {
     super(checkpointToken, tmpRoot);
     workflowHelper = new CascadingWorkflowBuilder(getTmpRoot(), getClass().getSimpleName(), flowProperties, skipCompleteListener);
+  }
+
+  protected void complete(String stepName, SinkBinding sinkBinding) {
+    complete(stepName, Lists.newArrayList(sinkBinding));
   }
 
   protected void complete(String stepName, List<? extends SinkBinding> sinkBindings) {

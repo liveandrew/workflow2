@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.apache.thrift.TBase;
 
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
+import com.rapleaf.cascading_ext.tap.PartitionedSinkTapFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory.NullTapFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory.SimpleFactory;
@@ -117,10 +119,10 @@ public interface SinkBinding {
   public class PartitionedSink implements SinkBinding {
 
     private final Pipe pipe;
-    private final PartitionableDataStore store;
+    private final PartitionableDataStore<? extends TBase> store;
     private final PartitionFactory structure;
 
-    public PartitionedSink(Pipe pipe, PartitionableDataStore store, PartitionFactory structure) {
+    public PartitionedSink(Pipe pipe, PartitionableDataStore<? extends TBase> store, PartitionFactory structure) {
       this.pipe = pipe;
       this.store = store;
       this.structure = structure;
@@ -133,12 +135,7 @@ public interface SinkBinding {
 
     @Override
     public TapFactory getTapFactory() {
-      return new TapFactory() {
-        @Override
-        public Tap createTap() throws IOException {
-          return store.getPartitionedSinkTap(structure.create());
-        }
-      };
+      return new PartitionedSinkTapFactory<>(store, structure.create());
     }
 
     @Override
