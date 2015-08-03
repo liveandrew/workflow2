@@ -33,7 +33,6 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
-import com.liveramp.java_support.event_timer.EventTimer;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
@@ -92,8 +91,6 @@ public final class WorkflowRunner {
    * started and completed successfully
    */
   private final Set<StepRunner> completedSteps = new HashSet<StepRunner>();
-
-  private final EventTimer timer;
 
   private final Thread shutdownHook;
 
@@ -180,7 +177,6 @@ public final class WorkflowRunner {
     this.counterFilter = options.getCounterFilter();
     this.enabledNotifications = options.getEnabledNotifications().get();
     this.semaphore = new Semaphore(maxConcurrentSteps);
-    this.timer = new EventTimer(workflowName);
     this.lockProvider = options.getLockProvider();
     this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
@@ -361,7 +357,6 @@ public final class WorkflowRunner {
       throw new IllegalStateException("The workflow is already running (or finished)!");
     }
     alreadyRun = true;
-    timer.start();
     try {
 
       // Notify
@@ -381,7 +376,6 @@ public final class WorkflowRunner {
       LOG.info(getSuccessMessage());
     } finally {
       Runtime.getRuntime().removeShutdownHook(shutdownHook);
-      timer.stop();
       LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));
     }
   }
@@ -670,10 +664,6 @@ public final class WorkflowRunner {
 
   public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
     return dependencyGraph;
-  }
-
-  public EventTimer getTimer() {
-    return timer;
   }
 
   /**
