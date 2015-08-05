@@ -11,7 +11,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import org.apache.hadoop.io.BytesWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,16 +22,10 @@ import cascading.tuple.Fields;
 
 import com.liveramp.cascading_tools.EmptyListener;
 import com.rapleaf.cascading_ext.HRap;
-import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
-import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
-import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
-import com.rapleaf.cascading_ext.msj_tap.scheme.MergingScheme;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
-import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.pipe.PipeFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory.SimpleFactory;
@@ -99,63 +92,6 @@ public class CascadingWorkflowBuilder {
     pipenameToTap.put(name, sourceStoreBinding.getTapFactory());
     return sourceStoreBinding.getPipe(new Pipe(name));
   }
-
-  public <T extends Comparable> Pipe msj(final String name, List<MSJBinding<T>> bindings, final TOutputMultiJoiner<T, ?> joiner) throws IOException {
-
-    //  don't really love the instanceof stuff, but we'll just call it a TODO --ben
-    final List<SourceMSJBinding<T>> sourceMSJBindings = Lists.newArrayList();
-    for (MSJBinding<T> binding : bindings) {
-
-      //  if the MSJ is coming from a cascading flow, bind it to a datastore so the MSJ can read it
-      if (binding instanceof FlowMSJBinding) {
-        FlowMSJBinding<T> flowBinding = (FlowMSJBinding<T>)binding;
-
-        String stepName = getNextStepName();
-        BucketDataStore checkpointStore = dsBuilder.getBucketDataStore(stepName + "-sink", flowBinding.getRecordType());
-        Step step = completeFlows(stepName, Lists.newArrayList(new DSSink(flowBinding.getPipe(), checkpointStore)), new EmptyListener());
-
-        sourceMSJBindings.add(new SourceMSJBinding<T>(binding.getExtractor(), checkpointStore));
-
-        subSteps.add(step);
-        pipenameToParentStep.put(name, step);
-      }
-
-      //  otherwise we can read it directly
-      else if (binding instanceof SourceMSJBinding) {
-        sourceMSJBindings.add((SourceMSJBinding<T>)binding);
-      }
-
-      //  no idea
-      else {
-        throw new RuntimeException("Unrecognized binding class: " + binding.getClass());
-      }
-
-    }
-
-    for (SourceMSJBinding<T> binding : sourceMSJBindings) {
-      pipenameToSourceStore.put(name, binding.getStore());
-    }
-
-    pipenameToTap.put(name, new TapFactory() {
-      @Override
-      public Tap createTap() throws IOException {
-
-        final List<InputConf<BytesWritable>> confs = Lists.newArrayList();
-        for (SourceMSJBinding<T> binding : sourceMSJBindings) {
-          BucketDataStore store = binding.getStore();
-          confs.add(store.getInputConf(binding.getExtractor()));
-        }
-
-        return new MSJTap<BytesWritable>(confs, (MSJScheme<BytesWritable>) MergingScheme.of(joiner));
-      }
-    });
-
-    return new Pipe(name);
-  }
-
-  //  TODO if a pipe has nothing done to it, just attach it to the subsequent MSJ (to allow MSJing a store which has
-  //  just been sorted with a previously MSJ compatible datastore in a single flow.  Likewise, if a MSJ is the last step
-  //  in a flow, just sink directly and don't create an empty cascading step
 
   //  checkpoints
 

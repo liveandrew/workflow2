@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.thrift.TBase;
 
 import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
@@ -15,7 +14,6 @@ import cascading.tuple.Fields;
 
 import com.liveramp.cascading_tools.EmptyListener;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.msj_tap.joiner.TOutputMultiJoiner;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
@@ -89,10 +87,6 @@ public class CascadingAction2 extends MultiStepAction {
 
   protected Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding) {
     return workflowHelper.bindSource(name, sourceStoreBinding);
-  }
-
-  protected <T extends Comparable, O extends TBase> Pipe msj(String name, List<MSJBinding<T>> bindings, TOutputMultiJoiner<T, O> joiner) throws IOException {
-    return workflowHelper.msj(name, bindings, joiner);
   }
 
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException {

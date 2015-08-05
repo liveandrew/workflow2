@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -19,19 +18,14 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
 import com.liveramp.cascading_ext.assembly.Increment;
-import com.liveramp.commons.collections.list.ListBuilder;
-import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.rapleaf.cascading_ext.HRap;
-import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
-import com.rapleaf.cascading_ext.function.ExpandThrift;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
-import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
@@ -93,60 +87,6 @@ public class TestCascadingAction2 extends WorkflowTestCase {
       complete("tail-step", Lists.newArrayList(
           new DSSink(sink1, output1),
           new DSSink(sink2, output2)));
-    }
-  }
-
-  public static class SimpleMSJAction extends CascadingAction2 {
-
-    public SimpleMSJAction(String checkpointToken, String tmpRoot,
-                           BucketDataStore<DustinInternalEquiv> store1,
-                           BucketDataStore<IdentitySumm> store2,
-                           BucketDataStore<IdentitySumm> output,
-                           Map<Object, Object> flowProperties) throws IOException {
-      super(checkpointToken, tmpRoot, flowProperties);
-
-      Pipe input = msj("msj-source", new ListBuilder<MSJBinding<BytesWritable>>()
-          .add(new SourceMSJBinding<>(DIE_EID_EXTRACTOR, store1))
-          .add(new SourceMSJBinding<>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
-          new ExampleMultiJoiner());
-
-      input = new Increment(input, "COUNTER", "INCREMENT");
-
-      complete("mjs-plus-cascading", input, output);
-    }
-  }
-
-  public static class MidMSJAction extends CascadingAction2 {
-
-    public MidMSJAction(String checkpointToken,
-                        BucketDataStore store1,
-                        BucketDataStore store2,
-                        BucketDataStore sink,
-                        String tmpRoot, Map<Object, Object> flowProperties) throws IOException {
-      super(checkpointToken, tmpRoot, flowProperties);
-
-      Pipe pipe1 = bindSource("pipe1", store1);
-      pipe1 = new Increment(pipe1, "DIES", "COUNT");
-      pipe1 = new Each(pipe1, new Fields("dustin_internal_equiv"),
-          new ExpandThrift(DustinInternalEquiv.class),
-          new Fields("dustin_internal_equiv", "eid"));
-      pipe1 = new GroupBy(pipe1, new Fields("eid"));
-
-      Pipe pipe2 = bindSource("pipe2", store2);
-      pipe2 = new Increment(pipe2, "SUMMS", "COUNT");
-      pipe2 = new Each(pipe2, new Fields("identity_summ"),
-          new ExpandThrift(IdentitySumm.class),
-          new Fields("identity_summ", "eid"));
-      pipe2 = new GroupBy(pipe2, new Fields("eid"));
-
-      Pipe summ = msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-          .add(new FlowMSJBinding<>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
-          .add(new FlowMSJBinding<>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
-          new ExampleMultiJoiner());
-      summ = new Increment(summ, "AFTER", "COUNT");
-
-      complete("thestep", summ, sink);
-
     }
   }
 
@@ -221,57 +161,5 @@ public class TestCascadingAction2 extends WorkflowTestCase {
 
     assertEquals("Pipe with name source already exists!", token.getMessage());
   }
-
-  @Test
-  public void testMSJ() throws Exception {
-
-    BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
-    BucketDataStore<IdentitySumm> store2 = builder().getBucketDataStore("delta", IdentitySumm.class);
-    BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
-
-    ThriftBucketHelper.writeToBucketAndSort(store1.getBucket(), DIE_EID_COMPARATOR,
-        die1,
-        die3
-    );
-
-    ThriftBucketHelper.writeToBucketAndSort(store2.getBucket(), ID_SUMM_EID_COMPARATOR,
-        SUMM
-    );
-
-    WorkflowRunner token = execute(new SimpleMSJAction("token", getTestRoot() + "/tmp", store1, store2, output, Collections.emptyMap()),
-        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
-
-    assertEquals(new Long(1l), token.getPersistence().getFlatCounters().get("COUNTER").get("INCREMENT"));
-    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.getValuesFromBucket(output));
-
-  }
-
-  @Test
-  public void testMidMSJ() throws Exception {
-
-    BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
-    BucketDataStore<IdentitySumm> store2   = builder().getBucketDataStore("delta", IdentitySumm.class);
-    BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
-
-    ThriftBucketHelper.writeToBucket(store1.getBucket(),
-        die1,
-        die3
-    );
-
-    ThriftBucketHelper.writeToBucket(store2.getBucket(),
-        SUMM
-    );
-
-    WorkflowRunner output1 = execute(new MidMSJAction("token", store1, store2, output, getTestRoot()+"/tmp", Collections.emptyMap()),
-        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
-
-    TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
-    assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
-    assertEquals(new Long(1), counters.get("SUMMS").get("COUNT"));
-    assertEquals(new Long(1), counters.get("AFTER").get("COUNT"));
-
-    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.getValuesFromBucket(output));
-  }
-
 
 }

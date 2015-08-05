@@ -15,7 +15,6 @@ import org.junit.Test;
 import cascading.flow.Flow;
 import cascading.operation.Insert;
 import cascading.pipe.Each;
-import cascading.pipe.GroupBy;
 import cascading.pipe.Pipe;
 import cascading.pipe.assembly.Retain;
 import cascading.tap.Tap;
@@ -25,7 +24,6 @@ import cascading.tuple.Tuple;
 import com.liveramp.cascading_ext.assembly.BloomJoin;
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.liveramp.cascading_tools.EmptyListener;
-import com.liveramp.commons.collections.list.ListBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.assembly.Distinct;
@@ -37,7 +35,6 @@ import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedThriftBucketDataStoreHelper;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.cascading_ext.function.ExpandThrift;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
@@ -320,133 +317,6 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     execute(tail);
 
     assertCollectionEquivalent(Lists.newArrayList(email), HRap.<PIN>getValuesFromBucket(output));
-  }
-
-  @Test
-  public void testBindMSJ() throws IOException, TException, InterruptedException {
-
-    BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
-    BucketDataStore<IdentitySumm> store2   = builder().getBucketDataStore("delta", IdentitySumm.class);
-    BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
-
-    ThriftBucketHelper.writeToBucketAndSort(store1.getBucket(), DIE_EID_COMPARATOR,
-        die1,
-        die3
-    );
-
-    ThriftBucketHelper.writeToBucketAndSort(store2.getBucket(), ID_SUMM_EID_COMPARATOR,
-        SUMM
-    );
-
-    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
-
-    Pipe pipe1 = builder.msj("pipe1", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new SourceMSJBinding<>(DIE_EID_EXTRACTOR, store1))
-        .add(new SourceMSJBinding<>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
-        new ExampleMultiJoiner());
-
-    pipe1 = new Increment(pipe1, "COUNTER1", "VALUE");
-
-    WorkflowRunner workflowRunner = execute(builder.buildTail(pipe1, output),
-        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
-
-    TwoNestedMap<String, String, Long> counters = workflowRunner.getPersistence().getFlatCounters();
-
-    assertEquals(new Long(1), counters.get("COUNTER1").get("VALUE"));
-
-    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.getValuesFromBucket(output));
-  }
-
-  @Test
-  public void testMidMSJ() throws IOException, TException, InterruptedException {
-
-    BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
-    BucketDataStore<IdentitySumm> store2   = builder().getBucketDataStore("delta", IdentitySumm.class);
-    BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
-
-    ThriftBucketHelper.writeToBucket(store1.getBucket(),
-        die1,
-        die3
-    );
-
-    ThriftBucketHelper.writeToBucket(store2.getBucket(),
-        SUMM
-    );
-
-    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
-
-    Pipe pipe1 = builder.bindSource("pipe1", store1);
-    pipe1 = new Increment(pipe1, "DIES", "COUNT");
-    pipe1 = new Each(pipe1, new Fields("dustin_internal_equiv"),
-        new ExpandThrift(DustinInternalEquiv.class),
-        new Fields("dustin_internal_equiv", "eid"));
-    pipe1 = new GroupBy(pipe1, new Fields("eid"));
-
-    Pipe pipe2 = builder.bindSource("pipe2", store2);
-    pipe2 = new Increment(pipe2, "SUMMS", "COUNT");
-    pipe2 = new Each(pipe2, new Fields("identity_summ"),
-        new ExpandThrift(IdentitySumm.class),
-        new Fields("identity_summ", "eid"));
-    pipe2 = new GroupBy(pipe2, new Fields("eid"));
-
-    Pipe die = builder.msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new FlowMSJBinding<>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
-        .add(new FlowMSJBinding<>(ID_SUMM_EID_EXTRACTOR, pipe2, "identity_summ", IdentitySumm.class)).get(),
-        new ExampleMultiJoiner());
-    die = new Increment(die, "AFTER", "COUNT");
-
-    WorkflowRunner output1 = execute(builder.buildTail("output", die, output),
-        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
-
-    TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
-
-    assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
-    assertEquals(new Long(1), counters.get("SUMMS").get("COUNT"));
-    assertEquals(new Long(1), counters.get("AFTER").get("COUNT"));
-
-    assertCollectionEquivalent(Lists.<IdentitySumm>newArrayList(SUMM_AFTER), HRap.<IdentitySumm>getValuesFromBucket(output));
-  }
-
-  @Test
-  public void testMixedSources() throws Exception {
-
-    BucketDataStore<DustinInternalEquiv> store1 = builder().getBucketDataStore("base", DustinInternalEquiv.class);
-    BucketDataStore<IdentitySumm> store2   = builder().getBucketDataStore("delta", IdentitySumm.class);
-    BucketDataStore<IdentitySumm> output = builder().getBucketDataStore("output", IdentitySumm.class);
-
-    ThriftBucketHelper.writeToBucket(store1.getBucket(),
-        die1,
-        die3
-    );
-
-    ThriftBucketHelper.writeToBucketAndSort(store2.getBucket(), ID_SUMM_EID_COMPARATOR,
-        SUMM
-    );
-
-    CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
-
-    Pipe pipe1 = builder.bindSource("pipe1", store1);
-    pipe1 = new Increment(pipe1, "DIES", "COUNT");
-    pipe1 = new Each(pipe1, new Fields("dustin_internal_equiv"),
-        new ExpandThrift(DustinInternalEquiv.class),
-        new Fields("dustin_internal_equiv", "eid"));
-    pipe1 = new GroupBy(pipe1, new Fields("eid"));
-
-    Pipe die = builder.msj("msj-step", new ListBuilder<MSJBinding<BytesWritable>>()
-        .add(new FlowMSJBinding<>(DIE_EID_EXTRACTOR, pipe1, "dustin_internal_equiv", DustinInternalEquiv.class))
-        .add(new SourceMSJBinding<>(ID_SUMM_EID_EXTRACTOR, store2)).get(),
-        new ExampleMultiJoiner());
-    die = new Increment(die, "AFTER", "COUNT");
-
-    WorkflowRunner output1 = execute(builder.buildTail("output", die, output),
-        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
-
-    TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
-
-    assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
-    assertEquals(new Long(1), counters.get("AFTER").get("COUNT"));
-
-    assertCollectionEquivalent(Lists.newArrayList(SUMM_AFTER), HRap.getValuesFromBucket(output));
   }
 
   @Test
