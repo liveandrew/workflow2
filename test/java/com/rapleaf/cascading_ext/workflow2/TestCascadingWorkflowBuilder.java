@@ -38,6 +38,7 @@ import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
+import com.rapleaf.cascading_ext.pipe.PipeFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
@@ -80,7 +81,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
       new PINAndOwners(PIN1),
       new PINAndOwners(PIN3)
   ));
-  
+
   private TupleDataStore input;
   private TupleDataStore input2;
 
@@ -131,7 +132,10 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
     CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
-    Pipe pipe = workflow.bindSource("pipe", input);
+    Pipe pipe = workflow.bindSource("pipe", new SourceStoreBinding(Lists.newArrayList(input),
+            new TapFactory.SimpleFactory(input), new PipeFactory.Fresh()),
+        new ActionCallback.Default()
+    );
 
     pipe = new Each(pipe, new Insert(new Fields("field3"), 3), Fields.ALL);
     pipe = new Increment(pipe, "Test", "Tuples");
@@ -189,7 +193,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
         builder().getSplitBucketDataStore("split_store", DataUnit.class);
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("data_unit"));
 
-    DataUnit prevDU = NPDH.getAgeDataUnit((byte) 12);
+    DataUnit prevDU = NPDH.getAgeDataUnit((byte)12);
     DataUnit keepDU = NPDH.getGenderDataUnit(GenderType.MALE);
 
     ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(_Fields.AGE.getThriftFieldId()),
@@ -200,12 +204,15 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
     CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
-    Pipe pipe1 = workflow.bindSource("pipe1", inputSplit, new TapFactory() {
-      @Override
-      public Tap createTap() throws IOException {
-        return inputSplit.getTap(EnumSet.of(_Fields.GENDER));
-      }
-    });
+    Pipe pipe1 = workflow.bindSource("pipe1", new SourceStoreBinding(Lists.newArrayList(inputSplit),
+            new TapFactory() {
+              @Override
+              public Tap createTap() throws IOException {
+                return inputSplit.getTap(EnumSet.of(_Fields.GENDER));
+              }
+            }, new PipeFactory.Fresh()),
+        new ActionCallback.Default()
+    );
 
     execute(workflow.buildTail(pipe1, output));
 
@@ -223,7 +230,11 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("field1", "field2"));
     CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
-    Pipe pipe1 = workflow.bindSource("pipe1", input);
+    Pipe pipe1 = workflow.bindSource("pipe1", new SourceStoreBinding(Lists.newArrayList(input),
+            new TapFactory.SimpleFactory(input),
+            new PipeFactory.Fresh()),
+        new ActionCallback.Default()
+    );
 
     final AtomicBoolean isCompleted = new AtomicBoolean(false);
 
@@ -240,8 +251,17 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
   private Step buildComplex(DataStore output) throws IOException {
     CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
-    Pipe pipe = workflow.bindSource("pipe1", input);
-    Pipe pipe2 = workflow.bindSource("pipe2", input2);
+    Pipe pipe = workflow.bindSource("pipe1", new SourceStoreBinding(Lists.newArrayList(input),
+            new TapFactory.SimpleFactory(input),
+            new PipeFactory.Fresh()),
+        new ActionCallback.Default()
+    );
+
+    Pipe pipe2 = workflow.bindSource("pipe2", new SourceStoreBinding(Lists.newArrayList(input2),
+            new TapFactory.SimpleFactory(input2),
+            new PipeFactory.Fresh()),
+        new ActionCallback.Default()
+    );
 
     pipe2 = new Distinct(pipe2);
     pipe2 = workflow.addCheckpoint(pipe2, "distinct");
@@ -283,7 +303,11 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     //  run workflow
     CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
 
-    Pipe pipe = builder.bindSource("pipe", msjStore);
+    Pipe pipe = builder.bindSource("pipe1", new SourceStoreBinding(Lists.newArrayList(msjStore),
+            new TapFactory.SimpleFactory(msjStore),
+            new PipeFactory.Fresh()),
+        new ActionCallback.Default()
+    );
 
     pipe = new Increment(pipe, "counter_group", "counter1");
 
@@ -308,7 +332,13 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
     //  put together workflow
     CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
-    Pipe source = builder.bindSource("source", store);
+
+    Pipe source = builder.bindSource("pipe1", new SourceStoreBinding(Lists.newArrayList(store),
+            new TapFactory.SimpleFactory(store),
+            new PipeFactory.Fresh()),
+        new ActionCallback.Default()
+    );
+
     Step tail = builder.buildTail("tail", source, output);
 
     //  actual version
@@ -331,7 +361,12 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
     CascadingWorkflowBuilder builder = new CascadingWorkflowBuilder(getTestRoot() + "/tmp", "Test");
 
-    Pipe pipe1 = builder.bindSource("pipe1", store1);
+    Pipe pipe1 = builder.bindSource("pipe1", new SourceStoreBinding(Lists.newArrayList(store1),
+            new TapFactory.SimpleFactory(store1),
+            new PipeFactory.Fresh()),
+        new ActionCallback.Default()
+    );
+
     pipe1 = new Increment(pipe1, "DIES", "COUNT");
 
     WorkflowRunner output1 = execute(builder.buildNullTail(pipe1),
@@ -341,4 +376,5 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
 
   }
+
 }

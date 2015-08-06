@@ -10,11 +10,14 @@ import com.google.common.collect.Maps;
 
 import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
+import cascading.tap.Tap;
 import cascading.tuple.Fields;
 
 import com.liveramp.cascading_tools.EmptyListener;
+import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
+import com.rapleaf.cascading_ext.pipe.PipeFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 
@@ -61,33 +64,55 @@ public class CascadingAction2 extends MultiStepAction {
     setSubStepsFromTail(workflowHelper.buildNullTail(output));
   }
 
-  protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionStructure structure){
+  protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionStructure structure) {
     setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, new PartitionFactory.Now(structure)));
   }
 
-  protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionFactory structure){
+  protected void completePartitioned(String stepName, Pipe output, PartitionableDataStore outputStore, PartitionFactory structure) {
     setSubStepsFromTail(workflowHelper.buildPartitionedTail(stepName, output, outputStore, structure));
   }
 
   protected Pipe bindSource(String name, DataStore input, TapFactory sourceTap) {
-    return workflowHelper.bindSource(name, input, sourceTap);
+    return bindSource(name, input, sourceTap, new ActionCallback.Default());
   }
 
   protected Pipe bindSource(String name, DataStore input) {
-    return workflowHelper.bindSource(name, input);
+    return bindSource(name, input, new ActionCallback.Default());
   }
 
-  protected Pipe bindSource(String name, Collection<? extends DataStore> inputs) {
-    return workflowHelper.bindSource(name, inputs);
+  protected Pipe bindSource(String name, DataStore input, ActionCallback callback) {
+    return bindSource(name, input, new TapFactory.SimpleFactory(input), callback);
+  }
+
+  protected Pipe bindSource(String name, final Collection<? extends DataStore> inputs) {
+    return bindSource(name, inputs, new TapFactory() {
+      @Override
+      public Tap createTap() {
+        return HRap.getMultiTap(inputs);
+      }
+    }, new ActionCallback.Default());
+  }
+
+  protected Pipe bindSource(String name, DataStore input, TapFactory sourceTap, ActionCallback callback) {
+    return bindSource(name, Lists.newArrayList(input), sourceTap, callback);
   }
 
   protected Pipe bindSource(String name, Collection<? extends DataStore> inputs, TapFactory sourceTap) {
-    return workflowHelper.bindSource(name, inputs, sourceTap);
+    return bindSource(name, inputs, sourceTap, new ActionCallback.Default());
+  }
+
+  protected Pipe bindSource(String name, Collection<? extends DataStore> inputs, TapFactory sourceTap, ActionCallback callback) {
+    return bindSource(name, new SourceStoreBinding(inputs, sourceTap, new PipeFactory.Fresh()), callback);
   }
 
   protected Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding) {
-    return workflowHelper.bindSource(name, sourceStoreBinding);
+    return bindSource(name, sourceStoreBinding, new ActionCallback.Default());
   }
+
+  protected Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding, ActionCallback callback) {
+    return workflowHelper.bindSource(name, sourceStoreBinding, callback);
+  }
+
 
   protected Pipe addCheckpoint(Pipe pipe, String checkpointName) throws IOException {
     return workflowHelper.addCheckpoint(pipe, checkpointName);

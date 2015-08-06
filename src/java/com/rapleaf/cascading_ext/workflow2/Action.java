@@ -119,6 +119,7 @@ public abstract class Action {
       this.tmpRoot = null;
       this.builder = null;
     }
+
   }
 
   public ActionId getActionId() {
@@ -139,10 +140,6 @@ public abstract class Action {
 
   public void runningFlow(Flow flow) {
     operations.add(new FlowOperation(flow));
-  }
-
-  public List<ActionOperation> getRunFlows() {
-    return operations;
   }
 
   //  resource actions
@@ -520,6 +517,37 @@ public abstract class Action {
     String actionId = this.actionId.resolve();
     ThreeNestedMap<String, String, String, Long> allCounters = persistence.getCountersByStep();
     return allCounters.get(actionId);
+  }
+
+  //  everything we feel like exposing to pre-execute hooks in CA2.  I don't really love that it's here, but this way
+  //  we don't have to make these methods public.  there should be a cleaner way but I can't think of it.
+  public class PreExecuteContext {
+
+    public <T> T get(OldResource<T> resource) throws IOException{
+      return Action.this.get(resource);
+    }
+
+    public <T> T get(ReadResource<T> resource){
+      return Action.this.get(resource);
+    }
+
+  }
+
+  //  stuff available for during action construction
+  public class ConstructContext {
+
+    public void creates(DataStore store){
+      Action.this.creates(store);
+    }
+
+  }
+
+  public PreExecuteContext getPreExecuteContext(){
+    return new PreExecuteContext();
+  }
+
+  public ConstructContext getConstructContext(){
+    return new ConstructContext();
   }
 
 }

@@ -8,24 +8,33 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.thrift.TException;
 import org.junit.Test;
 
+import cascading.flow.FlowProcess;
 import cascading.operation.Identity;
+import cascading.operation.OperationCall;
 import cascading.pipe.Each;
 import cascading.pipe.GroupBy;
 import cascading.pipe.Pipe;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
+import cascading.tuple.TupleEntryCollector;
 
 import com.liveramp.cascading_ext.assembly.Increment;
 import com.rapleaf.cascading_ext.HRap;
+import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
+import com.rapleaf.cascading_ext.filter.DirectFilter;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
+import com.rapleaf.cascading_ext.tap.bucket2.BucketTap2;
+import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
@@ -160,6 +169,100 @@ public class TestCascadingAction2 extends WorkflowTestCase {
     });
 
     assertEquals("Pipe with name source already exists!", token.getMessage());
+  }
+
+  @Test
+  public void testPreExecuteHook() throws IOException, TException {
+
+    BucketDataStore<PIN> input = builder().getBucketDataStore("input", PIN.class);
+    BucketDataStore<PIN> sideOutput = builder().getBucketDataStore("side-output", PIN.class);
+    BucketDataStore<PIN> realOutput = builder().getBucketDataStore("real-output", PIN.class);
+
+    ThriftBucketHelper.writeToBucket(input.getBucket(), PIN.email("good@gmail.com"));
+    //  this'll write to some part-1231313214142141 file so we'll get 2 in output if creates() doesn't work
+    ThriftBucketHelper.writeToBucket(sideOutput.getBucket(), PIN.email("bad@gmail.com"));
+
+    execute(new MyFancyAction(
+        "somestep",
+        getTestRoot() + "/tmp",
+        input,
+        sideOutput,
+        realOutput
+    ));
+
+    assertEquals(Lists.newArrayList(PIN.email("good@gmail.com")), HRap.getValuesFromBucket(sideOutput));
+  }
+
+
+  public static class MyFancyAction extends CascadingAction2 {
+
+    public MyFancyAction(String checkpointToken, String tmpRoot,
+                         BucketDataStore<PIN> input1,
+                         final BucketDataStore<PIN> sideOutput,
+                         BucketDataStore<PIN> realOutput) {
+      super(checkpointToken, tmpRoot);
+
+      final SomeFunction myFunc = new SomeFunction(sideOutput.getPath());
+
+      Pipe pipe = bindSource("input", input1, new ActionCallback.Default() {
+
+        @Override
+        public void construct(ConstructContext context) {
+          context.creates(sideOutput);
+        }
+
+        @Override
+        public void prepare(PreExecuteContext context) throws IOException {
+          sideOutput.getBucket();
+          myFunc.allowPass();
+        }
+
+      });
+
+      pipe = new Each(pipe, new Fields("pin"), myFunc);
+      complete("step", pipe, realOutput);
+
+    }
+  }
+
+  private static class SomeFunction extends DirectFilter<PIN> {
+
+    private final String output;
+
+    private boolean fail = true;
+    private TupleEntryCollector coll;
+
+    public void allowPass(){
+      fail = false;
+    }
+
+    public SomeFunction(String output) {
+      this.output = output;
+    }
+
+    @Override
+    public void prepare(FlowProcess flowProcess, OperationCall operationCall) {
+      try {
+        coll = new BucketTap2<>(output, new ThriftBucketScheme<>(PIN.class)).disableBucketCreation().openForWrite(flowProcess);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public boolean isRemove(PIN value) {
+      if(fail){
+        throw new RuntimeException("Hook didn't get called");
+      }
+      coll.add(new Tuple(value));
+      return true;
+    }
+
+    @Override
+    public void flush(FlowProcess flowProcess, OperationCall operationCall) {
+      coll.close();
+    }
+
   }
 
 }

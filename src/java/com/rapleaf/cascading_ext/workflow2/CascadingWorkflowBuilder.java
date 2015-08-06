@@ -1,7 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import cascading.flow.FlowListener;
 import cascading.flow.planner.Scope;
 import cascading.pipe.Pipe;
-import cascading.tap.Tap;
 import cascading.tuple.Fields;
 
 import com.liveramp.cascading_tools.EmptyListener;
@@ -38,9 +36,7 @@ public class CascadingWorkflowBuilder {
   private final String flowName;
   private final DataStoreBuilder dsBuilder;
   private final Set<Step> subSteps = Sets.newHashSet();
-
-  private Map<String, TapFactory> pipenameToTap;                     //  tap which provides input
-  private Multimap<String, DataStore> pipenameToSourceStore;  //  stores which are the source for the pipe
+  private Map<String, BindInfo> bindInfoMap;
   private Multimap<String, Step> pipenameToParentStep;        //  what step(s) does the pipe depend on
 
   private Map<Object, Object> flowProperties;
@@ -57,39 +53,16 @@ public class CascadingWorkflowBuilder {
     this.dsBuilder = new DataStoreBuilder(workingDir + "/temp-stores");
     this.flowName = flowName;
     this.flowProperties = Maps.newHashMap(flowProperties);
+    this.bindInfoMap = Maps.newHashMap();
     this.pipenameToParentStep = HashMultimap.create();
-    this.pipenameToSourceStore = HashMultimap.create();
-    this.pipenameToTap = Maps.newHashMap();
     this.skipCompleteListener = skipCompleteListener;
   }
 
   //  bind source and sink taps to the flow.  This will set the creates / readsFrom datastores as well as
   //  create the necessary actions
 
-  public Pipe bindSource(String name, DataStore source) {
-    return bindSource(name, Lists.newArrayList(source), new SimpleFactory(source));
-  }
-
-  public Pipe bindSource(String name, final Collection<? extends DataStore> inputs) {
-    return bindSource(name, inputs, new TapFactory() {
-      @Override
-      public Tap createTap() {
-        return HRap.getMultiTap(inputs);
-      }
-    });
-  }
-
-  public Pipe bindSource(String name, DataStore source, TapFactory tap) {
-    return bindSource(name, Lists.newArrayList(source), tap);
-  }
-
-  public Pipe bindSource(String name, Collection<? extends DataStore> sources, TapFactory tap) {
-    return bindSource(name, new SourceStoreBinding(sources, tap, new PipeFactory.Fresh()));
-  }
-
-  public Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding) {
-    pipenameToSourceStore.putAll(name, sourceStoreBinding.getStores());
-    pipenameToTap.put(name, sourceStoreBinding.getTapFactory());
+  public Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding, ActionCallback callback) {
+    bindInfoMap.put(name, new BindInfo(sourceStoreBinding.getTapFactory(), callback, Lists.newArrayList(sourceStoreBinding.getStores())));
     return sourceStoreBinding.getPipe(new Pipe(name));
   }
 
@@ -133,8 +106,8 @@ public class CascadingWorkflowBuilder {
 
     subSteps.add(step);
     pipenameToParentStep.put(nextPipeName, step);
-    pipenameToSourceStore.put(nextPipeName, checkpointStore);
-    pipenameToTap.put(nextPipeName, new SimpleFactory(checkpointStore));
+
+    bindInfoMap.put(nextPipeName, new BindInfo(new SimpleFactory(checkpointStore), new ActionCallback.Default(), Lists.<DataStore>newArrayList(checkpointStore)));
 
     return new Pipe(nextPipeName);
   }
@@ -181,11 +154,11 @@ public class CascadingWorkflowBuilder {
   }
 
   private Step completeFlows(String checkpointName, List<? extends SinkBinding> sinkBindings, FlowListener flowListener) {
-    Map<String, TapFactory> sources = Maps.newHashMap();
+
+    Map<String, BindInfo> scopedBind = Maps.newHashMap();
     Map<String, TapFactory> sinks = Maps.newHashMap();
     List<DataStore> sinkStores = Lists.newArrayList();
 
-    Set<DataStore> inputs = Sets.newHashSet();
     List<Step> previousSteps = Lists.newArrayList();
     List<Pipe> pipes = Lists.newArrayList();
 
@@ -198,8 +171,8 @@ public class CascadingWorkflowBuilder {
         throw new RuntimeException("Pipe with name " + pipeName + " already exists!");
       }
 
-      sources.putAll(createSourceMap(heads));
-      inputs.addAll(getInputStores(heads));
+      scopedBind.putAll(getBindMap(heads));
+
       previousSteps.addAll(getPreviousSteps(heads));
       pipes.add(pipe);
 
@@ -212,10 +185,9 @@ public class CascadingWorkflowBuilder {
     FutureCascadingAction action = new FutureCascadingAction(
         checkpointName,
         flowName,
-        sources,
+        scopedBind,
         sinks,
         pipes,
-        inputs,
         sinkStores,
         flowProperties,
         flowListener,
@@ -235,18 +207,6 @@ public class CascadingWorkflowBuilder {
     return output;
   }
 
-  private Map<String, TapFactory> createSourceMap(Pipe[] heads) {
-    Map<String, TapFactory> output = Maps.newHashMap();
-    for (Pipe head : heads) {
-      if (pipenameToTap.containsKey(head.getName())) {
-        output.put(head.getName(), pipenameToTap.get(head.getName()));
-      } else {
-        throw new RuntimeException("Could not find tap for head pipe named " + head.getName());
-      }
-    }
-    return output;
-  }
-
   private Fields determineOutputFields(Pipe tail) throws IOException {
     return getScope(tail).getIncomingTapFields();
   }
@@ -255,8 +215,8 @@ public class CascadingWorkflowBuilder {
     Pipe[] previousPipes = tail.getPrevious();
     if (previousPipes.length == 0) {
       Fields sourceFields;
-      if (pipenameToTap.containsKey(tail.getName())) {
-        sourceFields = pipenameToTap.get(tail.getName()).getSourceFields();
+      if (bindInfoMap.containsKey(tail.getName())) {
+        sourceFields = bindInfoMap.get(tail.getName()).getTapFactory().getSourceFields();
       } else {
         throw new RuntimeException("Cannot find head pipe name " + tail.getName() + " in any source map during field resolution");
       }
@@ -274,16 +234,21 @@ public class CascadingWorkflowBuilder {
     }
   }
 
-  private Set<DataStore> getInputStores(Pipe[] heads) {
-    Set<DataStore> inputStores = Sets.newHashSet();
+  private Map<String, BindInfo> getBindMap(Pipe[] heads) {
+    Map<String, BindInfo> inputStores = Maps.newHashMap();
     for (Pipe head : heads) {
-      if (pipenameToSourceStore.containsKey(head.getName())) {
-        inputStores.addAll(pipenameToSourceStore.get(head.getName()));
+      String name = head.getName();
+
+      if (bindInfoMap.containsKey(name)) {
+        inputStores.put(name, bindInfoMap.get(name));
       } else {
-        throw new RuntimeException("Could not find store for head pipe " + head.getName());
+        throw new RuntimeException("Could not find store for head pipe " + name);
       }
+
     }
     return inputStores;
   }
+
+
 }
 
