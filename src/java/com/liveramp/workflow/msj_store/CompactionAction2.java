@@ -66,16 +66,11 @@ public class CompactionAction2<T extends Comparable, K extends Comparable> exten
     //  because of the field name
     BucketDataStore<T> temp = new BucketDataStoreImpl<T>(getFS(), "temp base", getTmpRoot(), "/new_base", type, ThriftBucketScheme.getFieldName(type));
 
-    Step acquireLock = new Step(new AcquireBase("acquire",
-        store
-    ));
-
     Step compact = new Step(new CompactMSJStore<>("compact",
         getTmpRoot(),
         type,
         store,
-        temp),
-        acquireLock
+        temp)
     );
 
     Step commit = new Step(new CommitCompactedBase<>("commit",

@@ -47,6 +47,16 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
                       final ExtractorsList<K> inputs,
                       MSJFunction<K> function,
                       PartitionableDataStore output,
+                      PartitionStructure outputStructure,
+                      ActionCallback callback) {
+    this(checkpointToken, tmpRoot, properties, inputs, function, new SplitGenerator.Empty(), output, new PartitionFactory.Now(outputStructure), callback);
+  }
+
+  public MSJTapAction(String checkpointToken, String tmpRoot,
+                      Map<Object, Object> properties,
+                      final ExtractorsList<K> inputs,
+                      MSJFunction<K> function,
+                      PartitionableDataStore output,
                       PartitionStructure outputStructure) {
     this(checkpointToken, tmpRoot, properties, inputs, function, new SplitGenerator.Empty(), output, outputStructure);
   }

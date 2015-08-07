@@ -1,8 +1,10 @@
 package com.liveramp.workflow.msj_store;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
 
+import com.google.common.collect.Maps;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.thrift.TBase;
 import org.slf4j.Logger;
@@ -19,6 +21,7 @@ import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
+import com.rapleaf.cascading_ext.workflow2.ActionCallback;
 import com.rapleaf.cascading_ext.workflow2.action.ExtractorsList;
 import com.rapleaf.cascading_ext.workflow2.action.MSJTapAction;
 
@@ -63,7 +66,7 @@ public class CompactMSJStore<T extends Comparable, K extends Comparable> extends
     Iterator fetch(MSJGroup<K> group);
   }
 
-  public static class FetchThrift<K extends TBase> implements Fetch<K>{
+  public static class FetchThrift<K extends TBase> implements Fetch<K> {
 
     private Class<K> type;
     private transient K proto;
@@ -74,7 +77,7 @@ public class CompactMSJStore<T extends Comparable, K extends Comparable> extends
 
     @Override
     public Iterator fetch(MSJGroup<K> group) {
-      if(proto == null){
+      if (proto == null) {
         try {
           proto = type.newInstance();
         } catch (Exception e) {
@@ -87,8 +90,19 @@ public class CompactMSJStore<T extends Comparable, K extends Comparable> extends
   }
 
 
-  public CompactMSJStore(String checkpointToken, String tmpDir, Class<T> outputType, MSJDataStore<K> store, BucketDataStore<T> tempStore) throws InstantiationException, IllegalAccessException {
-    super(checkpointToken, tmpDir, new ExtractorsList<K>().add(store, store.getExtractor()), new AllJoin<K>(outputType), tempStore, PartitionStructure.UNENFORCED);
+  public CompactMSJStore(String checkpointToken, String tmpDir, Class<T> outputType, final MSJDataStore<K> store, BucketDataStore<T> tempStore) throws InstantiationException, IllegalAccessException {
+    super(checkpointToken, tmpDir, Maps.newHashMap(),
+        new ExtractorsList().add(store, store.getExtractor()),
+        new AllJoin<K>(outputType),
+        tempStore,
+        PartitionStructure.UNENFORCED,
+        new ActionCallback.Default() {
+          @Override
+          public void prepare(PreExecuteContext context) throws IOException {
+            store.getStore().acquireBaseCreationAttempt();
+          }
+        }
+    );
   }
 
   private static class AllJoin<K extends Comparable> extends MSJFunction<K> {
