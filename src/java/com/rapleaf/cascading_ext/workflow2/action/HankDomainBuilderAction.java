@@ -129,7 +129,8 @@ public abstract class HankDomainBuilderAction extends Action {
 
       if (!allowSimultaneousDeltas) {
         if (Domains.hasOpenDelta(domain)) {
-          throw new RuntimeException("Multiple deltas are open!.  Please mark defunct and delete any old deltas");
+          throw new RuntimeException("Multiple deltas are open!.  Please mark defunct and delete any old deltas. " +
+              "Delta " + Domains.getLatestOpenDeltaIfExists(domain) + " is open");
         }
       }
 
