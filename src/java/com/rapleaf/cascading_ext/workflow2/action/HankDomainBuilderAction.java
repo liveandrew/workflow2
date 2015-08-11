@@ -128,7 +128,7 @@ public abstract class HankDomainBuilderAction extends Action {
       Domain domain = DomainBuilderProperties.getDomain(coordinator, domainName);
 
       if (!allowSimultaneousDeltas) {
-        if (Domains.hasOpenDelta(domain)) {
+        if (Domains.hasOpenDeltaAfterLastValidBase(domain)) {
           throw new RuntimeException("Multiple deltas are open!.  Please mark defunct and delete any old deltas. " +
               "Delta " + Domains.getLatestOpenDeltaIfExists(domain) + " is open");
         }
