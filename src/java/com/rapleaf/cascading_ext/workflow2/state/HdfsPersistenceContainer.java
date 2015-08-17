@@ -185,6 +185,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
+  public long getAttemptId() throws IOException {
+    throw new NotImplementedException();
+  }
+
+  @Override
   public void markStepRunning(String stepToken) throws IOException {
     getState(stepToken)
         .setStatus(StepStatus.RUNNING)

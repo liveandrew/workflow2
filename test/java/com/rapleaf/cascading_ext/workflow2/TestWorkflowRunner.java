@@ -48,6 +48,7 @@ import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
+import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
@@ -650,7 +651,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     step3 = new Step(new IncrementAction2("step3", step3Count), step2);
 
     testWorkflow = buildWfr(dbPersistenceFactory, step3);
-    WorkflowStatePersistence pers2 = testWorkflow.getPersistence();
+    DbPersistence pers2 = (DbPersistence)testWorkflow.getPersistence();
 
     try {
       testWorkflow.run();
