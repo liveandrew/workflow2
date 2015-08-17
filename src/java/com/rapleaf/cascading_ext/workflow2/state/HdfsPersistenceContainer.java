@@ -12,7 +12,8 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.slf4j.Logger; import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
@@ -21,12 +22,10 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
 import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
-import com.rapleaf.db_schemas.rldb.workflow.ProcessStatus;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
-import com.rapleaf.db_schemas.rldb.workflow.json.WorkflowJSON;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
+import com.rapleaf.db_schemas.rldb.workflow.json.WorkflowJSON;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
@@ -146,6 +145,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
+  public String getScopeIdentifier() throws IOException {
+    return null;
+  }
+
+  @Override
   public String getId() {
     return id;
   }
@@ -176,23 +180,8 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
-  public WorkflowExecutionStatus getExecutionStatus() throws IOException {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public boolean isLatestExecution() throws IOException {
-    return true;
-  }
-
-  @Override
   public long getExecutionId() throws IOException {
     throw new RuntimeException("Not supported by hdfs persistence");
-  }
-
-  @Override
-  public ProcessStatus getProcessStatus() throws IOException {
-    return ProcessStatus.ALIVE;
   }
 
   @Override
