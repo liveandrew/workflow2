@@ -604,7 +604,11 @@ public final class WorkflowRunner {
   }
 
   private String appendTrackerUrl(String messageBody) throws IOException {
-    return "Tracker URL: "+trackerURLBuilder.buildURL(persistence)+"<b><b>"+messageBody;
+    return "Tracker URL: "+getTrackerURL()+"<br><br>"+messageBody;
+  }
+
+  public String getTrackerURL() throws IOException {
+    return trackerURLBuilder.buildURL(persistence);
   }
 
   private String findDefaultValue(String property, String defaultValue) {
