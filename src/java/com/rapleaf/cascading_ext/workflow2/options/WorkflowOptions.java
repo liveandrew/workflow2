@@ -8,6 +8,7 @@ import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
+import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
@@ -26,8 +27,18 @@ public class WorkflowOptions {
   private CounterFilter counterFilter;
   private ResourceManager resourceManager;
   private String sandboxDir;
+  private TrackerURLBuilder urlBuilder;
 
   protected WorkflowOptions(){}
+
+  public WorkflowOptions setUrlBuilder(TrackerURLBuilder urlBuilder) {
+    this.urlBuilder = urlBuilder;
+    return this;
+  }
+
+  public TrackerURLBuilder getUrlBuilder() {
+    return urlBuilder;
+  }
 
   public int getMaxConcurrentSteps() {
     return maxConcurrentSteps;

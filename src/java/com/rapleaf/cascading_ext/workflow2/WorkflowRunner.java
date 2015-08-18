@@ -99,8 +99,7 @@ public final class WorkflowRunner {
   private final Set<WorkflowRunnerNotification> enabledNotifications;
   private final CounterFilter counterFilter;
   private final ResourceManager<?, ?> resourceManager;
-
-  private final String scopeIdentifier;
+  private final TrackerURLBuilder trackerURLBuilder;
 
   public WorkflowRunner(Class klass, Step tail) {
     this(klass, new DbPersistenceFactory(), tail);
@@ -182,7 +181,7 @@ public final class WorkflowRunner {
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.stepPollInterval = options.getStepPollInterval();
     this.resourceManager = options.getResourceManager();
-    this.scopeIdentifier = options.getScopeIdentifier();
+    this.trackerURLBuilder = options.getUrlBuilder();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps);
@@ -571,7 +570,7 @@ public final class WorkflowRunner {
   }
 
   private String getDisplayName() throws IOException {
-    return persistence.getName() + (this.scopeIdentifier == null ? "" : " (" + this.scopeIdentifier + ")");
+    return persistence.getName() + (this.persistence.getScopeIdentifier() == null ? "" : " (" + this.persistence.getScopeIdentifier() + ")");
   }
 
   private String getStartMessage() throws IOException {
@@ -597,11 +596,15 @@ public final class WorkflowRunner {
   private void mail(String subject, String body, AlertRecipient recipient) throws IOException {
     alertsHandler.sendAlert(
         AlertMessages.builder(subject)
-            .setBody(body)
+            .setBody(appendTrackerUrl(body))
             .addToDefaultTags(WORKFLOW_EMAIL_SUBJECT_TAG)
             .build(),
         recipient
     );
+  }
+
+  private String appendTrackerUrl(String messageBody) throws IOException {
+    return "Tracker URL: "+trackerURLBuilder.buildURL(persistence)+"<b><b>"+messageBody;
   }
 
   private String findDefaultValue(String property, String defaultValue) {

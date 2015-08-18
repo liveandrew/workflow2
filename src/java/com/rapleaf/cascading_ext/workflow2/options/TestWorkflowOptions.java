@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.options;
 import com.liveramp.cascading_ext.megadesk.MockStoreReaderLockProvider;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
+import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.support.Rap;
@@ -19,7 +20,7 @@ public class TestWorkflowOptions extends WorkflowOptions {
     setStorage(new ContextStorage.None());
     setStepPollInterval(100);
     setCounterFilter(CounterFilters.all());
-
+    setUrlBuilder(new TrackerURLBuilder.None());
   }
 
 }

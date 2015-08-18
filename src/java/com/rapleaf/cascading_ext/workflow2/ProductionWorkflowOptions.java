@@ -12,6 +12,8 @@ import com.rapleaf.support.Rap;
 public class ProductionWorkflowOptions extends WorkflowOptions {
   private static final Logger LOG = LoggerFactory.getLogger(ProductionWorkflowOptions.class);
 
+  private static final String WORKFLOW_UI_URL = "http://workflows.liveramp.net";
+
   public ProductionWorkflowOptions() {
 
     Rap.assertProduction();
@@ -23,5 +25,7 @@ public class ProductionWorkflowOptions extends WorkflowOptions {
     setStorage(new ContextStorage.None());
     setStepPollInterval(3000);  // be nice to production DB
     setCounterFilter(CounterFilters.all());
+    setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL));
+
   }
 }
