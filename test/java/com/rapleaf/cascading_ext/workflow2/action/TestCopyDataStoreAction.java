@@ -1,17 +1,15 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStores;
-import com.rapleaf.cascading_ext.datastore.DatastoresHelper;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.test.BucketHelper;
-import com.rapleaf.formats.test.ThriftBucketHelper;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestCopyDataStoreAction extends WorkflowTestCase {
   @Test
@@ -21,7 +19,7 @@ public class TestCopyDataStoreAction extends WorkflowTestCase {
 
     final BucketDataStore<byte[]> ds2 = DataStores.bucket(getTestRoot() + "/ds2", byte[].class);
 
-    new CopyDataStoreAction<>("cp", getTestRoot() + "/tmp", ds1, ds2).execute();
+    execute(new CopyDataStoreAction<>("cp", getTestRoot() + "/tmp", ds1, ds2));
 
     assertTrue("Destination should exist", getFS().exists(new Path(ds2.getPath())));
     assertEquals("Destination should have a single record", 1, BucketHelper.readBucket(ds2.getBucket()).size());
