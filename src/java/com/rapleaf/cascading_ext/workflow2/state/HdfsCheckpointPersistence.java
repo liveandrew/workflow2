@@ -44,6 +44,7 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
     this.checkpointDir = checkpointDir;
     this.deleteOnSuccess = deleteOnSuccess;
   }
+
   @Override
   public WorkflowStatePersistence prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
                                           String name,
@@ -54,7 +55,9 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
                                           String pool,
                                           String priority,
                                           String launchDir,
-                                          String launchJar) {
+                                          String launchJar,
+                                          String errorEmail,
+                                          String infoEmail) {
 
     FileSystem fs = FileSystemHelper.getFS();
 

@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapred.JobConf;
 import org.jgrapht.DirectedGraph;
@@ -197,7 +198,9 @@ public final class WorkflowRunner {
         findDefaultValue(JOB_POOL_PARAM, "default"),
         findDefaultValue(JOB_PRIORITY_PARAM, "NORMAL"),
         System.getProperty("user.dir"),
-        HadoopJarUtil.getLanuchJarName()
+        HadoopJarUtil.getLanuchJarName(),
+        getEmail(errorRecipient()),
+        getEmail(infoRecipient())
     );
 
     linkPersistence();
@@ -214,6 +217,14 @@ public final class WorkflowRunner {
     }
 
     this.shutdownHook = new Thread(new ShutdownHook(), "Shutdown Hook for " + workflowName);
+  }
+
+  private String getEmail(AlertRecipient recipient) {
+    List<String> emails = alertsHandler.getRecipients(Lists.newArrayList(recipient)).getEmailRecipients();
+    if(emails.isEmpty()){
+      return null;
+    }
+    return emails.get(0);
   }
 
   private void linkPersistence() {
@@ -551,33 +562,41 @@ public final class WorkflowRunner {
     return false;
   }
 
+  private AlertRecipient infoRecipient(){
+    return AlertRecipients.engineering(AlertSeverity.INFO);
+  }
+
+  private AlertRecipient errorRecipient(){
+    return AlertRecipients.engineering(AlertSeverity.ERROR);
+  }
+
   private void sendStartEmail() throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.START)) {
-      mail(getStartSubject(), AlertRecipients.engineering(AlertSeverity.INFO));
+      mail(getStartSubject(), infoRecipient());
     }
   }
 
   private void sendSuccessEmail() throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.SUCCESS)) {
-      mail(getSuccessSubject(), AlertRecipients.engineering(AlertSeverity.INFO));
+      mail(getSuccessSubject(), infoRecipient());
     }
   }
 
   private void sendStepFailureEmail(String msg) throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.FAILURE)) {
-      mail(getStepFailureSubject(), msg, AlertRecipients.engineering(AlertSeverity.ERROR));
+      mail(getStepFailureSubject(), msg, errorRecipient());
     }
   }
 
   private void sendFailureEmail(String msg) throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.FAILURE)) {
-      mail(getFailureSubject(), msg, AlertRecipients.engineering(AlertSeverity.ERROR));
+      mail(getFailureSubject(), msg, errorRecipient());
     }
   }
 
   private void sendShutdownEmail(String cause) throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.SHUTDOWN)) {
-      mail(getShutdownSubject(cause), AlertRecipients.engineering(AlertSeverity.INFO));
+      mail(getShutdownSubject(cause), infoRecipient());
     }
   }
 
@@ -610,6 +629,7 @@ public final class WorkflowRunner {
   }
 
   private void mail(String subject, String body, AlertRecipient recipient) throws IOException {
+
     alertsHandler.sendAlert(
         AlertMessages.builder(subject)
             .setBody(appendTrackerUrl(body))

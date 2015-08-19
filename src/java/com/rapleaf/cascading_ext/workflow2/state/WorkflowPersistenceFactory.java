@@ -17,5 +17,7 @@ public interface WorkflowPersistenceFactory {
                                           String pool,
                                           String priority,
                                           String launchDir,
-                                          String launchJar);
+                                          String launchJar,
+                                          String errorEmail,
+                                          String infoEmail);
 }

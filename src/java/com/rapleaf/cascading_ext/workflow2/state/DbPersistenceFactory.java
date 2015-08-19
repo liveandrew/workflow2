@@ -59,7 +59,9 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
                                             String pool,
                                             String priority,
                                             String launchDir,
-                                            String launchJar) {
+                                            String launchJar,
+                                            String errorEmail,
+                                            String infoEmail) {
 
     try {
 
@@ -80,6 +82,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
           getPriority(latestAttempt, priority),
           launchDir,
           launchJar,
+          errorEmail,
+          infoEmail,
           execution
       );
 
@@ -218,10 +222,12 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     }
   }
 
-  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, WorkflowExecution execution) throws IOException {
+  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, String errorEmail, String infoEmail, WorkflowExecution execution) throws IOException {
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setLaunchDir(launchDir)
         .setLaunchJar(launchJar)
+        .setErrorEmail(errorEmail)
+        .setInfoEmail(infoEmail)
         .setLastHeartbeat(System.currentTimeMillis());
     attempt.save();
     return attempt;
