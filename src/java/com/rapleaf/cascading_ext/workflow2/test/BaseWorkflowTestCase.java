@@ -56,6 +56,10 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(steps, context);
   }
 
+  public WorkflowRunner execute(Set<Step> steps, WorkflowOptions options) throws IOException {
+    return execute(steps, options, context);
+  }
+
   public WorkflowRunner execute(Action action, WorkflowOptions options) throws IOException {
     return execute(Sets.newHashSet(new Step(action)), options, context);
   }

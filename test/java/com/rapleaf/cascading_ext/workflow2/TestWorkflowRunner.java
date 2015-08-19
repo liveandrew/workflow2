@@ -30,6 +30,11 @@ import cascading.tuple.Tuple;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.java_support.alerts_handler.AlertMessage;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfig;
+import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
+import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.HRap;
@@ -49,6 +54,7 @@ import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
+import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
@@ -112,6 +118,120 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testFullRestart1() throws IOException {
     testFullRestart(hdfsPersistenceFactory);
   }
+
+  @Test
+  public void testKeepRunning() throws Exception {
+
+    final Semaphore sem = new Semaphore(1);
+    final Semaphore sem2 = new Semaphore(1);
+
+    Step one = new Step(new DelayedFailingAction("fail", sem2));
+    Step two = new Step(new UnlockWaitAction("wait", sem2, sem));
+    Step three = new Step(new NoOpAction("proceed"), two);
+
+    final List<String> messages = Lists.newArrayList();
+
+    WorkflowRunner runner = new WorkflowRunner("Test Workflow", new DbPersistenceFactory(), new TestWorkflowOptions()
+        .setEnabledNotifications(WorkflowRunnerNotification.FAILURE)
+        .setAlertsHandler(new AlertsHandler() {
+
+          @Override
+          public void sendAlert(AlertMessage contents, AlertRecipient recipient, AlertRecipient... ad) {
+            messages.add(contents.getSubject(new DefaultAlertMessageConfig(true, Lists.newArrayList("TAG"))));
+            sem.release();
+          }
+
+          @Override
+          public void sendAlert(String subject, String body, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+          }
+
+          @Override
+          public void sendAlert(String subject, Throwable t, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+          }
+
+          @Override
+          public void sendAlert(String subject, String body, Throwable t, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+          }
+
+          @Override
+          public RecipientListBuilder getRecipients(List<AlertRecipient> recipients) {
+            return new RecipientListBuilder();
+          }
+
+        }), Sets.newHashSet(one, three));
+
+    try {
+      runner.run();
+      fail();
+    } catch (Exception e) {
+      // fine
+    }
+
+    StepState proceed = runner.getPersistence().getState("proceed");
+    StepState complete = runner.getPersistence().getState("wait");
+    StepState fail = runner.getPersistence().getState("fail");
+
+    assertEquals(StepStatus.COMPLETED, proceed.getStatus());
+    assertEquals(StepStatus.COMPLETED, complete.getStatus());
+    assertEquals(StepStatus.FAILED, fail.getStatus());
+
+    assertCollectionEquivalent(Lists.newArrayList(
+            "[TAG] [WORKFLOW] [ERROR] Step has failed in: Test Workflow",
+            "[TAG] [WORKFLOW] [ERROR] Failed: Test Workflow"),
+        messages
+    );
+
+  }
+
+  @Test
+  public void testSingleAlert() throws Exception {
+
+    Step one = new Step(new FailingAction("fail"));
+
+    final List<String> messages = Lists.newArrayList();
+
+    WorkflowRunner runner = new WorkflowRunner("Test Workflow", new DbPersistenceFactory(), new TestWorkflowOptions()
+        .setEnabledNotifications(WorkflowRunnerNotification.FAILURE)
+        .setAlertsHandler(new AlertsHandler() {
+
+          @Override
+          public void sendAlert(AlertMessage contents, AlertRecipient recipient, AlertRecipient... ad) {
+            messages.add(contents.getSubject(new DefaultAlertMessageConfig(true, Lists.newArrayList("TAG"))));
+          }
+
+          @Override
+          public void sendAlert(String subject, String body, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+          }
+
+          @Override
+          public void sendAlert(String subject, Throwable t, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+          }
+
+          @Override
+          public void sendAlert(String subject, String body, Throwable t, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+          }
+
+          @Override
+          public RecipientListBuilder getRecipients(List<AlertRecipient> recipients) {
+            return new RecipientListBuilder();
+          }
+
+        }), one);
+
+    try {
+      runner.run();
+      fail();
+    } catch (Exception e) {
+      // fine
+    }
+
+    assertCollectionEquivalent(Lists.newArrayList(
+            "[TAG] [WORKFLOW] [ERROR] Failed: Test Workflow"),
+        messages
+    );
+
+  }
+
 
   @Test
   public void testFullRestart2() throws IOException {

@@ -329,7 +329,7 @@ public final class WorkflowRunner {
   }
 
   private void assertSandbox(String sandboxDir) {
-    if(sandboxDir != null) {
+    if (sandboxDir != null) {
       LOG.info("Checking that no action writes outside sandboxDir \"" + sandboxDir + "\"");
       try {
         for (Step step : getPhsyicalDependencyGraph().vertexSet()) {
@@ -359,7 +359,7 @@ public final class WorkflowRunner {
     try {
 
       // Notify
-      LOG.info(getStartMessage());
+      LOG.info(getStartSubject());
       // Note: start email after web server so that UI is functional
       sendStartEmail();
 
@@ -372,7 +372,7 @@ public final class WorkflowRunner {
 
       // Notify success
       sendSuccessEmail();
-      LOG.info(getSuccessMessage());
+      LOG.info(getSuccessSubject());
     } finally {
       Runtime.getRuntime().removeShutdownHook(shutdownHook);
       LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));
@@ -429,7 +429,7 @@ public final class WorkflowRunner {
       }
 
       // check if there are any startable steps
-      StepRunner startableStep = getStartableStep(pendingSteps);
+      StepRunner startableStep = getStartableStep();
 
       if (startableStep == null) {
         // we didn't find any step to start, so wait a little.
@@ -471,14 +471,14 @@ public final class WorkflowRunner {
     if (isFailPending()) {
       String failureMessage = buildStepsFailureMessage();
       sendFailureEmail(failureMessage);
-      throw new RuntimeException(getFailureMessage() + "\n" + failureMessage);
+      throw new RuntimeException(getFailureSubject() + "\n" + failureMessage);
     }
 
     //  something internal to WorkflowRunner failed.
     if (!internalErrors.isEmpty()) {
       LOG.error("WorkflowRunner has encountered an internal error");
       sendInternalErrorMessage();
-      throw new RuntimeException(getFailureMessage() + " internal WorkflowRunner error");
+      throw new RuntimeException(getFailureSubject() + " internal WorkflowRunner error");
     }
 
     // nothing failed, but if there are steps that haven't been executed, it's
@@ -486,7 +486,7 @@ public final class WorkflowRunner {
     if (pendingSteps.size() > 0) {
       String reason = getReasonForShutdownRequest();
       sendShutdownEmail(reason);
-      throw new RuntimeException(getShutdownMessage(reason));
+      throw new RuntimeException(getShutdownSubject(reason));
     }
   }
 
@@ -503,8 +503,14 @@ public final class WorkflowRunner {
       pw.append("---------------------\n");
     }
 
-    mail(getFailureMessage(), pw.toString(), AlertRecipients.engineering(AlertSeverity.ERROR));
+    mail(getFailureSubject(), pw.toString(), AlertRecipients.engineering(AlertSeverity.ERROR));
 
+  }
+
+  private String buildStepFailureMessage(String step) throws IOException {
+    return "Workflow will continue running non-blocked steps \n\n Step "
+        + step + " failed with exception: "
+        + persistence.getStepStatuses().get(step).getFailureMessage();
   }
 
   private String buildStepsFailureMessage() throws IOException {
@@ -547,25 +553,31 @@ public final class WorkflowRunner {
 
   private void sendStartEmail() throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.START)) {
-      mail(getStartMessage(), AlertRecipients.engineering(AlertSeverity.INFO));
+      mail(getStartSubject(), AlertRecipients.engineering(AlertSeverity.INFO));
     }
   }
 
   private void sendSuccessEmail() throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.SUCCESS)) {
-      mail(getSuccessMessage(), AlertRecipients.engineering(AlertSeverity.INFO));
+      mail(getSuccessSubject(), AlertRecipients.engineering(AlertSeverity.INFO));
+    }
+  }
+
+  private void sendStepFailureEmail(String msg) throws IOException {
+    if (enabledNotifications.contains(WorkflowRunnerNotification.FAILURE)) {
+      mail(getStepFailureSubject(), msg, AlertRecipients.engineering(AlertSeverity.ERROR));
     }
   }
 
   private void sendFailureEmail(String msg) throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.FAILURE)) {
-      mail(getFailureMessage(), msg, AlertRecipients.engineering(AlertSeverity.ERROR));
+      mail(getFailureSubject(), msg, AlertRecipients.engineering(AlertSeverity.ERROR));
     }
   }
 
   private void sendShutdownEmail(String cause) throws IOException {
     if (enabledNotifications.contains(WorkflowRunnerNotification.SHUTDOWN)) {
-      mail(getShutdownMessage(cause), AlertRecipients.engineering(AlertSeverity.INFO));
+      mail(getShutdownSubject(cause), AlertRecipients.engineering(AlertSeverity.INFO));
     }
   }
 
@@ -573,19 +585,23 @@ public final class WorkflowRunner {
     return persistence.getName() + (this.persistence.getScopeIdentifier() == null ? "" : " (" + this.persistence.getScopeIdentifier() + ")");
   }
 
-  private String getStartMessage() throws IOException {
+  private String getStartSubject() throws IOException {
     return "Started: " + getDisplayName();
   }
 
-  private String getSuccessMessage() throws IOException {
+  private String getSuccessSubject() throws IOException {
     return "Succeeded: " + getDisplayName();
   }
 
-  private String getFailureMessage() throws IOException {
+  private String getFailureSubject() throws IOException {
     return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + getDisplayName();
   }
 
-  private String getShutdownMessage(String reason) throws IOException {
+  private String getStepFailureSubject() throws IOException {
+    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Step has failed in: " + getDisplayName();
+  }
+
+  private String getShutdownSubject(String reason) throws IOException {
     return "Shutdown requested: " + getDisplayName() + ". Reason: " + reason;
   }
 
@@ -604,7 +620,7 @@ public final class WorkflowRunner {
   }
 
   private String appendTrackerUrl(String messageBody) throws IOException {
-    return "Tracker URL: "+getTrackerURL()+"<br><br>"+messageBody;
+    return "Tracker URL: " + getTrackerURL() + "<br><br>" + messageBody;
   }
 
   public String getTrackerURL() throws IOException {
@@ -656,7 +672,16 @@ public final class WorkflowRunner {
     stepRunner.start();
   }
 
-  private StepRunner getStartableStep(Set<StepRunner> pendingSteps) throws IOException {
+  private boolean arePotentiallyStartableSteps() throws IOException {
+    for (StepRunner pendingStep : pendingSteps) {
+      if (!pendingStep.anyDependenciesFailed()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private StepRunner getStartableStep() throws IOException {
     for (StepRunner cr : pendingSteps) {
       if (cr.allDependenciesCompleted()) {
         return cr;
@@ -666,7 +691,7 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() throws IOException {
-    return !isFailPending() && persistence.getShutdownRequest() == null && internalErrors.isEmpty();
+    return persistence.getShutdownRequest() == null && internalErrors.isEmpty() && arePotentiallyStartableSteps();
   }
 
   public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
@@ -726,16 +751,19 @@ public final class WorkflowRunner {
 
             LOG.error("Step " + stepToken + " failed!", e);
 
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-
             try {
               persistence.markStepFailed(stepToken, e);
+
+              //  only alert about this specific step failure if we aren't about to fail
+              if(arePotentiallyStartableSteps() || runningSteps.size() > 1) {
+                sendStepFailureEmail(buildStepFailureMessage(stepToken));
+              }
+
             } catch (Exception e2) {
               LOG.error("Could not update step " + stepToken + " to failed! ", e2);
               internalErrors.add(e2);
             }
+
 
           } finally {
             semaphore.release();
@@ -744,6 +772,17 @@ public final class WorkflowRunner {
       };
       thread = new Thread(r, "Step Runner for " + step.getCheckpointToken());
       thread.start();
+    }
+
+    public boolean anyDependenciesFailed() throws IOException {
+      for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
+        Step dep = dependencyGraph.getEdgeTarget(edge);
+        if (state.getState(dep.getCheckpointToken()).getStatus() == StepStatus.FAILED) {
+          return true;
+        }
+      }
+      return false;
+
     }
 
     public boolean allDependenciesCompleted() throws IOException {
