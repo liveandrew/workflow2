@@ -7,8 +7,6 @@ import org.junit.Test;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.bucket.Bucket;
 
-import static org.junit.Assert.*;
-
 public class TestCopyDirectoryAction extends WorkflowTestCase {
   @Test
   public void testBasic() throws Exception {
@@ -17,7 +15,7 @@ public class TestCopyDirectoryAction extends WorkflowTestCase {
 
     Bucket.create(getFS(), srcPath.toString(), byte[].class);
 
-    new CopyDirectoryAction("cp", getTestRoot() + "/tmp", srcPath, dstPath).execute();
+    execute(new CopyDirectoryAction("cp", getTestRoot() + "/tmp", srcPath, dstPath));
 
     Assert.assertTrue("Should copy bucket data", Bucket.exists(getFS(), srcPath.toString()));
   }
@@ -30,7 +28,7 @@ public class TestCopyDirectoryAction extends WorkflowTestCase {
     Bucket.create(getFS(), srcPath.toString(), byte[].class);
     Bucket.create(getFS(), dstPath.toString(), byte[].class);
 
-    new CopyDirectoryAction("cp", getTestRoot() + "/tmp", srcPath, dstPath).execute();
+    execute(new CopyDirectoryAction("cp", getTestRoot() + "/tmp", srcPath, dstPath));
 
     Assert.assertTrue("Should copy bucket data", Bucket.exists(getFS(), srcPath.toString()));
   }
