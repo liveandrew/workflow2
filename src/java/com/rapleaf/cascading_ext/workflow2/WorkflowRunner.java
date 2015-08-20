@@ -44,16 +44,11 @@ import com.rapleaf.cascading_ext.workflow2.util.TimeFormatting;
 import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowConstants;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public final class WorkflowRunner {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowRunner.class);
-
-  /**
-   * Specify this and the system will pick any free port.j
-   */
-  public static final String WORKFLOW_EMAIL_SUBJECT_TAG = "WORKFLOW";
-  public static final String ERROR_EMAIL_SUBJECT_TAG = "ERROR";
 
   private static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
   private static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
@@ -613,11 +608,11 @@ public final class WorkflowRunner {
   }
 
   private String getFailureSubject() throws IOException {
-    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + getDisplayName();
+    return "[" + WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + getDisplayName();
   }
 
   private String getStepFailureSubject() throws IOException {
-    return "[" + ERROR_EMAIL_SUBJECT_TAG + "] " + "Step has failed in: " + getDisplayName();
+    return "[" + WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG + "] " + "Step has failed in: " + getDisplayName();
   }
 
   private String getShutdownSubject(String reason) throws IOException {
@@ -633,7 +628,7 @@ public final class WorkflowRunner {
     alertsHandler.sendAlert(
         AlertMessages.builder(subject)
             .setBody(appendTrackerUrl(body))
-            .addToDefaultTags(WORKFLOW_EMAIL_SUBJECT_TAG)
+            .addToDefaultTags(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG)
             .build(),
         recipient
     );
