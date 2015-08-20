@@ -16,35 +16,63 @@ public class WorkflowMonitor {
   public static final int FIVE_MINUTES = 5 * 60 * 1000;
 
   private final List<ExecutionAlerter> executionAlerters;
+  private final Thread monitor;
+  private final Thread shutdownHook;
 
   public WorkflowMonitor(List<ExecutionAlerter> executionAlerters) {
     this.executionAlerters = executionAlerters;
+    this.monitor = new Thread(new Monitor());
+    this.shutdownHook = new Thread(new ShutdownHook());
   }
 
-  public void monitor(){
+  public void monitor() throws InterruptedException {
 
-    try {
+    Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-      while (true) {
-        LOG.info("Starting to generate alerts");
+    monitor.start();
+    monitor.join();
 
-        for (ExecutionAlerter alerter : executionAlerters) {
-          alerter.generateAlerts();
+    Runtime.getRuntime().removeShutdownHook(shutdownHook);
+
+  }
+
+  private class ShutdownHook implements Runnable{
+
+    @Override
+    public void run() {
+      monitor.interrupt();
+    }
+  }
+
+  private class Monitor implements Runnable{
+
+    @Override
+    public void run() {
+      try {
+
+        while (true) {
+          LOG.info("Starting to generate alerts");
+
+          for (ExecutionAlerter alerter : executionAlerters) {
+            alerter.generateAlerts();
+          }
+
+          LOG.info("Sleeping for " + FIVE_MINUTES + "ms");
+          Thread.sleep(FIVE_MINUTES);
         }
 
-        LOG.info("Sleeping for " + FIVE_MINUTES + "ms");
-        Thread.sleep(FIVE_MINUTES);
+      } catch(InterruptedException e){
+        LOG.info("Interrupted, going down without a fight.");
+      }
+      catch (Exception e) {
+        LOG.info("Failure", e);
+        AlertsHandlers.devTools(WorkflowMonitor.class).sendAlert("WorkflowMonitor failed!", e,
+            AlertRecipients.engineering(AlertSeverity.ERROR)
+        );
       }
 
-    } catch (Exception e) {
-      LOG.info("Failure", e);
-      AlertsHandlers.devTools(WorkflowMonitor.class).sendAlert("WorkflowMonitor failed!", e,
-          AlertRecipients.engineering(AlertSeverity.ERROR)
-      );
     }
-
   }
-
 
 }
 
