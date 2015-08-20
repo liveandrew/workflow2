@@ -21,6 +21,7 @@ public class TestWorkflowOptions extends WorkflowOptions {
     setStepPollInterval(100);
     setCounterFilter(CounterFilters.all());
     setUrlBuilder(new TrackerURLBuilder.None());
+
   }
 
 }

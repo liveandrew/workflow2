@@ -28,11 +28,21 @@ public class WorkflowOptions {
   private ResourceManager resourceManager;
   private String sandboxDir;
   private TrackerURLBuilder urlBuilder;
+  private boolean stopOnFailure = false;
 
   protected WorkflowOptions(){}
 
   public WorkflowOptions setUrlBuilder(TrackerURLBuilder urlBuilder) {
     this.urlBuilder = urlBuilder;
+    return this;
+  }
+
+  public boolean getStopOnFailure() {
+    return stopOnFailure;
+  }
+
+  public WorkflowOptions setStopOnFailure(boolean stopOnFailure) {
+    this.stopOnFailure = stopOnFailure;
     return this;
   }
 
