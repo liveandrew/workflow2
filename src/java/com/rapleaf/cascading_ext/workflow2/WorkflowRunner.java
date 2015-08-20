@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
@@ -687,17 +688,40 @@ public final class WorkflowRunner {
     stepRunner.start();
   }
 
-  private boolean arePotentiallyStartableSteps() throws IOException {
-    for (StepRunner pendingStep : pendingSteps) {
+  private boolean existUnblockedSteps() throws IOException {
 
-      //  only say yes if all your dependencies are running or complete
-      if (pendingStep.allDependenciesInProgress()) {
+    Queue<Step> explore = Lists.newLinkedList();
+    Set<String> blockedSteps = Sets.newHashSet();
+
+    //  get failed steps
+    Map<String, StepState> statuses = persistence.getStepStatuses();
+    for (Step step : dependencyGraph.vertexSet()) {
+      StepState state = statuses.get(step.getCheckpointToken());
+      if (state.getStatus() == StepStatus.FAILED) {
+        explore.add(step);
+      }
+    }
+
+    //  get any part of the graph depending on failed steps
+    while (!explore.isEmpty()) {
+      Step step = explore.poll();
+      if (!blockedSteps.contains(step.getCheckpointToken())) {
+        blockedSteps.add(step.getCheckpointToken());
+        for (DefaultEdge edge : dependencyGraph.incomingEdgesOf(step)) {
+          explore.add(dependencyGraph.getEdgeSource(edge));
+        }
+      }
+    }
+
+    //  if any pending steps are not in this set, they can still plausibly run
+    for (StepRunner pendingStep : pendingSteps) {
+      if(!blockedSteps.contains(pendingStep.getStepName())){
         return true;
       }
-
     }
 
     return false;
+
   }
 
   private StepRunner getStartableStep() throws IOException {
@@ -710,7 +734,7 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() throws IOException {
-    return  !isFailPending() && persistence.getShutdownRequest() == null && internalErrors.isEmpty();
+    return !isFailPending() && persistence.getShutdownRequest() == null && internalErrors.isEmpty();
   }
 
   public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
@@ -774,7 +798,7 @@ public final class WorkflowRunner {
               persistence.markStepFailed(stepToken, e);
 
               //  only alert about this specific step failure if we aren't about to fail
-              if (arePotentiallyStartableSteps() || runningSteps.size() > 1) {
+              if (existUnblockedSteps() || runningSteps.size() > 1) {
                 sendStepFailureEmail(buildStepFailureMessage(stepToken));
               }
 
@@ -793,21 +817,8 @@ public final class WorkflowRunner {
       thread.start();
     }
 
-    public boolean allDependenciesInProgress() throws IOException {
-      for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
-        Step dep = dependencyGraph.getEdgeTarget(edge);
-        StepStatus status = state.getState(dep.getCheckpointToken()).getStatus();
-
-        if (status == StepStatus.FAILED) {
-          return false;
-        }
-
-        if (status == StepStatus.WAITING) {
-          return false;
-        }
-
-      }
-      return true;
+    public String getStepName(){
+      return step.getCheckpointToken();
     }
 
     public boolean allDependenciesCompleted() throws IOException {

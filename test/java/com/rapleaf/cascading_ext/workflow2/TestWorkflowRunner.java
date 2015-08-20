@@ -125,8 +125,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     //  TODO the case which this tries to catch hangs forever.  figure out a timer or something
     //  instead of just having the test hang
 
+    Step zero = new Step(new NoOpAction("succeed"));
     Step one = new Step(new FailingAction("fail"));
-    Step two = new Step(new NoOpAction("after"), one);
+    Step two = new Step(new NoOpAction("after"), zero, one);
     Step three = new Step(new NoOpAction("later"), two);
 
     try {
@@ -137,7 +138,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     }
   }
 
-  //@Test TODO working on fixing this behavior
+  @Test
   public void testKeepRunning() throws Exception {
 
     final Semaphore sem = new Semaphore(1);
