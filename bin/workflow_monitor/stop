@@ -7,7 +7,7 @@ MAX_WAIT=120
 pid=$($DIR/locate-daemon)
 if [[ ! -z "$pid" ]]; then
   echo "Killing ${pid}. Will wait up to ${MAX_WAIT} seconds before timing out."
-  kill "$pid" || exit 1
+  kill -9 "$pid" || exit 1
 
   while [[ "$pid" == "$($DIR/locate-daemon)" ]]; do
     echo "$0: waiting for shutdown..."
