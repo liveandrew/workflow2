@@ -4,7 +4,7 @@ MAIN_CLASS="com.liveramp.workflow_monitor.MonitorRunner"
 
 if [[ -z "$(ps ax | grep $MAIN_CLASS | grep -v grep)" ]]; then
   cd /apps/workflow_monitor/current
-  nohup java -Xmx1024m -cp workflow_monitor.job.jar $MAIN_CLASS $* > log/workflow_monitor.out 2> log/workflow_monitor.err < /dev/null &
+  nohup java -Xmx1024m -cp workflow_monitor.job.jar $MAIN_CLASS $* 2>&1 log/workflow_monitor.out &
 else
   echo "Workflow Monitor already running!"
   exit 1
