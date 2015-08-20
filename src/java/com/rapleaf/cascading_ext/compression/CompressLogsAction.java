@@ -108,7 +108,8 @@ public class CompressLogsAction extends Action {
           tmpOutputParts);
 
       Map<Object, Object> properties = new HashMap<Object, Object>();
-      properties.put("mapred.min.split.size", Long.MAX_VALUE);
+      properties.put("mapreduce.input.fileinputformat.split.minsize", 10 * 1024 * 1024 * 1024l);
+      properties.put("mapreduce.input.fileinputformat.split.maxsize", 20 * 1024 * 1024 * 1024l);
       properties.put("io.compression.codecs", getCodecsProperty());
 
       if (config.getSinkCodec() != null) {

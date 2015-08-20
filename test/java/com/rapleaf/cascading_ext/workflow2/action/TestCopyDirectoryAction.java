@@ -13,7 +13,7 @@ public class TestCopyDirectoryAction extends WorkflowTestCase {
     final Path srcPath = new Path(getTestRoot() + "/dir1");
     final Path dstPath = new Path(getTestRoot() + "/dir2");
 
-    Bucket.create(getFS(), srcPath.toString(), byte[].class);
+    Bucket.openOrCreate(getFS(), srcPath.toString(), byte[].class);
 
     execute(new CopyDirectoryAction("cp", getTestRoot() + "/tmp", srcPath, dstPath));
 
@@ -25,8 +25,8 @@ public class TestCopyDirectoryAction extends WorkflowTestCase {
     final Path srcPath = new Path(getTestRoot() + "/dir1");
     final Path dstPath = new Path(getTestRoot() + "/dir2");
 
-    Bucket.create(getFS(), srcPath.toString(), byte[].class);
-    Bucket.create(getFS(), dstPath.toString(), byte[].class);
+    Bucket.openOrCreate(getFS(), srcPath.toString(), byte[].class);
+    Bucket.openOrCreate(getFS(), dstPath.toString(), byte[].class);
 
     execute(new CopyDirectoryAction("cp", getTestRoot() + "/tmp", srcPath, dstPath));
 
