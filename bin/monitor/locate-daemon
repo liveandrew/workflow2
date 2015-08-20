@@ -1,3 +1,3 @@
 #!/bin/bash
 
-jps -l | grep com.liveramp.workflow_monitor.WorkflowMonitor | awk '{print $1}' 2>/dev/null
+jps -l | grep com.liveramp.workflow_monitor.MonitorRunner | awk '{print $1}' 2>/dev/null
