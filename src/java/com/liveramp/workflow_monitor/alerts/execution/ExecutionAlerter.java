@@ -67,7 +67,7 @@ public class ExecutionAlerter {
                 .build();
 
             handler.sendAlert(
-                buildSubject(genAlert.getMesasage(), execution),
+                buildSubject(alertClass.getSimpleName(), execution),
                 buildMessage(genAlert.getMesasage(), execution),
                 AlertRecipients.engineering(genAlert.getSeverity())
             );
@@ -86,7 +86,9 @@ public class ExecutionAlerter {
   }
 
   private String buildSubject(String alertMessage, WorkflowExecution execution){
-    String message = alertMessage+": "+execution.getName();
+    String[] split = execution.getName().split("\\.");
+
+    String message = alertMessage+": "+ split[split.length-1];
 
     if(execution.getScopeIdentifier() != null){
       message = message +"("+execution.getScopeIdentifier()+")";
@@ -104,7 +106,7 @@ public class ExecutionAlerter {
             .build().toString())
         .appendText("Link");
 
-    return "Alert for execution " + execution.getId() + " (" + execution.getName() + "). " + link.toString() + "\n\n " + alertMessage;
+    return "Execution: " + execution.getId() + " (" + execution.getName() + "). " + link.write() + "\n\n " + alertMessage;
 
   }
 
