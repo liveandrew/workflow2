@@ -57,7 +57,7 @@ public class ExecutionAlerter {
           if (recipientEmail != null) {
 
             ArrayList<String> tags = Lists.newArrayList(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG);
-            if(genAlert.getSeverity() == AlertSeverity.ERROR){
+            if (genAlert.getSeverity() == AlertSeverity.ERROR) {
               tags.add(WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG);
             }
 
@@ -85,13 +85,13 @@ public class ExecutionAlerter {
     }
   }
 
-  private String buildSubject(String alertMessage, WorkflowExecution execution){
+  private String buildSubject(String alertMessage, WorkflowExecution execution) {
     String[] split = execution.getName().split("\\.");
 
-    String message = alertMessage+": "+ split[split.length-1];
+    String message = alertMessage + ": " + split[split.length - 1];
 
-    if(execution.getScopeIdentifier() != null){
-      message = message +" ("+execution.getScopeIdentifier()+")";
+    if (execution.getScopeIdentifier() != null) {
+      message = message + " (" + execution.getScopeIdentifier() + ")";
     }
 
     return message;
@@ -106,9 +106,11 @@ public class ExecutionAlerter {
             .setPath("/execution.html")
             .setParameter("id", Long.toString(execution.getId()))
             .build().toString())
-        .appendText("Link");
+        .appendText(Long.toString(execution.getId()));
 
-    return "Execution: " + execution.getId() + " (" + execution.getName() + "). " + link.write() + "\n\n " + alertMessage;
+    return "Application: " + execution.getName() +
+        "\nExecution: " + link.write() +
+        "\n\n" + alertMessage;
 
   }
 
