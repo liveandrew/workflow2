@@ -1,7 +1,9 @@
 package com.liveramp.workflow_monitor.alerts.execution;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,9 +99,9 @@ public class ExecutionAlerter {
     return message;
   }
 
-  private String buildMessage(String alertMessage, WorkflowExecution execution) throws URISyntaxException {
+  private String buildMessage(String alertMessage, WorkflowExecution execution) throws URISyntaxException, UnsupportedEncodingException {
 
-    A link = new A()
+    A executionLink = new A()
         .setHref(new URIBuilder()
             .setScheme("http")
             .setHost("workflows.liveramp.net")
@@ -108,8 +110,17 @@ public class ExecutionAlerter {
             .build().toString())
         .appendText(Long.toString(execution.getId()));
 
-    return "Application: " + execution.getName() +
-        "\nExecution: " + link.write() +
+    A appLink = new A()
+        .setHref(new URIBuilder()
+            .setScheme("http")
+            .setHost("workflows.liveramp.net")
+            .setPath("/application.html")
+            .setParameter("name", URLEncoder.encode(execution.getName(), "UTF-8"))
+            .build().toString())
+        .appendText(execution.getName());
+
+    return "Application: " + appLink.write() +
+        "\nExecution: " + executionLink.write() +
         "\n\n" + alertMessage;
 
   }
