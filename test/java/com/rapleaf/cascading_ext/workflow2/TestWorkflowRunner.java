@@ -27,7 +27,6 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
-import com.liveramp.cascading_ext.tap.NullTap;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
@@ -64,7 +63,6 @@ import com.rapleaf.db_schemas.rldb.workflow.controller.ExecutionController;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.support.collections.Accessors;
-import com.rapleaf.types.new_person_data.PIN;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -1098,38 +1096,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     ThreeNestedMap<String, String, String, Long> countersByStep = runner.getPersistence().getCountersByStep();
     assertEquals(1l, countersByStep.get("step1__step", mapIn.getClass().getName(), mapIn.name()).longValue());
 
-  }
 
-  @Test
-  public void testFailExecuteDirectly() throws Exception {
-
-    try {
-      new SimpleFlow("checkpoint", builder().getBucketDataStore("adsf", PIN.class)).execute();
-      fail();
-    }catch(Exception e){
-      assertEquals("Cannot call execute() directly!  Use WorkflowRunner (execute(step) in tests)", e.getMessage());
-      // fine
-    }
-
-  }
-
-  private static class SimpleFlow extends Action {
-
-    private final DataStore store1;
-
-    public SimpleFlow(String checkpointToken, DataStore store1) {
-      super(checkpointToken);
-      readsFrom(store1);
-
-      this.store1 = store1;
-
-    }
-
-    @Override
-    protected void execute() throws Exception {
-      Pipe pipe = new Pipe("pipe");
-      completeWithProgress(buildFlow().connect(store1.getTap(), new NullTap(), pipe));
-    }
   }
 
 

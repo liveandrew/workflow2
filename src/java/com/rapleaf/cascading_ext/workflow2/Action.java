@@ -392,10 +392,21 @@ public abstract class Action {
 
   protected FlowBuilder buildFlow(Map<Object, Object> properties) {
     NestedProperties flowProperties;
+    //TODO Sweep direct calls to execute() so we don't have to do this!
     if (nestedProperties != null) {
       flowProperties = new NestedProperties(nestedProperties, properties);
     } else {
-      throw new RuntimeException("Cannot call execute() directly!  Use WorkflowRunner (execute(step) in tests)");
+      flowProperties =
+          new NestedProperties(
+              new NestedProperties(
+                  new NestedProperties(
+                      null,
+                      CascadingHelper.get().getDefaultHadoopProperties()
+                  ),
+                  stepProperties
+              ),
+              properties
+          );
     }
     return new FlowBuilder(buildFlowConnector(flowProperties.getPropertiesMap()), getClass());
   }
