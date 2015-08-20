@@ -91,7 +91,7 @@ public class ExecutionAlerter {
     String message = alertMessage+": "+ split[split.length-1];
 
     if(execution.getScopeIdentifier() != null){
-      message = message +"("+execution.getScopeIdentifier()+")";
+      message = message +" ("+execution.getScopeIdentifier()+")";
     }
 
     return message;
@@ -100,7 +100,9 @@ public class ExecutionAlerter {
   private String buildMessage(String alertMessage, WorkflowExecution execution) throws URISyntaxException {
 
     A link = new A()
-        .setHref(new URIBuilder().setHost("http://workflows.liveramp.net")
+        .setHref(new URIBuilder()
+            .setScheme("http")
+            .setHost("workflows.liveramp.net")
             .setPath("/execution.html")
             .setParameter("id", Long.toString(execution.getId()))
             .build().toString())
