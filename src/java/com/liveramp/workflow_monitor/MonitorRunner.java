@@ -2,6 +2,7 @@ package com.liveramp.workflow_monitor;
 
 import com.google.common.collect.Lists;
 
+import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.DiedUnclean;
@@ -13,6 +14,7 @@ import com.rapleaf.db_schemas.IDatabases;
 public class MonitorRunner {
 
   public static void main(String[] args) throws InterruptedException {
+    LoggingHelper.setLoggingProperties(MonitorRunner.class.getSimpleName());
 
     IDatabases db = new DatabasesImpl();
     db.getRlDb().disableCaching();
