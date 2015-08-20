@@ -23,7 +23,7 @@ public class DiedUnclean implements ExecutionAlertGenerator {
       long id = execution.getId();
 
       alerts.add(new ExecutionAlert(id,
-          "Execution has died unclean.  Please cancel or resume.",
+          "Execution has died without shutting down cleanly.  This often means the process was killed by the system OOM killer.  Please cancel or resume the execution.",
           AlertSeverity.ERROR)
       );
 
