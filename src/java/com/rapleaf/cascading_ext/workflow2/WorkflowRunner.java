@@ -696,6 +696,7 @@ public final class WorkflowRunner {
       }
 
     }
+
     return false;
   }
 
@@ -709,7 +710,7 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() throws IOException {
-    return persistence.getShutdownRequest() == null && internalErrors.isEmpty() && arePotentiallyStartableSteps();
+    return  !isFailPending() && persistence.getShutdownRequest() == null && internalErrors.isEmpty();
   }
 
   public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
