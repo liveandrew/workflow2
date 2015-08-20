@@ -29,8 +29,12 @@ public class WorkflowMonitor {
 
     Runtime.getRuntime().addShutdownHook(shutdownHook);
 
+    LOG.info("Starting monitor thread");
+
     monitor.start();
     monitor.join();
+
+    LOG.info("Monitor thread terminated");
 
     Runtime.getRuntime().removeShutdownHook(shutdownHook);
 
@@ -40,6 +44,7 @@ public class WorkflowMonitor {
 
     @Override
     public void run() {
+      LOG.info("Got a kill signal, interrupting monitor");
       monitor.interrupt();
     }
   }
