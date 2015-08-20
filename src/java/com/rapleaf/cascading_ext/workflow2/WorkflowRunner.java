@@ -216,7 +216,7 @@ public final class WorkflowRunner {
 
   private String getEmail(AlertRecipient recipient) {
     List<String> emails = alertsHandler.getRecipients(Lists.newArrayList(recipient)).getEmailRecipients();
-    if(emails.isEmpty()){
+    if (emails.isEmpty()) {
       return null;
     }
     return emails.get(0);
@@ -557,11 +557,11 @@ public final class WorkflowRunner {
     return false;
   }
 
-  private AlertRecipient infoRecipient(){
+  private AlertRecipient infoRecipient() {
     return AlertRecipients.engineering(AlertSeverity.INFO);
   }
 
-  private AlertRecipient errorRecipient(){
+  private AlertRecipient errorRecipient() {
     return AlertRecipients.engineering(AlertSeverity.ERROR);
   }
 
@@ -689,9 +689,12 @@ public final class WorkflowRunner {
 
   private boolean arePotentiallyStartableSteps() throws IOException {
     for (StepRunner pendingStep : pendingSteps) {
-      if (!pendingStep.anyDependenciesFailed()) {
+
+      //  only say yes if all your dependencies are running or complete
+      if (pendingStep.allDependenciesInProgress()) {
         return true;
       }
+
     }
     return false;
   }
@@ -770,7 +773,7 @@ public final class WorkflowRunner {
               persistence.markStepFailed(stepToken, e);
 
               //  only alert about this specific step failure if we aren't about to fail
-              if(arePotentiallyStartableSteps() || runningSteps.size() > 1) {
+              if (arePotentiallyStartableSteps() || runningSteps.size() > 1) {
                 sendStepFailureEmail(buildStepFailureMessage(stepToken));
               }
 
@@ -789,15 +792,21 @@ public final class WorkflowRunner {
       thread.start();
     }
 
-    public boolean anyDependenciesFailed() throws IOException {
+    public boolean allDependenciesInProgress() throws IOException {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if (state.getState(dep.getCheckpointToken()).getStatus() == StepStatus.FAILED) {
-          return true;
-        }
-      }
-      return false;
+        StepStatus status = state.getState(dep.getCheckpointToken()).getStatus();
 
+        if (status == StepStatus.FAILED) {
+          return false;
+        }
+
+        if (status == StepStatus.WAITING) {
+          return false;
+        }
+
+      }
+      return true;
     }
 
     public boolean allDependenciesCompleted() throws IOException {
