@@ -95,6 +95,8 @@ public abstract class Action {
   private transient WorkflowStatePersistence persistence;
   private transient CounterFilter counterFilter;
 
+  private boolean failOnCounterFetch = true;
+
   public Action(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
   }
@@ -484,10 +486,19 @@ public abstract class Action {
       }
 
     } catch (IOException e) {
-      LOG.error("Failed to capture stats for step!");
+
+      LOG.error("Failed to capture stats for step!", e);
+
+      if (failOnCounterFetch) {
+        throw new RuntimeException("Failed fetching stats for step", e);
+      }
+
     }
 
+  }
 
+  public void setFailOnCounterFetch(boolean value) {
+    this.failOnCounterFetch = value;
   }
 
   protected long getCurrentExecutionId() throws IOException {
@@ -512,11 +523,11 @@ public abstract class Action {
   //  we don't have to make these methods public.  there should be a cleaner way but I can't think of it.
   public class PreExecuteContext {
 
-    public <T> T get(OldResource<T> resource) throws IOException{
+    public <T> T get(OldResource<T> resource) throws IOException {
       return Action.this.get(resource);
     }
 
-    public <T> T get(ReadResource<T> resource){
+    public <T> T get(ReadResource<T> resource) {
       return Action.this.get(resource);
     }
 
@@ -525,17 +536,17 @@ public abstract class Action {
   //  stuff available for during action construction
   public class ConstructContext {
 
-    public void creates(DataStore store){
+    public void creates(DataStore store) {
       Action.this.creates(store);
     }
 
   }
 
-  public PreExecuteContext getPreExecuteContext(){
+  public PreExecuteContext getPreExecuteContext() {
     return new PreExecuteContext();
   }
 
-  public ConstructContext getConstructContext(){
+  public ConstructContext getConstructContext() {
     return new ConstructContext();
   }
 
