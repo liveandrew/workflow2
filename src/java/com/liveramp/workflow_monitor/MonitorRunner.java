@@ -6,6 +6,7 @@ import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.DiedUnclean;
+import com.liveramp.workflow_monitor.alerts.execution.alerts.KilledTasks;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.FromAttemptGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGenerator;
 import com.rapleaf.db_schemas.DatabasesImpl;
@@ -30,7 +31,8 @@ public class MonitorRunner {
     ExecutionAlerter testing = new ExecutionAlerter(
         new TestRecipientGenerator("bpodgursky@liveramp.com"),
         Lists.<ExecutionAlertGenerator>newArrayList(
-            new DiedUnclean()
+            new DiedUnclean(),
+            new KilledTasks()
         ),
         db
     );
