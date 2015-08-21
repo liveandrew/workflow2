@@ -11,6 +11,7 @@ import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlert;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 
 public class KilledTasks implements ExecutionAlertGenerator {
@@ -24,8 +25,7 @@ public class KilledTasks implements ExecutionAlertGenerator {
         null,
         System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000,
         null,
-        null
-        //WorkflowExecutionStatus.INCOMPLETE
+        WorkflowExecutionStatus.INCOMPLETE
     );
 
     List<ExecutionAlert> alerts = Lists.newArrayList();
@@ -45,7 +45,7 @@ public class KilledTasks implements ExecutionAlertGenerator {
 
       if (killed > .5 * launched) {
         alerts.add(new ExecutionAlert(execution.getId(),
-            "There were " + killed + " killed tasks out of " + launched + " launched maps.  This may indicate heavy contention",
+            "There were " + killed + " killed tasks out of " + launched + " launched tasks.  This may indicate heavy contention and under-allocated pools.",
             AlertSeverity.INFO
         ));
       }
