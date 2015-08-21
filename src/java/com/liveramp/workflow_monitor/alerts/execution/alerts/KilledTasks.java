@@ -11,7 +11,6 @@ import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlert;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 
 public class KilledTasks implements ExecutionAlertGenerator {
@@ -25,7 +24,8 @@ public class KilledTasks implements ExecutionAlertGenerator {
         null,
         System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000,
         null,
-        WorkflowExecutionStatus.INCOMPLETE
+        null
+        //WorkflowExecutionStatus.INCOMPLETE
     );
 
     List<ExecutionAlert> alerts = Lists.newArrayList();
