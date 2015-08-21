@@ -78,6 +78,7 @@ public class WorkflowOptions {
     return this;
   }
 
+  @Deprecated //  use setNotificationLevel instead
   public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
                                                        WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = WorkflowRunnerNotificationSet.only(enabledNotification, enabledNotifications);
@@ -110,6 +111,7 @@ public class WorkflowOptions {
     return this;
   }
 
+  @Deprecated //  use setNotificationLevel instead
   public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
     this.enabledNotifications = enabledNotifications;
     return this;
