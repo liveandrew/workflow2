@@ -9,6 +9,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
+import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
@@ -80,6 +81,27 @@ public class WorkflowOptions {
   public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
                                                        WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = WorkflowRunnerNotificationSet.only(enabledNotification, enabledNotifications);
+    return this;
+  }
+
+  public WorkflowOptions setNotificationLevel(WorkflowNotificationLevel level){
+
+    enabledNotifications = WorkflowRunnerNotificationSet.none();
+
+    //  TODO only do this while migrating
+    switch(level){
+      case DEBUG:
+        enabledNotifications.add(WorkflowRunnerNotification.START);
+      case INFO:
+        enabledNotifications.add(WorkflowRunnerNotification.SUCCESS);
+      case WARN:
+        enabledNotifications.add(WorkflowRunnerNotification.SHUTDOWN);
+      case ERROR:
+        enabledNotifications.add(WorkflowRunnerNotification.FAILURE);
+      case NONE:
+        //  none
+    }
+
     return this;
   }
 

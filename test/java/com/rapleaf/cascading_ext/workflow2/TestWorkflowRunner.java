@@ -133,7 +133,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     try {
       execute(three);
       fail();
-    }catch(Exception e){
+    } catch (Exception e) {
       // fine
     }
   }
@@ -202,6 +202,86 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     );
 
   }
+
+  @Test
+  public void testNotificationLevels() throws Exception {
+
+    runFlow(WorkflowNotificationLevel.DEBUG, new NoOpAction("step"), Lists.newArrayList(
+        "[WORKFLOW] Started: Test workflow",
+        "[WORKFLOW] Succeeded: Test workflow"
+    ));
+
+    runFlow(WorkflowNotificationLevel.ERROR, new NoOpAction("step"), Lists.<String>newArrayList());
+
+    runFlow(WorkflowNotificationLevel.INFO, new NoOpAction("step"), Lists.<String>newArrayList(
+        "[WORKFLOW] Succeeded: Test workflow"
+    ));
+
+    runFlow(WorkflowNotificationLevel.ERROR, new FailingAction("step"), Lists.<String>newArrayList(
+        "[WORKFLOW] [ERROR] Failed: Test workflow"
+    ));
+
+    runFlow(WorkflowNotificationLevel.DEBUG, new FailingAction("step"), Lists.<String>newArrayList(
+        "[WORKFLOW] Started: Test workflow",
+        "[WORKFLOW] [ERROR] Failed: Test workflow"
+    ));
+
+  }
+
+  private void runFlow(WorkflowNotificationLevel level, Action toRun, List<String> expectedAlerts) throws IOException {
+
+    SubjectAlertHandler handler = new SubjectAlertHandler();
+
+    Step step = new Step(toRun);
+
+    try{
+      execute(step, new TestWorkflowOptions()
+              .setNotificationLevel(level)
+              .setAlertsHandler(handler)
+      );
+    }catch(Exception e){
+      //  fine
+    }
+
+    assertCollectionEquivalent(expectedAlerts, handler.getSubjects());
+
+  }
+
+
+  private static class SubjectAlertHandler implements AlertsHandler {
+
+    private final Set<String> subjects = Sets.newHashSet();
+
+    public Set<String> getSubjects() {
+      return subjects;
+    }
+
+    @Override
+    public void sendAlert(AlertMessage contents, AlertRecipient recipient, AlertRecipient... ad) {
+      subjects.add(contents.getSubject(new DefaultAlertMessageConfig(false, Lists.<String>newArrayList())));
+    }
+
+    @Override
+    public void sendAlert(String subject, String body, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+      subjects.add(subject);
+    }
+
+    @Override
+    public void sendAlert(String subject, Throwable t, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+      subjects.add(subject);
+    }
+
+    @Override
+    public void sendAlert(String subject, String body, Throwable t, AlertRecipient recipient, AlertRecipient... additionalRecipients) {
+      subjects.add(subject);
+    }
+
+    @Override
+    public RecipientListBuilder getRecipients(List<AlertRecipient> recipients) {
+      return new RecipientListBuilder();
+    }
+  }
+
 
   @Test
   public void testSingleAlert() throws Exception {
