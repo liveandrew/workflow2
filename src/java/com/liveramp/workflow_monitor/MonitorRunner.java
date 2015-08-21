@@ -21,7 +21,9 @@ public class MonitorRunner {
 
     ExecutionAlerter production = new ExecutionAlerter(
         new FromAttemptGenerator(),
-        Lists.<ExecutionAlertGenerator>newArrayList(),
+        Lists.<ExecutionAlertGenerator>newArrayList(
+            new DiedUnclean()
+        ),
         db
     );
 
