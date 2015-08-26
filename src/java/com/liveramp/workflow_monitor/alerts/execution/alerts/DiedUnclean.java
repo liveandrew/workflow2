@@ -21,12 +21,10 @@ public class DiedUnclean implements ExecutionAlertGenerator {
 
     for (WorkflowExecution execution : WorkflowQueries.getDiedUncleanExecutions(db, null, 7)) {
       long id = execution.getId();
-
       alerts.add(new ExecutionAlert(id,
           "Execution has died without shutting down cleanly.  This often means the process was killed by the system OOM killer.  Please cancel or resume the execution.",
           AlertSeverity.ERROR)
       );
-
     }
 
     return alerts;

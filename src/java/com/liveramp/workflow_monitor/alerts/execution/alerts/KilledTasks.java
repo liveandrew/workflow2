@@ -18,30 +18,20 @@ public class KilledTasks implements ExecutionAlertGenerator {
   @Override
   public List<ExecutionAlert> generateAlerts(IDatabases db) throws IOException {
 
-    List<WorkflowExecution> executions = WorkflowQueries.queryWorkflowExecutions(db,
-        null,
-        null,
-        null,
-        null,
-        System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000,
-        null,
-        WorkflowExecutionStatus.INCOMPLETE
-    );
-
     List<ExecutionAlert> alerts = Lists.newArrayList();
 
-    for (WorkflowExecution execution : executions) {
+    for (WorkflowExecution execution : WorkflowQueries.queryWorkflowExecutions(db, null, null, null, null, System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000, null,
+        WorkflowExecutionStatus.INCOMPLETE)) {
 
       TwoNestedMap<String, String, Long> counters = WorkflowQueries.getFlatCounters(db.getRlDb(), execution.getId());
 
-      Long launchedMaps = counters.get("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_MAPS");
-      Long launchedReduces = counters.get("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_REDUCES");
+      long killed =
+          counters.get("org.apache.hadoop.mapreduce.JobCounter", "NUM_KILLED_MAPS") +
+          counters.get("org.apache.hadoop.mapreduce.JobCounter", "NUM_KILLED_REDUCES");
 
-      Long killedMaps = counters.get("org.apache.hadoop.mapreduce.JobCounter", "NUM_KILLED_MAPS");
-      Long killedReduces = counters.get("org.apache.hadoop.mapreduce.JobCounter", "NUM_KILLED_REDUCES");
-
-      long killed = killedMaps + killedReduces;
-      long launched = launchedMaps + launchedReduces;
+      long launched =
+          counters.get("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_MAPS") +
+          counters.get("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_REDUCES");
 
       if (killed > .5 * launched) {
         alerts.add(new ExecutionAlert(execution.getId(),
