@@ -21,7 +21,6 @@ import com.rapleaf.cascading_ext.function.DirectFunction;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionedBucketScheme;
 import com.rapleaf.cascading_ext.workflow2.sink_bindings.RoutedSinkBinding;
-import com.rapleaf.cascading_ext.workflow2.sink_bindings.TypedSink;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.types.new_person_data.AbiliTecId;
 import com.rapleaf.types.new_person_data.DataPartnerPIN;
@@ -98,7 +97,7 @@ public class TestRoutedSinkBinding extends WorkflowTestCase {
           .add(PIN._Fields.GROUP, FieldHelper.fieldNameOf(GroupPIN.class), partGroup, groupPartitioner)
           .add(PIN._Fields.DATA_PARTNER_PIN, "data_partner_pin", dapar, dapar.getTap())
           .add(PIN._Fields.ABILITEC, FieldHelper.fieldNameOf(AbiliTecId.class), abilitec)
-          .add(PIN._Fields.NAPKIN, TypedSink.of(nap, NAPkin.class))));
+          .add(PIN._Fields.NAPKIN, NAPkin.class, nap)));
     }
 
     private static class Split extends DirectFunction<PIN> {

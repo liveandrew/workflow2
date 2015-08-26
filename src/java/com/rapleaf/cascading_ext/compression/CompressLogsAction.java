@@ -126,10 +126,10 @@ public class CompressLogsAction extends Action {
 
       // this backing up is temporary until we're confident there are no issues in production
       LOG.info("moving " + inputPath + " to backup location: " + backupLocation);
-      FileSystemHelper.safeRename(fs, new Path(inputPath), backupLocation);
+      FileSystemHelper.safeRename(fs, new Path(inputPath), backupLocation, 10, 5 * 1000L);
 
       LOG.info("moving " + tmpOutputParts + " to final location: " + inputPath);
-      FileSystemHelper.safeRename(fs, new Path(tmpOutputParts), new Path(inputPath));
+      FileSystemHelper.safeRename(fs, new Path(tmpOutputParts), new Path(inputPath), 10, 5 * 1000L);
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {
@@ -169,7 +169,7 @@ public class CompressLogsAction extends Action {
       Path destPath = new Path(path.getParent(), config.getDestFileName(sourcePath));
 
       LOG.info("Renaming: {} to {}", path, destPath);
-      FileSystemHelper.safeRename(fs, path, destPath);
+      FileSystemHelper.safeRename(fs, path, destPath, 10, 5 * 1000L);
     }
   }
 

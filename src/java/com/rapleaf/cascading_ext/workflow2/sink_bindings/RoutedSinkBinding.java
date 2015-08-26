@@ -16,6 +16,7 @@ import cascading.tap.Tap;
 
 import com.liveramp.cascading_ext.util.FieldHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.UnitDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.tap.FieldRemap;
 import com.rapleaf.cascading_ext.tap.PartitionedSinkTapFactory;
@@ -66,16 +67,16 @@ public class RoutedSinkBinding implements SinkBinding {
     return this.add(route, sinkField, store, new TapFactory.Wrapping(tap));
   }
 
+  public <T> RoutedSinkBinding add(Object route, Class<T> klass, UnitDataStore<T> store) {
+    return this.add(route, FieldHelper.fieldNameOf(klass), store);
+  }
+
   public RoutedSinkBinding add(Object route, String sinkField, DataStore store) {
     return this.add(route, sinkField, store, new TapFactory.SimpleFactory(store));
   }
 
   public RoutedSinkBinding add(Object route, String sinkField, PartitionableDataStore<? extends TBase> pds, PartitionStructure pStructure) {
     return this.add(route, sinkField, pds, new PartitionedSinkTapFactory<>(pds, pStructure));
-  }
-
-  public RoutedSinkBinding add(Object route, TypedSink<?> storeAndType) {
-    return this.add(route, FieldHelper.fieldNameOf(storeAndType.getRight()), storeAndType.getLeft());
   }
 
   public List<DataStore> getOutputStores() {
