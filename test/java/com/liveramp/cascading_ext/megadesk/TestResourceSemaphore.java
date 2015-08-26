@@ -97,7 +97,11 @@ public class TestResourceSemaphore extends WorkflowTestCase {
     Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
-        runner.run();
+        try {
+          runner.run();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
     });
     thread.start();
