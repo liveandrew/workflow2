@@ -21,7 +21,6 @@ import com.rapleaf.cascading_ext.datastore.VersionedThriftBucketDataStoreHelper;
 import com.rapleaf.cascading_ext.serialization.ThriftRawComparator;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.CleanUpOlderVersions;
@@ -92,10 +91,15 @@ public class TestResourceSemaphore extends WorkflowTestCase {
     StoreReaderLockProvider lockProvider = new CuratorStoreReaderLockProvider(framework);
     WorkflowOptions options = new TestWorkflowOptions().setLockProvider(lockProvider);
 
-    WorkflowRunner runner = new WorkflowRunner(TestResourceSemaphore.class,
+    final WorkflowRunner runner = new WorkflowRunner(TestResourceSemaphore.class,
         new DbPersistenceFactory(),
         options, action);
-    Thread thread = new Thread(new WorkflowRunnable(runner));
+    Thread thread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        runner.run();
+      }
+    });
     thread.start();
 
     waitOnAction(barrier);
