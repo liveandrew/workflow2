@@ -13,6 +13,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.InMemoryContext;
 import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
@@ -91,6 +92,10 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
         steps);
     workflowRunner.run();
     return workflowRunner;
+  }
+
+  public void executeWorkflowFOff(WorkflowRunnable foff) throws Exception {
+    foff.postWorkflow(execute(foff.getSteps(), foff.getOptions()));
   }
 
   public InMemoryContext context() {
