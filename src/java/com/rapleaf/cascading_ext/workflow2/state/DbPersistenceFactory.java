@@ -179,7 +179,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private String getPriority(Optional<WorkflowAttempt> last, String priority) {
     if (last.isPresent()) {
       String lastPriority = last.get().getPriority();
-      LOG.info("Overriding provided pool "+priority+" with previous pool "+lastPriority);
+      LOG.info("Overriding provided pool "+priority+" with previous priority "+lastPriority);
       return lastPriority;
     }
     return priority;
