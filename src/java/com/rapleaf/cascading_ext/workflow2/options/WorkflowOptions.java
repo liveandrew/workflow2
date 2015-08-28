@@ -30,8 +30,18 @@ public class WorkflowOptions {
   private String sandboxDir;
   private TrackerURLBuilder urlBuilder;
   private boolean stopOnFailure = false;
+  private HostnameProvider hostnameProvider;
 
   protected WorkflowOptions(){}
+
+  public HostnameProvider getHostnameProvider() {
+    return hostnameProvider;
+  }
+
+  public WorkflowOptions setHostnameProvider(HostnameProvider hostnameProvider) {
+    this.hostnameProvider = hostnameProvider;
+    return this;
+  }
 
   public WorkflowOptions setUrlBuilder(TrackerURLBuilder urlBuilder) {
     this.urlBuilder = urlBuilder;

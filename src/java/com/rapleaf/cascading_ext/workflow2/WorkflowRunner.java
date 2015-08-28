@@ -192,7 +192,7 @@ public final class WorkflowRunner {
         workflowName,
         options.getScopeIdentifier(),
         options.getAppType(),
-        getHostName(),
+        options.getHostnameProvider().getHostname(),
         System.getProperty("user.name"),
         findDefaultValue(JOB_POOL_PARAM, "default"),
         findDefaultValue(JOB_PRIORITY_PARAM, "NORMAL"),
@@ -257,14 +257,6 @@ public final class WorkflowRunner {
       throw new RuntimeException("AppType must be set in WorkflowOptions!");
     }
     return appType.name();
-  }
-
-  private static String getHostName() {
-    try {
-      return InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private void setStepContextObjects(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
