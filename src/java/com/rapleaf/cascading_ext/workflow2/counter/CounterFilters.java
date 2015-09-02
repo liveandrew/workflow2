@@ -23,6 +23,9 @@ public class CounterFilters {
 
     DEFAULT_AS_MAP.put(FileSystemCounter.class.getName(), "HDFS_BYTES_READ");
     DEFAULT_AS_MAP.put(FileSystemCounter.class.getName(), "HDFS_BYTES_WRITTEN");
+    DEFAULT_AS_MAP.put(FileSystemCounter.class.getName(), "HDFS_READ_OPS");
+    DEFAULT_AS_MAP.put(FileSystemCounter.class.getName(), "HDFS_WRITE_OPS");
+    DEFAULT_AS_MAP.put(FileSystemCounter.class.getName(), "HDFS_LARGE_READ_OPS");
 
     DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.TOTAL_LAUNCHED_MAPS.name());
     DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.DATA_LOCAL_MAPS.name());
