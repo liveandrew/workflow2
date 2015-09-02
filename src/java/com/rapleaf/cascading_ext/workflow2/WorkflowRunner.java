@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -197,7 +195,7 @@ public final class WorkflowRunner {
         findDefaultValue(JOB_POOL_PARAM, "default"),
         findDefaultValue(JOB_PRIORITY_PARAM, "NORMAL"),
         System.getProperty("user.dir"),
-        HadoopJarUtil.getLanuchJarName(),
+        HadoopJarUtil.getLaunchJarName(),
         getEmail(errorRecipient()),
         getEmail(infoRecipient())
     );
