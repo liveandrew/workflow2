@@ -50,6 +50,7 @@ public class CompressLogsAction extends Action {
   private final CoercionConfig config;
   private final String backupRoot;
   private String tmpPath;
+  private final Map<String, Object> flowProperties;
 
   static {
     SUPPORTED_CODECS = new HashMap<>();
@@ -68,13 +69,15 @@ public class CompressLogsAction extends Action {
                             String inputCodec,
                             String outputCodec,
                             LogApp logApp,
-                            DateTime date) throws IOException {
+                            DateTime date,
+                            Map<String, Object> flowProperties) throws IOException {
     super(String.format("%s-%s-%s", CompressLogsAction.class.getSimpleName(), logApp, date.toString("yyyy_MM_dd")), tmpRoot);
     this.inputPath = inputPath;
     this.backupRoot = backupRoot;
     this.config = new CoercionConfig(getCodecForName(inputCodec), getCodecForName(outputCodec));
     this.fs = FileSystem.get(new Configuration());
     this.tmpPath = getTmpRoot() + "/" + UUID.randomUUID().toString();
+    this.flowProperties = flowProperties;
   }
 
   @Override
@@ -108,8 +111,9 @@ public class CompressLogsAction extends Action {
           tmpOutputParts);
 
       Map<Object, Object> properties = new HashMap<Object, Object>();
-      properties.put("mapred.min.split.size", Long.MAX_VALUE);
+      properties.put("mapreduce.input.fileinputformat.split.minsize", Long.MAX_VALUE);
       properties.put("io.compression.codecs", getCodecsProperty());
+      properties.putAll(flowProperties);
 
       if (config.getSinkCodec() != null) {
         properties.put("mapred.output.compression.codec", config.getSinkCodec().getClass().getCanonicalName());

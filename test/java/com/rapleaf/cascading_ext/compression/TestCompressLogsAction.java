@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.BZip2Codec;
@@ -38,7 +39,7 @@ public class TestCompressLogsAction extends WorkflowTestCase {
     new WorkflowRunner(
         CompressLogsAction.class,
         new TestWorkflowOptions(),
-        new Step(new CompressLogsAction(inputPath, tmpRoot, backupRoot, inputCodec, outputCodec, LogApp.S2S_DATA_SYNCER, DateTime.now()))
+        new Step(new CompressLogsAction(inputPath, tmpRoot, backupRoot, inputCodec, outputCodec, LogApp.S2S_DATA_SYNCER, DateTime.now(), Maps.<String, Object>newHashMap()))
     ).run();
   }
 
