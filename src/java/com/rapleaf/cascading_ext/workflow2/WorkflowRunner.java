@@ -217,7 +217,7 @@ public final class WorkflowRunner {
   }
 
   private String getEmail(AlertRecipient recipient) {
-    List<String> emails = alertsHandler.getRecipients(Lists.newArrayList(recipient)).getEmailRecipients();
+    List<String> emails = alertsHandler.resolveRecipients(Lists.newArrayList(recipient)).getEmailRecipients();
     if (emails.isEmpty()) {
       return null;
     }

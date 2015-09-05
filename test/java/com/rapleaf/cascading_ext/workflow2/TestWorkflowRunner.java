@@ -174,7 +174,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
           }
 
           @Override
-          public RecipientListBuilder getRecipients(List<AlertRecipient> recipients) {
+          public RecipientListBuilder resolveRecipients(List<AlertRecipient> recipients) {
             return new RecipientListBuilder();
           }
 
@@ -277,7 +277,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     }
 
     @Override
-    public RecipientListBuilder getRecipients(List<AlertRecipient> recipients) {
+    public RecipientListBuilder resolveRecipients(List<AlertRecipient> recipients) {
       return new RecipientListBuilder();
     }
   }
@@ -312,7 +312,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
           }
 
           @Override
-          public RecipientListBuilder getRecipients(List<AlertRecipient> recipients) {
+          public RecipientListBuilder resolveRecipients(List<AlertRecipient> recipients) {
             return new RecipientListBuilder();
           }
 
