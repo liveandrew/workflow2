@@ -1,8 +1,11 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.io.BytesWritable;
@@ -10,27 +13,37 @@ import org.junit.Test;
 
 import cascading.flow.FlowProcess;
 
+import com.liveramp.audience.generated.AudienceMember;
 import com.liveramp.cascading_ext.Bytes;
 import com.liveramp.commons.collections.map.MapBuilder;
+import com.liveramp.importer.generated.ImportRecordID;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.datastore.DataStores;
+import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
+import com.rapleaf.cascading_ext.datastore.PartitionedThriftDataStoreHelper;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
 import com.rapleaf.cascading_ext.map_side_join.TIterator;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.map_side_join.extractors.ThriftExtractor;
+import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
 import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.msj_tap.operation.MOMSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.operation.functioncall.MOMSJFunctionCall;
+import com.rapleaf.cascading_ext.tap.bucket2.partitioner.AudienceMemberPartitioner;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
+import com.rapleaf.data_helpers.AudienceMemberHelper;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.support.Strings;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
+import com.rapleaf.types.new_person_data.LRCField;
 import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwners;
 import com.rapleaf.types.new_person_data.StringList;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
@@ -158,6 +171,92 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
     }
 
   }
+
+  @Test
+  public void testRetainSplits() throws Exception {
+
+    PartitionedDataStore<AudienceMember> ams1 = builder().getPartitionedDataStore(
+        "ams1",
+        AudienceMember.class
+    );
+
+    AudienceMember am1 = makeAudienceMember(0l, 1);
+
+    AudienceMemberPartitioner.BaseAMPartitioner<AudienceMember> partitioner = new AudienceMemberPartitioner.BaseAMPartitioner<AudienceMember>(AudienceMember.class);
+    PartitionedThriftDataStoreHelper.writeSortedToNewVersion(
+        ams1,
+        partitioner,
+        AudienceMember.class,
+        am1
+    );
+
+    BucketDataStore<AudienceMember> out = builder().getBucketDataStore("output", AudienceMember.class);
+
+    execute(new IdentityMOMSJ("identity", getTestRoot()+"/tmp", ams1, out));
+
+    assertEquals(1, HRap.getValuesFromBucket(DataStores.bucket(out.getPath(), "/custom-split", AudienceMember.class)).size());
+
+  }
+
+  private enum OutputEnum {
+    OUT1
+  }
+
+  private static class IdentityOutput extends MOMSJFunction<OutputEnum, BytesWritable> {
+
+    @Override
+    public void operate(MOMSJFunctionCall<OutputEnum> functionCall, MSJGroup<BytesWritable> group) {
+
+      TIterator<AudienceMember> iter1 = group.getThriftIterator(0, new AudienceMember());
+
+      while(iter1.hasNext()){
+        functionCall.emit(OutputEnum.OUT1, "custom-split", iter1.next());
+      }
+
+    }
+  }
+
+  private static class IdentityMOMSJ extends MOMSJTapAction<OutputEnum, BytesWritable>{
+
+    public IdentityMOMSJ(String checkpointToken, String tmpRoot,
+                         final PartitionedDataStore<AudienceMember> ams1,
+                         BucketDataStore<AudienceMember> out) throws IOException {
+      super(checkpointToken, tmpRoot,
+          new ExtractorsList<BytesWritable>()
+          .add(ams1, new SimpleConfFactory(ams1)),
+          new IdentityOutput(),
+          Collections.singletonMap(OutputEnum.OUT1, out)
+      );
+    }
+
+    private static class SimpleConfFactory implements ConfFactory<BytesWritable> {
+      private final PartitionedDataStore<AudienceMember> ams1;
+
+      public SimpleConfFactory(PartitionedDataStore<AudienceMember> ams1) {
+        this.ams1 = ams1;
+      }
+
+      @Override
+      public InputConf<BytesWritable> getInputConf() {
+        try {
+          return ams1.getInputConf(new TByteArrayExtractor(AudienceMember._Fields.MEMBER_ID), Collections.singletonMap(0l, 0));
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+
+  private static byte[] makeAudienceKey(byte number) {
+    return new byte[]{number, number, number, number};
+  }
+
+  public static AudienceMember makeAudienceMember(Long audienceId, Integer memberNumber) {
+    byte[] bytes = makeAudienceKey(memberNumber.byteValue());
+    return new AudienceMember(audienceId, 0, ByteBuffer.wrap(bytes), ByteBuffer.wrap(AudienceMemberHelper.computeMemberID(audienceId, bytes)),
+        new HashMap<ImportRecordID, List<LRCField>>(), new HashMap<PIN, List<ImportRecordID>>());
+  }
+
 
   @Test
   public void testStrings() throws Exception {
