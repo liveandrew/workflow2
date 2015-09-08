@@ -14,9 +14,10 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.importer.generated.AppType;
@@ -57,7 +58,9 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
                                           String launchDir,
                                           String launchJar,
                                           String errorEmail,
-                                          String infoEmail) {
+                                          String infoEmail,
+                                          String remote,
+                                          String implementationBuild) {
 
     FileSystem fs = FileSystemHelper.getFS();
 

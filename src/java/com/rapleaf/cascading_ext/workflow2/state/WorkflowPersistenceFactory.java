@@ -19,5 +19,7 @@ public interface WorkflowPersistenceFactory {
                                           String launchDir,
                                           String launchJar,
                                           String errorEmail,
-                                          String infoEmail);
+                                          String infoEmail,
+                                          String remote,
+                                          String implementationBuild);
 }

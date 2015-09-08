@@ -61,7 +61,9 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
                                             String launchDir,
                                             String launchJar,
                                             String errorEmail,
-                                            String infoEmail) {
+                                            String infoEmail,
+                                            String remote,
+                                            String implementationBuild) {
 
     try {
 
@@ -84,8 +86,11 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
           launchJar,
           errorEmail,
           infoEmail,
-          execution
+          execution,
+          remote,
+          implementationBuild
       );
+
 
       assertOnlyLiveAttempt(execution, attempt);
 
@@ -170,7 +175,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private String getPool(Optional<WorkflowAttempt> last, String provided) {
     if (last.isPresent()) {
       String lastPool = last.get().getPool();
-      LOG.info("Overriding provided pool "+provided+" with previous pool "+lastPool);
+      LOG.info("Overriding provided pool " + provided + " with previous pool " + lastPool);
       return lastPool;
     }
     return provided;
@@ -179,7 +184,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private String getPriority(Optional<WorkflowAttempt> last, String priority) {
     if (last.isPresent()) {
       String lastPriority = last.get().getPriority();
-      LOG.info("Overriding provided pool "+priority+" with previous priority "+lastPriority);
+      LOG.info("Overriding provided pool " + priority + " with previous priority " + lastPriority);
       return lastPriority;
     }
     return priority;
@@ -226,13 +231,15 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     }
   }
 
-  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, String errorEmail, String infoEmail, WorkflowExecution execution) throws IOException {
+  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, String errorEmail, String infoEmail, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setLaunchDir(launchDir)
         .setLaunchJar(launchJar)
         .setErrorEmail(errorEmail)
         .setInfoEmail(infoEmail)
-        .setLastHeartbeat(System.currentTimeMillis());
+        .setLastHeartbeat(System.currentTimeMillis())
+        .setScmRemote(remote)
+        .setCommitRevision(implementationBuild);
     attempt.save();
     return attempt;
   }

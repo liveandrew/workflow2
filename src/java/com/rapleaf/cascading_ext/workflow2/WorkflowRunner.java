@@ -98,6 +98,7 @@ public final class WorkflowRunner {
   private final ResourceManager<?, ?> resourceManager;
   private final TrackerURLBuilder trackerURLBuilder;
 
+
   public WorkflowRunner(Class klass, Step tail) {
     this(klass, new DbPersistenceFactory(), tail);
   }
@@ -186,6 +187,8 @@ public final class WorkflowRunner {
 
     assertSandbox(options.getSandboxDir());
 
+    HadoopJarUtil.ScmInfo scmInfo = HadoopJarUtil.getRemoteAndCommit();
+
     this.persistence = persistenceFactory.prepare(dependencyGraph,
         workflowName,
         options.getScopeIdentifier(),
@@ -197,7 +200,9 @@ public final class WorkflowRunner {
         System.getProperty("user.dir"),
         HadoopJarUtil.getLaunchJarName(),
         getEmail(errorRecipient()),
-        getEmail(infoRecipient())
+        getEmail(infoRecipient()),
+        scmInfo.getGitRemote(),
+        scmInfo.getRevision()
     );
 
     linkPersistence();
