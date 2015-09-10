@@ -27,7 +27,6 @@ import cascading.scheme.hadoop.SequenceFile;
 import cascading.scheme.hadoop.TextLine;
 import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
-import cascading.tap.hadoop.HfsProps;
 import cascading.tuple.Fields;
 import cascading.tuple.TupleEntryIterator;
 
@@ -122,10 +121,7 @@ public class CompressLogsAction extends Action {
 
       completeWithProgress(buildFlow(properties).connect(jobName, source, sink, pipe));
 
-      if (!properties.containsKey(HfsProps.COMBINE_INPUT_FILES) ||
-          properties.get(HfsProps.COMBINE_INPUT_FILES) == false) {
-        renameOutputParts(tmpOutputRenames, tmpOutputParts);
-      }
+      renameOutputParts(tmpOutputRenames, tmpOutputParts);
 
       // create backup directory
       Path backupLocation = new Path(backupRoot + "/" + inputPath);
@@ -156,13 +152,15 @@ public class CompressLogsAction extends Action {
     // that task.  We then use this map to preserve
     // the original file names
     Map<Integer, String> partNumToSourcePath = new HashMap<Integer, String>();
+    FileSystem fileSystem = FileSystemHelper.getFileSystemForPath(dir);
+    if (fileSystem.exists(new Path(renamesFile))) {
+      TupleEntryIterator iterator = new Hfs(new SequenceFile(new Fields("rename_action")), renamesFile).openForRead(
+          CascadingHelper.get().getFlowProcess());
 
-    TupleEntryIterator iterator = new Hfs(new SequenceFile(new Fields("rename_action")), renamesFile).openForRead(
-        CascadingHelper.get().getFlowProcess());
-
-    while (iterator.hasNext()) {
-      RenameAction renameAction = (RenameAction)iterator.next().getObject(0);
-      partNumToSourcePath.put(renameAction.get_task_num(), renameAction.get_src_path());
+      while (iterator.hasNext()) {
+        RenameAction renameAction = (RenameAction)iterator.next().getObject(0);
+        partNumToSourcePath.put(renameAction.get_task_num(), renameAction.get_src_path());
+      }
     }
 
     for (FileStatus status : fs.listStatus(new Path(dir))) {
@@ -173,7 +171,7 @@ public class CompressLogsAction extends Action {
         continue;
       }
 
-      String sourcePath = getSourcePathForFile(path, partNumToSourcePath);
+      String sourcePath = partNumToSourcePath.size() > 0 ? getSourcePathForFile(path, partNumToSourcePath) : path.toString();
       Path destPath = new Path(path.getParent(), config.getDestFileName(sourcePath));
 
       LOG.info("Renaming: {} to {}", path, destPath);
