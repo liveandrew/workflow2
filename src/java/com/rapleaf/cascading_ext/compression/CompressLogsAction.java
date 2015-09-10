@@ -27,6 +27,7 @@ import cascading.scheme.hadoop.SequenceFile;
 import cascading.scheme.hadoop.TextLine;
 import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
+import cascading.tap.hadoop.HfsProps;
 import cascading.tuple.Fields;
 import cascading.tuple.TupleEntryIterator;
 
@@ -121,7 +122,10 @@ public class CompressLogsAction extends Action {
 
       completeWithProgress(buildFlow(properties).connect(jobName, source, sink, pipe));
 
-      renameOutputParts(tmpOutputRenames, tmpOutputParts);
+      if (!properties.containsKey(HfsProps.COMBINE_INPUT_FILES) ||
+          properties.get(HfsProps.COMBINE_INPUT_FILES) == false) {
+        renameOutputParts(tmpOutputRenames, tmpOutputParts);
+      }
 
       // create backup directory
       Path backupLocation = new Path(backupRoot + "/" + inputPath);
