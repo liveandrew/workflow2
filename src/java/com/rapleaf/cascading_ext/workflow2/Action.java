@@ -555,6 +555,10 @@ public abstract class Action {
       Action.this.uses(resource);
     }
 
+    public <T> ReadResource<T> readsFrom(Resource<T> resource) {
+      return Action.this.readsFrom(resource);
+    }
+
   }
 
   public PreExecuteContext getPreExecuteContext() {
