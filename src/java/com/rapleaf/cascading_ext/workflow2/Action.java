@@ -551,6 +551,10 @@ public abstract class Action {
       Action.this.creates(store);
     }
 
+    public <T> void uses(OldResource<T> resource) {
+      Action.this.uses(resource);
+    }
+
   }
 
   public PreExecuteContext getPreExecuteContext() {
