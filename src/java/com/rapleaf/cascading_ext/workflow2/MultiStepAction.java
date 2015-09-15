@@ -11,6 +11,8 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+import com.liveramp.cascading_ext.resource.ReadResource;
+import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.event_timer.MultiTimedEvent;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -130,6 +132,24 @@ public class MultiStepAction extends Action {
   @Override
   protected final void writesTo(DataStore store) {
     throw new RuntimeException("Cannot set a datastore to write to for a multistep action");
+  }
+
+  @Deprecated
+  protected <T> T get(OldResource<T> resource) throws IOException {
+    throw new RuntimeException("Cannot get a resource in a multistep action!");
+  }
+
+  protected <T> T get(ReadResource<T> resource) {
+    throw new RuntimeException("Cannot get a resource in a multistep action!");
+  }
+
+  protected <T, R extends WriteResource<T>> void set(R resource, T value) {
+    throw new RuntimeException("Cannot set a resource in a multistep action!");
+  }
+
+  @Deprecated
+  protected <T> void set(OldResource<T> resource, T value) throws IOException {
+    throw new RuntimeException("Cannot get a resource in a multistep action!");
   }
 
   private void verifyStepsAreSet() {
