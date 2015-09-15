@@ -149,7 +149,7 @@ public class MultiStepAction extends Action {
 
   @Deprecated
   protected <T> void set(OldResource<T> resource, T value) throws IOException {
-    throw new RuntimeException("Cannot get a resource in a multistep action!");
+    throw new RuntimeException("Cannot set a resource in a multistep action!");
   }
 
   private void verifyStepsAreSet() {
