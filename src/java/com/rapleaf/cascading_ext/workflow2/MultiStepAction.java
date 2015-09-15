@@ -152,6 +152,13 @@ public class MultiStepAction extends Action {
   }
 
   @Override
+  public void setFailOnCounterFetch(boolean value) {
+    for (Step step : getSubSteps()) {
+      step.getAction().setFailOnCounterFetch(value);
+    }
+  }
+
+  @Override
   TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
 
     TwoNestedMap<String, String, Long> map = new TwoNestedMap<>();
