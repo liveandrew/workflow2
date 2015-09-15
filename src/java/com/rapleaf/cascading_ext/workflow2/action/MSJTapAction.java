@@ -33,6 +33,8 @@ import com.rapleaf.cascading_ext.workflow2.PartitionFactory;
 
 public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
 
+  private final MSJFunction<K> function;
+
   public MSJTapAction(String checkpointToken, String tmpRoot,
                       ExtractorsList<K> inputs,
                       MSJFunction<K> function,
@@ -108,6 +110,8 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
                       ActionCallback callback) {
     super(checkpointToken, tmpRoot, properties);
 
+    this.function = function;
+
     final List<StoreExtractor<K>> asList = inputs.get();
 
     List<DataStore> dsStores = Lists.newArrayList();
@@ -133,6 +137,11 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
         Fields.ALL);
 
     completePartitioned("msj-tap", pipe, output, structureFactory);
+  }
+
+  //  TODO this is ugly and I'd rather figure out a way to let the user pass in a MSJFunctionFactory... but it's tough.
+  protected MSJFunction<K> getFunction() {
+    return function;
   }
 
   private static class InsertSplit extends BaseOperation implements Function {
