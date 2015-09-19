@@ -64,8 +64,8 @@ public class ExecutionAlerter {
             }
 
             //  TODO bpodgursky temporary
-            AlertsHandler handler = AlertsHandlers.builder(TeamEmailList.DEV_TOOLS)
-                .setEngineeringRecipient(AlertRecipients.of(Lists.newArrayList(recipientEmail, "bpodgursky@liveramp.com")))
+            AlertsHandler handler = AlertsHandlers.builder(TeamEmailList.NULL)
+                .setEngineeringRecipient(AlertRecipients.of(Lists.newArrayList(recipientEmail)))
                 .setTags(tags)
                 .build();
 
