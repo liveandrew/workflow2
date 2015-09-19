@@ -63,7 +63,6 @@ public class ExecutionAlerter {
               tags.add(WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG);
             }
 
-            //  TODO bpodgursky temporary
             AlertsHandler handler = AlertsHandlers.builder(TeamEmailList.NULL)
                 .setEngineeringRecipient(AlertRecipients.of(Lists.newArrayList(recipientEmail)))
                 .setTags(tags)
