@@ -1,5 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
+import java.util.Map;
+
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
@@ -114,6 +116,10 @@ public class WorkflowOptions {
     }
 
     return this;
+  }
+
+  public WorkflowOptions addWorkflowProperties(Map<Object, Object> propertiesMap){
+    return addWorkflowHadoopProperties(new HadoopProperties(propertiesMap, false));
   }
 
   public WorkflowOptions addWorkflowHadoopProperties(HadoopProperties workflowHadoopProperties) {
