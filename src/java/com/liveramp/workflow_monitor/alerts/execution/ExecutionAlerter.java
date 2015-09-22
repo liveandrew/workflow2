@@ -19,7 +19,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
-import com.liveramp.java_support.alerts_handler.recipients.TeamEmailList;
+import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
@@ -63,7 +63,7 @@ public class ExecutionAlerter {
               tags.add(WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG);
             }
 
-            AlertsHandler handler = AlertsHandlers.builder(TeamEmailList.NULL)
+            AlertsHandler handler = AlertsHandlers.builder(TeamList.NULL)
                 .setEngineeringRecipient(AlertRecipients.of(Lists.newArrayList(recipientEmail)))
                 .setTags(tags)
                 .build();
