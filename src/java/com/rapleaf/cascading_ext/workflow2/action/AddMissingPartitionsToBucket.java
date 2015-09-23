@@ -36,10 +36,11 @@ public class AddMissingPartitionsToBucket<T> extends Action {
   public static void main(String[] args) throws Exception {
     String path = args[0];
     Class clazz = Class.forName(args[1]);
+    int numPartitions = args.length > 2 ? Integer.parseInt(args[2]) : 599;
     BucketDataStore dataStore = new BucketDataStoreImpl(FileSystemHelper.getFS(), "bucket", path, "", clazz);
     new WorkflowRunner(
         AddMissingPartitionsToBucket.class,
-        new Step(new AddMissingPartitionsToBucket("checkpoint", 599, dataStore, clazz))
+        new Step(new AddMissingPartitionsToBucket("checkpoint", numPartitions, dataStore, clazz))
     ).run();
   }
 }
