@@ -62,7 +62,7 @@ import com.rapleaf.db_schemas.rldb.workflow.controller.ApplicationController;
 import com.rapleaf.db_schemas.rldb.workflow.controller.ExecutionController;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
-import com.rapleaf.support.collections.Accessors;
+import com.liveramp.commons.Accessors;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;

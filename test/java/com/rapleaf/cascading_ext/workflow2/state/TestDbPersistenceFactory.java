@@ -22,7 +22,7 @@ import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
-import com.rapleaf.support.collections.Accessors;
+import com.liveramp.commons.Accessors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

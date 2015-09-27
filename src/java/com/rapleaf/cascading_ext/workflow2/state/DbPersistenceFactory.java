@@ -35,7 +35,7 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
-import com.rapleaf.support.collections.Accessors;
+import com.liveramp.commons.Accessors;
 
 public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
