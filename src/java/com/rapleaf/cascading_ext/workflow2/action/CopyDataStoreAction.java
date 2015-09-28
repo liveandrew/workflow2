@@ -27,6 +27,6 @@ public class CopyDataStoreAction<T extends DataStore> extends Action {
 
   @Override
   protected void execute() throws Exception {
-    distCp.copyDirectory(new Path(src.getPath()), new Path(dst.getPath()), getPropertiesMap());
+    distCp.copyDirectory(new Path(src.getPath()), new Path(dst.getPath()), getInheritedProperties());
   }
 }

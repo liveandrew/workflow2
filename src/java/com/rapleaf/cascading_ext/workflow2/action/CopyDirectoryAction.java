@@ -23,6 +23,6 @@ public class CopyDirectoryAction extends Action {
 
   @Override
   protected void execute() throws Exception {
-    distCpCopier.copyDirectory(srcDir, dstDir);
+    distCpCopier.copyDirectory(srcDir, dstDir, getInheritedProperties());
   }
 }

@@ -26,6 +26,6 @@ public class CopyAppendAction extends Action {
   @Override
   protected void execute() throws Exception {
     this.setStatusMessage("Copy-appending " + input.getPath() + " to " + target.getPath());
-    target.getBucket().copyAppend(input.getBucket(), getPropertiesMap());
+    target.getBucket().copyAppend(input.getBucket(), getInheritedProperties());
   }
 }

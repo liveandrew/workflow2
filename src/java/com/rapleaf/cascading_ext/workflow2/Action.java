@@ -391,14 +391,14 @@ public abstract class Action {
   }
 
   protected FlowBuilder buildFlow(Map<Object, Object> properties) {
-    return new FlowBuilder(buildFlowConnector(getPropertiesMap(properties)), getClass());
+    return new FlowBuilder(buildFlowConnector(getInheritedProperties(properties)), getClass());
   }
 
-  protected Map<Object, Object> getPropertiesMap() {
-    return getPropertiesMap(Maps.newHashMap());
+  protected Map<Object, Object> getInheritedProperties() {
+    return getInheritedProperties(Maps.newHashMap());
   }
 
-  protected Map<Object, Object> getPropertiesMap(Map<Object, Object> childProperties) {
+  protected Map<Object, Object> getInheritedProperties(Map<Object, Object> childProperties) {
     //TODO Sweep direct calls to execute() so we don't have to do this!
 
     if (nestedProperties != null) {
