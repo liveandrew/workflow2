@@ -391,12 +391,20 @@ public abstract class Action {
   }
 
   protected FlowBuilder buildFlow(Map<Object, Object> properties) {
-    NestedProperties flowProperties;
+    return new FlowBuilder(buildFlowConnector(getPropertiesMap(properties)), getClass());
+  }
+
+  protected Map<Object, Object> getPropertiesMap() {
+    return getPropertiesMap(Maps.newHashMap());
+  }
+
+  protected Map<Object, Object> getPropertiesMap(Map<Object, Object> childProperties) {
     //TODO Sweep direct calls to execute() so we don't have to do this!
+
     if (nestedProperties != null) {
-      flowProperties = new NestedProperties(nestedProperties, properties);
+      return new NestedProperties(nestedProperties, childProperties).getPropertiesMap();
     } else {
-      flowProperties =
+      return
           new NestedProperties(
               new NestedProperties(
                   new NestedProperties(
@@ -405,10 +413,9 @@ public abstract class Action {
                   ),
                   stepProperties
               ),
-              properties
-          );
+              childProperties
+          ).getPropertiesMap();
     }
-    return new FlowBuilder(buildFlowConnector(flowProperties.getPropertiesMap()), getClass());
   }
 
   protected FlowBuilder buildFlow() {
