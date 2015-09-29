@@ -27,6 +27,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
+import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
@@ -51,18 +52,19 @@ import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
+import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.db_schemas.rldb.workflow.controller.ApplicationController;
 import com.rapleaf.db_schemas.rldb.workflow.controller.ExecutionController;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
-import com.liveramp.commons.Accessors;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -112,6 +114,16 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     buildWfr(persistence, second).run();
 
     assertEquals(2, IncrementAction.counter);
+  }
+
+  @Test
+  public void testInitialStatus() throws IOException {
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+
+    Step first = new Step(new IncrementAction("first"));
+    WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(rldb.workflowExecutions().find(buildWfr(dbPersistenceFactory, first).getPersistence().getExecutionId()));
+    assertEquals(AttemptStatus.INITIALIZING.ordinal(), attempt.getStatus().intValue());
+
   }
 
   @Test

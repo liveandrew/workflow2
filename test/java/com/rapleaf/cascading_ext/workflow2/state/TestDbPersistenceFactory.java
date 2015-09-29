@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.google.common.collect.Sets;
@@ -7,6 +8,7 @@ import org.apache.hadoop.util.Time;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.liveramp.commons.Accessors;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
@@ -22,7 +24,6 @@ import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
-import com.liveramp.commons.Accessors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -36,7 +37,15 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
   @Test
   public void testAutoCleanup() throws Exception {
+    testAutoCleanup(AttemptStatus.RUNNING);
+  }
 
+  @Test
+  public void testAutoCleanup2() throws Exception {
+    testAutoCleanup(AttemptStatus.INITIALIZING);
+  }
+
+  public void testAutoCleanup(AttemptStatus dead) throws IOException {
     IRlDb rldb = new DatabasesImpl().getRlDb();
     rldb.disableCaching();
 
@@ -47,7 +56,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
     long currentTime = System.currentTimeMillis();
 
     WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create(ex.getIntId(), "bpodgursky", "default", "default", "localhost")
-        .setStatus(AttemptStatus.RUNNING.ordinal())
+        .setStatus(dead.ordinal())
         .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 2));
     workflowAttempt.save();
 
@@ -66,6 +75,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
         rldb.stepAttempts().find(stepAttempt.getId()).getStepStatus());
 
   }
+
 
   @Test
   public void testApplicationCreation() throws Exception {

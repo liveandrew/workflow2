@@ -14,6 +14,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.commons.Accessors;
 import com.liveramp.importer.generated.AppType;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -35,7 +36,6 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
-import com.liveramp.commons.Accessors;
 
 public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
@@ -233,6 +233,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, String errorEmail, String infoEmail, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
+        .setStatus(AttemptStatus.INITIALIZING.ordinal())
         .setLaunchDir(launchDir)
         .setLaunchJar(launchJar)
         .setErrorEmail(errorEmail)
