@@ -143,7 +143,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       }
 
-      return new DbPersistence(workflowAttemptId);
+      return DbPersistence.runPersistence(workflowAttemptId);
 
     } catch (Exception e) {
       throw new RuntimeException(e);
