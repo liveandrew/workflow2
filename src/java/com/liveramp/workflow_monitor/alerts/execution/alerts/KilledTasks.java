@@ -21,7 +21,7 @@ public class KilledTasks implements ExecutionAlertGenerator {
     List<ExecutionAlert> alerts = Lists.newArrayList();
 
     for (WorkflowExecution execution : WorkflowQueries.queryWorkflowExecutions(db, null, null, null, null, System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000, null,
-        WorkflowExecutionStatus.INCOMPLETE)) {
+        WorkflowExecutionStatus.INCOMPLETE, null)) {
 
       TwoNestedMap<String, String, Long> counters = WorkflowQueries.getFlatCounters(db.getRlDb(), execution.getId());
 
