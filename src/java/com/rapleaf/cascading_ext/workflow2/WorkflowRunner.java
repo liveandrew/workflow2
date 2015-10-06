@@ -765,11 +765,11 @@ public final class WorkflowRunner {
       String pool = persistence.getPool();
 
       if (priority != null) {
-        uiPropertiesBuilder.setProperty(JOB_PRIORITY_PARAM, priority, true);
+        uiPropertiesBuilder.setProperty(JOB_PRIORITY_PARAM, priority);
       }
 
       if (pool != null) {
-        uiPropertiesBuilder.setProperty(JOB_POOL_PARAM, pool, true);
+        uiPropertiesBuilder.setProperty(JOB_POOL_PARAM, pool);
       }
 
       return new NestedProperties(workflowJobProperties, uiPropertiesBuilder.build());
