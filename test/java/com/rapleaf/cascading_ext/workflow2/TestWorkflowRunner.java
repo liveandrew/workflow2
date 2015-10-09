@@ -37,7 +37,6 @@ import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfi
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.workflow.ActionId;
-import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
@@ -1193,13 +1192,6 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
-
-  // methods to evade PMD in test
-
-  private static CascadingHelper hideGetBuilder() {
-    return CascadingHelper.get();
-  }
-
   private static void hideComplete(Flow f) {
     f.complete();
   }
@@ -1228,7 +1220,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       Pipe pipe = new Pipe("input");
       pipe = new Each(pipe, new Count());
 
-      Flow flow = hideGetBuilder().getFlowConnector().connect(in.getTap(), out.getTap(), pipe);
+      Flow flow = flowConnector().connect(in.getTap(), out.getTap(), pipe);
       hideComplete(flow);
       runningFlow(flow);
 
