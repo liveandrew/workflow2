@@ -853,6 +853,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   @Test
   public void integrationTestCancelTwoDeep() throws Exception {
+    IRlDb rldb = new DatabasesImpl().getRlDb();
 
     //  complete, fail, wait
     //  skip, complete, fail
@@ -890,12 +891,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       //  fine
     }
 
-    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, pers2.getExecutionStatus());
+    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, getExecutionStatus(rldb, pers2));
     assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
 
     pers1.markStepReverted("step1");
 
-    Assert.assertEquals(WorkflowExecutionStatus.INCOMPLETE, pers2.getExecutionStatus());
+    Assert.assertEquals(WorkflowExecutionStatus.INCOMPLETE, getExecutionStatus(rldb, pers2));
     assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
 
     step1 = new Step(new IncrementAction2("step1", step1Count));
@@ -905,13 +906,17 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     testWorkflow = buildWfr(dbPersistenceFactory, step3);
     testWorkflow.run();
 
-    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, pers2.getExecutionStatus());
+    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, getExecutionStatus(rldb, pers2));
     assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
 
     assertEquals(2, step1Count.get());
     assertEquals(1, step2Count.get());
     assertEquals(1, step3Count.get());
 
+  }
+
+  public static WorkflowExecutionStatus getExecutionStatus(IRlDb rldb, WorkflowStatePersistence persistence) throws IOException {
+    return WorkflowExecutionStatus.findByValue(rldb.workflowExecutions().find(persistence.getExecutionId()).getStatus());
   }
 
   @Test
