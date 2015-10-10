@@ -854,6 +854,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void integrationTestCancelTwoDeep() throws Exception {
     IRlDb rldb = new DatabasesImpl().getRlDb();
+    rldb.disableCaching();
 
     //  complete, fail, wait
     //  skip, complete, fail
