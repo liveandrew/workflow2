@@ -104,8 +104,13 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     return true;
   }
 
+
   @Override
-  public StepState getState(String stepToken) {
+  public StepStatus getStatus(String stepToken) throws IOException {
+    return getState(stepToken).getStatus();
+  }
+
+  private StepState getState(String stepToken) {
 
     if (!statuses.containsKey(stepToken)) {
       throw new RuntimeException("Unknown step " + stepToken + "!");
@@ -117,11 +122,6 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   @Override
   public Map<String, StepState> getStepStatuses() {
     return statuses;
-  }
-
-  @Override
-  public List<DataStoreInfo> getDatastores() {
-    return datastores;
   }
 
   @Override
@@ -152,16 +152,6 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   @Override
   public String getId() {
     return id;
-  }
-
-  @Override
-  public String getHost() {
-    return host;
-  }
-
-  @Override
-  public String getUsername() {
-    return username;
   }
 
   @Override

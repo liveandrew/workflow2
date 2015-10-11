@@ -669,7 +669,7 @@ public final class WorkflowRunner {
     while (iter.hasNext()) {
       StepRunner cr = iter.next();
       //LOG.info("Checking persistence for " + cr.step.getCheckpointToken());
-      switch (persistence.getState(cr.step.getCheckpointToken()).getStatus()) {
+      switch (persistence.getStatus(cr.step.getCheckpointToken())) {
         case COMPLETED:
         case SKIPPED:
           completedSteps.add(cr);
@@ -782,7 +782,7 @@ public final class WorkflowRunner {
         public void run() {
           String stepToken = step.getCheckpointToken();
           try {
-            if (StepStatus.NON_BLOCKING.contains(state.getState(stepToken).getStatus())) {
+            if (StepStatus.NON_BLOCKING.contains(state.getStatus(stepToken))) {
               LOG.info("Step " + stepToken + " was executed successfully in a prior run. Skipping.");
             } else {
 
@@ -827,7 +827,7 @@ public final class WorkflowRunner {
     public boolean allDependenciesCompleted() throws IOException {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if (!StepStatus.NON_BLOCKING.contains(state.getState(dep.getCheckpointToken()).getStatus())) {
+        if (!StepStatus.NON_BLOCKING.contains(state.getStatus(dep.getCheckpointToken()))) {
           return false;
         }
       }

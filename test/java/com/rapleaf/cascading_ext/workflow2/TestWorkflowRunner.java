@@ -55,7 +55,6 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
-import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
@@ -198,13 +197,10 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       // fine
     }
 
-    StepState proceed = runner.getPersistence().getState("proceed");
-    StepState complete = runner.getPersistence().getState("wait");
-    StepState fail = runner.getPersistence().getState("fail");
 
-    assertEquals(StepStatus.COMPLETED, proceed.getStatus());
-    assertEquals(StepStatus.COMPLETED, complete.getStatus());
-    assertEquals(StepStatus.FAILED, fail.getStatus());
+    assertEquals(StepStatus.COMPLETED, runner.getPersistence().getStatus("proceed"));
+    assertEquals(StepStatus.COMPLETED, runner.getPersistence().getStatus("wait"));
+    assertEquals(StepStatus.FAILED, runner.getPersistence().getStatus("fail"));
 
     assertCollectionEquivalent(Lists.newArrayList(
             "[TAG] [WORKFLOW] [ERROR] Step has failed in: Test Workflow",
@@ -499,9 +495,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     assertEquals("Shutdown Requested", persistence.getShutdownRequest());
     assertFalse(didExecute.get());
-    assertTrue(persistence.getStepStatuses().get("fail").getStatus() == StepStatus.FAILED);
-    assertTrue(persistence.getStepStatuses().get("unlock").getStatus() == StepStatus.COMPLETED);
-    assertTrue(persistence.getStepStatuses().get("after").getStatus() == StepStatus.WAITING);
+    assertTrue(persistence.getStatus("fail") == StepStatus.FAILED);
+    assertTrue(persistence.getStatus("unlock") == StepStatus.COMPLETED);
+    assertTrue(persistence.getStatus("after") == StepStatus.WAITING);
 
   }
 
@@ -543,8 +539,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     assertEquals("Shutdown Requested", persistence.getShutdownRequest());
     assertFalse(didExecute.get());
-    assertTrue(persistence.getStepStatuses().get("fail").getStatus() == StepStatus.FAILED);
-    assertTrue(persistence.getStepStatuses().get("after").getStatus() == StepStatus.WAITING);
+    assertTrue(persistence.getStatus("fail") == StepStatus.FAILED);
+    assertTrue(persistence.getStatus("after") == StepStatus.WAITING);
   }
 
   @Test
@@ -589,9 +585,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals("Shutdown Requested", peristence.getShutdownRequest());
     assertEquals(1, preCounter.get());
     assertEquals(0, postConter.get());
-    assertTrue(peristence.getStepStatuses().get("pre").getStatus() == StepStatus.COMPLETED);
-    assertTrue(peristence.getStepStatuses().get("wait").getStatus() == StepStatus.COMPLETED);
-    assertTrue(peristence.getStepStatuses().get("after").getStatus() == StepStatus.WAITING);
+    assertTrue(peristence.getStatus("pre") == StepStatus.COMPLETED);
+    assertTrue(peristence.getStatus("wait") == StepStatus.COMPLETED);
+    assertTrue(peristence.getStatus("after") == StepStatus.WAITING);
 
     //  restart
 
@@ -607,9 +603,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(null, peristence.getShutdownRequest());
     assertEquals(1, preCounter.get());
     assertEquals(1, postConter.get());
-    assertTrue(peristence.getStepStatuses().get("pre").getStatus() == StepStatus.SKIPPED);
-    assertTrue(peristence.getStepStatuses().get("wait").getStatus() == StepStatus.SKIPPED);
-    assertTrue(peristence.getStepStatuses().get("after").getStatus() == StepStatus.COMPLETED);
+    assertTrue(peristence.getStatus("pre") == StepStatus.SKIPPED);
+    assertTrue(peristence.getStatus("wait") == StepStatus.SKIPPED);
+    assertTrue(peristence.getStatus("after") == StepStatus.COMPLETED);
 
   }
 
@@ -800,8 +796,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(1, storage.get(resMock1).intValue());
     assertEquals(1, storage.get(resMock2).intValue());
 
-    Assert.assertEquals(StepStatus.COMPLETED, persistence.getState("parent-step__set-resource").getStatus());
-    Assert.assertEquals(StepStatus.COMPLETED, persistence.getState("parent-step__consume-resource").getStatus());
+    Assert.assertEquals(StepStatus.COMPLETED, persistence.getStatus("parent-step__set-resource"));
+    Assert.assertEquals(StepStatus.COMPLETED, persistence.getStatus("parent-step__consume-resource"));
 
     TupleDataStore store = new TupleDataStoreImpl("store", tmpRoot + "/parent-step-tmp-stores/consume-resource-tmp-stores/", "tup_out", new Fields("string"));
     List<Tuple> tups = HRap.getAllTuples(store.getTap());
@@ -847,7 +843,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     assertEquals(2, step1Count.get());
     assertEquals(1, step2Count.get());
-    assertEquals(StepStatus.REVERTED, origPersistence.getState("step1").getStatus());
+    assertEquals(StepStatus.REVERTED, origPersistence.getStatus("step1"));
 
   }
 
@@ -947,8 +943,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     WorkflowExecution ex = Accessors.first(rldb.workflowExecutions().findAll());
 
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
-    assertEquals(StepStatus.REVERTED.ordinal(), persistence.getState("step1").getStatus().ordinal());
-    assertEquals(StepStatus.FAILED.ordinal(), persistence.getState("step2").getStatus().ordinal());
+    assertEquals(StepStatus.REVERTED.ordinal(), persistence.getStatus("step1").ordinal());
+    assertEquals(StepStatus.FAILED.ordinal(), persistence.getStatus("step2").ordinal());
 
     //  restart workflow
     step1 = new Step(new IncrementAction2("step1", step1Count));
@@ -962,14 +958,14 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     List<WorkflowExecution> executions = rldb.workflowExecutions().query().order(QueryOrder.ASC).find();
     ex = Accessors.first(executions);
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
-    assertEquals(StepStatus.REVERTED.ordinal(), persistence.getState("step1").getStatus().ordinal());
-    assertEquals(StepStatus.FAILED.ordinal(), persistence.getState("step2").getStatus().ordinal());
+    assertEquals(StepStatus.REVERTED.ordinal(), persistence.getStatus("step1").ordinal());
+    assertEquals(StepStatus.FAILED.ordinal(), persistence.getStatus("step2").ordinal());
 
     //  second one is complete
     final WorkflowExecution ex2 = Accessors.second(executions);
     assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(), ex2.getStatus());
-    assertEquals(StepStatus.COMPLETED.ordinal(), newPeristence.getState("step1").getStatus().ordinal());
-    assertEquals(StepStatus.COMPLETED.ordinal(), newPeristence.getState("step2").getStatus().ordinal());
+    assertEquals(StepStatus.COMPLETED.ordinal(), newPeristence.getStatus("step1").ordinal());
+    assertEquals(StepStatus.COMPLETED.ordinal(), newPeristence.getStatus("step2").ordinal());
 
     assertEquals(2, step1Count.get());
     assertEquals(1, step2Count.get());
@@ -1057,7 +1053,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     WorkflowRunner secondRun = buildWfr(dbPersistenceFactory, step2);
     secondRun.run();
 
-    assertEquals(StepStatus.COMPLETED, secondRun.getPersistence().getState("step1").getStatus());
+    assertEquals(StepStatus.COMPLETED, secondRun.getPersistence().getStatus("step1"));
 
     try {
       firstRun.getPersistence().markStepReverted("step1");
