@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.Maps;
 import com.hadoop.compression.lzo.LzoCodec;
 import com.hadoop.compression.lzo.LzopCodec;
 import org.apache.hadoop.conf.Configuration;
@@ -74,7 +75,7 @@ public class CompressLogsAction extends Action {
     super(String.format("%s-%s-%s", CompressLogsAction.class.getSimpleName(), logApp, date.toString("yyyy_MM_dd")), tmpRoot);
     this.inputPath = inputPath;
     this.backupRoot = backupRoot;
-    this.config = new CoercionConfig(getCodecForName(inputCodec), getCodecForName(outputCodec));
+    this.config = new CoercionConfig(getCodecForName(inputCodec), getCodecForName(outputCodec), Maps.<Object, Object>newHashMap(flowProperties));
     this.fs = FileSystem.get(new Configuration());
     this.tmpPath = getTmpRoot() + "/" + UUID.randomUUID().toString();
     this.flowProperties = flowProperties;
