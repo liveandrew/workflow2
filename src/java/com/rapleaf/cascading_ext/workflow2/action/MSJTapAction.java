@@ -45,6 +45,16 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
   }
 
   public MSJTapAction(String checkpointToken, String tmpRoot,
+                      ExtractorsList<K> inputs,
+                      MSJFunction<K> function,
+                      PartitionableDataStore output,
+                      PartitionStructure outputStructure,
+                      ActionCallback callback) {
+    this(checkpointToken, tmpRoot, Maps.newHashMap(),
+        inputs, function, output, outputStructure, callback);
+  }
+
+  public MSJTapAction(String checkpointToken, String tmpRoot,
                       Map<Object, Object> properties,
                       final ExtractorsList<K> inputs,
                       MSJFunction<K> function,
