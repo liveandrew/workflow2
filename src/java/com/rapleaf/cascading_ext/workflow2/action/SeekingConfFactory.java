@@ -9,10 +9,10 @@ import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 
 public class SeekingConfFactory<K extends Comparable> implements ConfFactory<K> {
 
-  private final MapSideJoinableDataStore<K> store;
+  private final MapSideJoinableDataStore store;
   private final Extractor<K> extractor;
 
-  public SeekingConfFactory(MapSideJoinableDataStore<K> store, Extractor<K> extractor) {
+  public SeekingConfFactory(MapSideJoinableDataStore store, Extractor<K> extractor) {
     this.store = store;
     this.extractor = extractor;
   }
