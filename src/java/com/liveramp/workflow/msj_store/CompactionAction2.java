@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
+import com.rapleaf.cascading_ext.datastore.SeekingBucketDataStore;
 import com.rapleaf.cascading_ext.msj_tap.compaction.CompactionUtil;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
@@ -64,7 +65,10 @@ public class CompactionAction2<T extends Comparable, K extends Comparable> exten
     super(checkpointToken, tmpRoot);
 
     //  because of the field name
-    BucketDataStore<T> temp = new BucketDataStoreImpl<T>(getFS(), "temp base", getTmpRoot(), "/new_base", type, ThriftBucketScheme.getFieldName(type), store.isIndexOnWrite(), store.getExtractor());
+    BucketDataStore<T> temp = new BucketDataStoreImpl<>(getFS(), "temp base", getTmpRoot(), "/new_base", type, ThriftBucketScheme.getFieldName(type));
+    if (store.isIndexOnWrite()) {
+      temp = new SeekingBucketDataStore<>(temp, store.getExtractor());
+    }
 
     Step compact = new Step(new CompactMSJStore<>("compact",
         getTmpRoot(),

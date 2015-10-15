@@ -9,7 +9,8 @@ import java.util.Set;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.slf4j.Logger; import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.config.InvalidConfigurationException;
@@ -42,6 +43,10 @@ public class DeployDomains extends Action {
   }
 
   public DeployDomains(String checkpointToken, Coordinator coordinator, HankDataStore... domainStores) {
+    this(checkpointToken, coordinator, Lists.newArrayList(domainStores));
+  }
+
+  public DeployDomains(String checkpointToken, Coordinator coordinator, Collection<HankDataStore> domainStores) {
     super(checkpointToken);
     this.coordinator = coordinator;
     domainNames = Lists.newArrayList();
