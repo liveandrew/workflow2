@@ -176,7 +176,9 @@ public abstract class HankDomainBuilderAction extends Action {
       builder.setPartitionToBuild(partitionToBuild);
     }
 
+    properties.putAll(getInheritedProperties());
     properties.putAll(CascadingHelper.get().getDefaultProperties());
+
     Flow flow = builder.build(CascadingHelper.get().getFlowConnectorFactory(properties), getSources());
     domainVersionNumber = builder.getDomainVersionNumber();
 
