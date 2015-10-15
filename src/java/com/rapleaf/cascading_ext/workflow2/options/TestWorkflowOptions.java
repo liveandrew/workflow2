@@ -1,5 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
+import java.util.Collections;
+
+import org.apache.hadoop.mapreduce.MRJobConfig;
+
 import com.liveramp.cascading_ext.megadesk.MockStoreReaderLockProvider;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
@@ -22,6 +26,7 @@ public class TestWorkflowOptions extends WorkflowOptions {
     setCounterFilter(CounterFilters.all());
     setUrlBuilder(new TrackerURLBuilder.None());
     setHostnameProvider(new FixedHostnameProvider());
+    addWorkflowProperties(Collections.<Object, Object>singletonMap(MRJobConfig.QUEUE_NAME, "test"));
   }
 
 }
