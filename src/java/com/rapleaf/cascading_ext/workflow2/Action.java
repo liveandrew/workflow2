@@ -9,7 +9,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -22,14 +21,11 @@ import org.slf4j.LoggerFactory;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
-import cascading.flow.FlowStepStrategy;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 
+import com.liveramp.cascading_ext.CascadingUtil;
 import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.cascading_ext.flow.LoggingFlowConnector;
-import com.liveramp.cascading_ext.flow_step_strategy.FlowStepStrategyFactory;
-import com.liveramp.cascading_ext.flow_step_strategy.MultiFlowStepStrategy;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ReadResource;
@@ -40,7 +36,6 @@ import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
-import com.liveramp.cascading_ext.util.OperationStatsUtils;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.liveramp.cascading_tools.jobs.FlowOperation;
 import com.liveramp.cascading_tools.jobs.HadoopOperation;
@@ -427,13 +422,12 @@ public abstract class Action {
   }
 
   private FlowConnector buildFlowConnector(Map<Object, Object> properties) {
-    List<FlowStepStrategy<JobConf>> strategies = Lists.newArrayList();
-    for (FlowStepStrategyFactory<JobConf> factory : CascadingHelper.get().getDefaultFlowStepStrategies()) {
-      strategies.add(factory.getFlowStepStrategy());
-    }
-    return new LoggingFlowConnector(properties,
-        new MultiFlowStepStrategy(strategies),
-        OperationStatsUtils.formatStackPosition(OperationStatsUtils.getStackPosition(2)));
+    return CascadingUtil.buildFlowConnector(
+        new JobConf(),
+        properties,
+        CascadingHelper.get().resolveFlowStepStrategies(),
+        CascadingHelper.get().getInvalidPropertyValues()
+    );
   }
 
   protected void completeWithProgress(RunnableJob job) {
