@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapreduce.JobStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,16 +51,14 @@ class JobPoller extends Thread {
     for (ActionOperation operation : actionList) {
       for (RunningJob job : operation.listJobs()) {
         try {
-          if (job.getJobState() == JobStatus.State.RUNNING.getValue()) {
-            persistence.markStepRunningJob(
-                checkpoint,
-                job.getID().toString(),
-                job.getJobName(),
-                job.getTrackingURL()
-            );
-          }
+          persistence.markStepRunningJob(
+              checkpoint,
+              job.getID().toString(),
+              job.getJobName(),
+              job.getTrackingURL()
+          );
         } catch (NullPointerException | IOException e) {
-          LOG.error("Cannot mark job as running", e);
+          //  no op
         }
       }
 
