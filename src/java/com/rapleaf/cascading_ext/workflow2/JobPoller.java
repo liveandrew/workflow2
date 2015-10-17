@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.mapred.RunningJob;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 class JobPoller extends Thread {
+  private static final Logger LOG = LoggerFactory.getLogger(JobPoller.class);
   private static final long THIRTY_SECONDS = 30000;
 
   private boolean shouldShutdown = false;
@@ -44,22 +47,21 @@ class JobPoller extends Thread {
     }
   }
 
-  public void updateRunningJobs()  {
+  public void updateRunningJobs() {
     for (ActionOperation operation : actionList) {
-      try {
-        for (RunningJob job : operation.listJobs()) {
+      for (RunningJob job : operation.listJobs()) {
+        try {
           persistence.markStepRunningJob(
               checkpoint,
               job.getID().toString(),
               job.getJobName(),
               job.getTrackingURL()
           );
+        } catch (NullPointerException | IOException e) {
+          LOG.error("Cannot mark job as running", e);
         }
-      } catch (NullPointerException e) {
-        //  no op
-      } catch (IOException e) {
-        //  no op
       }
+
     }
   }
 
