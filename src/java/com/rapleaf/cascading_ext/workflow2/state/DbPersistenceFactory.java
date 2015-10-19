@@ -75,13 +75,10 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       cleanUpRunningAttempts(execution);
 
-      Optional<WorkflowAttempt> latestAttempt = WorkflowQueries
-          .getLatestAttemptOptional(execution);
-
       WorkflowAttempt attempt = createAttempt(host,
           username,
-          getPool(latestAttempt, pool),
-          getPriority(latestAttempt, priority),
+          pool,
+          priority,
           launchDir,
           launchJar,
           errorEmail,
@@ -170,24 +167,6 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       return app;
     }
 
-  }
-
-  private String getPool(Optional<WorkflowAttempt> last, String provided) {
-    if (last.isPresent()) {
-      String lastPool = last.get().getPool();
-      LOG.info("Overriding provided pool " + provided + " with previous pool " + lastPool);
-      return lastPool;
-    }
-    return provided;
-  }
-
-  private String getPriority(Optional<WorkflowAttempt> last, String priority) {
-    if (last.isPresent()) {
-      String lastPriority = last.get().getPriority();
-      LOG.info("Overriding provided pool " + priority + " with previous priority " + lastPriority);
-      return lastPriority;
-    }
-    return priority;
   }
 
   private void cleanUpRunningAttempts(WorkflowExecution execution) throws IOException {
