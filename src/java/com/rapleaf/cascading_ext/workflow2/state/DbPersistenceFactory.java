@@ -293,7 +293,10 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       LOG.info("No incomplete execution found, creating new execution");
 
       //  new execution
-      WorkflowExecution ex = rldb.workflowExecutions().create(null, name, scopeId, WorkflowExecutionStatus.INCOMPLETE.ordinal(), Time.now(), null, app.getIntId());
+      WorkflowExecution ex = rldb.workflowExecutions().create(name, WorkflowExecutionStatus.INCOMPLETE.ordinal())
+          .setScopeIdentifier(scopeId)
+          .setStartTime(Time.now())
+          .setApplicationId(app.getIntId());
 
       if (appType != null) {
         ex.setAppType(appType.getValue());

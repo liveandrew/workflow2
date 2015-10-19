@@ -51,7 +51,10 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     Application app = rldb.applications().create("Workflow");
 
-    WorkflowExecution ex = rldb.workflowExecutions().create(null, "Workflow", null, WorkflowExecutionStatus.INCOMPLETE.ordinal(), Time.now(), Time.now() + 1, app.getIntId());
+    WorkflowExecution ex = rldb.workflowExecutions().create("Workflow", WorkflowExecutionStatus.INCOMPLETE.ordinal())
+        .setStartTime(Time.now())
+        .setEndTime(Time.now()+1)
+        .setApplicationId(app.getIntId());
 
     long currentTime = System.currentTimeMillis();
 
@@ -114,7 +117,10 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     Application app = rldb.applications().create("Workflow");
 
-    WorkflowExecution ex = rldb.workflowExecutions().create(null, "Workflow", null, WorkflowExecutionStatus.INCOMPLETE.ordinal(), Time.now(), Time.now() + 1, app.getIntId());
+    WorkflowExecution ex = rldb.workflowExecutions().create("Workflow", WorkflowExecutionStatus.INCOMPLETE.ordinal())
+        .setStartTime(Time.now())
+        .setEndTime(Time.now()+1)
+        .setApplicationId(app.getIntId());
 
     long currentTime = System.currentTimeMillis();
 
@@ -147,7 +153,10 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     Application app = rldb.applications().create("Workflow");
 
-    WorkflowExecution ex = rldb.workflowExecutions().create(null, "Workflow", null, WorkflowExecutionStatus.INCOMPLETE.ordinal(), Time.now(), Time.now() + 1, app.getIntId());
+    WorkflowExecution ex = rldb.workflowExecutions().create("Workflow", WorkflowExecutionStatus.INCOMPLETE.ordinal())
+        .setStartTime(Time.now())
+        .setEndTime(Time.now()+1)
+        .setApplicationId(app.getIntId());
 
     long currentTime = System.currentTimeMillis();
 
