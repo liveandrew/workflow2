@@ -56,6 +56,8 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
         .setEndTime(Time.now()+1)
         .setApplicationId(app.getIntId());
 
+    ex.save();
+
     long currentTime = System.currentTimeMillis();
 
     WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create(ex.getIntId(), "bpodgursky", "default", "default", "localhost")
@@ -122,6 +124,8 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
         .setEndTime(Time.now()+1)
         .setApplicationId(app.getIntId());
 
+    ex.save();
+
     long currentTime = System.currentTimeMillis();
 
     WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create((int)ex.getId(), "bpodgursky", "default", "default", "localhost")
@@ -157,6 +161,8 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
         .setStartTime(Time.now())
         .setEndTime(Time.now()+1)
         .setApplicationId(app.getIntId());
+
+    ex.save();
 
     long currentTime = System.currentTimeMillis();
 
