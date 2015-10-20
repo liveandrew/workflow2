@@ -101,13 +101,6 @@ public class WorkflowOptions {
     return this;
   }
 
-  @Deprecated
-  public WorkflowOptions setEnabledNotificationsExcept(WorkflowRunnerNotification enabledNotification,
-                                                       WorkflowRunnerNotification... enabledNotifications) {
-    this.enabledNotifications = WorkflowRunnerNotificationSet.except(enabledNotification, enabledNotifications);
-    return this;
-  }
-
   public WorkflowOptions setNotificationLevel(Set<WorkflowRunnerNotification> notifications){
     enabledNotifications = new WorkflowRunnerNotificationSet(notifications);
     return this;
@@ -180,6 +173,7 @@ public class WorkflowOptions {
     return counterFilter;
   }
 
+  @Deprecated //  all counters are tracked by default now, so this will actually disable tracking most counters.  if you really want this, let me know  -- ben
   public WorkflowOptions setCounterFilter(CounterFilter filter) {
     this.counterFilter = filter;
     return this;
