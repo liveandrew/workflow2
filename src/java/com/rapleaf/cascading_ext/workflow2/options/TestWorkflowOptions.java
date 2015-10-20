@@ -8,7 +8,7 @@ import com.liveramp.cascading_ext.megadesk.MockStoreReaderLockProvider;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
-import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
+import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.support.Rap;
 
@@ -19,7 +19,7 @@ public class TestWorkflowOptions extends WorkflowOptions {
 
     setMaxConcurrentSteps(1);
     setAlertsHandler(new LoggingAlertsHandler());
-    setEnabledNotifications(WorkflowRunnerNotificationSet.all());
+    setNotificationLevel(WorkflowNotificationLevel.DEBUG);
     setLockProvider(new MockStoreReaderLockProvider());
     setStorage(new ContextStorage.None());
     setStepPollInterval(100);

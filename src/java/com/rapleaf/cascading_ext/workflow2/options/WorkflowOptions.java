@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,7 +14,6 @@ import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
-import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 
 public class WorkflowOptions {
@@ -21,7 +21,7 @@ public class WorkflowOptions {
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
   private NestedProperties nestedProperties = null;
-  private WorkflowRunnerNotificationSet enabledNotifications;
+  private Set<WorkflowRunnerNotification> enabledNotifications;
   private StoreReaderLockProvider lockProvider;
   private ContextStorage storage;
   private String uniqueIdentifier;
@@ -92,17 +92,12 @@ public class WorkflowOptions {
 
   public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
                                                        WorkflowRunnerNotification... enabledNotifications) {
-    this.enabledNotifications = WorkflowRunnerNotificationSet.only(enabledNotification, enabledNotifications);
-    return this;
-  }
-
-  public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
-    this.enabledNotifications = enabledNotifications;
+    this.enabledNotifications = EnumSet.of(enabledNotification, enabledNotifications);
     return this;
   }
 
   public WorkflowOptions setNotificationLevel(Set<WorkflowRunnerNotification> notifications){
-    enabledNotifications = new WorkflowRunnerNotificationSet(notifications);
+    enabledNotifications = EnumSet.copyOf(notifications);
     return this;
   }
 
@@ -124,10 +119,9 @@ public class WorkflowOptions {
     return this.resourceManager;
   }
 
-  public WorkflowRunnerNotificationSet getEnabledNotifications() {
+  public Set<WorkflowRunnerNotification> getEnabledNotifications() {
     return enabledNotifications;
   }
-
 
   public NestedProperties getWorkflowJobProperties() {
     return new NestedProperties(nestedProperties, CascadingHelper.get().getDefaultHadoopProperties());
