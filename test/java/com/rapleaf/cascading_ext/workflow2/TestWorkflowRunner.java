@@ -235,7 +235,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
-  private void runFlow(WorkflowNotificationLevel level, Action toRun, List<String> expectedAlerts) throws IOException {
+  private void runFlow(Set<WorkflowRunnerNotification> level, Action toRun, List<String> expectedAlerts) throws IOException {
 
     SubjectAlertHandler handler = new SubjectAlertHandler();
 

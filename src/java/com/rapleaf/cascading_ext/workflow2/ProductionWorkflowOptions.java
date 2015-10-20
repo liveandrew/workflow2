@@ -21,7 +21,7 @@ public class ProductionWorkflowOptions extends WorkflowOptions {
 
     setMaxConcurrentSteps(Integer.MAX_VALUE);
     setAlertsHandler(new LoggingAlertsHandler());
-    setEnabledNotifications(WorkflowRunnerNotificationSet.all());
+    setNotificationLevel(WorkflowNotificationLevel.DEBUG);
     setLockProvider(new MockStoreReaderLockProvider());
     setStorage(new ContextStorage.None());
     setStepPollInterval(3000);  // be nice to production DB

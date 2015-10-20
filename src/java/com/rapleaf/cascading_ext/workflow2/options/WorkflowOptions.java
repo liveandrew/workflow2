@@ -1,17 +1,17 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_ext.util.NestedProperties;
-import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
-import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotificationSet;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
@@ -90,31 +90,26 @@ public class WorkflowOptions {
     return this;
   }
 
-  @Deprecated //  use setNotificationLevel instead
   public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
                                                        WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = WorkflowRunnerNotificationSet.only(enabledNotification, enabledNotifications);
     return this;
   }
 
-  public WorkflowOptions setNotificationLevel(WorkflowNotificationLevel level){
+  public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
+    this.enabledNotifications = enabledNotifications;
+    return this;
+  }
 
-    enabledNotifications = WorkflowRunnerNotificationSet.none();
+  @Deprecated
+  public WorkflowOptions setEnabledNotificationsExcept(WorkflowRunnerNotification enabledNotification,
+                                                       WorkflowRunnerNotification... enabledNotifications) {
+    this.enabledNotifications = WorkflowRunnerNotificationSet.except(enabledNotification, enabledNotifications);
+    return this;
+  }
 
-    //  TODO only do this while migrating
-    switch(level){
-      case DEBUG:
-        enabledNotifications.add(WorkflowRunnerNotification.START);
-      case INFO:
-        enabledNotifications.add(WorkflowRunnerNotification.SUCCESS);
-      case WARN:
-        enabledNotifications.add(WorkflowRunnerNotification.SHUTDOWN);
-      case ERROR:
-        enabledNotifications.add(WorkflowRunnerNotification.FAILURE);
-      case NONE:
-        //  none
-    }
-
+  public WorkflowOptions setNotificationLevel(Set<WorkflowRunnerNotification> notifications){
+    enabledNotifications = new WorkflowRunnerNotificationSet(notifications);
     return this;
   }
 
@@ -124,18 +119,6 @@ public class WorkflowOptions {
 
   public WorkflowOptions addWorkflowHadoopProperties(HadoopProperties workflowHadoopProperties) {
     this.nestedProperties = new NestedProperties(this.nestedProperties, workflowHadoopProperties);
-    return this;
-  }
-
-  @Deprecated //  use setNotificationLevel instead
-  public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotificationSet enabledNotifications) {
-    this.enabledNotifications = enabledNotifications;
-    return this;
-  }
-
-  public WorkflowOptions setEnabledNotificationsExcept(WorkflowRunnerNotification enabledNotification,
-                                                             WorkflowRunnerNotification... enabledNotifications) {
-    this.enabledNotifications = WorkflowRunnerNotificationSet.except(enabledNotification, enabledNotifications);
     return this;
   }
 

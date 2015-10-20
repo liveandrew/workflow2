@@ -7,6 +7,11 @@ public class WorkflowRunnerNotificationSet {
 
   private Set<WorkflowRunnerNotification> notifications;
 
+  public WorkflowRunnerNotificationSet(Set<WorkflowRunnerNotification> notifications) {
+    this.notifications = notifications;
+  }
+
+  @Deprecated
   public static WorkflowRunnerNotificationSet all() {
     return new WorkflowRunnerNotificationSet(EnumSet.allOf(WorkflowRunnerNotification.class));
   }
@@ -25,25 +30,8 @@ public class WorkflowRunnerNotificationSet {
     return new WorkflowRunnerNotificationSet(EnumSet.complementOf(EnumSet.of(notification, notifications)));
   }
 
-  public WorkflowRunnerNotificationSet(EnumSet<WorkflowRunnerNotification> notifications) {
-    this.notifications = notifications;
-  }
-
   public Set<WorkflowRunnerNotification> get() {
     return notifications;
   }
 
-  public WorkflowRunnerNotificationSet copy() {
-    return new WorkflowRunnerNotificationSet(EnumSet.copyOf(notifications));
-  }
-
-  public WorkflowRunnerNotificationSet remove(WorkflowRunnerNotification notification) {
-    notifications.remove(notification);
-    return this;
-  }
-
-  public WorkflowRunnerNotificationSet add(WorkflowRunnerNotification notification) {
-    notifications.add(notification);
-    return this;
-  }
 }
