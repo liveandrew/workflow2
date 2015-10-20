@@ -172,7 +172,7 @@ public final class WorkflowRunner {
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.alertsHandler = options.getAlertsHandler();
     this.counterFilter = options.getCounterFilter();
-    this.enabledNotifications = options.getEnabledNotifications().get();
+    this.enabledNotifications = options.getEnabledNotifications();
     this.semaphore = new Semaphore(maxConcurrentSteps);
     this.lockProvider = options.getLockProvider();
     this.storage = options.getStorage();
