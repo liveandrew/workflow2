@@ -35,7 +35,6 @@ import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
-import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.liveramp.cascading_tools.jobs.FlowOperation;
 import com.liveramp.cascading_tools.jobs.HadoopOperation;
@@ -78,7 +77,7 @@ public abstract class Action {
   private StoreReaderLockProvider lockProvider;
   private StoreReaderLockProvider.LockManager lockManager;
   private HadoopProperties stepProperties;
-  private NestedProperties nestedProperties;
+  private HadoopProperties combinedProperties;
 
   private List<ActionOperation> operations = new ArrayList<ActionOperation>();
 
@@ -248,12 +247,12 @@ public abstract class Action {
     return actionId.resolve();
   }
 
-  protected final void internalExecute(NestedProperties parentProperties) {
+  protected final void internalExecute(HadoopProperties parentProperties) {
 
     try {
 
       //  only set properties not explicitly set by the step
-      nestedProperties = new NestedProperties(parentProperties, stepProperties);
+      combinedProperties = stepProperties.override(parentProperties);
 
       jobPoller = new JobPoller(fullId(), operations, persistence);
       jobPoller.start();
@@ -394,22 +393,16 @@ public abstract class Action {
   }
 
   protected Map<Object, Object> getInheritedProperties(Map<Object, Object> childProperties) {
-    //TODO Sweep direct calls to execute() so we don't have to do this!
 
-    if (nestedProperties != null) {
-      return new NestedProperties(nestedProperties, childProperties).getPropertiesMap();
-    } else {
-      return
-          new NestedProperties(
-              new NestedProperties(
-                  new NestedProperties(
-                      null,
-                      CascadingHelper.get().getDefaultHadoopProperties()
-                  ),
-                  stepProperties
-              ),
-              childProperties
-          ).getPropertiesMap();
+    HadoopProperties childProps = new HadoopProperties(childProperties, false);
+
+    if (combinedProperties != null) {
+      return childProps.override(combinedProperties).getPropertiesMap();
+    }
+    //TODO Sweep direct calls to execute() so we don't have to do this!
+    else {
+      return childProps.override(stepProperties.override(CascadingHelper.get().getDefaultHadoopProperties()))
+              .getPropertiesMap();
     }
   }
 
@@ -418,7 +411,7 @@ public abstract class Action {
   }
 
   protected FlowConnector buildFlowConnector() {
-    return CascadingHelper.get().getFlowConnector(nestedProperties.getPropertiesMap());
+    return CascadingHelper.get().getFlowConnector(combinedProperties.getPropertiesMap());
   }
 
   private FlowConnector buildFlowConnector(Map<Object, Object> properties) {
@@ -431,7 +424,7 @@ public abstract class Action {
   }
 
   protected void completeWithProgress(RunnableJob job) {
-    job.addProperties(nestedProperties.getPropertiesMap());
+    job.addProperties(combinedProperties.getPropertiesMap());
     completeWithProgress(new HadoopOperation(job));
   }
 
