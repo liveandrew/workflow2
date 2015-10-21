@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import com.liveramp.cascading_ext.util.NestedProperties;
+import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 
 public final class Step {
@@ -74,7 +74,7 @@ public final class Step {
     };
   }
 
-  public void run(NestedProperties properties) {
+  public void run(HadoopProperties properties) {
     action.internalExecute(properties);
   }
 }

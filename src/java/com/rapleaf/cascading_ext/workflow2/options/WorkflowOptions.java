@@ -4,10 +4,11 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Maps;
+
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopProperties;
-import com.liveramp.cascading_ext.util.NestedProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.CascadingHelper;
@@ -20,7 +21,7 @@ public class WorkflowOptions {
 
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
-  private NestedProperties nestedProperties = null;
+  private HadoopProperties properties = new HadoopProperties(Maps.newHashMap(), false);
   private Set<WorkflowRunnerNotification> enabledNotifications;
   private StoreReaderLockProvider lockProvider;
   private ContextStorage storage;
@@ -34,7 +35,8 @@ public class WorkflowOptions {
   private boolean stopOnFailure = false;
   private HostnameProvider hostnameProvider;
 
-  protected WorkflowOptions(){}
+  protected WorkflowOptions() {
+  }
 
   public HostnameProvider getHostnameProvider() {
     return hostnameProvider;
@@ -72,7 +74,7 @@ public class WorkflowOptions {
     return this;
   }
 
-  public WorkflowOptions setStepPollInterval(int ms){
+  public WorkflowOptions setStepPollInterval(int ms) {
     this.stepPollInterval = ms;
     return this;
   }
@@ -91,22 +93,22 @@ public class WorkflowOptions {
   }
 
   public WorkflowOptions setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
-                                                       WorkflowRunnerNotification... enabledNotifications) {
+                                                 WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = EnumSet.of(enabledNotification, enabledNotifications);
     return this;
   }
 
-  public WorkflowOptions setNotificationLevel(Set<WorkflowRunnerNotification> notifications){
+  public WorkflowOptions setNotificationLevel(Set<WorkflowRunnerNotification> notifications) {
     enabledNotifications = EnumSet.copyOf(notifications);
     return this;
   }
 
-  public WorkflowOptions addWorkflowProperties(Map<Object, Object> propertiesMap){
+  public WorkflowOptions addWorkflowProperties(Map<Object, Object> propertiesMap) {
     return addWorkflowHadoopProperties(new HadoopProperties(propertiesMap, false));
   }
 
-  public WorkflowOptions addWorkflowHadoopProperties(HadoopProperties workflowHadoopProperties) {
-    this.nestedProperties = new NestedProperties(this.nestedProperties, workflowHadoopProperties);
+  public WorkflowOptions addWorkflowHadoopProperties(HadoopProperties newProperties) {
+    this.properties = newProperties.override(this.properties);
     return this;
   }
 
@@ -123,8 +125,8 @@ public class WorkflowOptions {
     return enabledNotifications;
   }
 
-  public NestedProperties getWorkflowJobProperties() {
-    return new NestedProperties(nestedProperties, CascadingHelper.get().getDefaultHadoopProperties());
+  public HadoopProperties getWorkflowJobProperties() {
+    return properties.override(CascadingHelper.get().getDefaultHadoopProperties());
   }
 
   public ContextStorage getStorage() {
@@ -155,7 +157,7 @@ public class WorkflowOptions {
   }
 
   public AppType getAppType() {
-    return appType; 
+    return appType;
   }
 
   public WorkflowOptions setAppType(AppType appType) {
@@ -167,17 +169,18 @@ public class WorkflowOptions {
     return counterFilter;
   }
 
-  @Deprecated //  all counters are tracked by default now, so this will actually disable tracking most counters.  if you really want this, let me know  -- ben
+  @Deprecated
+  //  all counters are tracked by default now, so this will actually disable tracking most counters.  if you really want this, let me know  -- ben
   public WorkflowOptions setCounterFilter(CounterFilter filter) {
     this.counterFilter = filter;
     return this;
   }
 
-  public String getSandboxDir(){
+  public String getSandboxDir() {
     return sandboxDir;
   }
 
-  public WorkflowOptions setSandboxDir(String sandboxDir){
+  public WorkflowOptions setSandboxDir(String sandboxDir) {
     this.sandboxDir = sandboxDir;
     return this;
   }

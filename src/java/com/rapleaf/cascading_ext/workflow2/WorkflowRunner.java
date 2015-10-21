@@ -60,7 +60,7 @@ public final class WorkflowRunner {
   //  set this if something fails in a step (outside user-code) so we don't keep trying to start steps
   private List<Exception> internalErrors = new CopyOnWriteArrayList<Exception>();
 
-  private NestedProperties workflowJobProperties;
+  private HadoopProperties workflowJobProperties;
 
   /**
    * how many components will we allow to execute simultaneously?
@@ -646,8 +646,8 @@ public final class WorkflowRunner {
     //  fall back to static jobconf props if not set elsewhere
     JobConf jobconf = CascadingHelper.get().getJobConf();
 
-    if (workflowJobProperties.isSetProperty(property)) {
-      return (String)workflowJobProperties.getProperty(property);
+    if (workflowJobProperties.containsKey(property)) {
+      return (String)workflowJobProperties.get(property);
     }
 
     String value = jobconf.get(property);
@@ -759,7 +759,7 @@ public final class WorkflowRunner {
       this.state = state;
     }
 
-    private NestedProperties buildInheritedProperties() throws IOException {
+    private HadoopProperties buildInheritedProperties() throws IOException {
       HadoopProperties.Builder uiPropertiesBuilder = new HadoopProperties.Builder();
       String priority = persistence.getPriority();
       String pool = persistence.getPool();
@@ -772,7 +772,7 @@ public final class WorkflowRunner {
         uiPropertiesBuilder.setProperty(JOB_POOL_PARAM, pool);
       }
 
-      return new NestedProperties(workflowJobProperties, uiPropertiesBuilder.build());
+      return uiPropertiesBuilder.build().override(workflowJobProperties);
     }
 
     public void start() {
