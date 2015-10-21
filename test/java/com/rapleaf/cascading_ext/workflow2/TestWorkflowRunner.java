@@ -27,6 +27,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
+import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
@@ -36,6 +37,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfig;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
+import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -112,6 +114,20 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     buildWfr(persistence, second).run();
 
     assertEquals(2, IncrementAction.counter);
+  }
+
+  @Test
+  public void testRetainPool() throws IOException {
+
+    Step first = new Step(new IncrementAction("first"));
+
+    WorkflowRunner wr = new WorkflowRunner("test",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")),
+        first
+    );
+
+    assertEquals("root.dev-tools.some_pool", wr.findDefaultValue("mapreduce.job.queuename", "default"));
   }
 
   @Test
@@ -241,12 +257,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     Step step = new Step(toRun);
 
-    try{
+    try {
       execute(step, new TestWorkflowOptions()
               .setNotificationLevel(level)
               .setAlertsHandler(handler)
       );
-    }catch(Exception e){
+    } catch (Exception e) {
       //  fine
     }
 

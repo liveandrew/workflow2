@@ -640,7 +640,7 @@ public final class WorkflowRunner {
     return trackerURLBuilder.buildURL(persistence);
   }
 
-  private String findDefaultValue(String property, String defaultValue) {
+  protected String findDefaultValue(String property, String defaultValue) {
 
     //  fall back to static jobconf props if not set elsewhere
     JobConf jobconf = CascadingHelper.get().getJobConf();
