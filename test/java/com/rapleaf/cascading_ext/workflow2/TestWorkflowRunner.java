@@ -177,7 +177,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     final List<String> messages = Lists.newArrayList();
 
     WorkflowRunner runner = new WorkflowRunner("Test Workflow", new DbPersistenceFactory(), new TestWorkflowOptions()
-        .setEnabledNotifications(WorkflowRunnerNotification.FAILURE)
+        .setNotificationLevel(WorkflowNotificationLevel.ERROR)
         .setMaxConcurrentSteps(2)
         .setAlertsHandler(new AlertsHandler() {
 
@@ -314,7 +314,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     final List<String> messages = Lists.newArrayList();
 
     WorkflowRunner runner = new WorkflowRunner("Test Workflow", new DbPersistenceFactory(), new TestWorkflowOptions()
-        .setEnabledNotifications(WorkflowRunnerNotification.FAILURE)
+        .setNotificationLevel(WorkflowNotificationLevel.ERROR)
         .setAlertsHandler(new AlertsHandler() {
 
           @Override
