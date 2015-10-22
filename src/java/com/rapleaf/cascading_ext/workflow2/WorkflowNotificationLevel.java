@@ -1,8 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
+import com.rapleaf.support.collections.SetBuilder;
 
 /**
 
@@ -19,28 +21,22 @@ public class WorkflowNotificationLevel {
   private WorkflowNotificationLevel() {
   }
 
-  public static final EnumSet<WorkflowRunnerNotification> DEBUG = EnumSet.of(
-      WorkflowRunnerNotification.START,
-      WorkflowRunnerNotification.SUCCESS,
-      WorkflowRunnerNotification.SHUTDOWN,
-      WorkflowRunnerNotification.FAILURE
-  );
+  public static final Set<WorkflowRunnerNotification> NONE = EnumSet.noneOf(WorkflowRunnerNotification.class);
 
-  public static final EnumSet<WorkflowRunnerNotification> INFO = EnumSet.of(
-      WorkflowRunnerNotification.SUCCESS,
-      WorkflowRunnerNotification.SHUTDOWN,
-      WorkflowRunnerNotification.FAILURE
-  );
+  public static final Set<WorkflowRunnerNotification> ERROR = new SetBuilder<>(NONE)
+      .add(WorkflowRunnerNotification.FAILURE, WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.INTERNAL_ERROR)
+      .get();
 
-  public static final EnumSet<WorkflowRunnerNotification> WARN = EnumSet.of(
-      WorkflowRunnerNotification.SHUTDOWN,
-      WorkflowRunnerNotification.FAILURE
-  );
+  public static final Set<WorkflowRunnerNotification> WARN = new SetBuilder<>(ERROR)
+      .add(WorkflowRunnerNotification.SHUTDOWN)
+      .get();
 
-  public static final EnumSet<WorkflowRunnerNotification> ERROR = EnumSet.of(
-      WorkflowRunnerNotification.FAILURE
-  );
+  public static final Set<WorkflowRunnerNotification> INFO = new SetBuilder<>(WARN)
+      .add(WorkflowRunnerNotification.SUCCESS)
+      .get();
 
-  public static final EnumSet<WorkflowRunnerNotification> NONE = EnumSet.noneOf(WorkflowRunnerNotification.class);
+  public static final Set<WorkflowRunnerNotification> DEBUG = new SetBuilder<>(INFO)
+      .add(WorkflowRunnerNotification.START)
+      .get();
 
 }
