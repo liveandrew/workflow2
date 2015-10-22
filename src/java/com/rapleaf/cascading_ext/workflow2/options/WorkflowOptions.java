@@ -17,7 +17,7 @@ import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
-import com.rapleaf.cascading_ext.workflow2.WorkflowRunnerNotification;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 
 public class WorkflowOptions {

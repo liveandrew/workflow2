@@ -2,6 +2,8 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.util.EnumSet;
 
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
+
 /**
 
  DEBUG -> start
