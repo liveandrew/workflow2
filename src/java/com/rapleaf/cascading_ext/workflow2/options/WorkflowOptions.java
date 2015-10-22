@@ -4,6 +4,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
@@ -11,6 +12,8 @@ import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.alerts_handler.AlertsHandlers;
+import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
@@ -85,6 +88,18 @@ public class WorkflowOptions {
 
   public AlertsHandler getAlertsHandler() {
     return alertsHandler;
+  }
+
+  public WorkflowOptions setAlertsHandler(TeamList team){
+    return setAlertsHandler(team, Optional.<Class<?>>absent());
+  }
+
+  public WorkflowOptions setAlertsHandler(TeamList team, Class<?> project){
+    return setAlertsHandler(team, Optional.<Class<?>>of(project));
+  }
+
+  public WorkflowOptions setAlertsHandler(TeamList team, Optional<Class<?>> project){
+    return setAlertsHandler(AlertsHandlers.buildHandlerForTeam(team, project));
   }
 
   public WorkflowOptions setAlertsHandler(AlertsHandler alertsHandler) {
