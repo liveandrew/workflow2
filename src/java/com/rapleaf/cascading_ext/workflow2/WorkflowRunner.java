@@ -199,8 +199,8 @@ public final class WorkflowRunner {
         findDefaultValue(JOB_PRIORITY_PARAM, "NORMAL"),
         System.getProperty("user.dir"),
         HadoopJarUtil.getLaunchJarName(),
-        getEmail(errorRecipient()),
-        getEmail(infoRecipient()),
+        options.getEnabledNotifications(),
+        options.getAlertsHandler(),
         scmInfo.getGitRemote(),
         scmInfo.getRevision()
     );
@@ -219,14 +219,6 @@ public final class WorkflowRunner {
     }
 
     this.shutdownHook = new Thread(new ShutdownHook(), "Shutdown Hook for " + workflowName);
-  }
-
-  private String getEmail(AlertRecipient recipient) {
-    List<String> emails = alertsHandler.resolveRecipients(Lists.newArrayList(recipient)).getEmailRecipients();
-    if (emails.isEmpty()) {
-      return null;
-    }
-    return emails.get(0);
   }
 
   private void linkPersistence() {

@@ -1,10 +1,14 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
+import java.util.Set;
+
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public interface WorkflowPersistenceFactory {
@@ -18,8 +22,8 @@ public interface WorkflowPersistenceFactory {
                                           String priority,
                                           String launchDir,
                                           String launchJar,
-                                          String errorEmail,
-                                          String infoEmail,
+                                          Set<WorkflowRunnerNotification> configuredNotifications,
+                                          AlertsHandler configuredHandler,
                                           String remote,
                                           String implementationBuild);
 }

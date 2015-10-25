@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -28,6 +29,7 @@ import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.support.Rap;
 
@@ -57,8 +59,8 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
                                           String priority,
                                           String launchDir,
                                           String launchJar,
-                                          String errorEmail,
-                                          String infoEmail,
+                                          Set<WorkflowRunnerNotification> configuredNotifications,
+                                          AlertsHandler configuredHandler,
                                           String remote,
                                           String implementationBuild) {
 

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.util.Time;
@@ -16,6 +17,10 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
+import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
+import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.db_schemas.DatabasesImpl;
@@ -34,6 +39,7 @@ import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
 
@@ -60,8 +66,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
                                             String priority,
                                             String launchDir,
                                             String launchJar,
-                                            String errorEmail,
-                                            String infoEmail,
+                                            Set<WorkflowRunnerNotification> configuredNotifications,
+                                            AlertsHandler providedHandler,
                                             String remote,
                                             String implementationBuild) {
 
@@ -81,8 +87,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
           priority,
           launchDir,
           launchJar,
-          errorEmail,
-          infoEmail,
+          providedHandler,
           execution,
           remote,
           implementationBuild
@@ -140,7 +145,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       }
 
-      return DbPersistence.runPersistence(workflowAttemptId);
+      return DbPersistence.runPersistence(workflowAttemptId, providedHandler);
 
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -210,19 +215,41 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     }
   }
 
-  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, String errorEmail, String infoEmail, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
+  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
+
+    String error = getEmail(providedHandler, errorRecipient());
+    String info = getEmail(providedHandler, infoRecipient());
+
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setStatus(AttemptStatus.INITIALIZING.ordinal())
         .setLaunchDir(launchDir)
         .setLaunchJar(launchJar)
-        .setErrorEmail(errorEmail)
-        .setInfoEmail(infoEmail)
+        .setErrorEmail(error) //  TODO remove these once notifications redone
+        .setInfoEmail(info)
         .setLastHeartbeat(System.currentTimeMillis())
         .setScmRemote(remote)
         .setCommitRevision(implementationBuild);
     attempt.save();
     return attempt;
   }
+
+  private static AlertRecipient infoRecipient() {
+    return AlertRecipients.engineering(AlertSeverity.INFO);
+  }
+
+  private static AlertRecipient errorRecipient() {
+    return AlertRecipients.engineering(AlertSeverity.ERROR);
+  }
+
+
+  private static String getEmail(AlertsHandler handler, AlertRecipient recipient) {
+    List<String> emails = handler.resolveRecipients(Lists.newArrayList(recipient)).getEmailRecipients();
+    if (emails.isEmpty()) {
+      return null;
+    }
+    return emails.get(0);
+  }
+
 
   private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
 
