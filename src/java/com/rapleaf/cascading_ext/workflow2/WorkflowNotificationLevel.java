@@ -24,7 +24,7 @@ public class WorkflowNotificationLevel {
   public static final Set<WorkflowRunnerNotification> NONE = EnumSet.noneOf(WorkflowRunnerNotification.class);
 
   public static final Set<WorkflowRunnerNotification> ERROR = new SetBuilder<>(NONE)
-      .add(WorkflowRunnerNotification.FAILURE, WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.INTERNAL_ERROR)
+      .add(WorkflowRunnerNotification.FAILURE, WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.INTERNAL_ERROR, WorkflowRunnerNotification.STEP_FAILURE)
       .get();
 
   public static final Set<WorkflowRunnerNotification> WARN = new SetBuilder<>(ERROR)
