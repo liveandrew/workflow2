@@ -9,7 +9,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import junit.framework.Assert;
 import org.apache.hadoop.mapreduce.TaskCounter;
@@ -34,8 +37,13 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessage;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.alerts_handler.AlertsHandlers;
+import com.liveramp.java_support.alerts_handler.MailBuffer;
+import com.liveramp.java_support.alerts_handler.MailOptions;
 import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfig;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
+import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
+import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
@@ -166,6 +174,61 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   }
 
   @Test
+  public void testNotificationDestinations() throws IOException {
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+    rldb.disableCaching();
+
+    MailBuffer providedBuffer = new MailBuffer.ListBuffer();
+
+    Step one = new Step(new FailingAction("fail"));
+
+    WorkflowRunner wr = new WorkflowRunner("test", new DbPersistenceFactory(), new TestWorkflowOptions()
+        .setNotificationLevel(WorkflowNotificationLevel.ERROR)
+        .setAlertsHandler(AlertsHandlers.builder(TeamList.DEV_TOOLS).setTestMailBuffer(providedBuffer).build()),
+        one);
+
+    ApplicationController.addConfiguredNotifications(rldb,
+        "test",
+        "test@gmail.com",
+        WorkflowNotificationLevel.ERROR
+    );
+
+    try {
+      wr.run();
+      fail();
+    } catch (Exception e) {
+      // fine
+    }
+
+    DbPersistence origPersistence = (DbPersistence)wr.getPersistence();
+    DbPersistence newPersistence = DbPersistence.queryPersistence(origPersistence.getAttemptId(), rldb);
+
+    for (AlertsHandler alertsHandler : newPersistence.getRecipients(WorkflowRunnerNotification.DIED_UNCLEAN)) {
+      alertsHandler.sendAlert("Died Unclean", "Test", AlertRecipients.engineering(AlertSeverity.ERROR));
+    }
+
+    Multimap<String, String> recipientToSubjects = HashMultimap.create();
+
+    for (MailOptions mailOptions : newPersistence.getTestMailBuffer().get()) {
+      for (String to : mailOptions.getToEmails()) {
+        recipientToSubjects.put(to, mailOptions.getSubject());
+      }
+    }
+
+    for (MailOptions mailOptions : Iterables.concat(providedBuffer.get(), origPersistence.getTestMailBuffer().get())) {
+      for (String to : mailOptions.getToEmails()) {
+        recipientToSubjects.put(to, mailOptions.getSubject());
+      }
+    }
+
+    assertEquals(2, recipientToSubjects.keySet().size());
+
+    assertCollectionEquivalent(recipientToSubjects.get("test@gmail.com"), Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"));
+    assertCollectionEquivalent(recipientToSubjects.get("dev-tools+error@liveramp.com"), Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"));
+
+  }
+
+  @Test
   public void testKeepRunning() throws Exception {
 
     final Semaphore sem = new Semaphore(0);
@@ -220,8 +283,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(StepStatus.FAILED, runner.getPersistence().getStatus("fail"));
 
     assertCollectionEquivalent(Lists.newArrayList(
-            "[TAG] [WORKFLOW] [ERROR] Step has failed in: Test Workflow",
-            "[TAG] [WORKFLOW] [ERROR] Failed: Test Workflow"),
+            "[ERROR] [TAG] [WORKFLOW] Step has failed in: Test Workflow",
+            "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
         messages
     );
 
@@ -242,12 +305,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     ));
 
     runFlow(WorkflowNotificationLevel.ERROR, new FailingAction("step"), Lists.<String>newArrayList(
-        "[WORKFLOW] [ERROR] Failed: Test workflow"
+        "[ERROR] [WORKFLOW] Failed: Test workflow"
     ));
 
     runFlow(WorkflowNotificationLevel.DEBUG, new FailingAction("step"), Lists.<String>newArrayList(
         "[WORKFLOW] Started: Test workflow",
-        "[WORKFLOW] [ERROR] Failed: Test workflow"
+        "[ERROR] [WORKFLOW] Failed: Test workflow"
     ));
 
   }
@@ -350,7 +413,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     }
 
     assertCollectionEquivalent(Lists.newArrayList(
-            "[TAG] [WORKFLOW] [ERROR] Failed: Test Workflow"),
+            "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
         messages
     );
 

@@ -47,6 +47,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private final String host;
   private final String username;
   private final AlertsHandler handler;
+  private final Set<WorkflowRunnerNotification> configuredNotifications;
 
   public HdfsPersistenceContainer(String checkpointDir,
                                   boolean deleteOnSuccess,
@@ -58,6 +59,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
                                   String username,
                                   Map<String, StepState> statuses,
                                   List<DataStoreInfo> datastores,
+                                  Set<WorkflowRunnerNotification> configuredNotifications,
                                   AlertsHandler providedHandler) {
 
     this.checkpointDir = checkpointDir;
@@ -73,6 +75,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     this.statuses = statuses;
     this.datastores = datastores;
     this.handler = providedHandler;
+    this.configuredNotifications = configuredNotifications;
 
   }
 
@@ -166,7 +169,10 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException {
-    return Lists.newArrayList(handler);
+    if(configuredNotifications.contains(notification)) {
+      return Lists.newArrayList(handler);
+    }
+    return Lists.newArrayList();
   }
 
   @Override

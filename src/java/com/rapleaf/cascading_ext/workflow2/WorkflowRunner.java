@@ -29,7 +29,6 @@ import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.rapleaf.cascading_ext.CascadingHelper;
@@ -92,8 +91,6 @@ public final class WorkflowRunner {
   private final Thread shutdownHook;
 
   private boolean alreadyRun;
-  private final AlertsHandler alertsHandler;
-  private final Set<WorkflowRunnerNotification> enabledNotifications;
   private final CounterFilter counterFilter;
   private final ResourceManager<?, ?> resourceManager;
   private final TrackerURLBuilder trackerURLBuilder;
@@ -170,9 +167,7 @@ public final class WorkflowRunner {
     verifyName(workflowName, options);
 
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
-    this.alertsHandler = options.getAlertsHandler();
     this.counterFilter = options.getCounterFilter();
-    this.enabledNotifications = options.getEnabledNotifications();
     this.semaphore = new Semaphore(maxConcurrentSteps);
     this.lockProvider = options.getLockProvider();
     this.storage = options.getStorage();
@@ -500,7 +495,7 @@ public final class WorkflowRunner {
       pw.append("---------------------\n");
     }
 
-    mail(getFailureSubject(), pw.toString(), AlertRecipients.engineering(AlertSeverity.ERROR));
+    mail(getFailureSubject(), pw.toString(), WorkflowRunnerNotification.INTERNAL_ERROR);
 
   }
 
@@ -548,42 +543,24 @@ public final class WorkflowRunner {
     return false;
   }
 
-  private AlertRecipient infoRecipient() {
-    return AlertRecipients.engineering(AlertSeverity.INFO);
-  }
-
-  private AlertRecipient errorRecipient() {
-    return AlertRecipients.engineering(AlertSeverity.ERROR);
-  }
-
   private void sendStartEmail() throws IOException {
-    if (enabledNotifications.contains(WorkflowRunnerNotification.START)) {
-      mail(getStartSubject(), infoRecipient());
-    }
+    mail(getStartSubject(), WorkflowRunnerNotification.START);
   }
 
   private void sendSuccessEmail() throws IOException {
-    if (enabledNotifications.contains(WorkflowRunnerNotification.SUCCESS)) {
-      mail(getSuccessSubject(), infoRecipient());
-    }
+    mail(getSuccessSubject(), WorkflowRunnerNotification.SUCCESS);
   }
 
   private void sendStepFailureEmail(String msg) throws IOException {
-    if (enabledNotifications.contains(WorkflowRunnerNotification.FAILURE)) {
-      mail(getStepFailureSubject(), msg, errorRecipient());
-    }
+    mail(getStepFailureSubject(), msg, WorkflowRunnerNotification.STEP_FAILURE);
   }
 
   private void sendFailureEmail(String msg) throws IOException {
-    if (enabledNotifications.contains(WorkflowRunnerNotification.FAILURE)) {
-      mail(getFailureSubject(), msg, errorRecipient());
-    }
+    mail(getFailureSubject(), msg, WorkflowRunnerNotification.FAILURE);
   }
 
   private void sendShutdownEmail(String cause) throws IOException {
-    if (enabledNotifications.contains(WorkflowRunnerNotification.SHUTDOWN)) {
-      mail(getShutdownSubject(cause), infoRecipient());
-    }
+    mail(getShutdownSubject(cause), WorkflowRunnerNotification.SHUTDOWN);
   }
 
   private String getDisplayName() throws IOException {
@@ -599,30 +576,37 @@ public final class WorkflowRunner {
   }
 
   private String getFailureSubject() throws IOException {
-    return "[" + WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG + "] " + "Failed: " + getDisplayName();
+    return "Failed: " + getDisplayName();
   }
 
   private String getStepFailureSubject() throws IOException {
-    return "[" + WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG + "] " + "Step has failed in: " + getDisplayName();
+    return "Step has failed in: " + getDisplayName();
   }
 
   private String getShutdownSubject(String reason) throws IOException {
     return "Shutdown requested: " + getDisplayName() + ". Reason: " + reason;
   }
 
-  private void mail(String subject, AlertRecipient recipient) throws IOException {
-    mail(subject, "", recipient);
+  private void mail(String subject, WorkflowRunnerNotification notification) throws IOException {
+    mail(subject, "", notification);
   }
 
-  private void mail(String subject, String body, AlertRecipient recipient) throws IOException {
+  private void mail(String subject, String body, WorkflowRunnerNotification notification) throws IOException {
+    for (AlertsHandler handler : persistence.getRecipients(notification)) {
 
-    alertsHandler.sendAlert(
-        AlertMessages.builder(subject)
-            .setBody(appendTrackerUrl(body))
-            .addToDefaultTags(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG)
-            .build(),
-        recipient
-    );
+      AlertMessages.Builder builder = AlertMessages.builder(subject)
+          .setBody(appendTrackerUrl(body))
+          .addToDefaultTags(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG);
+
+      if (notification.serverity() == AlertSeverity.ERROR) {
+        builder.addToDefaultTags(WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG);
+      }
+
+      handler.sendAlert(
+          builder.build(),
+          AlertRecipients.engineering(notification.serverity())
+      );
+    }
   }
 
   private String appendTrackerUrl(String messageBody) throws IOException {
