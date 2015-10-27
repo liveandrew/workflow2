@@ -27,8 +27,10 @@ import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
+import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
+import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.util.JackUtil;
@@ -88,11 +90,11 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
           launchDir,
           launchJar,
           providedHandler,
+          configuredNotifications,
           execution,
           remote,
           implementationBuild
       );
-
 
       assertOnlyLiveAttempt(execution, attempt);
 
@@ -215,30 +217,59 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     }
   }
 
-  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
+  private static final Set<WorkflowRunnerNotification> PROVIDED_HANDLER_NOTIFICATIONS = Sets.newHashSet(
+      WorkflowRunnerNotification.START,
+      WorkflowRunnerNotification.SUCCESS,
+      WorkflowRunnerNotification.FAILURE,
+      WorkflowRunnerNotification.STEP_FAILURE,
+      WorkflowRunnerNotification.SHUTDOWN,
+      WorkflowRunnerNotification.INTERNAL_ERROR
+  );
 
-    String error = getEmail(providedHandler, errorRecipient());
-    String info = getEmail(providedHandler, infoRecipient());
+  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
+
+    Map<AlertSeverity, String> recipients = Maps.newHashMap();
+    for (AlertSeverity severity : AlertSeverity.values()) {
+      recipients.put(severity, getEmail(providedHandler, AlertRecipients.engineering(severity)));
+    }
 
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setStatus(AttemptStatus.INITIALIZING.ordinal())
         .setLaunchDir(launchDir)
         .setLaunchJar(launchJar)
-        .setErrorEmail(error) //  TODO remove these once notifications redone
-        .setInfoEmail(info)
+        .setErrorEmail(recipients.get(AlertSeverity.ERROR))     //  TODO remove these on attempt once notifications redone
+        .setInfoEmail(recipients.get(AlertSeverity.INFO))
         .setLastHeartbeat(System.currentTimeMillis())
         .setScmRemote(remote)
         .setCommitRevision(implementationBuild);
     attempt.save();
+
+
+    for (WorkflowRunnerNotification notification : configuredNotifications) {
+
+      ConfiguredNotification configured = buildConfiguredNotification(notification, recipients.get(notification.serverity()));
+      if (configured != null) {
+        configured.save();
+
+        WorkflowAttemptConfiguredNotification attemptConfigured = rldb.workflowAttemptConfiguredNotifications().create(attempt.getId(), configured.getId());
+        attemptConfigured.save();
+
+      }
+    }
+
     return attempt;
   }
 
-  private static AlertRecipient infoRecipient() {
-    return AlertRecipients.engineering(AlertSeverity.INFO);
-  }
+  private ConfiguredNotification buildConfiguredNotification(WorkflowRunnerNotification notification, String emailForSeverity) throws IOException {
+    if (PROVIDED_HANDLER_NOTIFICATIONS.contains(notification)) {
+      return rldb.configuredNotifications().create(notification.ordinal()).setProvidedAlertsHandler(true);
+    } else {
+      if (emailForSeverity != null) {
+        return rldb.configuredNotifications().create(notification.ordinal()).setEmail(emailForSeverity);
+      }
+    }
 
-  private static AlertRecipient errorRecipient() {
-    return AlertRecipients.engineering(AlertSeverity.ERROR);
+    return null;
   }
 
 
