@@ -136,7 +136,8 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
           host,
           username,
           statuses,
-          datastores
+          datastores,
+          configuredHandler
       );
 
     } catch (Exception e) {

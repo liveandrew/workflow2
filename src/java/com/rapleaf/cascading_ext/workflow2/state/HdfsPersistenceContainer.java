@@ -19,11 +19,13 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
 import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
 import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
 import com.rapleaf.db_schemas.rldb.workflow.StepState;
 import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.db_schemas.rldb.workflow.json.WorkflowJSON;
 
@@ -44,6 +46,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private String pool;
   private final String host;
   private final String username;
+  private final AlertsHandler handler;
 
   public HdfsPersistenceContainer(String checkpointDir,
                                   boolean deleteOnSuccess,
@@ -54,7 +57,8 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
                                   String host,
                                   String username,
                                   Map<String, StepState> statuses,
-                                  List<DataStoreInfo> datastores) {
+                                  List<DataStoreInfo> datastores,
+                                  AlertsHandler providedHandler) {
 
     this.checkpointDir = checkpointDir;
     this.deleteCheckpointsOnSuccess = deleteOnSuccess;
@@ -68,6 +72,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     this.username = username;
     this.statuses = statuses;
     this.datastores = datastores;
+    this.handler = providedHandler;
 
   }
 
@@ -157,6 +162,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   @Override
   public AttemptStatus getStatus() throws IOException {
     throw new NotImplementedException();
+  }
+
+  @Override
+  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException {
+    return Lists.newArrayList(handler);
   }
 
   @Override
