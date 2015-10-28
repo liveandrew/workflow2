@@ -193,6 +193,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         WorkflowNotificationLevel.ERROR
     );
 
+    ExecutionController.addConfiguredNotifications(rldb,
+        wr.getPersistence().getExecutionId(),
+        "ben@gmail.com",
+        WorkflowNotificationLevel.ERROR
+    );
+
     try {
       wr.run();
       fail();
@@ -221,8 +227,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       }
     }
 
-    assertEquals(2, recipientToSubjects.keySet().size());
+    assertEquals(3, recipientToSubjects.keySet().size());
 
+    assertCollectionEquivalent(recipientToSubjects.get("ben@gmail.com"), Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"));
     assertCollectionEquivalent(recipientToSubjects.get("test@gmail.com"), Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"));
     assertCollectionEquivalent(recipientToSubjects.get("dev-tools+error@liveramp.com"), Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"));
 
