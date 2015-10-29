@@ -6,13 +6,13 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlert;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
 public class KilledTasks implements ExecutionAlertGenerator {
   @Override
@@ -36,7 +36,7 @@ public class KilledTasks implements ExecutionAlertGenerator {
       if (killed > .5 * launched) {
         alerts.add(new ExecutionAlert(execution.getId(),
             "There were " + killed + " killed tasks out of " + launched + " launched tasks.  This may indicate heavy contention and under-allocated pools.",
-            AlertSeverity.INFO
+            WorkflowRunnerNotification.PERFORMANCE
         ));
       }
 

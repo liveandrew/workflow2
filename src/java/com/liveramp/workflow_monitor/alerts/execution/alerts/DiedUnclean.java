@@ -5,13 +5,13 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlert;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
 public class DiedUnclean implements ExecutionAlertGenerator {
 
@@ -26,7 +26,7 @@ public class DiedUnclean implements ExecutionAlertGenerator {
       long id = execution.getId();
       alerts.add(new ExecutionAlert(id,
           "Execution has died without shutting down cleanly.  This often means the process was killed by the system OOM killer.  Please cancel or resume the execution.",
-          AlertSeverity.ERROR)
+              WorkflowRunnerNotification.DIED_UNCLEAN)
       );
     }
 

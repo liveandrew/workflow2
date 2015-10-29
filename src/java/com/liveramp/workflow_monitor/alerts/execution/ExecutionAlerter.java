@@ -4,26 +4,24 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.hp.gagawa.java.elements.A;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
-import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowConstants;
+import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
 public class ExecutionAlerter {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionAlerter.class);
@@ -52,33 +50,27 @@ public class ExecutionAlerter {
           LOG.info("Sending alert: " + genAlert);
 
           WorkflowExecution execution = db.getRlDb().workflowExecutions().find(executionId);
-          String recipientEmail = generator.getRecipient(genAlert.getSeverity(), execution);
+          WorkflowRunnerNotification notification = genAlert.getNotification();
 
-          LOG.info("Notifying: " + recipientEmail);
+          for (AlertsHandler handler : generator.getRecipients(notification, execution)) {
 
-          if (recipientEmail != null) {
+            AlertMessages.Builder builder = AlertMessages.builder(buildSubject(alertClass.getSimpleName(), execution))
+                .setBody(buildMessage(genAlert.getMesasage(), execution))
+                .addToDefaultTags(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG);
 
-            ArrayList<String> tags = Lists.newArrayList(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG);
-            if (genAlert.getSeverity() == AlertSeverity.ERROR) {
-              tags.add(WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG);
+            if (notification.serverity() == AlertSeverity.ERROR) {
+              builder.addToDefaultTags(WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG);
             }
 
-            AlertsHandler handler = AlertsHandlers.builder(TeamList.NULL)
-                .setEngineeringRecipient(AlertRecipients.of(Lists.newArrayList(recipientEmail)))
-                .setTags(tags)
-                .build();
-
             handler.sendAlert(
-                buildSubject(alertClass.getSimpleName(), execution),
-                buildMessage(genAlert.getMesasage(), execution),
-                AlertRecipients.engineering(genAlert.getSeverity())
+                builder.build(),
+                AlertRecipients.engineering(notification.serverity())
             );
 
             sentProdAlerts.put(executionId, alertClass);
 
-          } else {
-            LOG.info("No notification email found for execution " + execution.getId() + " (" + execution.getApplication().getName() + ")");
           }
+
         } else {
           LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
         }
