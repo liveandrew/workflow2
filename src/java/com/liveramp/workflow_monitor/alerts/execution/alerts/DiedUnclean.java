@@ -1,15 +1,18 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
-import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlert;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
-import com.rapleaf.db_schemas.IDatabases;
+import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
+import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
+import com.rapleaf.db_schemas.rldb.workflow.ProcessStatus;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
@@ -18,19 +21,22 @@ public class DiedUnclean implements ExecutionAlertGenerator {
   private static final int MISSED_HEARTBEATS_THRESHOLD = DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 5; // 5 min, to reduce false alarms
 
   @Override
-  public List<ExecutionAlert> generateAlerts(IDatabases db) throws IOException {
+  public List<AlertMessage> generateAlerts(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
 
-    List<ExecutionAlert> alerts = Lists.newArrayList();
+    Optional<WorkflowAttempt> lastAttempt = WorkflowQueries.getLatestAttemptOptional(attempts);
 
-    for (WorkflowExecution execution : WorkflowQueries.getDiedUncleanExecutions(db, null, 7, MISSED_HEARTBEATS_THRESHOLD)) {
-      long id = execution.getId();
-      alerts.add(new ExecutionAlert(id,
-          "Execution has died without shutting down cleanly.  This often means the process was killed by the system OOM killer.  Please cancel or resume the execution.",
-              WorkflowRunnerNotification.DIED_UNCLEAN)
-      );
+    if (lastAttempt.isPresent()) {
+      ProcessStatus process = WorkflowQueries.getProcessStatus(lastAttempt.get(), execution, MISSED_HEARTBEATS_THRESHOLD);
+      if (process == ProcessStatus.TIMED_OUT) {
+        return Lists.newArrayList(new AlertMessage(
+            "Execution has died without shutting down cleanly.  This often means the process was killed by the system OOM killer.  Please cancel or resume the execution.",
+            WorkflowRunnerNotification.DIED_UNCLEAN
+        ));
+      }
     }
 
-    return alerts;
+    return Lists.newArrayList();
+
   }
 
 }

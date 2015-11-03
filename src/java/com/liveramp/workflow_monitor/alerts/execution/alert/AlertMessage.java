@@ -1,21 +1,15 @@
-package com.liveramp.workflow_monitor.alerts.execution;
+package com.liveramp.workflow_monitor.alerts.execution.alert;
 
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
-public class ExecutionAlert {
+public class AlertMessage {
 
-  private final long execution;
   private final String mesasage;
   private final WorkflowRunnerNotification notification;
 
-  public ExecutionAlert(long execution, String mesasage, WorkflowRunnerNotification notification) {
-    this.execution = execution;
+  public AlertMessage(String mesasage, WorkflowRunnerNotification notification) {
     this.mesasage = mesasage;
     this.notification = notification;
-  }
-
-  public long getExecution() {
-    return execution;
   }
 
   public String getMesasage() {
@@ -26,12 +20,10 @@ public class ExecutionAlert {
     return notification;
   }
 
-
   @Override
   public String toString() {
-    return "ExecutionAlert{" +
-        "execution=" + execution +
-        ", mesasage='" + mesasage + '\'' +
+    return "AlertMessage{" +
+        "mesasage='" + mesasage + '\'' +
         ", notification=" + notification +
         '}';
   }
