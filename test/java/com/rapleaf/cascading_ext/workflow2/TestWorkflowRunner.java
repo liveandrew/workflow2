@@ -48,10 +48,13 @@ import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
 import com.rapleaf.cascading_ext.HRap;
+import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
+import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
+import com.rapleaf.cascading_ext.workflow2.action.PersistNewVersion;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
@@ -74,6 +77,7 @@ import com.rapleaf.db_schemas.rldb.workflow.controller.ApplicationController;
 import com.rapleaf.db_schemas.rldb.workflow.controller.ExecutionController;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
+import com.rapleaf.types.new_person_data.PIN;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -1280,6 +1284,48 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
 
   }
+
+  @Test
+  public void testDatastoreDeps() throws Exception {
+
+    BucketDataStore<PIN> store1 = builder().getBucketDataStore("store1", PIN.class);
+    BucketDataStore<PIN> store2 = builder().getBucketDataStore("store2", PIN.class);
+    VersionedBucketDataStore<PIN> store1P = builder().getVersionedBucketDataStore("stoer1p", PIN.class);
+    BucketDataStore<PIN> store3 = builder().getBucketDataStore("store3", PIN.class);
+
+    Step step1 = new Step(new CopyStore("step1", store1, store2));
+    Step step2 = new Step(new PersistNewVersion<PIN>("step2", store2, store1P), step1);
+    new WorkflowRunner("workflow1", new DbPersistenceFactory(), new TestWorkflowOptions()
+        .addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DISTRIBUTION, "default")), step2).run();
+
+    Step step3 = new Step(new CopyStore("step2", store1P.getLatestVersion(), store3));
+    new WorkflowRunner("workflow2", new DbPersistenceFactory(), new TestWorkflowOptions()
+        .addWorkflowProperties(PropertiesUtil.teamPool(TeamList.APEX, "default")), step3).run();
+
+  }
+
+  public static class CopyStore extends Action {
+
+    private final DataStore input;
+    private final DataStore output;
+
+    public CopyStore(String checkpointToken,
+                     DataStore input,
+                     DataStore output) {
+      super(checkpointToken);
+      this.input = input;
+      this.output = output;
+
+      readsFrom(input);
+      creates(output);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      completeWithProgress(buildFlow().connect(input.getTap(), output.getTap(), new Pipe("flow")));
+    }
+  }
+
 
   private static void hideComplete(Flow f) {
     f.complete();
