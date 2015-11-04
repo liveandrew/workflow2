@@ -1,18 +1,14 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 
 public class MemoryUsage implements MapreduceJobAlertGenerator {
 
@@ -45,6 +41,7 @@ public class MemoryUsage implements MapreduceJobAlertGenerator {
     System.out.println(job.getJobIdentifier()+" "+job.getJobName());
     System.out.println(occupiedMemory.doubleValue() / allocatedMem.doubleValue());
 
+    return Lists.newArrayList();
   }
 }
 
