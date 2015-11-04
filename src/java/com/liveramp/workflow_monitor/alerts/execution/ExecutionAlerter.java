@@ -16,8 +16,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.liveramp.commons.collections.map.NestedMultimap;
-import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
@@ -25,8 +23,6 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
 import com.rapleaf.db_schemas.IDatabases;
-import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
-import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowConstants;
@@ -81,29 +77,29 @@ public class ExecutionAlerter {
       }
     }
 
-    Map<Long, WorkflowExecution> executionsById = getExecutionsById(attempts.keySet());
-    NestedMultimap<Long, MapreduceJob, MapreduceCounter> countersPerJob = WorkflowQueries.getCountersByMapreduceJobByExecution(db, startWindow, null);
-
-    for (Long executionId : countersPerJob.k1Set()) {
-      WorkflowExecution execution = executionsById.get(executionId);
-      Multimap<MapreduceJob, MapreduceCounter> jobToCounters = countersPerJob.get(executionId);
-
-      for (MapreduceJob mapreduceJob : jobToCounters.keySet()) {
-        TwoNestedMap<String, String, Long> counterMap = countersAsMap(countersPerJob.get(executionId).get(mapreduceJob));
-
-        for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
-          Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
-
-          if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
-            for (AlertMessage message : jobAlert.generateAlerts(mapreduceJob, counterMap)) {
-              sendAlert(alertClass, execution, message);
-            }
-          } else {
-            LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
-          }
-        }
-      }
-    }
+//    Map<Long, WorkflowExecution> executionsById = getExecutionsById(attempts.keySet());
+//    NestedMultimap<Long, MapreduceJob, MapreduceCounter> countersPerJob = WorkflowQueries.getCountersByMapreduceJobByExecution(db, startWindow, null);
+//
+//    for (Long executionId : countersPerJob.k1Set()) {
+//      WorkflowExecution execution = executionsById.get(executionId);
+//      Multimap<MapreduceJob, MapreduceCounter> jobToCounters = countersPerJob.get(executionId);
+//
+//      for (MapreduceJob mapreduceJob : jobToCounters.keySet()) {
+//        TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersPerJob.get(executionId).get(mapreduceJob));
+//
+//        for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
+//          Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
+//
+//          if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
+//            for (AlertMessage message : jobAlert.generateAlerts(mapreduceJob, counterMap)) {
+//              sendAlert(alertClass, execution, message);
+//            }
+//          } else {
+//            LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
+//          }
+//        }
+//      }
+//    }
   }
 
   private void sendAlert(Class alertClass, WorkflowExecution execution, AlertMessage alertMessage) throws IOException, URISyntaxException {
@@ -129,13 +125,6 @@ public class ExecutionAlerter {
     }
   }
 
-  private TwoNestedMap<String, String, Long> countersAsMap(Collection<MapreduceCounter> counters) {
-    TwoNestedMap<String, String, Long> asMap = new TwoNestedMap<>();
-    for (MapreduceCounter counter : counters) {
-      asMap.put(counter.getGroup(), counter.getName(), counter.getValue());
-    }
-    return asMap;
-  }
 
   private Map<Long, WorkflowExecution> getExecutionsById(Collection<WorkflowExecution> executions) {
     Map<Long, WorkflowExecution> executionMap = Maps.newHashMap();
