@@ -7,15 +7,17 @@ import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.hp.gagawa.java.elements.A;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
@@ -23,8 +25,11 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
 import com.rapleaf.db_schemas.IDatabases;
+import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
+import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
+import com.rapleaf.db_schemas.rldb.util.JackUtil;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowConstants;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
@@ -40,6 +45,8 @@ public class ExecutionAlerter {
   private final RecipientGenerator generator;
   private final IDatabases db;
 
+  private final Multimap<String, String> countersToFetch = HashMultimap.create();
+
   public ExecutionAlerter(RecipientGenerator generator,
                           List<ExecutionAlertGenerator> executionAlerts,
                           List<MapreduceJobAlertGenerator> jobAlerts,
@@ -48,16 +55,19 @@ public class ExecutionAlerter {
     this.jobAlerts = jobAlerts;
     this.generator = generator;
     this.db = db;
+
+    for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
+      countersToFetch.putAll(jobAlert.getCountersToFetch());
+    }
   }
 
   public void generateAlerts() throws IOException, URISyntaxException {
 
-    long startWindow = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000;
-    LOG.info("Fetching executions to attempts since " + startWindow);
+    long executionWindow = System.currentTimeMillis() - 24L * 60L * 60L * 1000L;
+    LOG.info("Fetching executions to attempts since " + executionWindow);
 
-    Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, startWindow, null, null, null);
+    Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, executionWindow, null, null, null);
     LOG.info("Found " + attempts.keySet().size() + " executions");
-
 
     for (ExecutionAlertGenerator executionAlert : executionAlerts) {
       Class<? extends ExecutionAlertGenerator> alertClass = executionAlert.getClass();
@@ -77,29 +87,55 @@ public class ExecutionAlerter {
       }
     }
 
-//    Map<Long, WorkflowExecution> executionsById = getExecutionsById(attempts.keySet());
-//    NestedMultimap<Long, MapreduceJob, MapreduceCounter> countersPerJob = WorkflowQueries.getCountersByMapreduceJobByExecution(db, startWindow, null);
-//
-//    for (Long executionId : countersPerJob.k1Set()) {
-//      WorkflowExecution execution = executionsById.get(executionId);
-//      Multimap<MapreduceJob, MapreduceCounter> jobToCounters = countersPerJob.get(executionId);
-//
-//      for (MapreduceJob mapreduceJob : jobToCounters.keySet()) {
-//        TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersPerJob.get(executionId).get(mapreduceJob));
-//
-//        for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
-//          Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
-//
-//          if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
-//            for (AlertMessage message : jobAlert.generateAlerts(mapreduceJob, counterMap)) {
-//              sendAlert(alertClass, execution, message);
-//            }
-//          } else {
-//            LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
-//          }
-//        }
-//      }
-//    }
+    //  finished in last hour
+    long jobWindow = System.currentTimeMillis() -  60L * 60L * 1000L;
+
+    Map<Long, MapreduceJob> jobs = JackUtil.byId(WorkflowQueries.getAllMapreduceJobs(db,
+        jobWindow,
+        null
+    ));
+
+    Set<Long> stepAttemptIds = stepAttemptIds(jobs.values());
+
+    Multimap<Integer, MapreduceCounter> countersByJob = JackUtil.by(WorkflowQueries.getAllJobCounters(db,
+        jobWindow,
+        null,
+        countersToFetch.keySet(),
+        Sets.<String>newHashSet(countersToFetch.values())),
+        MapreduceCounter._Fields.mapreduce_job_id
+    );
+
+    Map<Long, Long> stepAttemptToExecution = WorkflowQueries.getStepAttemptIdtoWorkflowExecutionId(db, stepAttemptIds);
+
+    Map<Long, WorkflowExecution> relevantExecutions = JackUtil.byId(WorkflowQueries.getExecutionsForStepAttempts(db, stepAttemptIds));
+
+    for (Integer jobId : countersByJob.keySet()) {
+      MapreduceJob mapreduceJob = jobs.get(jobId.longValue());
+      WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get((long)mapreduceJob.getStepAttemptId()));
+      long executionId = execution.getId();
+
+      TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get(jobId));
+
+      for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
+        Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
+
+        if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
+          for (AlertMessage message : jobAlert.generateAlerts(mapreduceJob, counterMap)) {
+            sendAlert(alertClass, execution, message);
+          }
+        } else {
+          LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
+        }
+      }
+    }
+  }
+
+  private static Set<Long> stepAttemptIds(Collection<MapreduceJob> jobs) {
+    Set<Long> stepAttemptIds = Sets.newHashSet();
+    for (MapreduceJob job : jobs) {
+      stepAttemptIds.add(Long.valueOf(job.getStepAttemptId()));
+    }
+    return stepAttemptIds;
   }
 
   private void sendAlert(Class alertClass, WorkflowExecution execution, AlertMessage alertMessage) throws IOException, URISyntaxException {
@@ -123,15 +159,6 @@ public class ExecutionAlerter {
       );
       sentProdAlerts.put(executionId, alertClass);
     }
-  }
-
-
-  private Map<Long, WorkflowExecution> getExecutionsById(Collection<WorkflowExecution> executions) {
-    Map<Long, WorkflowExecution> executionMap = Maps.newHashMap();
-    for (WorkflowExecution execution : executions) {
-      executionMap.put(execution.getId(), execution);
-    }
-    return executionMap;
   }
 
   private String buildSubject(String alertMessage, WorkflowExecution execution) {
