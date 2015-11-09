@@ -55,7 +55,6 @@ import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.action.PersistNewVersion;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
@@ -1200,8 +1199,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     WorkflowRunner runner = new WorkflowRunner("Test Workflow",
         new DbPersistenceFactory(),
-        new TestWorkflowOptions()
-            .setCounterFilter(CounterFilters.userGroups(Sets.newHashSet("CUSTOM_COUNTER", "CUSTOM_COUNTER2"))),
+        new TestWorkflowOptions(),
         Sets.newHashSet(step, step2)
     );
 
@@ -1241,8 +1239,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     WorkflowRunner runner = new WorkflowRunner("Test Workflow",
         new DbPersistenceFactory(),
-        new TestWorkflowOptions()
-            .setCounterFilter(CounterFilters.userGroups(Sets.newHashSet("CUSTOM_COUNTER", "CUSTOM_COUNTER2"))),
+        new TestWorkflowOptions(),
         Sets.newHashSet(step2)
     );
 
@@ -1257,8 +1254,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     runner = new WorkflowRunner("Test Workflow",
         new DbPersistenceFactory(),
-        new TestWorkflowOptions()
-            .setCounterFilter(CounterFilters.userGroups(Sets.newHashSet("CUSTOM_COUNTER", "CUSTOM_COUNTER2"))),
+        new TestWorkflowOptions(),
         Sets.newHashSet(step2)
     );
 

@@ -8,6 +8,8 @@ import org.apache.hadoop.mapreduce.FileSystemCounter;
 import org.apache.hadoop.mapreduce.JobCounter;
 import org.apache.hadoop.mapreduce.TaskCounter;
 
+import cascading.flow.SliceCounters;
+
 public class CounterFilters {
 
   private static final Multimap<String, String> DEFAULT_AS_MAP = HashMultimap.create();
@@ -39,6 +41,12 @@ public class CounterFilters {
 
     DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.MB_MILLIS_MAPS.name());
     DEFAULT_AS_MAP.put(JobCounter.class.getName(), JobCounter.MB_MILLIS_REDUCES.name());
+
+    DEFAULT_AS_MAP.put(SliceCounters.class.getName(), SliceCounters.Process_Begin_Time.name());
+    DEFAULT_AS_MAP.put(SliceCounters.class.getName(), SliceCounters.Process_End_Time.name());
+
+    DEFAULT_AS_MAP.put(TaskCounter.class.getName(), TaskCounter.PHYSICAL_MEMORY_BYTES.name());
+    DEFAULT_AS_MAP.put(TaskCounter.class.getName(), TaskCounter.GC_TIME_MILLIS.name());
 
   }
 

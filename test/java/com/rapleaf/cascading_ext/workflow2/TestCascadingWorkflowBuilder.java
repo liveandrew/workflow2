@@ -370,7 +370,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     pipe1 = new Increment(pipe1, "DIES", "COUNT");
 
     WorkflowRunner output1 = execute(builder.buildNullTail(pipe1),
-        new TestWorkflowOptions().setCounterFilter(CounterFilters.all()));
+        new TestWorkflowOptions());
 
     TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
     assertEquals(new Long(2), counters.get("DIES").get("COUNT"));
