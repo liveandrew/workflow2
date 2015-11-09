@@ -29,7 +29,9 @@ public class MonitorRunner {
         Lists.<ExecutionAlertGenerator>newArrayList(
             new DiedUnclean()
         ),
-        Lists.<MapreduceJobAlertGenerator>newArrayList(new KilledTasks()),
+        Lists.<MapreduceJobAlertGenerator>newArrayList(
+//            new KilledTasks()
+        ),
         db
     );
 

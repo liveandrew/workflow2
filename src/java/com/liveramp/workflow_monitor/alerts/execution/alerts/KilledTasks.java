@@ -1,18 +1,11 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
-import java.io.IOException;
-import java.util.List;
-
-import com.google.common.collect.Lists;
-
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator;
-import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
-import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
+import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
-public class KilledTasks extends MapreduceJobAlertGenerator {
+public class KilledTasks extends JobThresholdAlert {
 
   private static final String GROUP = "org.apache.hadoop.mapreduce.JobCounter";
   private static final String KILLED_MAPS = "NUM_KILLED_MAPS";
@@ -21,7 +14,10 @@ public class KilledTasks extends MapreduceJobAlertGenerator {
   private static final String LAUNCHED_REDUCES = "TOTAL_LAUNCHED_REDUCES";
 
   public KilledTasks() {
-    super(new MultimapBuilder<String, String>()
+    super(
+        .5,
+        WorkflowRunnerNotification.PERFORMANCE,
+        new MultimapBuilder<String, String>()
         .put(GROUP, KILLED_MAPS)
         .put(GROUP, KILLED_REDUCES)
         .put(GROUP, LAUNCHED_MAPS)
@@ -29,8 +25,9 @@ public class KilledTasks extends MapreduceJobAlertGenerator {
         .get());
   }
 
+
   @Override
-  public List<AlertMessage> generateAlerts(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
+  protected double calculateStatistic(TwoNestedMap<String, String, Long> counters) {
 
     long killed =
         counters.get(GROUP, KILLED_MAPS) +
@@ -40,13 +37,12 @@ public class KilledTasks extends MapreduceJobAlertGenerator {
         counters.get(GROUP, LAUNCHED_MAPS) +
             counters.get(GROUP, LAUNCHED_REDUCES);
 
-    if (killed > .5 * launched) {
-      return Lists.newArrayList(new AlertMessage(
-          "There were " + killed + " killed tasks out of " + launched + " launched tasks.  This may indicate heavy contention and under-allocated pools.",
-          WorkflowRunnerNotification.PERFORMANCE
-      ));
-    }
+    return ((double) killed) / ((double) launched);
 
-    return Lists.newArrayList();
+  }
+
+  @Override
+  protected String getMessage(double value) {
+    return (value*100) +"% of launched tasks were killed.  This may indicate heavy contention and under-allocated pools.";
   }
 }

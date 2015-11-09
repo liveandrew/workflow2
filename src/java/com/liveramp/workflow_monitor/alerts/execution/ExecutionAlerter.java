@@ -90,7 +90,7 @@ public class ExecutionAlerter {
     //  finished in last hour
     long jobWindow = System.currentTimeMillis() -  60L * 60L * 1000L;
 
-    Map<Long, MapreduceJob> jobs = JackUtil.byId(WorkflowQueries.getAllMapreduceJobs(db,
+    Map<Long, MapreduceJob> jobs = JackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
         jobWindow,
         null
     ));
