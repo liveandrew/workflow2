@@ -18,31 +18,26 @@ public class KilledTasks extends JobThresholdAlert {
         .5,
         WorkflowRunnerNotification.PERFORMANCE,
         new MultimapBuilder<String, String>()
-        .put(GROUP, KILLED_MAPS)
-        .put(GROUP, KILLED_REDUCES)
-        .put(GROUP, LAUNCHED_MAPS)
-        .put(GROUP, LAUNCHED_REDUCES)
-        .get());
+            .put(GROUP, KILLED_MAPS)
+            .put(GROUP, KILLED_REDUCES)
+            .put(GROUP, LAUNCHED_MAPS)
+            .put(GROUP, LAUNCHED_REDUCES)
+            .get());
   }
 
 
   @Override
   protected Double calculateStatistic(TwoNestedMap<String, String, Long> counters) {
 
-    long killed =
-        counters.get(GROUP, KILLED_MAPS) +
-            counters.get(GROUP, KILLED_REDUCES);
+    long killed = get(GROUP, KILLED_MAPS, counters) + get(GROUP, KILLED_REDUCES, counters);
+    long launched = get(GROUP, LAUNCHED_MAPS, counters) + get(GROUP, LAUNCHED_REDUCES, counters);
 
-    long launched =
-        counters.get(GROUP, LAUNCHED_MAPS) +
-            counters.get(GROUP, LAUNCHED_REDUCES);
-
-    return ((double) killed) / ((double) launched);
+    return ((double)killed) / ((double)launched);
 
   }
 
   @Override
   protected String getMessage(double value) {
-    return (value*100) +"% of launched tasks were killed.  This may indicate heavy contention and under-allocated pools.";
+    return (value * 100) + "% of launched tasks were killed.  This may indicate heavy contention and under-allocated pools.";
   }
 }

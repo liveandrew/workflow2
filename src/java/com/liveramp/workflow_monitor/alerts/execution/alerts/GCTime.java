@@ -24,22 +24,12 @@ public class GCTime extends JobThresholdAlert {
   protected Double calculateStatistic(TwoNestedMap<String, String, Long> counters) {
 
     Long gcTime = counters.get(TASK_COUNTER_GROUP, GC_TIME_MILLIS);
-    Long milliMaps = counters.get(JOB_COUNTER_GROUP, MILLIS_MAPS);
-    Long milliReduces = counters.get(JOB_COUNTER_GROUP, MILLIS_REDUCES);
 
     if (gcTime == null) {
       return null;
     }
 
-    Long allTime = 0L;
-
-    if (milliMaps != null) {
-      allTime += milliMaps;
-    }
-
-    if (milliReduces != null) {
-      allTime += milliReduces;
-    }
+    Long allTime = get(JOB_COUNTER_GROUP, MILLIS_MAPS, counters) + get(JOB_COUNTER_GROUP, MILLIS_REDUCES, counters);
 
     return gcTime.doubleValue() / allTime.doubleValue();
   }

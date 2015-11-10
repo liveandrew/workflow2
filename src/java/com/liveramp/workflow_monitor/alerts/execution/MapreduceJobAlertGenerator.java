@@ -24,4 +24,12 @@ public abstract class MapreduceJobAlertGenerator {
   public Multimap<String, String> getCountersToFetch() {
     return countersToFetch;
   }
+
+
+  public Long get(String group, String name, TwoNestedMap<String, String, Long> counters){
+    if(counters.containsKey(group, name)){
+      return counters.get(group, name);
+    }
+    return 0L;
+  }
 }
