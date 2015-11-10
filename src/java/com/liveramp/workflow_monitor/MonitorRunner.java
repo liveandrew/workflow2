@@ -10,6 +10,7 @@ import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
 import com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.DiedUnclean;
+import com.liveramp.workflow_monitor.alerts.execution.alerts.GCTime;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.KilledTasks;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.FromPersistenceGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGenerator;
@@ -30,7 +31,7 @@ public class MonitorRunner {
             new DiedUnclean()
         ),
         Lists.<MapreduceJobAlertGenerator>newArrayList(
-//            new KilledTasks()
+            //            new KilledTasks()
         ),
         db
     );
@@ -41,8 +42,12 @@ public class MonitorRunner {
                 .setEngineeringRecipient(AlertRecipients.of("bpodgursky@liveramp.com"))
                 .build()),
         Lists.<ExecutionAlertGenerator>newArrayList(
-            new DiedUnclean()),
-        Lists.<MapreduceJobAlertGenerator>newArrayList(new KilledTasks()),
+            new DiedUnclean()
+        ),
+        Lists.<MapreduceJobAlertGenerator>newArrayList(
+            new KilledTasks(),
+            new GCTime()
+        ),
         db
     );
 

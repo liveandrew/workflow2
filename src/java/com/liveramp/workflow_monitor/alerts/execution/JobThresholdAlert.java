@@ -28,9 +28,9 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
   public List<AlertMessage> generateAlerts(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
 
-    double value = calculateStatistic(counters);
+    Double value = calculateStatistic(counters);
 
-    if (value > threshold) {
+    if (value != null && value > threshold) {
 
       String message = getMessage(value) + "\n\n" +
           "Job name: " +
@@ -47,7 +47,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
     return Lists.newArrayList();
   }
 
-  protected abstract double calculateStatistic(TwoNestedMap<String, String, Long> counters);
+  protected abstract Double calculateStatistic(TwoNestedMap<String, String, Long> counters);
 
   protected abstract String getMessage(double value);
 

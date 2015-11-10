@@ -38,6 +38,7 @@ public class ExecutionAlerter {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionAlerter.class);
 
   private final Multimap<Long, Class> sentProdAlerts = HashMultimap.create();
+  private final Multimap<Long, Class> sentJobAlerts = HashMultimap.create();
 
   private final List<ExecutionAlertGenerator> executionAlerts;
   private final List<MapreduceJobAlertGenerator> jobAlerts;
@@ -62,31 +63,11 @@ public class ExecutionAlerter {
   }
 
   public void generateAlerts() throws IOException, URISyntaxException {
+    generateExecutionAlerts();
+    generateJobAlerts();
+  }
 
-    long executionWindow = System.currentTimeMillis() - 24L * 60L * 60L * 1000L;
-    LOG.info("Fetching executions to attempts since " + executionWindow);
-
-    Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, executionWindow, null, null, null);
-    LOG.info("Found " + attempts.keySet().size() + " executions");
-
-    for (ExecutionAlertGenerator executionAlert : executionAlerts) {
-      Class<? extends ExecutionAlertGenerator> alertClass = executionAlert.getClass();
-      LOG.info("Running alert generator " + alertClass);
-
-      for (WorkflowExecution execution : attempts.keySet()) {
-        long executionId = execution.getId();
-
-        if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
-
-          for (AlertMessage alertMessage : executionAlert.generateAlerts(execution, attempts.get(execution))) {
-            sendAlert(alertClass, execution, alertMessage);
-          }
-        } else {
-          LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
-        }
-      }
-    }
-
+  private void generateJobAlerts() throws IOException, URISyntaxException {
     //  finished in last hour
     long jobWindow = System.currentTimeMillis() -  60L * 60L * 1000L;
 
@@ -101,7 +82,7 @@ public class ExecutionAlerter {
         jobWindow,
         null,
         countersToFetch.keySet(),
-        Sets.<String>newHashSet(countersToFetch.values())),
+        Sets.newHashSet(countersToFetch.values())),
         MapreduceCounter._Fields.mapreduce_job_id
     );
 
@@ -119,10 +100,41 @@ public class ExecutionAlerter {
       for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
         Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
 
-        if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
+        if (!sentJobAlerts.containsEntry(executionId, alertClass)) {
+          sentJobAlerts.put(jobId.longValue(), alertClass);
+
           for (AlertMessage message : jobAlert.generateAlerts(mapreduceJob, counterMap)) {
             sendAlert(alertClass, execution, message);
           }
+
+        } else {
+          LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
+        }
+      }
+    }
+  }
+
+  private void generateExecutionAlerts() throws IOException, URISyntaxException {
+    long executionWindow = System.currentTimeMillis() - 24L * 60L * 60L * 1000L;
+    LOG.info("Fetching executions to attempts since " + executionWindow);
+
+    Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, executionWindow, null, null, null);
+    LOG.info("Found " + attempts.keySet().size() + " executions");
+
+    for (ExecutionAlertGenerator executionAlert : executionAlerts) {
+      Class<? extends ExecutionAlertGenerator> alertClass = executionAlert.getClass();
+      LOG.info("Running alert generator " + alertClass);
+
+      for (WorkflowExecution execution : attempts.keySet()) {
+        long executionId = execution.getId();
+
+        if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
+          sentProdAlerts.put(executionId, alertClass);
+
+          for (AlertMessage alertMessage : executionAlert.generateAlerts(execution, attempts.get(execution))) {
+            sendAlert(alertClass, execution, alertMessage);
+          }
+
         } else {
           LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
         }
@@ -157,7 +169,6 @@ public class ExecutionAlerter {
           builder.build(),
           AlertRecipients.engineering(notification.serverity())
       );
-      sentProdAlerts.put(executionId, alertClass);
     }
   }
 
