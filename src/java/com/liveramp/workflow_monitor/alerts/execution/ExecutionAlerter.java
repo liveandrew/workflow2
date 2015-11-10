@@ -68,13 +68,16 @@ public class ExecutionAlerter {
   }
 
   private void generateJobAlerts() throws IOException, URISyntaxException {
+    LOG.info("Generating job alerts");
+
     //  finished in last hour
-    long jobWindow = System.currentTimeMillis() -  60L * 60L * 1000L;
+    long jobWindow = System.currentTimeMillis() - 60L * 60L * 1000L;
 
     Map<Long, MapreduceJob> jobs = JackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
         jobWindow,
         null
     ));
+    LOG.info("Found  " + jobs.size() + " complete jobs");
 
     Set<Long> stepAttemptIds = stepAttemptIds(jobs.values());
 
@@ -90,15 +93,17 @@ public class ExecutionAlerter {
 
     Map<Long, WorkflowExecution> relevantExecutions = JackUtil.byId(WorkflowQueries.getExecutionsForStepAttempts(db, stepAttemptIds));
 
-    for (Integer jobId : countersByJob.keySet()) {
-      MapreduceJob mapreduceJob = jobs.get(jobId.longValue());
-      WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get((long)mapreduceJob.getStepAttemptId()));
-      long executionId = execution.getId();
 
-      TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get(jobId));
+    for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
+      Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
+      LOG.info("Running alerter class: "+jobAlert.getClass().getName());
 
-      for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
-        Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
+      for (Integer jobId : countersByJob.keySet()) {
+        MapreduceJob mapreduceJob = jobs.get(jobId.longValue());
+        WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get((long)mapreduceJob.getStepAttemptId()));
+        long executionId = execution.getId();
+
+        TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get(jobId));
 
         if (!sentJobAlerts.containsEntry(executionId, alertClass)) {
           sentJobAlerts.put(jobId.longValue(), alertClass);
@@ -123,7 +128,7 @@ public class ExecutionAlerter {
 
     for (ExecutionAlertGenerator executionAlert : executionAlerts) {
       Class<? extends ExecutionAlertGenerator> alertClass = executionAlert.getClass();
-      LOG.info("Running alert generator " + alertClass);
+      LOG.info("Running alert generator " + alertClass.getName());
 
       for (WorkflowExecution execution : attempts.keySet()) {
         long executionId = execution.getId();
