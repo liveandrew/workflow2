@@ -76,7 +76,7 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     }
 
     @Override
-    public List<AlertMessage> generateAlerts(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
+    public List<AlertMessage> generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
       if (counters.get("Group", "Name") == 1) {
         return Lists.newArrayList(new AlertMessage("Alerting about job " + job.getId(), WorkflowRunnerNotification.PERFORMANCE));
       }
@@ -87,7 +87,7 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
   private static class TestExecutionGenerator implements ExecutionAlertGenerator {
 
     @Override
-    public List<AlertMessage> generateAlerts(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
+    public List<AlertMessage> generateAlert(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
       return Lists.newArrayList(new AlertMessage("Alerting about execution " + execution.getId(), WorkflowRunnerNotification.PERFORMANCE));
     }
   }

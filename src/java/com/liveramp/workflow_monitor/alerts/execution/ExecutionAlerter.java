@@ -96,7 +96,7 @@ public class ExecutionAlerter {
 
     for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
       Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
-      LOG.info("Running alerter class: "+jobAlert.getClass().getName());
+      LOG.info("Running alerter class: " + jobAlert.getClass().getName());
 
       for (Integer jobId : countersByJob.keySet()) {
         MapreduceJob mapreduceJob = jobs.get(jobId.longValue());
@@ -104,16 +104,16 @@ public class ExecutionAlerter {
         long executionId = execution.getId();
 
         TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get(jobId));
+        AlertMessage alert = jobAlert.generateAlert(mapreduceJob, counterMap);
 
-        if (!sentJobAlerts.containsEntry(executionId, alertClass)) {
-          sentJobAlerts.put(jobId.longValue(), alertClass);
-
-          for (AlertMessage message : jobAlert.generateAlerts(mapreduceJob, counterMap)) {
-            sendAlert(alertClass, execution, message);
+        if (alert != null) {
+          if (!sentJobAlerts.containsEntry(executionId, alertClass)) {
+            sentJobAlerts.put(jobId.longValue(), alertClass);
+            sendAlert(alertClass, execution, alert);
+          } else {
+            LOG.info("Not re-notifying about job " + jobId.longValue() + " alert gen " + alertClass);
           }
 
-        } else {
-          LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
         }
       }
     }
@@ -133,16 +133,16 @@ public class ExecutionAlerter {
       for (WorkflowExecution execution : attempts.keySet()) {
         long executionId = execution.getId();
 
-        if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
-          sentProdAlerts.put(executionId, alertClass);
-
-          for (AlertMessage alertMessage : executionAlert.generateAlerts(execution, attempts.get(execution))) {
-            sendAlert(alertClass, execution, alertMessage);
+        AlertMessage alert = executionAlert.generateAlert(execution, attempts.get(execution));
+        if (alert != null) {
+          if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
+            sentProdAlerts.put(executionId, alertClass);
+            sendAlert(alertClass, execution, alert);
+          } else {
+            LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
           }
-
-        } else {
-          LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
         }
+
       }
     }
   }

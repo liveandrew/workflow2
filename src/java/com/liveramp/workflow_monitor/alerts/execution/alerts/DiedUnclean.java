@@ -21,7 +21,7 @@ public class DiedUnclean implements ExecutionAlertGenerator {
   private static final int MISSED_HEARTBEATS_THRESHOLD = DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 5; // 5 min, to reduce false alarms
 
   @Override
-  public List<AlertMessage> generateAlerts(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
+  public List<AlertMessage> generateAlert(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
 
     Optional<WorkflowAttempt> lastAttempt = WorkflowQueries.getLatestAttemptOptional(attempts);
 

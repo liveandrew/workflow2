@@ -25,7 +25,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
   }
 
   @Override
-  public List<AlertMessage> generateAlerts(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
+  public List<AlertMessage> generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
 
     Double value = calculateStatistic(counters);

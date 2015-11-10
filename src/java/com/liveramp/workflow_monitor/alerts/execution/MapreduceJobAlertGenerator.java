@@ -1,7 +1,6 @@
 package com.liveramp.workflow_monitor.alerts.execution;
 
 import java.io.IOException;
-import java.util.List;
 
 import com.google.common.collect.Multimap;
 
@@ -19,7 +18,7 @@ public abstract class MapreduceJobAlertGenerator {
     this.countersToFetch = countersToFetch;
   }
 
-  public abstract List<AlertMessage> generateAlerts(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException;
+  public abstract AlertMessage generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException;
 
   public Multimap<String, String> getCountersToFetch() {
     return countersToFetch;
