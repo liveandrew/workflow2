@@ -310,15 +310,15 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     runFlow(WorkflowNotificationLevel.ERROR, new NoOpAction("step"), Lists.<String>newArrayList());
 
-    runFlow(WorkflowNotificationLevel.INFO, new NoOpAction("step"), Lists.<String>newArrayList(
+    runFlow(WorkflowNotificationLevel.INFO, new NoOpAction("step"), Lists.newArrayList(
         "[WORKFLOW] Succeeded: Test workflow"
     ));
 
-    runFlow(WorkflowNotificationLevel.ERROR, new FailingAction("step"), Lists.<String>newArrayList(
+    runFlow(WorkflowNotificationLevel.ERROR, new FailingAction("step"), Lists.newArrayList(
         "[ERROR] [WORKFLOW] Failed: Test workflow"
     ));
 
-    runFlow(WorkflowNotificationLevel.DEBUG, new FailingAction("step"), Lists.<String>newArrayList(
+    runFlow(WorkflowNotificationLevel.DEBUG, new FailingAction("step"), Lists.newArrayList(
         "[WORKFLOW] Started: Test workflow",
         "[ERROR] [WORKFLOW] Failed: Test workflow"
     ));
@@ -565,7 +565,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step unlockFail = new Step(new UnlockWaitAction("unlock", semaphore, semaphore2));
     Step last = new Step(new FlipAction("after", didExecute), unlockFail);
 
-    Wrapper<Exception> exception = new Wrapper<Exception>();
+    Wrapper<Exception> exception = new Wrapper<>();
     WorkflowRunner run = new WorkflowRunner("Test Workflow", factory, new TestWorkflowOptions().setMaxConcurrentSteps(2),
         Sets.newHashSet(fail, last));
 
@@ -1208,10 +1208,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     TwoNestedMap<String, String, Long> counters = runner.getPersistence().getFlatCounters();
 
     assertEquals(1l, counters.get("CUSTOM_COUNTER", "NAME").longValue());
-    assertFalse(counters.containsKey("OTHER_COUNTER", "NAME"));
 
     assertEquals(1l, counters.get("CUSTOM_COUNTER2", "NAME").longValue());
-    assertFalse(counters.containsKey("OTHER_COUNTER2", "NAME"));
 
     TaskCounter mapIn = TaskCounter.MAP_INPUT_RECORDS;
     assertEquals(2l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
@@ -1264,19 +1262,17 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     TwoNestedMap<String, String, Long> counters = runner.getPersistence().getFlatCounters();
 
-    assertEquals(1l, counters.get("CUSTOM_COUNTER", "NAME").longValue());
-    assertFalse(counters.containsKey("OTHER_COUNTER", "NAME"));
+    assertEquals(1L, counters.get("CUSTOM_COUNTER", "NAME").longValue());
 
-    assertEquals(1l, counters.get("CUSTOM_COUNTER2", "NAME").longValue());
-    assertFalse(counters.containsKey("OTHER_COUNTER2", "NAME"));
+    assertEquals(1L, counters.get("CUSTOM_COUNTER2", "NAME").longValue());
 
     TaskCounter mapIn = TaskCounter.MAP_INPUT_RECORDS;
-    assertEquals(2l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
+    assertEquals(2L, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
 
     //  test by step
 
     ThreeNestedMap<String, String, String, Long> countersByStep = runner.getPersistence().getCountersByStep();
-    assertEquals(1l, countersByStep.get("step1__step", mapIn.getClass().getName(), mapIn.name()).longValue());
+    assertEquals(1L, countersByStep.get("step1__step", mapIn.getClass().getName(), mapIn.name()).longValue());
 
 
   }
@@ -1290,7 +1286,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     BucketDataStore<PIN> store3 = builder().getBucketDataStore("store3", PIN.class);
 
     Step step1 = new Step(new CopyStore("step1", store1, store2));
-    Step step2 = new Step(new PersistNewVersion<PIN>("step2", store2, store1P), step1);
+    Step step2 = new Step(new PersistNewVersion<>("step2", store2, store1P), step1);
     new WorkflowRunner("workflow1", new DbPersistenceFactory(), new TestWorkflowOptions()
         .addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DISTRIBUTION, "default")), step2).run();
 
@@ -1356,7 +1352,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       runningFlow(flow);
 
       //  make sure counter from previous step is accessible
-      assertEquals(1l, (long)getFlatCounters().get("CUSTOM_COUNTER", "NAME"));
+      assertEquals(1L, (long)getFlatCounters().get("CUSTOM_COUNTER", "NAME"));
 
     }
 
