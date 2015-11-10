@@ -1,9 +1,6 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import java.io.IOException;
-import java.util.List;
-
-import com.google.common.collect.Lists;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
@@ -40,8 +37,7 @@ public class MemoryUsage extends MapreduceJobAlertGenerator {
   }
 
   @Override
-  public List<AlertMessage> generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
-
+  public AlertMessage generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
     Long end = counters.get(SLICE_GROUP, END_TIME);
     Long begin = counters.get(SLICE_GROUP, START_TIME);
@@ -69,7 +65,7 @@ public class MemoryUsage extends MapreduceJobAlertGenerator {
     System.out.println(job.getJobIdentifier() + " " + job.getJobName());
     System.out.println(occupiedMemory.doubleValue() / allocatedMem.doubleValue());
 
-    return Lists.newArrayList();
+    return null;
   }
 }
 

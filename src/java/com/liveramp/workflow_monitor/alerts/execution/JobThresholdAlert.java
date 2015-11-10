@@ -1,9 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution;
 
 import java.io.IOException;
-import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
@@ -25,7 +23,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
   }
 
   @Override
-  public List<AlertMessage> generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
+  public AlertMessage generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
 
     Double value = calculateStatistic(counters);
@@ -38,13 +36,10 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
           "Tracker link: " +
           job.getTrackingUrl() + "\n";
 
-      return Lists.newArrayList(
-          new AlertMessage(message, notification)
-      );
-
+      return new AlertMessage(message, notification);
     }
 
-    return Lists.newArrayList();
+    return null;
   }
 
   protected abstract Double calculateStatistic(TwoNestedMap<String, String, Long> counters);

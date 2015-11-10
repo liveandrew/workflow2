@@ -69,6 +69,7 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
 
   }
 
+  //  TODO test not-re-alerting behavior + changed status of workflow, alert second run
 
   private static class TestJobGenerator extends MapreduceJobAlertGenerator {
     protected TestJobGenerator() {
@@ -76,19 +77,19 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     }
 
     @Override
-    public List<AlertMessage> generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
+    public AlertMessage generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
       if (counters.get("Group", "Name") == 1) {
-        return Lists.newArrayList(new AlertMessage("Alerting about job " + job.getId(), WorkflowRunnerNotification.PERFORMANCE));
+        return new AlertMessage("Alerting about job " + job.getId(), WorkflowRunnerNotification.PERFORMANCE);
       }
-      return Lists.newArrayList();
+      return null;
     }
   }
 
   private static class TestExecutionGenerator implements ExecutionAlertGenerator {
 
     @Override
-    public List<AlertMessage> generateAlert(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
-      return Lists.newArrayList(new AlertMessage("Alerting about execution " + execution.getId(), WorkflowRunnerNotification.PERFORMANCE));
+    public AlertMessage generateAlert(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
+      return new AlertMessage("Alerting about execution " + execution.getId(), WorkflowRunnerNotification.PERFORMANCE);
     }
   }
 }
