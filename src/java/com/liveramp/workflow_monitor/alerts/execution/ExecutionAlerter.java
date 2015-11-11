@@ -210,6 +210,7 @@ public class ExecutionAlerter {
         .appendText(execution.getName());
 
     return "Application: " + appLink.write() +
+        "\nScope: "+ execution.getScopeIdentifier()+
         "\nExecution: " + executionLink.write() +
         "\n\n" + alertMessage;
 
