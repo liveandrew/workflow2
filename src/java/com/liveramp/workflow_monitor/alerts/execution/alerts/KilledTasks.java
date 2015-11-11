@@ -7,6 +7,9 @@ import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
 public class KilledTasks extends JobThresholdAlert {
 
+  //  don't alert if 5/10 are killed, not really important
+  private static final int MIN_TASKS = 100;
+
   private static final String GROUP = "org.apache.hadoop.mapreduce.JobCounter";
   private static final String KILLED_MAPS = "NUM_KILLED_MAPS";
   private static final String KILLED_REDUCES = "NUM_KILLED_REDUCES";
@@ -31,6 +34,10 @@ public class KilledTasks extends JobThresholdAlert {
 
     long killed = get(GROUP, KILLED_MAPS, counters) + get(GROUP, KILLED_REDUCES, counters);
     long launched = get(GROUP, LAUNCHED_MAPS, counters) + get(GROUP, LAUNCHED_REDUCES, counters);
+
+    if(launched < MIN_TASKS){
+      return null;
+    }
 
     return ((double)killed) / ((double)launched);
 
