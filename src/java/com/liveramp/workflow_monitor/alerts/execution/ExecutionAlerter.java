@@ -99,19 +99,19 @@ public class ExecutionAlerter {
       LOG.info("Running alerter class: " + jobAlert.getClass().getName());
 
       for (Integer jobId : countersByJob.keySet()) {
-        MapreduceJob mapreduceJob = jobs.get(jobId.longValue());
+        long idLong = jobId.longValue();
+        MapreduceJob mapreduceJob = jobs.get(idLong);
         WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get((long)mapreduceJob.getStepAttemptId()));
-        long executionId = execution.getId();
 
         TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get(jobId));
         AlertMessage alert = jobAlert.generateAlert(mapreduceJob, counterMap);
 
         if (alert != null) {
-          if (!sentJobAlerts.containsEntry(executionId, alertClass)) {
-            sentJobAlerts.put(jobId.longValue(), alertClass);
+          if (!sentJobAlerts.containsEntry(idLong, alertClass)) {
+            sentJobAlerts.put(idLong, alertClass);
             sendAlert(alertClass, execution, alert);
           } else {
-            LOG.info("Not re-notifying about job " + jobId.longValue() + " alert gen " + alertClass);
+            LOG.info("Not re-notifying about job " + idLong + " alert gen " + alertClass);
           }
 
         }
