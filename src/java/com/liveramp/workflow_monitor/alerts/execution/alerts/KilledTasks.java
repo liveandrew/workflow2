@@ -38,6 +38,6 @@ public class KilledTasks extends JobThresholdAlert {
 
   @Override
   protected String getMessage(double value) {
-    return (value * 100) + "% of launched tasks were killed.  This may indicate heavy contention and under-allocated pools.";
+    return asPercent(value) + " of launched tasks were killed.  This may indicate heavy contention and under-allocated pools.";
   }
 }

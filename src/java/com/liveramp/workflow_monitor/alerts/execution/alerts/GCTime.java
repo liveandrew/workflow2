@@ -36,7 +36,7 @@ public class GCTime extends JobThresholdAlert {
 
   @Override
   protected String getMessage(double value) {
-    return (value * 100) + "% of processing time was spent in Garbage Collection.  " +
+    return asPercent(value) + " of processing time was spent in Garbage Collection.  " +
         "This can be triggered by excessive object creation or insufficient heap size.  " +
         "Try to reduce object instantiations or increase task heap sizes.";
   }
