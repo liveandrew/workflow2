@@ -12,8 +12,11 @@ public class NearMemoryLimit extends JobThresholdAlert {
   protected static final double MEMORY_WARN_THRESHOLD = .9;
 
   protected static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
+      .put(JOB_COUNTER_GROUP, MILLIS_MAPS)
       .put(JOB_COUNTER_GROUP, MILLIS_REDUCES)
+      .put(JOB_COUNTER_GROUP, LAUNCHED_MAPS)
       .put(JOB_COUNTER_GROUP, LAUNCHED_REDUCES)
+      .put(JOB_COUNTER_GROUP, MB_MAPS)
       .put(JOB_COUNTER_GROUP, MB_REDUCES)
       .put(TASK_COUNTER_GROUP, MEM_BYTES)
       .get();
