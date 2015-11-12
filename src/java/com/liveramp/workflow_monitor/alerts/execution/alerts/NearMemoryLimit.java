@@ -28,10 +28,9 @@ public class NearMemoryLimit extends JobThresholdAlert {
     Long allTime = get(JOB_COUNTER_GROUP, MILLIS_MAPS, counters) + get(JOB_COUNTER_GROUP, MILLIS_REDUCES, counters);
     Long totalTasks = get(JOB_COUNTER_GROUP, LAUNCHED_MAPS, counters) + get(JOB_COUNTER_GROUP, LAUNCHED_REDUCES, counters);
     Long allocatedMem = get(JOB_COUNTER_GROUP, MB_MAPS, counters) + get(JOB_COUNTER_GROUP, MB_REDUCES, counters);
+    Long memoryBytes = get(TASK_COUNTER_GROUP, MEM_BYTES, counters) / (1024*1024);
 
-    Long memoryBytes = counters.get(TASK_COUNTER_GROUP, MEM_BYTES);
-
-    if (memoryBytes == null || allTime == 0 || totalTasks == 0 || allocatedMem == 0) {
+    if (memoryBytes == 0 || allTime == 0 || totalTasks == 0 || allocatedMem == 0) {
       return null;
     }
 
