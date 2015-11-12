@@ -1,5 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
+import com.google.common.collect.Multimap;
+
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
@@ -9,15 +11,13 @@ public class GCTime extends JobThresholdAlert {
 
   public static final double GC_FRACTION_THRESHOLD = .2;
 
-  private static final String GC_TIME_MILLIS = "GC_TIME_MILLIS";
-  private static final String MILLIS_MAPS = "MILLIS_MAPS";
-  private static final String MILLIS_REDUCES = "MILLIS_REDUCES";
+  private static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
+      .put(TASK_COUNTER_GROUP, GC_TIME_MILLIS)
+      .put(JOB_COUNTER_GROUP, MILLIS_MAPS)
+      .put(JOB_COUNTER_GROUP, MILLIS_REDUCES).get();
 
   public GCTime() {
-    super(GC_FRACTION_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, new MultimapBuilder<String, String>()
-        .put(TASK_COUNTER_GROUP, GC_TIME_MILLIS)
-        .put(JOB_COUNTER_GROUP, MILLIS_MAPS)
-        .put(JOB_COUNTER_GROUP, MILLIS_REDUCES).get());
+    super(GC_FRACTION_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS);
   }
 
   @Override

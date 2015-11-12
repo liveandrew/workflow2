@@ -32,16 +32,16 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
   @Override
   public AlertMessage generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
-
     Double value = calculateStatistic(counters);
 
     if (value != null && value > threshold) {
 
-      String message = getMessage(value) + "\n\n" +
+      String message =
           "Job name: " +
-          job.getJobName() +
+          job.getJobName() + "\n"+
           "Tracker link: " +
-          job.getTrackingUrl() + "\n";
+          job.getTrackingUrl() + "\n\n"+
+          getMessage(value);
 
       return new AlertMessage(message, notification);
     }
