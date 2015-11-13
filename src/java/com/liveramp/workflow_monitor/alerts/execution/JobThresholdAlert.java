@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
+import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
 public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
@@ -25,22 +26,23 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
     this.threshold = threshold;
   }
 
-  protected String asPercent(double fraction){
-    return df.format(fraction*100)+"%";
+  protected String asPercent(double fraction) {
+    return df.format(fraction * 100) + "%";
   }
 
   @Override
-  public AlertMessage generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
+  public AlertMessage generateAlert(StepAttempt stepAttempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
     Double value = calculateStatistic(counters);
 
     if (value != null && value > threshold) {
 
-      String message =
+      String message = "Step: " +
+          stepAttempt.getStepToken() + "\n" +
           "Job name: " +
-          job.getJobName() + "\n"+
+          job.getJobName() + "\n" +
           "Tracker link: " +
-          job.getTrackingUrl() + "\n\n"+
+          job.getTrackingUrl() + "\n\n" +
           getMessage(value);
 
       return new AlertMessage(message, notification);

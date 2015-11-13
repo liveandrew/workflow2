@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
+import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 
 public abstract class MapreduceJobAlertGenerator {
 
@@ -30,7 +31,7 @@ public abstract class MapreduceJobAlertGenerator {
     this.countersToFetch = countersToFetch;
   }
 
-  public abstract AlertMessage generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException;
+  public abstract AlertMessage generateAlert(StepAttempt step, MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException;
 
   public Multimap<String, String> getCountersToFetch() {
     return countersToFetch;

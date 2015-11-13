@@ -77,7 +77,7 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     }
 
     @Override
-    public AlertMessage generateAlert(MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
+    public AlertMessage generateAlert(StepAttempt attempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
       if (counters.get("Group", "Name") == 1) {
         return new AlertMessage("Alerting about job " + job.getId(), WorkflowRunnerNotification.PERFORMANCE);
       }

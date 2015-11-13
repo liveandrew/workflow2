@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.hp.gagawa.java.elements.A;
@@ -27,6 +28,7 @@ import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerat
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
+import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.util.JackUtil;
@@ -89,10 +91,15 @@ public class ExecutionAlerter {
         MapreduceCounter._Fields.mapreduce_job_id
     );
 
-    Map<Long, Long> stepAttemptToExecution = WorkflowQueries.getStepAttemptIdtoWorkflowExecutionId(db, stepAttemptIds);
+    Map<StepAttempt, Long> stepAttemptToExecution = WorkflowQueries.getStepAttemptIdtoWorkflowExecutionId(db, stepAttemptIds);
+    Map<Long, StepAttempt> stepsById = JackUtil.byId(stepAttemptToExecution.keySet());
+    Map<Long, Long> stepIdToExecution = Maps.newHashMap();
+
+    for (StepAttempt stepAttempt : stepAttemptToExecution.keySet()) {
+      stepIdToExecution.put(stepAttempt.getId(), stepAttemptToExecution.get(stepAttempt));
+    }
 
     Map<Long, WorkflowExecution> relevantExecutions = JackUtil.byId(WorkflowQueries.getExecutionsForStepAttempts(db, stepAttemptIds));
-
 
     for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
       Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
@@ -101,10 +108,12 @@ public class ExecutionAlerter {
       for (Integer jobId : countersByJob.keySet()) {
         long idLong = jobId.longValue();
         MapreduceJob mapreduceJob = jobs.get(idLong);
-        WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get((long)mapreduceJob.getStepAttemptId()));
+        long stepAttemptId = (long)mapreduceJob.getStepAttemptId();
+
+        WorkflowExecution execution = relevantExecutions.get(stepIdToExecution.get(stepAttemptId));
 
         TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get(jobId));
-        AlertMessage alert = jobAlert.generateAlert(mapreduceJob, counterMap);
+        AlertMessage alert = jobAlert.generateAlert(stepsById.get(stepAttemptId), mapreduceJob, counterMap);
 
         if (alert != null) {
           if (!sentJobAlerts.containsEntry(idLong, alertClass)) {
@@ -157,7 +166,6 @@ public class ExecutionAlerter {
 
   private void sendAlert(Class alertClass, WorkflowExecution execution, AlertMessage alertMessage) throws IOException, URISyntaxException {
     LOG.info("Sending alert: " + alertMessage + " type " + alertClass + " for execution " + execution);
-    long executionId = execution.getId();
 
     WorkflowRunnerNotification notification = alertMessage.getNotification();
     for (AlertsHandler handler : generator.getRecipients(notification, execution)) {
