@@ -7,9 +7,9 @@ import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
 public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
 

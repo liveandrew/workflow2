@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.util.List;
 
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_state.DbPersistence;
+import com.liveramp.workflow_state.WorkflowQueries;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowQueries;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
 public class FromPersistenceGenerator implements RecipientGenerator {
 

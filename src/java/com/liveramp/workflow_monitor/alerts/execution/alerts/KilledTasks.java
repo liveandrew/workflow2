@@ -3,7 +3,7 @@ package com.liveramp.workflow_monitor.alerts.execution.alerts;
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class KilledTasks extends JobThresholdAlert {
 

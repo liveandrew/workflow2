@@ -6,8 +6,8 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
 
 public class TestRecipientGenerator implements RecipientGenerator {
 

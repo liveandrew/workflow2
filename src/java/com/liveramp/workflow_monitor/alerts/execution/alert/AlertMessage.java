@@ -1,6 +1,6 @@
 package com.liveramp.workflow_monitor.alerts.execution.alert;
 
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class AlertMessage {
 
