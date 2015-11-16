@@ -3,7 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.util.EnumSet;
 import java.util.Set;
 
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.support.collections.SetBuilder;
 
 /**

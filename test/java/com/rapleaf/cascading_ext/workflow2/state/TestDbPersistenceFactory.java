@@ -9,6 +9,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.liveramp.commons.Accessors;
+import com.liveramp.workflow_state.AttemptStatus;
+import com.liveramp.workflow_state.DbPersistence;
+import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
@@ -20,10 +24,6 @@ import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
-import com.rapleaf.db_schemas.rldb.workflow.DbPersistence;
-import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowExecutionStatus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

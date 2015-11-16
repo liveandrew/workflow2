@@ -15,8 +15,8 @@ import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.event_timer.MultiTimedEvent;
+import com.liveramp.workflow_state.DSAction;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.db_schemas.rldb.workflow.DSAction;
 
 public class MultiStepAction extends Action {
 

@@ -13,9 +13,9 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
+import com.liveramp.workflow_state.StepState;
+import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.db_schemas.rldb.workflow.StepState;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public class TimeFormatting {
 

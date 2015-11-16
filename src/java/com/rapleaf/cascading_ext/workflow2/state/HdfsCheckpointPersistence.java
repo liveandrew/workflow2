@@ -22,15 +22,15 @@ import org.slf4j.LoggerFactory;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.DataStoreInfo;
+import com.liveramp.workflow_state.StepState;
+import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.db_schemas.rldb.workflow.DSAction;
-import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
-import com.rapleaf.db_schemas.rldb.workflow.StepState;
-import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 import com.rapleaf.support.Rap;
 
 public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {

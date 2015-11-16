@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.apache.http.client.utils.URIBuilder;
 
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
+import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 public class DbTrackerURLBuilder implements TrackerURLBuilder{
 

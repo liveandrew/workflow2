@@ -31,6 +31,12 @@ import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.StepState;
+import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow_state.WorkflowConstants;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
@@ -38,12 +44,6 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.util.TimeFormatting;
-import com.rapleaf.db_schemas.rldb.workflow.DSAction;
-import com.rapleaf.db_schemas.rldb.workflow.StepState;
-import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowConstants;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public final class WorkflowRunner {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowRunner.class);

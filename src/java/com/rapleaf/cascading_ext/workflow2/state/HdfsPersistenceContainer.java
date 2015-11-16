@@ -20,14 +20,14 @@ import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.rapleaf.db_schemas.rldb.workflow.AttemptStatus;
-import com.rapleaf.db_schemas.rldb.workflow.DataStoreInfo;
-import com.rapleaf.db_schemas.rldb.workflow.MapReduceJob;
-import com.rapleaf.db_schemas.rldb.workflow.StepState;
-import com.rapleaf.db_schemas.rldb.workflow.StepStatus;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowRunnerNotification;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
-import com.rapleaf.db_schemas.rldb.workflow.json.WorkflowJSON;
+import com.liveramp.workflow_state.AttemptStatus;
+import com.liveramp.workflow_state.DataStoreInfo;
+import com.liveramp.workflow_state.MapReduceJob;
+import com.liveramp.workflow_state.StepState;
+import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.liveramp.workflow_state.json.WorkflowJSON;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);

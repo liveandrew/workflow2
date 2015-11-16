@@ -41,14 +41,14 @@ import com.liveramp.cascading_tools.jobs.HadoopOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
+import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.RunnableJob;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
-import com.rapleaf.db_schemas.rldb.workflow.DSAction;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
 
 public abstract class Action {
   private static final Logger LOG = LoggerFactory.getLogger(Action.class);

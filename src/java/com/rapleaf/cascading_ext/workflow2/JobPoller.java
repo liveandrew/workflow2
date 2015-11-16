@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_tools.jobs.ActionOperation;
-import com.rapleaf.db_schemas.rldb.workflow.WorkflowStatePersistence;
+import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 class JobPoller extends Thread {
   private static final Logger LOG = LoggerFactory.getLogger(JobPoller.class);
