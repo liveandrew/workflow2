@@ -32,7 +32,9 @@ public class MonitorRunner {
             new DiedUnclean()
         ),
         Lists.<MapreduceJobAlertGenerator>newArrayList(
-            //            new KilledTasks()
+            new KilledTasks(),
+            new GCTime(),
+            new NearMemoryLimit()
         ),
         db
     );
@@ -40,7 +42,7 @@ public class MonitorRunner {
     ExecutionAlerter testing = new ExecutionAlerter(
         new TestRecipientGenerator(
             AlertsHandlers.builder(TeamList.DEV_TOOLS)
-                .setEngineeringRecipient(AlertRecipients.of("bpodgursky@liveramp.com"))
+                .setEngineeringRecipient(AlertRecipients.of("bpodgursky+alert-firehose@liveramp.com"))
                 .build()),
         Lists.<ExecutionAlertGenerator>newArrayList(
             new DiedUnclean()
