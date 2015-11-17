@@ -9,6 +9,7 @@ import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
 import com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator;
+import com.liveramp.workflow_monitor.alerts.execution.alerts.CPUUsage;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.DiedUnclean;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.GCTime;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.KilledTasks;
@@ -50,7 +51,8 @@ public class MonitorRunner {
         Lists.<MapreduceJobAlertGenerator>newArrayList(
             new KilledTasks(),
             new GCTime(),
-            new NearMemoryLimit()
+            new NearMemoryLimit(),
+            new CPUUsage()
         ),
         db
     );
