@@ -23,10 +23,10 @@ public class CPUUsage extends JobThresholdAlert {
 
   @Override
   protected Double calculateStatistic(TwoNestedMap<String, String, Long> counters) {
-    Long mapAllocatedCore = get("org.apache.hadoop.mapreduce.JobCounter", "VCORES_MILLIS_MAPS", counters);
-    Long reduceAllocatedCore = get("org.apache.hadoop.mapreduce.JobCounter", "VCORES_MILLIS_REDUCES", counters);
+    Long mapAllocatedCore = get(JOB_COUNTER_GROUP, VCORES_MAPS, counters);
+    Long reduceAllocatedCore = get(JOB_COUNTER_GROUP, VCORES_REDUCES, counters);
 
-    Long cpuMillis = counters.get("org.apache.hadoop.mapreduce.TaskCounter", CPU_MILLISECONDS);
+    Long cpuMillis = counters.get(TASK_COUNTER_GROUP, CPU_MILLISECONDS);
     long allMillis = mapAllocatedCore + reduceAllocatedCore;
 
     if (allMillis == 0 || cpuMillis == null) {

@@ -19,6 +19,9 @@ public abstract class MapreduceJobAlertGenerator {
   protected static final String MILLIS_MAPS = "MILLIS_MAPS";
   protected static final String MILLIS_REDUCES = "MILLIS_REDUCES";
 
+  protected static final String VCORES_MAPS = "VCORES_MILLIS_MAPS";
+  protected static final String VCORES_REDUCES = "VCORES_MILLIS_REDUCES";
+
   protected static final String MEM_BYTES = "PHYSICAL_MEMORY_BYTES";
   protected static final String LAUNCHED_MAPS = "TOTAL_LAUNCHED_MAPS";
   protected static final String LAUNCHED_REDUCES = "TOTAL_LAUNCHED_REDUCES";
