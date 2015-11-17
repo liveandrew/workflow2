@@ -12,8 +12,8 @@ public class CPUUsage extends JobThresholdAlert {
   private static final double CPU_USED_RATIO = 2.0;
 
   private static final Multimap<String, String> COUNTERS = new MultimapBuilder<String, String>()
-      .put(JOB_COUNTER_GROUP, MILLIS_MAPS)
-      .put(JOB_COUNTER_GROUP, MILLIS_REDUCES)
+      .put(JOB_COUNTER_GROUP, VCORES_MAPS)
+      .put(JOB_COUNTER_GROUP, VCORES_REDUCES)
       .put(TASK_COUNTER_GROUP, CPU_MILLISECONDS)
       .get();
 
