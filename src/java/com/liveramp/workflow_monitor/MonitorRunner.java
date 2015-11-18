@@ -35,7 +35,8 @@ public class MonitorRunner {
         Lists.<MapreduceJobAlertGenerator>newArrayList(
             new KilledTasks(),
             new GCTime(),
-            new NearMemoryLimit()
+            new NearMemoryLimit(),
+            new CPUUsage()
         ),
         db
     );
