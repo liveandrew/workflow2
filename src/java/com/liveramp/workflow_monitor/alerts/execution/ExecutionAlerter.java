@@ -72,11 +72,12 @@ public class ExecutionAlerter {
     LOG.info("Generating job alerts");
 
     //  finished in last hour
-    long jobWindow = System.currentTimeMillis() - 60L * 60L * 1000L;
+    long endTime = System.currentTimeMillis();
+    long jobWindow = endTime - 60L * 60L * 1000L;
 
     Map<Long, MapreduceJob> jobs = JackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
         jobWindow,
-        null
+        endTime
     ));
     LOG.info("Found  " + jobs.size() + " complete jobs");
 
@@ -84,7 +85,7 @@ public class ExecutionAlerter {
 
     Multimap<Integer, MapreduceCounter> countersByJob = JackUtil.by(WorkflowQueries.getAllJobCounters(db,
         jobWindow,
-        null,
+        endTime,
         countersToFetch.keySet(),
         Sets.newHashSet(countersToFetch.values())),
         MapreduceCounter._Fields.mapreduce_job_id

@@ -39,7 +39,7 @@ public class CPUUsage extends JobThresholdAlert {
 
   @Override
   protected String getMessage(double value) {
-    return "This job used "+asPercent(value)+" of its allocated CPU time.  This is probably due to high Garbage Collection time," +
+    return "This job used "+asPercent(value)+" of its allocated CPU time.  This is probably due to high Garbage Collection time, " +
         "unless the job is doing explicit multi-threading.  If CPU  time is due to GC, try to reduce either object creation or increase memory.  " +
         "If you are explicitly multi-threading, please increase set mapreduce.map.cpu.vcores or mapreduce.reduce.cpu.vcores accordingly.";
   }
