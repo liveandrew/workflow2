@@ -10,6 +10,7 @@ import com.google.common.collect.Maps;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopProperties;
+import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
@@ -88,6 +89,12 @@ public class WorkflowOptions {
 
   public AlertsHandler getAlertsHandler() {
     return alertsHandler;
+  }
+
+  public WorkflowOptions configureTeam(TeamList team, String subPool){
+    addWorkflowProperties(PropertiesUtil.teamPool(team, subPool));
+    setAlertsHandler(team);
+    return this;
   }
 
   public WorkflowOptions setAlertsHandler(TeamList team){

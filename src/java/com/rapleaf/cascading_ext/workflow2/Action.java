@@ -293,7 +293,7 @@ public abstract class Action {
         jobPoller.updateRunningJobs();
 
         for (ActionOperation operation : operations) {
-          recordCounters(operation);
+          recordStatistics(operation);
         }
 
         jobPoller.shutdown();
@@ -473,7 +473,13 @@ public abstract class Action {
     };
   }
 
-  private void recordCounters(ActionOperation operation) {
+  //  TODO temporary for testing
+  private boolean fetchTaskSummaries = false;
+  protected void setFetchTaskSummaries(boolean fetchTaskSummaries) {
+    this.fetchTaskSummaries = fetchTaskSummaries;
+  }
+
+  private void recordStatistics(ActionOperation operation) {
 
     try {
       ThreeNestedMap<String, String, String, Long> counters = operation.getJobCounters();
@@ -491,13 +497,18 @@ public abstract class Action {
       }
 
     } catch (IOException e) {
-
       LOG.error("Failed to capture stats for step!", e);
-
       if (failOnCounterFetch) {
         throw new RuntimeException("Failed fetching stats for step", e);
       }
+    }
 
+    //  TODO actually persist, just testing fetch time for now
+    if(fetchTaskSummaries){
+      LOG.info("Fetching task summaries...");
+      Map<String, ActionOperation.TaskSummary> summaries = operation.getJobTaskSummaries();
+      LOG.info("Done fetching task summaries");
+      LOG.info("Found: "+summaries);
     }
 
   }

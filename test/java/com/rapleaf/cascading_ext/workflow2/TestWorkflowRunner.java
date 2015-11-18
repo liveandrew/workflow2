@@ -30,6 +30,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
+import com.liveramp.cascading_ext.tap.NullTap;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
@@ -1294,6 +1295,55 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     new WorkflowRunner("workflow2", new DbPersistenceFactory(), new TestWorkflowOptions()
         .addWorkflowProperties(PropertiesUtil.teamPool(TeamList.APEX, "default")), step3).run();
 
+  }
+
+  @Test
+  public void testTaskStatistics() throws Exception {
+
+    TupleDataStore input = builder().getTupleDataStore("input",
+        new Fields("string")
+    );
+
+    TupleDataStoreHelper.writeToStore(input,
+        new Tuple("1")
+    );
+
+    execute(new StatAction("stat", input));
+
+    //  TODO verify after prove work and all
+
+  }
+
+  public static class StatAction extends Action {
+
+    private final TupleDataStore input;
+    public StatAction(String checkpointToken, TupleDataStore input) {
+      super(checkpointToken);
+      this.input = input;
+      setFetchTaskSummaries(true);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      completeWithProgress(buildFlow().connect(
+          input.getTap(),
+          new NullTap(),
+          new Each(new Pipe("pipe"), new TempDelay())
+      ));
+    }
+
+    private static class TempDelay extends BaseOperation implements Filter {
+
+      @Override
+      public boolean isRemove(FlowProcess flowProcess, FilterCall filterCall) {
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException e) {
+          //  wait
+        }
+        return false;
+      }
+    }
   }
 
   public static class CopyStore extends Action {
