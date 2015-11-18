@@ -343,7 +343,7 @@ public class WorkflowQueries {
       stepAttempts = stepAttempts.where(StepAttempt.END_TIME.greaterThan(DATETIME(endedAfter)));
     }
     if (endedBefore != null) {
-      stepAttempts = stepAttempts.where(StepAttempt.END_TIME.lessThan(DATETIME(endedBefore)));
+      stepAttempts = stepAttempts.where(StepAttempt.END_TIME.lessThanOrEqualTo(DATETIME(endedBefore)));
     }
 
     return stepAttempts.innerJoin(MapreduceJob.TBL)
