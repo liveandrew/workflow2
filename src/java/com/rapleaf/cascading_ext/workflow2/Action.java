@@ -38,6 +38,7 @@ import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.liveramp.cascading_tools.jobs.FlowOperation;
 import com.liveramp.cascading_tools.jobs.HadoopOperation;
+import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
@@ -506,7 +507,7 @@ public abstract class Action {
     //  TODO actually persist, just testing fetch time for now
     if(fetchTaskSummaries){
       LOG.info("Fetching task summaries...");
-      Map<String, ActionOperation.TaskSummary> summaries = operation.getJobTaskSummaries();
+      Map<String, TaskSummary> summaries = operation.getJobTaskSummaries();
       LOG.info("Done fetching task summaries");
       LOG.info("Found: "+summaries);
     }
