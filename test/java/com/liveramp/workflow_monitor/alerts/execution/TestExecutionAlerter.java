@@ -47,7 +47,9 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     StepAttempt step = rldb.stepAttempts().create(attempt.getIntId(), "step", StepStatus.COMPLETED.ordinal(), "")
         .setEndTime(System.currentTimeMillis() - 1);
     step.save();
-    MapreduceJob mapreduceJob = rldb.mapreduceJobs().create(step.getIntId(), "Job1", "JobName", "");
+    MapreduceJob mapreduceJob = rldb.mapreduceJobs().create("Job1", "JobName", "");
+    mapreduceJob.setStepAttemptId(step.getIntId()).save();
+    
     rldb.mapreduceCounters().create(mapreduceJob.getIntId(), "Group", "Name", 1);
 
     InMemoryAlertsHandler handler = new InMemoryAlertsHandler();
