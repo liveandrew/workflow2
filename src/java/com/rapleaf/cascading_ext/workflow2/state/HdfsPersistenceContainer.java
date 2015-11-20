@@ -20,6 +20,7 @@ import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.MapReduceJob;
@@ -253,7 +254,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     }
 
     if (!knownJobs.contains(jobId)) {
-      stepState.addMrjob(new MapReduceJob(jobId, jobName, trackingURL, Lists.<MapReduceJob.Counter>newArrayList()));
+      stepState.addMrjob(new MapReduceJob(jobId, jobName, trackingURL, null, Lists.<MapReduceJob.Counter>newArrayList()));
     }
 
   }
@@ -261,6 +262,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   @Override
   public void markJobCounters(String stepToken, String jobId, TwoNestedMap<String, String, Long> values) throws IOException {
     //  no op
+  }
+
+  @Override
+  public void markJobTaskInfo(String stepToken, String jobId, TaskSummary info) throws IOException {
+    getState(stepToken).getMrJobsByID().get(jobId).setTaskSummary(info);
   }
 
   @Override

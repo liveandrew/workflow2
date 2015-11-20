@@ -403,7 +403,7 @@ public abstract class Action {
     //TODO Sweep direct calls to execute() so we don't have to do this!
     else {
       return childProps.override(stepProperties.override(CascadingHelper.get().getDefaultHadoopProperties()))
-              .getPropertiesMap();
+          .getPropertiesMap();
     }
   }
 
@@ -476,11 +476,13 @@ public abstract class Action {
 
   //  TODO temporary for testing
   private boolean fetchTaskSummaries = false;
+
   protected void setFetchTaskSummaries(boolean fetchTaskSummaries) {
     this.fetchTaskSummaries = fetchTaskSummaries;
   }
 
   private void recordStatistics(ActionOperation operation) {
+    String id = fullId();
 
     try {
       ThreeNestedMap<String, String, String, Long> counters = operation.getJobCounters();
@@ -494,7 +496,7 @@ public abstract class Action {
             }
           }
         }
-        persistence.markJobCounters(fullId(), job, toRecord);
+        persistence.markJobCounters(id, job, toRecord);
       }
 
     } catch (IOException e) {
@@ -504,12 +506,17 @@ public abstract class Action {
       }
     }
 
-    //  TODO actually persist, just testing fetch time for now
-    if(fetchTaskSummaries){
-      LOG.info("Fetching task summaries...");
-      Map<String, TaskSummary> summaries = operation.getJobTaskSummaries();
-      LOG.info("Done fetching task summaries");
-      LOG.info("Found: "+summaries);
+    try {
+      //  TODO remove guard
+      if (fetchTaskSummaries) {
+        LOG.info("Fetching task summaries...");
+        for (Map.Entry<String, TaskSummary> entry : operation.getJobTaskSummaries().entrySet()) {
+          persistence.markJobTaskInfo(id, entry.getKey(), entry.getValue());
+        }
+        LOG.info("Done saving task summaries");
+      }
+    } catch (IOException e) {
+      LOG.error("Failed to capture task steps for step!", e);
     }
 
   }

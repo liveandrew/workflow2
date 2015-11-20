@@ -50,6 +50,8 @@ import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DbPersistence;
+import com.liveramp.workflow_state.MapReduceJob;
+import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowQueries;
@@ -1208,12 +1210,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     TwoNestedMap<String, String, Long> counters = runner.getPersistence().getFlatCounters();
 
-    assertEquals(1l, counters.get("CUSTOM_COUNTER", "NAME").longValue());
+    assertEquals(1L, counters.get("CUSTOM_COUNTER", "NAME").longValue());
 
-    assertEquals(1l, counters.get("CUSTOM_COUNTER2", "NAME").longValue());
+    assertEquals(1L, counters.get("CUSTOM_COUNTER2", "NAME").longValue());
 
     TaskCounter mapIn = TaskCounter.MAP_INPUT_RECORDS;
-    assertEquals(2l, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
+    assertEquals(2L, counters.get(mapIn.getClass().getName(), mapIn.name()).longValue());
 
   }
 
@@ -1308,9 +1310,13 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         new Tuple("1")
     );
 
-    execute(new StatAction("stat", input));
+    WorkflowRunner stat = execute(new StatAction("stat", input));
 
-    //  TODO verify after prove work and all
+    StepState state = stat.getPersistence().getStepStatuses().get("stat");
+    MapReduceJob job = Accessors.only(state.getMrJobsByID().values());
+
+    //  unfortunately we can't get real values locally, but prove not fail and not null
+    assertEquals(0L, job.getTaskSummary().getAvgMapDuration().longValue());
 
   }
 
