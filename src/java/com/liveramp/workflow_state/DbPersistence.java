@@ -25,6 +25,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.liveramp.workflow_state.json.WorkflowJSON;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
@@ -36,7 +37,6 @@ import com.rapleaf.db_schemas.rldb.models.StepDependency;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.liveramp.workflow_state.json.WorkflowJSON;
 
 public class DbPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
@@ -218,11 +218,12 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     if (saved.isEmpty()) {
       LOG.info("Marking step " + stepToken + " as running job " + jobId);
-      rldb.mapreduceJobs().create((int)step.getId(),
+      MapreduceJob job = rldb.mapreduceJobs().create(
           jobId,
           jobName,
           trackingURL
       );
+      job.setStepAttemptId((int)step.getId()).save();
     }
 
   }
