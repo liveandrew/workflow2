@@ -7,6 +7,7 @@ import java.util.Map;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.workflow.TaskSummary;
 
 //  TODO somehow split up the interfaces here.  dunno how.
 public interface WorkflowStatePersistence {
@@ -15,6 +16,7 @@ public interface WorkflowStatePersistence {
   public void markStepStatusMessage(String stepToken, String newMessage) throws IOException;
   public void markStepRunningJob(String stepToken, String jobId, String jobName, String trackingURL) throws IOException;
   public void markJobCounters(String stepToken, String jobId, TwoNestedMap<String, String, Long> values) throws IOException;
+  public void markJobTaskInfo(String stepToken, String jobId, TaskSummary info) throws IOException;
 
   //  StepRunner
   public void markStepRunning(String stepToken) throws IOException;

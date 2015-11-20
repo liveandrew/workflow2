@@ -2,6 +2,8 @@ package com.liveramp.workflow_state;
 
 import java.util.List;
 
+import com.liveramp.java_support.workflow.TaskSummary;
+
 //  TODO remove this class, replace usages with MapreduceJob
 public class MapReduceJob {
 
@@ -9,6 +11,8 @@ public class MapReduceJob {
   private final String jobName;
   private final String trackingURL;
   private final List<Counter> counters;
+
+  private TaskSummary taskSummary;
 
   public static class Counter {
     private final String group;
@@ -35,11 +39,17 @@ public class MapReduceJob {
   }
 
   public MapReduceJob(String jobId, String jobName, String trackingURL,
+                      TaskSummary taskSummary,
                       List<Counter> counters) {
     this.jobId = jobId;
     this.jobName = jobName;
     this.trackingURL = trackingURL;
+    this.taskSummary = taskSummary;
     this.counters = counters;
+  }
+
+  public void setTaskSummary(TaskSummary taskSummary) {
+    this.taskSummary = taskSummary;
   }
 
   public String getJobId() {
@@ -58,4 +68,7 @@ public class MapReduceJob {
     return counters;
   }
 
+  public TaskSummary getTaskSummary() {
+    return taskSummary;
+  }
 }
