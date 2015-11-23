@@ -100,25 +100,26 @@ public class ExecutionAlerter {
       Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
       LOG.info("Running alerter class: " + jobAlert.getClass().getName());
 
-      for (Integer jobId : countersByJob.keySet()) {
-        long idLong = jobId.longValue();
-        MapreduceJob mapreduceJob = jobs.get(idLong);
+      for (Map.Entry<Long, MapreduceJob> jobEntry : jobs.entrySet()) {
+        long jobId = jobEntry.getKey();
+        MapreduceJob mapreduceJob = jobEntry.getValue();
         long stepAttemptId = (long)mapreduceJob.getStepAttemptId();
 
         WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get(stepAttemptId));
 
-        TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get(jobId));
+        TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get((int) jobId));
         AlertMessage alert = jobAlert.generateAlert(stepsById.get(stepAttemptId), mapreduceJob, counterMap);
 
         if (alert != null) {
-          if (!sentJobAlerts.containsEntry(idLong, alertClass)) {
-            sentJobAlerts.put(idLong, alertClass);
+          if (!sentJobAlerts.containsEntry(jobId, alertClass)) {
+            sentJobAlerts.put(jobId, alertClass);
             sendAlert(alertClass, execution, alert);
           } else {
-            LOG.info("Not re-notifying about job " + idLong + " alert gen " + alertClass);
+            LOG.info("Not re-notifying about job " + jobId + " alert gen " + alertClass);
           }
 
         }
+
       }
     }
   }
