@@ -1,5 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
+import java.util.Collection;
+
 import com.liveramp.commons.collections.list.ListBuilder;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
@@ -15,4 +17,17 @@ public class ExtractorsList<K extends Comparable> extends ListBuilder<StoreExtra
     add(new StoreExtractor<K>(store, factory));
     return this;
   }
+
+  @Override
+  public ExtractorsList<K> add(StoreExtractor<K> item){
+    super.add(item);
+    return this;
+  }
+
+  @Override
+  public ExtractorsList<K> addAll(Collection<StoreExtractor<K>> item){
+    super.addAll(item);
+    return this;
+  }
+
 }
