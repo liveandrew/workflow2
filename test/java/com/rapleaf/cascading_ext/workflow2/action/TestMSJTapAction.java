@@ -1,8 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -23,8 +25,10 @@ import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
+import com.rapleaf.formats.test.BucketHelper;
 import com.rapleaf.support.Strings;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class TestMSJTapAction extends WorkflowTestCase {
@@ -40,6 +44,70 @@ public class TestMSJTapAction extends WorkflowTestCase {
       return new MockExtractor();
     }
   }
+
+  @Test
+  public void testMerge() throws Exception {
+    Bucket lBucket;
+    Bucket rBucket;
+    Bucket tBucket;
+
+    String outputDir = getTestRoot() + "/2/output";
+
+    final String bucket1Path = getTestRoot() + "/2/left";
+    final String bucket2Path = getTestRoot() + "/2/right";
+    final String bucket3Path = getTestRoot() + "/2/third";
+
+    lBucket = Bucket.create(fs, bucket1Path, BytesWritable.class);
+    rBucket = Bucket.create(fs, bucket2Path, BytesWritable.class);
+    tBucket = Bucket.create(fs, bucket3Path, BytesWritable.class);
+
+    fillWithData(lBucket, "part-1", "1@d", "4@b", "4@c", "7@a", "7@f", "9@a");
+    fillWithData(rBucket, "part-1", "0@m", "1@a", "1@c", "7@a", "7@b", "7@c", "9@a", "9@b", "10@x");
+    fillWithData(tBucket, "part-1", "3@f", "3@g", "7@z", "11@n");
+
+    execute(new MSJTapAction<>(
+            "TestMapSideJoin",
+            getTestRoot() + "/tmp",
+            new ExtractorsList<Integer>()
+                .add(asStore(bucket1Path), new MockExtractor())
+                .add(asStore(bucket2Path), new MockExtractor())
+                .add(asStore(bucket3Path), new MockExtractor()),
+            new MockJoiner(),
+            asStore(outputDir),
+            PartitionStructure.UNENFORCED
+        )
+    );
+
+    Bucket oBucket = Bucket.open(fs, outputDir);
+    List<byte[]> results = BucketHelper.readBucket(oBucket);
+
+    List<String> expectedResults = new ArrayList<String>();
+    expectedResults.add("0@m");
+    expectedResults.add("1@a");
+    expectedResults.add("1@c");
+    expectedResults.add("1@d");
+    expectedResults.add("3@f");
+    expectedResults.add("3@g");
+    expectedResults.add("4@b");
+    expectedResults.add("4@c");
+    expectedResults.add("7@a");
+    expectedResults.add("7@b");
+    expectedResults.add("7@c");
+    expectedResults.add("7@f");
+    expectedResults.add("7@z");
+    expectedResults.add("9@a");
+    expectedResults.add("9@b");
+    expectedResults.add("10@x");
+    expectedResults.add("11@n");
+
+    for (int i = 0; i < results.size(); i++) {
+      assertEquals(expectedResults.get(i), Strings.fromBytes(results.get(i)));
+    }
+
+    assertEquals(BytesWritable.class, oBucket.getRecordClass());
+
+  }
+
 
   @Test(expected = RuntimeException.class)
   public void testReverseSorting() throws Exception {
@@ -109,7 +177,7 @@ public class TestMSJTapAction extends WorkflowTestCase {
       }
 
       for (String value : values) {
-        functionCall.getOutputCollector().add(new Tuple(Strings.toBytes(key + "@" + value)));
+        functionCall.getOutputCollector().add(new Tuple(new BytesWritable(Strings.toBytes(key + "@" + value))));
       }
     }
   }
