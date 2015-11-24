@@ -9,7 +9,10 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TException;
 import org.junit.Test;
 
 import cascading.operation.FunctionCall;
@@ -26,9 +29,12 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
 import com.rapleaf.formats.test.BucketHelper;
+import com.rapleaf.support.SerializationHelper;
 import com.rapleaf.support.Strings;
+import com.rapleaf.types.new_person_data.StringList;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class TestMSJTapAction extends WorkflowTestCase {
@@ -108,7 +114,6 @@ public class TestMSJTapAction extends WorkflowTestCase {
 
   }
 
-
   @Test(expected = RuntimeException.class)
   public void testReverseSorting() throws Exception {
     Bucket lBucket;
@@ -138,6 +143,143 @@ public class TestMSJTapAction extends WorkflowTestCase {
 
     fail();
   }
+
+  public StringList getStringList(String... strings) {
+    return new StringList(Lists.newArrayList(strings));
+  }
+
+
+  static class AppenderJoiner extends MSJFunction<String> {
+
+    public AppenderJoiner() {
+      super(new Fields("string_list"));
+    }
+
+    public static StringList operate(StringList list1, StringList list2) {
+      StringList listOut = nonNull(list1, list2);
+      listOut.get_strings().set(2, getString(list1) + getString(list2));
+      return listOut;
+    }
+
+    private static StringList nonNull(StringList list1, StringList list2) {
+      return list1 == null ? list2 : list1;
+    }
+
+    public static String getString(StringList list1) {
+      if (list1 == null) {
+        return "null";
+      } else {
+        return list1.get_strings().get(2);
+      }
+    }
+
+    @Override
+    public void operate(FunctionCall functionCall, MSJGroup<String> group) {
+
+      StringList list1 = group.getFirstRecordOrNull(0, new StringList());
+      StringList list2 = group.getFirstRecordOrNull(1, new StringList());
+
+      StringList listOut = operate(list1, list2);
+
+      functionCall.getOutputCollector().add(new Tuple(listOut));
+    }
+  }
+
+  public static class MockStringExtractor extends Extractor<String> {
+
+    private transient TDeserializer deserializer;
+
+    @Override
+    public String extractKey(byte[] record) {
+      TDeserializer deSerializer = getDeSerializer();
+      StringList list = new StringList();
+      try {
+        deSerializer.deserialize(list, record);
+      } catch (TException e) {
+        throw new RuntimeException(e);
+      }
+      return list.get_strings().get(1);
+    }
+
+    @Override
+    public Extractor<String> makeCopy() {
+      return new MockStringExtractor();
+    }
+
+    public TDeserializer getDeSerializer() {
+      if (deserializer == null) {
+        deserializer = SerializationHelper.getFixedDeserializer();
+      }
+      return deserializer;
+    }
+  }
+
+  @Test
+  public void testCrazyIndexing() throws Exception {
+
+    BucketDataStore<StringList> bucket1 = bucket("input1",
+        getStringList("", "key1", "value1"),
+        getStringList("", "key2", "value2"),
+        getStringList("", "key3", "value3"),
+        getStringList("", "key4", "value4")
+    );
+
+
+    BucketDataStore<StringList> bucket2 = bucket("input2",
+        getStringList("", "key1", "value5"),
+        getStringList("", "key2", "value6")
+    );
+
+    BucketDataStore<StringList> out = emptyBucket("out", StringList.class);
+
+    execute(new MSJTapAction<String>(
+            "test-indexing",
+            getTestRoot() + "/tmp",
+            new ExtractorsList<String>()
+                .add(bucket1, new MockStringExtractor())
+                .add(bucket2, new MockStringExtractor()),
+            new AppenderJoiner(),
+
+            out,
+            PartitionStructure.UNENFORCED
+        )
+    );
+
+    assertTrue(bucketContains(
+        out,
+        Lists.newArrayList(
+            getStringList("", "key1", "value1value5"),
+            getStringList("", "key2", "value2value6"),
+            getStringList("", "key3", "value3null"),
+            getStringList("", "key4", "value4null")
+        )
+    ));
+
+    BucketDataStore<StringList> out2 = emptyBucket("out2", StringList.class);
+
+    execute(new MSJTapAction<>(
+            "test-msj-indexing",
+            getTestRoot() + "/tmp",
+            new ExtractorsList().add(out, new MockStringExtractor())
+                .add(bucket2, new MockStringExtractor()),
+            new AppenderJoiner(),
+            out2,
+            PartitionStructure.UNENFORCED
+        )
+    );
+
+    assertTrue(bucketContains(
+        out2,
+        Lists.newArrayList(
+            getStringList("", "key1", "value1value5value5"),
+            getStringList("", "key2", "value2value6value6"),
+            getStringList("", "key3", "value3nullnull"),
+            getStringList("", "key4", "value4nullnull")
+        )
+    ));
+
+  }
+
 
   public static class MockJoiner extends MSJFunction<Integer> {
 
