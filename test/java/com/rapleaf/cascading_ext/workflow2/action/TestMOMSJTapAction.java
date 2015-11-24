@@ -2,12 +2,20 @@ package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.io.BytesWritable;
 import org.junit.Test;
 
@@ -19,6 +27,7 @@ import com.liveramp.commons.collections.map.MapBuilder;
 import com.liveramp.importer.generated.ImportRecordID;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStores;
 import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
 import com.rapleaf.cascading_ext.datastore.PartitionedThriftDataStoreHelper;
@@ -34,6 +43,8 @@ import com.rapleaf.cascading_ext.tap.bucket2.partitioner.AudienceMemberPartition
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.data_helpers.AudienceMemberHelper;
+import com.rapleaf.formats.bucket.Bucket;
+import com.rapleaf.formats.test.BucketHelper;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.support.Strings;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
@@ -43,6 +54,7 @@ import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwners;
 import com.rapleaf.types.new_person_data.StringList;
 
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -192,7 +204,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
 
     BucketDataStore<AudienceMember> out = builder().getBucketDataStore("output", AudienceMember.class);
 
-    execute(new IdentityMOMSJ("identity", getTestRoot()+"/tmp", ams1, out));
+    execute(new IdentityMOMSJ("identity", getTestRoot() + "/tmp", ams1, out));
 
     assertEquals(1, HRap.getValuesFromBucket(DataStores.bucket(out.getPath(), "/custom-split", AudienceMember.class)).size());
 
@@ -209,21 +221,21 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
 
       TIterator<AudienceMember> iter1 = group.getThriftIterator(0, new AudienceMember());
 
-      while(iter1.hasNext()){
+      while (iter1.hasNext()) {
         functionCall.emit(OutputEnum.OUT1, "custom-split", iter1.next());
       }
 
     }
   }
 
-  private static class IdentityMOMSJ extends MOMSJTapAction<OutputEnum, BytesWritable>{
+  private static class IdentityMOMSJ extends MOMSJTapAction<OutputEnum, BytesWritable> {
 
     public IdentityMOMSJ(String checkpointToken, String tmpRoot,
                          final PartitionedDataStore<AudienceMember> ams1,
                          BucketDataStore<AudienceMember> out) throws IOException {
       super(checkpointToken, tmpRoot,
           new ExtractorsList<BytesWritable>()
-          .add(ams1, new SimpleConfFactory(ams1)),
+              .add(ams1, new SimpleConfFactory(ams1)),
           new IdentityOutput(),
           Collections.singletonMap(OutputEnum.OUT1, out)
       );
@@ -381,4 +393,236 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
       functionCall.emit(Outputs.TWO, new BytesWritable(val.get_eid()));
     }
   }
+
+  private enum MyEnum {
+    MERGED, REPEATED, ODD, NEVER_USED
+  }
+
+  @Test
+  public void testPostCreationOfSubBuckets() throws Exception {
+    Bucket lBucket;
+    Bucket rBucket;
+    Bucket tBucket;
+
+    lBucket = Bucket.create(fs, getTestRoot() + "/2/left", BytesWritable.class);
+    rBucket = Bucket.create(fs, getTestRoot() + "/2/right", BytesWritable.class);
+    tBucket = Bucket.create(fs, getTestRoot() + "/2/third", BytesWritable.class);
+
+    fillWithData(lBucket, "part-1", "1@d", "4@b", "4@c", "7@a", "7@f", "9@a");
+    fillWithData(rBucket, "part-1", "0@m", "1@a", "1@c", "7@a", "7@b", "7@c", "9@a", "9@b", "10@x");
+    fillWithData(tBucket, "part-1", "3@f", "3@g", "7@z", "11@n");
+
+    BucketDataStore inputDS1 = new BytesDataStore(fs, "store1", lBucket.getRoot().toString(), "");
+    BucketDataStore inputDS2 = new BytesDataStore(fs, "store2", rBucket.getRoot().toString(), "");
+    BucketDataStore inputDS3 = new BytesDataStore(fs, "store3", tBucket.getRoot().toString(), "");
+
+    BucketDataStore outputDS1 = new BytesDataStore(fs, "store1", getTestRoot(), "/store1");
+    BucketDataStore outputDS2 = new BytesDataStore(fs, "store2", getTestRoot(), "/store2");
+    BucketDataStore outputDS3 = new BytesDataStore(fs, "store3", getTestRoot(), "/store3");
+    BucketDataStore outputDS4 = new BytesDataStore(fs, "store4", getTestRoot(), "/store4");
+
+    //
+    // This should run the MSJ and create individual buckets
+    // for all of the output sub-directories
+    //
+
+    Map<MyEnum, BucketDataStore> categoryToBucketDataStore = new MapBuilder<MyEnum, BucketDataStore>()
+        .put(MyEnum.MERGED, outputDS1)
+        .put(MyEnum.ODD, outputDS2)
+        .put(MyEnum.REPEATED, outputDS3)
+        .put(MyEnum.NEVER_USED, outputDS4)
+        .get();
+
+    execute(new MOMSJTapAction<>(
+            "TestMOMSJ",
+            getTestRoot() + "/tmp",
+            new ExtractorsList<Integer>()
+                .add(inputDS1, new MockExtractor())
+                .add(inputDS2, new MockExtractor())
+                .add(inputDS3, new MockExtractor()),
+            new MockMOJoiner(),
+            categoryToBucketDataStore,
+            Maps.<MyEnum, BucketDataStore>newHashMap()
+        )
+    );
+
+    verifyMerged(BucketHelper.readBucket(outputDS1.getBucket()));
+
+    verifyOdd(BucketHelper.readBucket(outputDS2.getBucket()));
+
+    verifyRepeated(BucketHelper.readBucket(outputDS3.getBucket()));
+
+    verifyNeverUsed(BucketHelper.readBucket(outputDS4.getBucket()));
+
+    verifyRecordTypes();
+  }
+
+  /*public void testMerge() throws Exception {
+    Bucket lBucket;
+    Bucket rBucket;
+    Bucket tBucket;
+
+    String outputDir = getTestRoot() + "/2/output";
+
+    lBucket = Bucket.create(fs, getTestRoot() + "/2/left");
+    rBucket = Bucket.create(fs, getTestRoot() + "/2/right");
+    tBucket = Bucket.create(fs, getTestRoot() + "/2/third");
+
+    fillWithData(lBucket, "part-1", "1@d", "4@b", "4@c", "7@a", "7@f", "9@a");
+    fillWithData(rBucket, "part-1", "0@m", "1@a", "1@c", "7@a", "7@b", "7@c", "9@a", "9@b", "10@x");
+    fillWithData(tBucket, "part-1", "3@f", "3@g", "7@z", "11@n");
+
+    new MOMapSideJoin<Integer, MyEnum>(
+        "TestMOMSJ",
+        Arrays.<Extractor<Integer>>asList(new MockExtractor(), new MockExtractor(), new MockExtractor()),
+        new MockMOJoiner(),
+        Arrays.asList(lBucket, rBucket, tBucket),
+        outputDir
+    ).run();
+
+    // assert results from 'merged' sub-directory
+    verifyMerged(BucketHelper.readBucket(Bucket.open(fs, outputDir).getSubBucket(MOJoiner.getRelPath(MyEnum.MERGED))));
+
+    // assert results from 'repeated' sub-directory
+    verifyRepeated(BucketHelper.readBucket(MOJoiner.getSubBucket(Bucket.open(fs, outputDir), MyEnum.REPEATED)));
+
+    // assert results from 'repeated' sub-directory
+    verifyOdd(BucketHelper.readBucket(MOJoiner.getSubBucket(Bucket.open(fs, outputDir), MyEnum.ODD)));
+
+    // assert that never used sub-directory sub-bucket exists but is empty
+    verifyNeverUsed(BucketHelper.readBucket(MOJoiner.getSubBucket(Bucket.open(fs, outputDir), MyEnum.NEVER_USED)));
+  }*/
+
+  private void verifyMerged(List<byte[]> mergedResults) {
+    List<String> expectedMergedRecords = new ArrayList<String>();
+    expectedMergedRecords.add("0@m");
+    expectedMergedRecords.add("1@a");
+    expectedMergedRecords.add("1@c");
+    expectedMergedRecords.add("1@d");
+    expectedMergedRecords.add("3@f");
+    expectedMergedRecords.add("3@g");
+    expectedMergedRecords.add("4@b");
+    expectedMergedRecords.add("4@c");
+    expectedMergedRecords.add("7@a");
+    expectedMergedRecords.add("7@b");
+    expectedMergedRecords.add("7@c");
+    expectedMergedRecords.add("7@f");
+    expectedMergedRecords.add("7@z");
+    expectedMergedRecords.add("9@a");
+    expectedMergedRecords.add("9@b");
+    expectedMergedRecords.add("10@x");
+    expectedMergedRecords.add("11@n");
+
+    for (int i = 0; i < expectedMergedRecords.size(); i++) {
+      assertEquals(expectedMergedRecords.get(i), Strings.fromBytes(mergedResults.get(i)));
+    }
+  }
+
+  private void verifyRepeated(List<byte[]> repeatedRecords) {
+    List<String> expectedRepeatedRecords = new ArrayList<String>();
+    expectedRepeatedRecords.add("7@a");
+    expectedRepeatedRecords.add("9@a");
+
+    for (int i = 0; i < expectedRepeatedRecords.size(); i++) {
+      assertEquals(expectedRepeatedRecords.get(i), Strings.fromBytes(repeatedRecords.get(i)));
+    }
+  }
+
+  private void verifyOdd(List<byte[]> recordsWithOddKeys) {
+    List<String> expectedRecordsWithOddKeys = new ArrayList<String>();
+    expectedRecordsWithOddKeys.add("1@d");
+    expectedRecordsWithOddKeys.add("1@a");
+    expectedRecordsWithOddKeys.add("1@c");
+    expectedRecordsWithOddKeys.add("3@f");
+    expectedRecordsWithOddKeys.add("3@g");
+    expectedRecordsWithOddKeys.add("7@a");
+    expectedRecordsWithOddKeys.add("7@f");
+    expectedRecordsWithOddKeys.add("7@a");
+    expectedRecordsWithOddKeys.add("7@b");
+    expectedRecordsWithOddKeys.add("7@c");
+    expectedRecordsWithOddKeys.add("7@z");
+    expectedRecordsWithOddKeys.add("9@a");
+    expectedRecordsWithOddKeys.add("9@a");
+    expectedRecordsWithOddKeys.add("9@b");
+    expectedRecordsWithOddKeys.add("11@n");
+
+    for (int i = 0; i < expectedRecordsWithOddKeys.size(); i++) {
+      assertEquals(expectedRecordsWithOddKeys.get(i), Strings.fromBytes(recordsWithOddKeys.get(i)));
+    }
+  }
+
+  private void verifyNeverUsed(List<byte[]> neverUsed) {
+    assertTrue(neverUsed.isEmpty());
+  }
+
+  private static class MockMOJoiner extends MOMSJFunction<MyEnum, Integer> {
+
+    @Override
+    public void operate(MOMSJFunctionCall<MyEnum> functionCall, MSJGroup<Integer> group) {
+      SortedSet<String> values = new TreeSet<String>();
+      Set<String> keys = new HashSet<String>();
+
+      for (int i = 0; i < group.getNumIterators(); i++) {
+        Iterator<byte[]> iterator = group.getArgumentsIterator(i);
+
+        while (iterator.hasNext()) {
+          String value = Strings.fromBytes(iterator.next());
+          String[] fields = value.split("@");
+          keys.add(fields[0]);
+
+          if (values.contains(fields[1])) {
+            functionCall.emit(MyEnum.REPEATED, new BytesWritable(Strings.toBytes(value)));
+          } else {
+            values.add(fields[1]);
+          }
+
+          if (Integer.valueOf(fields[0]) % 2 != 0) {
+            functionCall.emit(MyEnum.ODD, new BytesWritable(Strings.toBytes(value)));
+          }
+        }
+      }
+
+      String key;
+
+      if (keys.size() == 0) {
+        if (values.size() != 0) {
+          throw new RuntimeException("can only have no keys if there are no values!");
+        } else {
+          return;
+        }
+      }
+
+      if (keys.size() == 1) {
+        key = keys.iterator().next();
+      } else {
+        throw new RuntimeException("Can only have one key per group!:" + keys);
+      }
+
+      for (String value : values) {
+        functionCall.emit(MyEnum.MERGED, new BytesWritable(Strings.toBytes(key + "@" + value)));
+      }
+    }
+
+  }
+
+  public static class MockExtractor extends Extractor<Integer> {
+    @Override
+    public Integer extractKey(byte[] record) {
+      return Integer.valueOf(Strings.fromBytes(record).split("@")[0]);
+    }
+
+    @Override
+    public Extractor<Integer> makeCopy() {
+      return new MockExtractor();
+    }
+  }
+
+
+  public void verifyRecordTypes() throws Exception {
+    assertEquals(BytesWritable.class, Bucket.open(fs, getTestRoot() + "/store1").getRecordClass());
+    assertEquals(BytesWritable.class, Bucket.open(fs, getTestRoot() + "/store2").getRecordClass());
+    assertEquals(BytesWritable.class, Bucket.open(fs, getTestRoot() + "/store3").getRecordClass());
+    assertEquals(BytesWritable.class, Bucket.open(fs, getTestRoot() + "/store4").getRecordClass());
+  }
+
 }

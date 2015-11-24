@@ -1,6 +1,5 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -20,14 +19,12 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
-import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
 import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.bucket.Bucket;
-import com.rapleaf.formats.stream.RecordOutputStream;
 import com.rapleaf.formats.test.BucketHelper;
 import com.rapleaf.support.SerializationHelper;
 import com.rapleaf.support.Strings;
@@ -323,19 +320,5 @@ public class TestMSJTapAction extends WorkflowTestCase {
       }
     }
   }
-
-
-  public static void fillWithData(Bucket b, String relPath, String... records) throws IOException {
-    RecordOutputStream os = b.openWrite(relPath);
-    for (String record : records) {
-      os.write(Strings.toBytes(record));
-    }
-    os.close();
-  }
-
-  public BucketDataStore<BytesWritable> asStore(String dir) throws IOException {
-    return new BucketDataStoreImpl<BytesWritable>(fs, "", dir, "", BytesWritable.class);
-  }
-
 
 }
