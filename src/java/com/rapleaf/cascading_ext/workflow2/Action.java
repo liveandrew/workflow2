@@ -474,13 +474,6 @@ public abstract class Action {
     };
   }
 
-  //  TODO temporary for testing
-  private boolean fetchTaskSummaries = false;
-
-  protected void setFetchTaskSummaries(boolean fetchTaskSummaries) {
-    this.fetchTaskSummaries = fetchTaskSummaries;
-  }
-
   private void recordStatistics(ActionOperation operation) {
     String id = fullId();
 
@@ -508,13 +501,11 @@ public abstract class Action {
 
     try {
       //  TODO remove guard
-      if (fetchTaskSummaries) {
-        LOG.info("Fetching task summaries...");
-        for (Map.Entry<String, TaskSummary> entry : operation.getJobTaskSummaries().entrySet()) {
-          persistence.markJobTaskInfo(id, entry.getKey(), entry.getValue());
-        }
-        LOG.info("Done saving task summaries");
+      LOG.info("Fetching task summaries...");
+      for (Map.Entry<String, TaskSummary> entry : operation.getJobTaskSummaries().entrySet()) {
+        persistence.markJobTaskInfo(id, entry.getKey(), entry.getValue());
       }
+      LOG.info("Done saving task summaries");
     } catch (IOException e) {
       LOG.error("Failed to capture task steps for step!", e);
     }

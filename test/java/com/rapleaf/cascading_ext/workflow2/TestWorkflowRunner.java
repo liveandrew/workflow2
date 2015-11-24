@@ -1326,7 +1326,6 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     public StatAction(String checkpointToken, TupleDataStore input) {
       super(checkpointToken);
       this.input = input;
-      setFetchTaskSummaries(true);
     }
 
     @Override
