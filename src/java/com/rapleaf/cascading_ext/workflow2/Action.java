@@ -37,15 +37,13 @@ import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.liveramp.cascading_tools.jobs.FlowOperation;
-import com.liveramp.cascading_tools.jobs.HadoopOperation;
-import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
+import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.RunnableJob;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
@@ -422,11 +420,6 @@ public abstract class Action {
         CascadingHelper.get().resolveFlowStepStrategies(),
         CascadingHelper.get().getInvalidPropertyValues()
     );
-  }
-
-  protected void completeWithProgress(RunnableJob job) {
-    job.addProperties(combinedProperties.getPropertiesMap());
-    completeWithProgress(new HadoopOperation(job));
   }
 
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc) {
