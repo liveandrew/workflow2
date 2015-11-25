@@ -453,7 +453,7 @@ public abstract class Action {
    *
    * @param operation
    */
-  private void completeWithProgress(ActionOperation operation) {
+  public void completeWithProgress(ActionOperation operation) {
     runningFlow(operation);
     operation.complete();
   }
