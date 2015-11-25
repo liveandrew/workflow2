@@ -19,6 +19,7 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.java_support.LaunchedJob;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.AttemptStatus;
@@ -254,7 +255,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     }
 
     if (!knownJobs.contains(jobId)) {
-      stepState.addMrjob(new MapReduceJob(jobId, jobName, trackingURL, null, Lists.<MapReduceJob.Counter>newArrayList()));
+      stepState.addMrjob(new MapReduceJob(new LaunchedJob(jobId, jobName, trackingURL), null, Lists.<MapReduceJob.Counter>newArrayList()));
     }
 
   }

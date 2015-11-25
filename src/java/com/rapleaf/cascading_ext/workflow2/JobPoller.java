@@ -3,11 +3,11 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.hadoop.mapred.RunningJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_tools.jobs.ActionOperation;
+import com.liveramp.java_support.LaunchedJob;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 class JobPoller extends Thread {
@@ -49,11 +49,11 @@ class JobPoller extends Thread {
 
   public void updateRunningJobs() {
     for (ActionOperation operation : actionList) {
-      for (RunningJob job : operation.listJobs()) {
+      for (LaunchedJob job : operation.listJobs()) {
         try {
           persistence.markStepRunningJob(
               checkpoint,
-              job.getID().toString(),
+              job.getJobId(),
               job.getJobName(),
               job.getTrackingURL()
           );

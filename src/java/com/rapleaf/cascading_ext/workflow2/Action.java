@@ -465,15 +465,6 @@ public abstract class Action {
     operation.complete();
   }
 
-  protected ActionOperation.Complete completeCallback() {
-    return new ActionOperation.Complete() {
-      @Override
-      public void complete(ActionOperation operation) {
-        completeWithProgress(operation);
-      }
-    };
-  }
-
   private void recordStatistics(ActionOperation operation) {
     String id = fullId();
 
