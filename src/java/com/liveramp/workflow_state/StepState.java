@@ -72,7 +72,7 @@ public class StepState {
   }
 
   public StepState addMrjob(MapReduceJob job) {
-    this.mrJobsByID.put(job.getJobId(), job);
+    this.mrJobsByID.put(job.getJob().getJobId(), job);
     return this;
   }
 

@@ -20,6 +20,7 @@ import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.map.MapBuilder;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.java_support.LaunchedJob;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
@@ -432,7 +433,7 @@ public class DbPersistence implements WorkflowStatePersistence {
         counters.add(new MapReduceJob.Counter(counter.getGroup(), counter.getName(), counter.getValue()));
       }
 
-      state.addMrjob(new MapReduceJob(job.getJobIdentifier(), job.getJobName(), job.getTrackingUrl(),
+      state.addMrjob(new MapReduceJob(new LaunchedJob(job.getJobIdentifier(), job.getJobName(), job.getTrackingUrl()),
           new TaskSummary(
               job.getAvgMapDuration(), job.getMedianMapDuration(), job.getMaxMapDuration(), job.getMinMapDuration(), job.getStdevMapDuration(),
               job.getAvgReduceDuration(), job.getMedianReduceDuration(), job.getMaxReduceDuration(), job.getMinReduceDuration(), job.getStdevReduceDuration()
