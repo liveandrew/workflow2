@@ -9,7 +9,7 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class NearMemoryLimit extends JobThresholdAlert {
 
-  protected static final double MEMORY_WARN_THRESHOLD = .9;
+  protected static final double MEMORY_WARN_THRESHOLD = .95;
 
   protected static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
       .put(JOB_COUNTER_GROUP, MILLIS_MAPS)
