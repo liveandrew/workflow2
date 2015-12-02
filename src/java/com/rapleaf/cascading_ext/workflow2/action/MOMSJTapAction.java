@@ -15,7 +15,11 @@ import cascading.pipe.Pipe;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
 import com.rapleaf.cascading_ext.msj_tap.operation.MOMSJFunction;
+import com.rapleaf.cascading_ext.msj_tap.partition_mapper.IdentityPartitionMapper;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
+import com.rapleaf.cascading_ext.msj_tap.split.ApproximateLocalityMerger;
+import com.rapleaf.cascading_ext.msj_tap.split.FlatGrouper;
+import com.rapleaf.cascading_ext.msj_tap.split.LocalityGrouper;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.tap.FieldRemap;
 import com.rapleaf.cascading_ext.tap.RoutingSinkTap;
@@ -26,6 +30,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends Action {
 
   private final MOMSJFunction<E, Key> function;
+  private final Class<? extends LocalityGrouper> localityGrouper;
   private final List<StoreExtractor<Key>> extractors;
 
   private final Map<E, ? extends BucketDataStore> partitionedCategories;
@@ -85,6 +90,19 @@ public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends A
                         PostFlow callback,
                         Map<Object, Object> properties,
                         PartitionStructure partitionStructure) throws IOException {
+    this(checkpointToken, tmpRoot, extractors,
+        function, partitionedCategories, unpartitionedCategories, callback, properties, FlatGrouper.class, partitionStructure);
+  }
+
+  public MOMSJTapAction(String checkpointToken, String tmpRoot,
+                        final ExtractorsList<Key> extractors,
+                        MOMSJFunction<E, Key> function,
+                        Map<E, ? extends BucketDataStore> partitionedCategories,
+                        Map<E, ? extends BucketDataStore> unpartitionedCategories,
+                        PostFlow callback,
+                        Map<Object, Object> properties,
+                        Class<? extends LocalityGrouper> grouper,
+                        PartitionStructure partitionStructure) throws IOException {
     super(checkpointToken, tmpRoot, properties);
 
     if (!CollectionUtils.intersection(partitionedCategories.keySet(), unpartitionedCategories.keySet()).isEmpty()) {
@@ -92,6 +110,7 @@ public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends A
     }
 
     this.function = function;
+    this.localityGrouper = grouper;
     this.extractors = extractors.get();
     this.callback = callback;
     this.partitionStructure = partitionStructure;
@@ -120,7 +139,7 @@ public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends A
     Pipe pipe = new Pipe("pipe");
     pipe = new Each(pipe, function);
 
-    MSJTap<Key> source = new MSJTap<Key>(getConfs(extractors), new MSJScheme<Key>());
+    MSJTap<Key> source = new MSJTap<Key>(getConfs(extractors), new MSJScheme<Key>(), new ApproximateLocalityMerger(localityGrouper), new IdentityPartitionMapper());
 
     Map<Object, BucketTap2> taps = Maps.newHashMap();
     Map<Object, String> tapToSinkFieldName = Maps.newHashMap();

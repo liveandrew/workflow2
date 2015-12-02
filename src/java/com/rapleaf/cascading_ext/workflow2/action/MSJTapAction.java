@@ -20,7 +20,11 @@ import cascading.tuple.Tuple;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
 import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
+import com.rapleaf.cascading_ext.msj_tap.partition_mapper.IdentityPartitionMapper;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
+import com.rapleaf.cascading_ext.msj_tap.split.ApproximateLocalityMerger;
+import com.rapleaf.cascading_ext.msj_tap.split.FlatGrouper;
+import com.rapleaf.cascading_ext.msj_tap.split.LocalityGrouper;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.tap.TapFactory;
@@ -61,7 +65,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
                       PartitionableDataStore output,
                       PartitionStructure outputStructure,
                       ActionCallback callback) {
-    this(checkpointToken, tmpRoot, properties, inputs, function, new SplitGenerator.Empty(), output, new PartitionFactory.Now(outputStructure), callback);
+    this(checkpointToken, tmpRoot, properties, inputs, function, new SplitGenerator.Empty(), output, new PartitionFactory.Now(outputStructure), FlatGrouper.class, callback);
   }
 
   public MSJTapAction(String checkpointToken, String tmpRoot,
@@ -107,6 +111,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
         splitGen,
         output,
         structureFactory,
+        FlatGrouper.class,
         new ActionCallback.Default());
   }
 
@@ -117,6 +122,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
                       SplitGenerator splitGen,
                       PartitionableDataStore output,
                       PartitionFactory structureFactory,
+                      final Class<? extends LocalityGrouper> localityMerger,
                       ActionCallback callback) {
     super(checkpointToken, tmpRoot, properties);
 
@@ -133,7 +139,11 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
     Pipe pipe = bindSource("msj-tap", dsStores, new TapFactory() {
       @Override
       public Tap createTap() throws IOException {
-        return new MSJTap<K>(getConfs(asList), new MSJScheme<K>());
+        return new MSJTap<K>(getConfs(asList),
+            new MSJScheme<K>(),
+            new ApproximateLocalityMerger(localityMerger),
+            new IdentityPartitionMapper()
+        );
       }
     }, callback);
 
@@ -148,7 +158,6 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
 
     completePartitioned("msj-tap", pipe, output, structureFactory);
   }
-
 
 
   //  TODO this is ugly and I'd rather figure out a way to let the user pass in a MSJFunctionFactory... but it's tough.
