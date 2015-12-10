@@ -57,7 +57,7 @@ public class WorkflowQueries {
     Records records = rldb.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
-        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID))
+        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
         .where(Application.NAME.equalTo(name))
         .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeIdentifier))
         .orderBy(WorkflowExecution.ID, QueryOrder.DESC)
@@ -76,7 +76,7 @@ public class WorkflowQueries {
     Records records = rldb.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
-        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID))
+        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
         .where(Application.APP_TYPE.equalTo(type.getValue()))
         .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeIdentifier))
         .orderBy(WorkflowExecution.ID, QueryOrder.DESC)
@@ -96,7 +96,7 @@ public class WorkflowQueries {
     return !rldb.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
-        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID))
+        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
         .where(Application.APP_TYPE.equalTo(type.getValue()))
         .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeIdentifier))
         .orderBy(WorkflowExecution.ID, QueryOrder.DESC)
@@ -109,7 +109,7 @@ public class WorkflowQueries {
     return !rldb.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
-        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID))
+        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
         .where(Application.NAME.equalTo(name))
         .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeIdentifier))
         .orderBy(WorkflowExecution.ID, QueryOrder.DESC)
@@ -347,7 +347,7 @@ public class WorkflowQueries {
     }
 
     return stepAttempts.innerJoin(MapreduceJob.TBL)
-        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID));
+        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)));
 
   }
 
@@ -369,7 +369,7 @@ public class WorkflowQueries {
                                                                       Collection<Long> stepAttemptIds) throws IOException {
     Map<Long, Long> map = Maps.newHashMap();
     for (Record record : stepAttemptToExecutionQuery(databases, stepAttemptIds)
-        .select(Lists.newArrayList(StepAttempt.ID, WorkflowExecution.ID))
+        .select(StepAttempt.ID, WorkflowExecution.ID)
         .fetch()) {
       map.put(record.getLong(StepAttempt.ID), record.getLong(WorkflowExecution.ID));
     }
@@ -379,9 +379,9 @@ public class WorkflowQueries {
   private static GenericQuery stepAttemptToExecutionQuery(IDatabases databases, Collection<Long> stepAttemptIds) {
     return databases.getRlDb().createQuery().from(WorkflowExecution.TBL)
         .innerJoin(WorkflowAttempt.TBL)
-        .on(WorkflowAttempt.WORKFLOW_EXECUTION_ID.equalTo(WorkflowExecution.ID))
+        .on(WorkflowAttempt.WORKFLOW_EXECUTION_ID.equalTo(WorkflowExecution.ID.as(Integer.class)))
         .innerJoin(StepAttempt.TBL)
-        .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID))
+        .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID.as(Integer.class)))
         .where(StepAttempt.ID.in(stepAttemptIds));
   }
 
@@ -413,7 +413,7 @@ public class WorkflowQueries {
 
     GenericQuery counterQuery = completeMapreduceJobQuery(databases, endedAfter, endedBefore)
         .innerJoin(MapreduceCounter.TBL)
-        .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID));
+        .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID.as(Integer.class)));
 
     if (group != null) {
       counterQuery = counterQuery.where(MapreduceCounter.GROUP.in(group));
@@ -464,9 +464,9 @@ public class WorkflowQueries {
 
     GenericQuery on = joinStepAttempts(workflowExecutionQuery(databases.getRlDb(), null, null, startedAfter, startedBefore))
         .innerJoin(StepAttemptDatastore.TBL)
-        .on(StepAttempt.ID.equalTo(StepAttemptDatastore.STEP_ATTEMPT_ID))
+        .on(StepAttempt.ID.equalTo(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class)))
         .innerJoin(WorkflowAttemptDatastore.TBL)
-        .on(StepAttemptDatastore.WORKFLOW_ATTEMPT_DATASTORE_ID.equalTo(WorkflowAttemptDatastore.ID))
+        .on(StepAttemptDatastore.WORKFLOW_ATTEMPT_DATASTORE_ID.equalTo(WorkflowAttemptDatastore.ID.as(Integer.class)))
         .select(columns);
 
     NestedMultimap<Long, DSAction, WorkflowAttemptDatastore> stores = new NestedMultimap<>();
@@ -488,7 +488,7 @@ public class WorkflowQueries {
                                                                                      Long id,
                                                                                      String name,
                                                                                      String scope,
-                                                                                     String appType,
+                                                                                     Integer appType,
                                                                                      Long startedAfter,
                                                                                      Long startedBefore,
                                                                                      WorkflowExecutionStatus status,
@@ -614,7 +614,7 @@ public class WorkflowQueries {
 
     List<WorkflowAttempt> workflowAttempts = Lists.newArrayList();
     for (Record record : databases.getRlDb().createQuery().from(WorkflowAttempt.TBL)
-        .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.in(workflowExecutionIds))
+        .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).in(workflowExecutionIds))
         .fetch()) {
       workflowAttempts.add(JackUtil.getFullModel(WorkflowAttempt.class, WorkflowAttempt.Attributes.class, record, databases));
     }
@@ -623,7 +623,7 @@ public class WorkflowQueries {
 
   public static List<WorkflowExecution> queryWorkflowExecutions(IDatabases databases,
                                                                 String name,
-                                                                String appType,
+                                                                Integer appType,
                                                                 Long startedAfter,
                                                                 Long startedBefore,
                                                                 Integer limit) throws IOException {
@@ -634,7 +634,7 @@ public class WorkflowQueries {
                                                                 Long id,
                                                                 String name,
                                                                 String scope,
-                                                                String appType,
+                                                                Integer appType,
                                                                 Long startedAfter,
                                                                 Long startedBefore,
                                                                 WorkflowExecutionStatus status,
@@ -652,7 +652,7 @@ public class WorkflowQueries {
     return executions;
   }
 
-  public static GenericQuery workflowExecutionQuery(IRlDb rldb, String name, String appType, Long startedAfter, Long startedBefore) throws IOException {
+  public static GenericQuery workflowExecutionQuery(IRlDb rldb, String name, Integer appType, Long startedAfter, Long startedBefore) throws IOException {
     return workflowExecutionQuery(rldb, null, name, null, appType, startedAfter, startedBefore, null, null);
   }
 
@@ -660,7 +660,7 @@ public class WorkflowQueries {
                                                     Long id,
                                                     String name,
                                                     String scope,
-                                                    String appType,
+                                                    Integer appType,
                                                     Long startedAfter,
                                                     Long startedBefore,
                                                     WorkflowExecutionStatus status,
@@ -682,7 +682,7 @@ public class WorkflowQueries {
       }
 
       query.innerJoin(WorkflowExecution.TBL)
-          .on(WorkflowExecution.APPLICATION_ID.equalTo(Application.ID));
+          .on(WorkflowExecution.APPLICATION_ID.equalTo(Application.ID.as(Integer.class)));
 
     } else {
       query = queryb.from(WorkflowExecution.TBL);
@@ -718,7 +718,7 @@ public class WorkflowQueries {
 
   public static List<StepAttempt.Attributes> getStepAttempts(IRlDb rldb, Long workflowAttemptId) throws IOException {
     List<StepAttempt.Attributes> executions = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(StepAttempt.TBL).where(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(workflowAttemptId)).fetch()) {
+    for (Record record : rldb.createQuery().from(StepAttempt.TBL).where(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId)).fetch()) {
       executions.add(JackUtil.getModel(StepAttempt.Attributes.class, record));
     }
     return executions;
@@ -726,7 +726,7 @@ public class WorkflowQueries {
 
   public static List<StepDependency.Attributes> getStepDependencies(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
     List<StepDependency.Attributes> dependencies = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(StepDependency.TBL).where(StepDependency.STEP_ATTEMPT_ID.in(stepAttemptIds).or(StepDependency.DEPENDENCY_ATTEMPT_ID.in(stepAttemptIds))).fetch()) {
+    for (Record record : rldb.createQuery().from(StepDependency.TBL).where(StepDependency.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds).or(StepDependency.DEPENDENCY_ATTEMPT_ID.as(Long.class).in(stepAttemptIds))).fetch()) {
       dependencies.add(JackUtil.getModel(StepDependency.Attributes.class, record));
     }
     return dependencies;
@@ -734,7 +734,7 @@ public class WorkflowQueries {
 
   public static List<MapreduceJob.Attributes> getMapreduceJobs(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
     List<MapreduceJob.Attributes> jobs = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(MapreduceJob.TBL).where(MapreduceJob.STEP_ATTEMPT_ID.in(stepAttemptIds)).fetch()) {
+    for (Record record : rldb.createQuery().from(MapreduceJob.TBL).where(MapreduceJob.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds)).fetch()) {
       jobs.add(JackUtil.getModel(MapreduceJob.Attributes.class, record));
     }
     return jobs;
@@ -742,7 +742,7 @@ public class WorkflowQueries {
 
   public static List<MapreduceCounter.Attributes> getMapreduceCounters(IRlDb rldb, Set<Long> mapreduceJobIds) throws IOException {
     List<MapreduceCounter.Attributes> counters = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(MapreduceCounter.TBL).where(MapreduceCounter.MAPREDUCE_JOB_ID.in(mapreduceJobIds)).fetch()) {
+    for (Record record : rldb.createQuery().from(MapreduceCounter.TBL).where(MapreduceCounter.MAPREDUCE_JOB_ID.as(Long.class).in(mapreduceJobIds)).fetch()) {
       counters.add(JackUtil.getModel(MapreduceCounter.Attributes.class, record));
     }
     return counters;
@@ -750,7 +750,7 @@ public class WorkflowQueries {
 
   public static List<StepAttemptDatastore.Attributes> getStepAttemptDatastores(IRlDb rldb, Set<Long> stepIds) throws IOException {
     List<StepAttemptDatastore.Attributes> attemptDatastores = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(StepAttemptDatastore.TBL).where(StepAttemptDatastore.STEP_ATTEMPT_ID.in(stepIds)).fetch()) {
+    for (Record record : rldb.createQuery().from(StepAttemptDatastore.TBL).where(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class).in(stepIds)).fetch()) {
       attemptDatastores.add(JackUtil.getModel(StepAttemptDatastore.Attributes.class, record));
     }
     return attemptDatastores;
@@ -758,7 +758,7 @@ public class WorkflowQueries {
 
   public static List<WorkflowAttemptDatastore.Attributes> getWorkflowAttemptDatastores(IRlDb rldb, Long workflowAttemptId) throws IOException {
     List<WorkflowAttemptDatastore.Attributes> workflowAttemptDatastore = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(WorkflowAttemptDatastore.TBL).where(WorkflowAttemptDatastore.WORKFLOW_ATTEMPT_ID.equalTo(workflowAttemptId)).fetch()) {
+    for (Record record : rldb.createQuery().from(WorkflowAttemptDatastore.TBL).where(WorkflowAttemptDatastore.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId)).fetch()) {
       workflowAttemptDatastore.add(JackUtil.getModel(WorkflowAttemptDatastore.Attributes.class, record));
     }
     return workflowAttemptDatastore;
@@ -792,16 +792,16 @@ public class WorkflowQueries {
         .where(StepAttempt.STEP_TOKEN.in(latestTokens))
         .where(StepAttempt.STEP_STATUS.equalTo(StepStatus.COMPLETED.ordinal()))
         .innerJoin(WorkflowAttempt.TBL)
-        .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID))
-        .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.equalTo(executionId))
+        .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID.as(Integer.class)))
+        .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).equalTo(executionId))
         .innerJoin(MapreduceJob.TBL)
-        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID))
+        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)))
         .innerJoin(MapreduceCounter.TBL)
-        .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID));
+        .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID.as(Integer.class)));
 
   }
 
-  public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, String name, String appType, Long startedAfter, Long startedBefore,
+  public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, String name, Integer appType, Long startedAfter, Long startedBefore,
                                                   Set<String> specificGroups,
                                                   Set<String> specificNames) throws IOException {
     return getMapreduceCounters(getStepAttempts(rldb, stepToken, name, appType, startedAfter, startedBefore), specificGroups, specificNames);
@@ -817,9 +817,9 @@ public class WorkflowQueries {
                                                   Set<String> specificGroups,
                                                   Set<String> specificNames) {
     GenericQuery query = stepQuery.innerJoin(MapreduceJob.TBL)
-        .on(StepAttempt.ID.equalTo(MapreduceJob.STEP_ATTEMPT_ID))
+        .on(StepAttempt.ID.equalTo(MapreduceJob.STEP_ATTEMPT_ID.as(Long.class)))
         .innerJoin(MapreduceCounter.TBL)
-        .on(MapreduceJob.ID.equalTo(MapreduceCounter.MAPREDUCE_JOB_ID));
+        .on(MapreduceJob.ID.equalTo(MapreduceCounter.MAPREDUCE_JOB_ID.as(Long.class)));
 
     if (specificGroups != null) {
       query = query.where(MapreduceCounter.GROUP.in(specificGroups));
@@ -832,7 +832,7 @@ public class WorkflowQueries {
     return query;
   }
 
-  public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, String name, String appType, Long startedAfter, Long startedBefore) throws IOException {
+  public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, String name, Integer appType, Long startedAfter, Long startedBefore) throws IOException {
     return filterStepAttempts(
         joinStepAttempts(workflowExecutionQuery(rldb, name, appType, startedAfter, startedBefore)),
         stepTokens,
@@ -843,9 +843,9 @@ public class WorkflowQueries {
   public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, Set<Long> workflowExecutionIds) throws IOException {
 
     GenericQuery attempts = rldb.createQuery().from(WorkflowAttempt.TBL)
-        .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.in(workflowExecutionIds))
+        .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).in(workflowExecutionIds))
         .innerJoin(StepAttempt.TBL)
-        .on(WorkflowAttempt.ID.equalTo(StepAttempt.WORKFLOW_ATTEMPT_ID));
+        .on(WorkflowAttempt.ID.equalTo(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class)));
 
     return filterStepAttempts(attempts, stepTokens, null);
   }
@@ -853,12 +853,12 @@ public class WorkflowQueries {
   private static GenericQuery joinStepAttempts(GenericQuery workflowExecutions) {
     return joinWorkflowAttempts(workflowExecutions)
         .innerJoin(StepAttempt.TBL)
-        .on(WorkflowAttempt.ID.equalTo(StepAttempt.WORKFLOW_ATTEMPT_ID));
+        .on(WorkflowAttempt.ID.equalTo(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class)));
   }
 
   private static GenericQuery joinWorkflowAttempts(GenericQuery workflowExecutions) {
     return workflowExecutions.innerJoin(WorkflowAttempt.TBL)
-        .on(WorkflowExecution.ID.equalTo(WorkflowAttempt.WORKFLOW_EXECUTION_ID));
+        .on(WorkflowExecution.ID.equalTo(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class)));
   }
 
   private static GenericQuery filterStepAttempts(GenericQuery stepQuery, Set<String> stepToken, EnumSet<StepStatus> inStatuses) {
