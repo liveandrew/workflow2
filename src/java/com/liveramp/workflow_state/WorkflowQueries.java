@@ -48,8 +48,6 @@ import com.rapleaf.jack.queries.Records;
 import com.rapleaf.jack.queries.where_operators.In;
 import com.rapleaf.jack.queries.where_operators.IsNull;
 
-import static com.rapleaf.jack.queries.Functions.DATETIME;
-
 public class WorkflowQueries {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowQueries.class);
 
@@ -340,10 +338,10 @@ public class WorkflowQueries {
         .where(StepAttempt.STEP_STATUS.equalTo(StepStatus.COMPLETED.ordinal()));
 
     if (endedAfter != null) {
-      stepAttempts = stepAttempts.where(StepAttempt.END_TIME.greaterThan(DATETIME(endedAfter)));
+      stepAttempts = stepAttempts.where(StepAttempt.END_TIME.greaterThan(endedAfter));
     }
     if (endedBefore != null) {
-      stepAttempts = stepAttempts.where(StepAttempt.END_TIME.lessThanOrEqualTo(DATETIME(endedBefore)));
+      stepAttempts = stepAttempts.where(StepAttempt.END_TIME.lessThanOrEqualTo(endedBefore));
     }
 
     return stepAttempts.innerJoin(MapreduceJob.TBL)
@@ -697,11 +695,11 @@ public class WorkflowQueries {
     }
 
     if (startedBefore != null) {
-      query = query.where(WorkflowExecution.START_TIME.lessThan(DATETIME(startedBefore)));
+      query = query.where(WorkflowExecution.START_TIME.lessThan(startedBefore));
     }
 
     if (startedAfter != null) {
-      query = query.where(WorkflowExecution.START_TIME.greaterThan(DATETIME(startedAfter)));
+      query = query.where(WorkflowExecution.START_TIME.greaterThan(startedAfter));
     }
 
     if (status != null) {
