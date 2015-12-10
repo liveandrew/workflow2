@@ -311,7 +311,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     Records records = rldb.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
-        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID))
+        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
         .where(Application.NAME.equalTo(name))
         .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeId))
         .where(WorkflowExecution.STATUS.equalTo(WorkflowExecutionStatus.INCOMPLETE.ordinal()))
