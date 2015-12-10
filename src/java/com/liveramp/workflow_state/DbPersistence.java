@@ -233,6 +233,11 @@ public class DbPersistence implements WorkflowStatePersistence {
   @Override
   public synchronized void markJobCounters(String stepToken, String jobId, TwoNestedMap<String, String, Long> values) throws IOException {
 
+    //  if job failed in setup, don't try to get the job, won't exist.  nothing to record.
+    if(values.isEmpty()){
+      return;
+    }
+
     StepAttempt step = getStep(stepToken);
     MapreduceJob job = getMapreduceJob(jobId, step);
 
