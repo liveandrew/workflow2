@@ -255,25 +255,32 @@ public class DbPersistence implements WorkflowStatePersistence {
   @Override
   public synchronized void markJobTaskInfo(String stepToken, String jobId, TaskSummary info) throws IOException {
 
-    StepAttempt step = getStep(stepToken);
-    MapreduceJob job = getMapreduceJob(jobId, step);
+    try {
 
-    job
-        //  map
-        .setAvgMapDuration(info.getAvgMapDuration())
-        .setMedianMapDuration(info.getMedianMapDuration())
-        .setMaxMapDuration(info.getMaxMapDuration())
-        .setMinMapDuration(info.getMinMapDuration())
-        .setStdevMapDuration(info.getMapDurationStDev())
-        //  reduce
-        .setAvgReduceDuration(info.getAvgReduceDuration())
-        .setMedianReduceDuration(info.getMedianReduceDuration())
-        .setMaxReduceDuration(info.getMaxReduceDuration())
-        .setMinReduceDuration(info.getMinReduceDuration())
-        .setStdevReduceDuration(info.getReduceDurationStDev())
+      StepAttempt step = getStep(stepToken);
+      MapreduceJob job = getMapreduceJob(jobId, step);
 
-        .save();
+      job
+          //  map
+          .setAvgMapDuration(info.getAvgMapDuration())
+          .setMedianMapDuration(info.getMedianMapDuration())
+          .setMaxMapDuration(info.getMaxMapDuration())
+          .setMinMapDuration(info.getMinMapDuration())
+          .setStdevMapDuration(info.getMapDurationStDev())
+          //  reduce
+          .setAvgReduceDuration(info.getAvgReduceDuration())
+          .setMedianReduceDuration(info.getMedianReduceDuration())
+          .setMaxReduceDuration(info.getMaxReduceDuration())
+          .setMinReduceDuration(info.getMinReduceDuration())
+          .setStdevReduceDuration(info.getReduceDurationStDev())
 
+          .save();
+
+    }
+    //  don't want to leave this in forever, debugging transient error on setup failure  (figure out why jobID is here which isn't recorded earlier)
+    catch(Exception e){
+      throw new RuntimeException("Error recording job task info for jobID "+jobId, e);
+    }
   }
 
   private MapreduceJob getMapreduceJob(String jobId, StepAttempt step) throws IOException {
