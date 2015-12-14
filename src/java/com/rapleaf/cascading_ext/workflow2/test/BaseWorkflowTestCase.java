@@ -95,7 +95,8 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public void executeWorkflowFOff(WorkflowRunnable foff) throws Exception {
-    foff.postWorkflow(execute(foff.getSteps(), foff.getOptions()));
+    WorkflowRunner runner = execute(foff.getSteps(), foff.getOptions());
+    foff.postWorkflow(runner.getPersistence().getFlatCounters(), runner.getPersistence().getCountersByStep());
   }
 
   public InMemoryContext context() {
