@@ -180,14 +180,25 @@ public class MultiStepAction extends Action {
 
   @Override
   TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
-
     TwoNestedMap<String, String, Long> map = new TwoNestedMap<>();
-
     for (Step step : steps) {
       map.putAll(step.getAction().getStepCounters());
     }
-
     return map;
   }
 
+  @Override
+  DurationInfo getDurationInfo() throws IOException {
+
+    long minStart = Long.MAX_VALUE;
+    long maxEnd = Long.MIN_VALUE;
+
+    for (Step step : steps) {
+      DurationInfo durationInfo = step.getAction().getDurationInfo();
+      minStart = Math.min(minStart, durationInfo.getStartTime());
+      maxEnd = Math.max(maxEnd, durationInfo.getEndTime());
+    }
+
+    return new DurationInfo(minStart, maxEnd);
+  }
 }

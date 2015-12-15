@@ -519,10 +519,32 @@ public abstract class Action {
     return allCounters.get(actionId);
   }
 
-  StepState getStepState() throws IOException {
+  DurationInfo getDurationInfo() throws IOException {
     String actionId = this.actionId.resolve();
     Map<String, StepState> stepStatuses = persistence.getStepStatuses();
-    return stepStatuses.get(actionId);
+    StepState stepState = stepStatuses.get(actionId);
+    return new DurationInfo(stepState.getStartTimestamp(), stepState.getEndTimestamp());
+  }
+
+  //  TODO I don't love having a new class here but returning just a StepState doesn't make sense with
+  // calling futures on MSAs and requiring people to specify checkpoint tokens to fetch data breaks modularity
+  //  (shouldn't have to know inner tokens of other actions you're using)
+  public static class DurationInfo {
+    private final long startTime;
+    private final long endTime;
+
+    public DurationInfo(long startTime, long endTime) {
+      this.startTime = startTime;
+      this.endTime = endTime;
+    }
+
+    public long getStartTime() {
+      return startTime;
+    }
+
+    public long getEndTime() {
+      return endTime;
+    }
   }
 
   //  everything we feel like exposing to pre-execute hooks in CA2.  I don't really love that it's here, but this way

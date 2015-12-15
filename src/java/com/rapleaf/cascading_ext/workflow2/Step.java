@@ -10,7 +10,6 @@ import java.util.concurrent.Callable;
 
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.workflow_state.StepState;
 
 public final class Step {
 
@@ -75,11 +74,11 @@ public final class Step {
     };
   }
 
-  public Callable<StepState> getStateFuture(){
-    return new Callable<StepState>() {
+  public Callable<Action.DurationInfo> getDurationFuture(){
+    return new Callable<Action.DurationInfo>() {
       @Override
-      public StepState call() throws Exception {
-        return action.getStepState();
+      public Action.DurationInfo call() throws Exception {
+        return action.getDurationInfo();
       }
     };
   }
