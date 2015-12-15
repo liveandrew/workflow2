@@ -42,6 +42,7 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -516,6 +517,12 @@ public abstract class Action {
     String actionId = this.actionId.resolve();
     ThreeNestedMap<String, String, String, Long> allCounters = persistence.getCountersByStep();
     return allCounters.get(actionId);
+  }
+
+  StepState getStepState() throws IOException {
+    String actionId = this.actionId.resolve();
+    Map<String, StepState> stepStatuses = persistence.getStepStatuses();
+    return stepStatuses.get(actionId);
   }
 
   //  everything we feel like exposing to pre-execute hooks in CA2.  I don't really love that it's here, but this way

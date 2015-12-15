@@ -159,12 +159,6 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
     completePartitioned("msj-tap", pipe, output, structureFactory);
   }
 
-
-  //  TODO this is ugly and I'd rather figure out a way to let the user pass in a MSJFunctionFactory... but it's tough.
-  protected MSJFunction<K> getFunction() {
-    return function;
-  }
-
   private static class InsertSplit extends BaseOperation implements Function {
 
     private final SplitGenerator generator;

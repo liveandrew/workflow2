@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.workflow_state.StepState;
 
 public final class Step {
 
@@ -70,6 +71,15 @@ public final class Step {
       @Override
       public TwoNestedMap<String, String, Long> call() throws Exception {
         return action.getStepCounters();
+      }
+    };
+  }
+
+  public Callable<StepState> getStateFuture(){
+    return new Callable<StepState>() {
+      @Override
+      public StepState call() throws Exception {
+        return action.getStepState();
       }
     };
   }
