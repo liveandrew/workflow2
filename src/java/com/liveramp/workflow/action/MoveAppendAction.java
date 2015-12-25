@@ -33,5 +33,6 @@ public class MoveAppendAction<T extends TBase> extends Action {
     final Bucket productionSplitBucket = Bucket.openOrCreate(fs, productionBucketPath, recordType);
 
     productionSplitBucket.moveAppend(tempSplitBucket);
+    setStatusMessage(String.format("Appended %s to %s", tempSplitBucket, productionSplitBucket));
   }
 }
