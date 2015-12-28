@@ -308,12 +308,6 @@ public class DbPersistence implements WorkflowStatePersistence {
     WorkflowAttempt attempt = getAttempt();
     Assertions.assertLive(attempt);
 
-    //  TODO sweep this in ~2 weeks (after stuff has been deployed)
-    LOG.info("Setting pool: " + pool);
-    save(attempt
-        .setPool(pool)
-    );
-
     save(getExecution()
         .setPoolOverride(pool)
     );
