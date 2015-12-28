@@ -120,6 +120,11 @@ public class WorkflowOptions {
     return this;
   }
 
+  public WorkflowOptions setEnabledNotifications(Set<WorkflowRunnerNotification> enabledNotifications) {
+    this.enabledNotifications = EnumSet.copyOf(enabledNotifications);
+    return this;
+  }
+
   public WorkflowOptions setNotificationLevel(Set<WorkflowRunnerNotification> notifications) {
     enabledNotifications = EnumSet.copyOf(notifications);
     return this;
