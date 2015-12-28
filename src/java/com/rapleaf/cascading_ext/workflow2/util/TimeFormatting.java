@@ -36,17 +36,17 @@ public class TimeFormatting {
       }
     }
 
-    public void print(String prefix, StringBuilder builder, WorkflowStatePersistence persistence) throws IOException {
+    public void print(String prefix, StringBuilder builder, Map<String, StepState> statuses) throws IOException {
 
       if(terminal != null){
-        StepState state = persistence.getStepStatuses().get(terminal.getCheckpointToken());
+        StepState state = statuses.get(terminal.getCheckpointToken());
         String duration = DurationFormatUtils.formatDurationWords(state.getEndTimestamp() - state.getStartTimestamp(), true, true);
         builder.append(duration).append(" (start: ").append(state.getStartTimestamp()).append(" end: ").append(state.getEndTimestamp()).append(")");
       }
 
       for (String key : children.keySet()) {
         builder.append("\n").append(prefix).append(key).append(":");
-        children.get(key).print(prefix + "  ", builder, persistence);
+        children.get(key).print(prefix + "  ", builder, statuses);
       }
     }
 
@@ -66,7 +66,10 @@ public class TimeFormatting {
     }
 
     StringBuilder toS = new StringBuilder();
-    root.print("", toS, persistence);
+
+
+    Map<String, StepState> statuses = persistence.getStepStatuses();
+    root.print("", toS, statuses);
 
     return toS.toString();
 
