@@ -594,18 +594,25 @@ public final class WorkflowRunner {
   private void mail(String subject, String body, WorkflowRunnerNotification notification) throws IOException {
     for (AlertsHandler handler : persistence.getRecipients(notification)) {
 
-      AlertMessages.Builder builder = AlertMessages.builder(subject)
-          .setBody(appendTrackerUrl(body))
-          .addToDefaultTags(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG);
+      try {
 
-      if (notification.serverity() == AlertSeverity.ERROR) {
-        builder.addToDefaultTags(WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG);
+        AlertMessages.Builder builder = AlertMessages.builder(subject)
+            .setBody(appendTrackerUrl(body))
+            .addToDefaultTags(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG);
+
+        if (notification.serverity() == AlertSeverity.ERROR) {
+          builder.addToDefaultTags(WorkflowConstants.ERROR_EMAIL_SUBJECT_TAG);
+        }
+
+        handler.sendAlert(
+            builder.build(),
+            AlertRecipients.engineering(notification.serverity())
+        );
+
+      }catch(Exception e){
+        LOG.error("Failed to notify AlertsHandler "+handler, e);
       }
-
-      handler.sendAlert(
-          builder.build(),
-          AlertRecipients.engineering(notification.serverity())
-      );
+      
     }
   }
 
