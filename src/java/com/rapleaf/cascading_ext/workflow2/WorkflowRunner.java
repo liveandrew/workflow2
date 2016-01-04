@@ -612,7 +612,7 @@ public final class WorkflowRunner {
       }catch(Exception e){
         LOG.error("Failed to notify AlertsHandler "+handler, e);
       }
-      
+
     }
   }
 

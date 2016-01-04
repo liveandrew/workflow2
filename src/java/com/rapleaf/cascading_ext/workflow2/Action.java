@@ -37,6 +37,8 @@ import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.liveramp.cascading_tools.jobs.FlowOperation;
+import com.liveramp.cascading_tools.jobs.TrackedFlow;
+import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
@@ -434,6 +436,30 @@ public abstract class Action {
     Flow flow = flowc.buildFlow();
     completeWithProgress(new FlowOperation(flow, skipCompleteListener));
     return flow;
+  }
+
+  //  TODO port everything to use completeTracked (or rename) after prod testing
+
+  protected Flow completeTracked(FlowBuilder.IFlowClosure flowc) {
+    return completeTracked(flowc, false);
+  }
+
+  //  TODO sweep skipCompleteListener when we figure out cascading npe (prolly upgrade past 2.5.1)
+  protected Flow completeTracked(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
+    Flow flow = flowc.buildFlow();
+
+    TrackedOperation tracked = new TrackedFlow(flow, skipCompleteListener);
+    completeTracked(tracked);
+
+    return flow;
+  }
+
+  protected void completeTracked(TrackedOperation tracked){
+    WorkflowJobPersister persister = new WorkflowJobPersister(persistence, getActionId().resolve(), counterFilter);
+    tracked.complete(
+        persister,
+        failOnCounterFetch
+    );
   }
 
   protected FlowRunner completeWithProgressClosure() {
