@@ -426,17 +426,28 @@ public abstract class Action {
   }
 
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc) {
-    Flow flow = flowc.buildFlow();
-    completeWithProgress(new FlowOperation(flow));
-    return flow;
+    return completeTracked(flowc);
   }
 
   //  TODO sweep when we figure out cascading npe (prolly upgrade past 2.5.1)
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
-    Flow flow = flowc.buildFlow();
-    completeWithProgress(new FlowOperation(flow, skipCompleteListener));
-    return flow;
+    return completeTracked(flowc, skipCompleteListener);
   }
+
+
+  /**
+   * Complete the provided ActionOperation while monitoring and reporting its progress.
+   * This method will  call setPercentComplete with values between startPct and
+   * maxPct incrementally based on the completion of the ActionOperation's steps.
+   *
+   * @param operation
+   */
+  @Deprecated
+  public void completeWithProgress(ActionOperation operation) {
+    runningFlow(operation);
+    operation.complete();
+  }
+
 
   //  TODO port everything to use completeTracked (or rename) after prod testing
 
@@ -471,18 +482,6 @@ public abstract class Action {
     public Flow complete(Properties properties, String name, Tap source, Tap sink, Pipe tail) {
       return completeWithProgress(buildFlow(properties).connect(name, source, sink, tail));
     }
-  }
-
-  /**
-   * Complete the provided ActionOperation while monitoring and reporting its progress.
-   * This method will call setPercentComplete with values between startPct and
-   * maxPct incrementally based on the completion of the ActionOperation's steps.
-   *
-   * @param operation
-   */
-  public void completeWithProgress(ActionOperation operation) {
-    runningFlow(operation);
-    operation.complete();
   }
 
   private void recordStatistics(ActionOperation operation) {
