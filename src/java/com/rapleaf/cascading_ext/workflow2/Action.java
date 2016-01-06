@@ -426,12 +426,17 @@ public abstract class Action {
   }
 
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc) {
-    return completeTracked(flowc);
+    return completeWithProgress(flowc, false);
   }
 
   //  TODO sweep when we figure out cascading npe (prolly upgrade past 2.5.1)
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
-    return completeTracked(flowc, skipCompleteListener);
+    Flow flow = flowc.buildFlow();
+
+    TrackedOperation tracked = new TrackedFlow(flow, skipCompleteListener);
+    completeWithProgress(tracked);
+
+    return flow;
   }
 
 
@@ -448,24 +453,7 @@ public abstract class Action {
     operation.complete();
   }
 
-
-  //  TODO port everything to use completeTracked (or rename) after prod testing
-
-  protected Flow completeTracked(FlowBuilder.IFlowClosure flowc) {
-    return completeTracked(flowc, false);
-  }
-
-  //  TODO sweep skipCompleteListener when we figure out cascading npe (prolly upgrade past 2.5.1)
-  protected Flow completeTracked(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
-    Flow flow = flowc.buildFlow();
-
-    TrackedOperation tracked = new TrackedFlow(flow, skipCompleteListener);
-    completeTracked(tracked);
-
-    return flow;
-  }
-
-  protected void completeTracked(TrackedOperation tracked){
+  protected void completeWithProgress(TrackedOperation tracked){
     WorkflowJobPersister persister = new WorkflowJobPersister(persistence, getActionId().resolve(), counterFilter);
     tracked.complete(
         persister,
