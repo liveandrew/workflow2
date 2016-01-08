@@ -34,7 +34,6 @@ import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
-import com.liveramp.cascading_tools.jobs.ActionOperation;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
@@ -430,44 +429,6 @@ public abstract class Action {
     public Flow complete(Properties properties, String name, Tap source, Tap sink, Pipe tail) {
       return completeWithProgress(buildFlow(properties).connect(name, source, sink, tail));
     }
-  }
-
-  private void recordStatistics(ActionOperation operation) {
-    String id = fullId();
-
-    try {
-      ThreeNestedMap<String, String, String, Long> counters = operation.getJobCounters();
-
-      for (String job : counters.key1Set()) {
-        TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<String, String, Long>();
-        for (String group : counters.key2Set(job)) {
-          for (String name : counters.key3Set(job, group)) {
-            if (counterFilter.isRecord(group, name)) {
-              toRecord.put(group, name, counters.get(job, group, name));
-            }
-          }
-        }
-        persistence.markJobCounters(id, job, toRecord);
-      }
-
-    } catch (IOException e) {
-      LOG.error("Failed to capture stats for step!", e);
-      if (failOnCounterFetch) {
-        throw new RuntimeException("Failed fetching stats for step", e);
-      }
-    }
-
-    try {
-      //  TODO remove guard
-      LOG.info("Fetching task summaries...");
-      for (Map.Entry<String, TaskSummary> entry : operation.getJobTaskSummaries().entrySet()) {
-        persistence.markJobTaskInfo(id, entry.getKey(), entry.getValue());
-      }
-      LOG.info("Done saving task summaries");
-    } catch (IOException e) {
-      LOG.error("Failed to capture task steps for step!", e);
-    }
-
   }
 
   public void setFailOnCounterFetch(boolean value) {
