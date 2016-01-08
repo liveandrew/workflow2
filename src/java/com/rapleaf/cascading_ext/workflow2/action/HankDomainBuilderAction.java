@@ -14,6 +14,7 @@ import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 
+import com.liveramp.cascading_ext.flow.JobRecordListener;
 import com.liveramp.hank.cascading.CascadingDomainBuilder;
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.coordinator.Coordinator;
@@ -179,13 +180,10 @@ public abstract class HankDomainBuilderAction extends Action {
     properties.putAll(getInheritedProperties());
     properties.putAll(CascadingHelper.get().getDefaultProperties());
 
-    Flow flow = builder.build(CascadingHelper.get().getFlowConnectorFactory(properties), getSources());
+    Flow flow = builder.build(new JobRecordListener(getPersister(), true), CascadingHelper.get().getFlowConnectorFactory(properties), getSources());
     domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {
-
-      //  record stats
-      runningFlow(flow);
 
       postProcessFlow(flow);
 
