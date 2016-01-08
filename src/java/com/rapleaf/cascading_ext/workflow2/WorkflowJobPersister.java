@@ -2,9 +2,9 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 
-import com.liveramp.cascading_tools.jobs.JobPersister;
+import com.liveramp.cascading_ext.flow.JobPersister;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.java_support.LaunchedJob;
+import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;

@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_tools.jobs.ActionOperation;
-import com.liveramp.java_support.LaunchedJob;
+import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 class JobPoller extends Thread {

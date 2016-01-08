@@ -30,6 +30,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
+import com.liveramp.cascading_ext.flow.JobRecordListener;
 import com.liveramp.cascading_ext.tap.NullTap;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.commons.Accessors;
@@ -1403,8 +1404,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       pipe = new Each(pipe, new Count());
 
       Flow flow = flowConnector().connect(in.getTap(), out.getTap(), pipe);
+      flow.addStepListener(new JobRecordListener(getPersister(), true));
       hideComplete(flow);
-      runningFlow(flow);
 
       //  make sure counter from previous step is accessible
       assertEquals(1L, (long)getFlatCounters().get("CUSTOM_COUNTER", "NAME"));

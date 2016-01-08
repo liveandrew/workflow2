@@ -19,7 +19,7 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.java_support.LaunchedJob;
+import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.AttemptStatus;
@@ -32,7 +32,7 @@ import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_state.json.WorkflowJSON;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
-  private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
+  private static final Logger LOG = LoggerFactory.getLogger (HdfsPersistenceContainer.class);
 
   private final String checkpointDir;
   private final boolean deleteCheckpointsOnSuccess;

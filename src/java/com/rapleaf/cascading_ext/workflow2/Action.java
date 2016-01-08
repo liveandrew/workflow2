@@ -2,8 +2,6 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -26,6 +24,7 @@ import cascading.tap.Tap;
 
 import com.liveramp.cascading_ext.CascadingUtil;
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.flow.JobPersister;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ReadResource;
@@ -36,7 +35,6 @@ import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.jobs.ActionOperation;
-import com.liveramp.cascading_tools.jobs.FlowOperation;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
@@ -81,11 +79,7 @@ public abstract class Action {
   private HadoopProperties stepProperties;
   private HadoopProperties combinedProperties;
 
-  private List<ActionOperation> operations = new ArrayList<ActionOperation>();
-
   private FileSystem fs;
-
-  private JobPoller jobPoller = null;
 
   private transient ContextStorage storage;
   private transient WorkflowStatePersistence persistence;
@@ -130,14 +124,6 @@ public abstract class Action {
     }
 
     return fs;
-  }
-
-  public void runningFlow(ActionOperation operation) {
-    operations.add(operation);
-  }
-
-  public void runningFlow(Flow flow) {
-    operations.add(new FlowOperation(flow));
   }
 
   //  resource actions
@@ -256,9 +242,6 @@ public abstract class Action {
       //  only set properties not explicitly set by the step
       combinedProperties = stepProperties.override(parentProperties);
 
-      jobPoller = new JobPoller(fullId(), operations, persistence);
-      jobPoller.start();
-
       prepDirs();
 
       lockManager.lockConsumeStart();
@@ -279,8 +262,6 @@ public abstract class Action {
 
       execute();
 
-      jobPoller.shutdown();
-
     } catch (Throwable t) {
       LOG.error("Action " + fullId() + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
@@ -288,18 +269,6 @@ public abstract class Action {
 
       lockManager.release();
 
-      if (jobPoller != null) {
-
-        //  make sure each MR job exists in the DB
-        //  try to refresh info in case of fast failures
-        jobPoller.updateRunningJobs();
-
-        for (ActionOperation operation : operations) {
-          recordStatistics(operation);
-        }
-
-        jobPoller.shutdown();
-      }
     }
   }
 
@@ -440,21 +409,12 @@ public abstract class Action {
   }
 
 
-  /**
-   * Complete the provided ActionOperation while monitoring and reporting its progress.
-   * This method will  call setPercentComplete with values between startPct and
-   * maxPct incrementally based on the completion of the ActionOperation's steps.
-   *
-   * @param operation
-   */
-  @Deprecated
-  public void completeWithProgress(ActionOperation operation) {
-    runningFlow(operation);
-    operation.complete();
+  protected JobPersister getPersister(){
+    return new WorkflowJobPersister(persistence, getActionId().resolve(), counterFilter);
   }
 
   protected void completeWithProgress(TrackedOperation tracked){
-    WorkflowJobPersister persister = new WorkflowJobPersister(persistence, getActionId().resolve(), counterFilter);
+    JobPersister persister = getPersister();
     tracked.complete(
         persister,
         failOnCounterFetch
