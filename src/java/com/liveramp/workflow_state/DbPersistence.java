@@ -20,7 +20,7 @@ import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.map.MapBuilder;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.java_support.LaunchedJob;
+import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
