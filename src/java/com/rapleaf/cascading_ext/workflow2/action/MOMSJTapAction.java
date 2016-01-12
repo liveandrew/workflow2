@@ -18,8 +18,8 @@ import com.rapleaf.cascading_ext.msj_tap.operation.MOMSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.partition_mapper.IdentityPartitionMapper;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.split.ApproximateLocalityMerger;
-import com.rapleaf.cascading_ext.msj_tap.split.FlatGrouper;
 import com.rapleaf.cascading_ext.msj_tap.split.LocalityGrouper;
+import com.rapleaf.cascading_ext.msj_tap.split.SplitGrouper;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.tap.FieldRemap;
 import com.rapleaf.cascading_ext.tap.RoutingSinkTap;
@@ -91,7 +91,7 @@ public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends A
                         Map<Object, Object> properties,
                         PartitionStructure partitionStructure) throws IOException {
     this(checkpointToken, tmpRoot, extractors,
-        function, partitionedCategories, unpartitionedCategories, callback, properties, FlatGrouper.class, partitionStructure);
+        function, partitionedCategories, unpartitionedCategories, callback, properties, SplitGrouper.class, partitionStructure);
   }
 
   public MOMSJTapAction(String checkpointToken, String tmpRoot,

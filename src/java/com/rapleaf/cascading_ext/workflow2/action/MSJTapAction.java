@@ -23,8 +23,8 @@ import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.partition_mapper.IdentityPartitionMapper;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.split.ApproximateLocalityMerger;
-import com.rapleaf.cascading_ext.msj_tap.split.FlatGrouper;
 import com.rapleaf.cascading_ext.msj_tap.split.LocalityGrouper;
+import com.rapleaf.cascading_ext.msj_tap.split.SplitGrouper;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.tap.TapFactory;
@@ -65,7 +65,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
                       PartitionableDataStore output,
                       PartitionStructure outputStructure,
                       ActionCallback callback) {
-    this(checkpointToken, tmpRoot, properties, inputs, function, new SplitGenerator.Empty(), output, new PartitionFactory.Now(outputStructure), FlatGrouper.class, callback);
+    this(checkpointToken, tmpRoot, properties, inputs, function, new SplitGenerator.Empty(), output, new PartitionFactory.Now(outputStructure), SplitGrouper.class, callback);
   }
 
   public MSJTapAction(String checkpointToken, String tmpRoot,
@@ -111,7 +111,7 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
         splitGen,
         output,
         structureFactory,
-        FlatGrouper.class,
+        SplitGrouper.class,
         new ActionCallback.Default());
   }
 
