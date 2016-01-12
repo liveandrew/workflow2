@@ -58,6 +58,7 @@ public class WorkflowMonitor {
         while (true) {
           LOG.info("Starting to generate alerts");
 
+
           for (ExecutionAlerter alerter : executionAlerters) {
             alerter.generateAlerts();
           }

@@ -107,7 +107,7 @@ public class ExecutionAlerter {
 
         WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get(stepAttemptId));
 
-        TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get((int) jobId));
+        TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get((int)jobId));
         AlertMessage alert = jobAlert.generateAlert(stepsById.get(stepAttemptId), mapreduceJob, counterMap);
 
         if (alert != null) {
@@ -125,7 +125,7 @@ public class ExecutionAlerter {
   }
 
   private void generateExecutionAlerts() throws IOException, URISyntaxException {
-    long executionWindow = System.currentTimeMillis() - 24L * 60L * 60L * 1000L;
+    long executionWindow = System.currentTimeMillis() - 7 * 24L * 60L * 60L * 1000L;
     LOG.info("Fetching executions to attempts since " + executionWindow);
 
     Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, executionWindow, null, null, null);
@@ -214,7 +214,7 @@ public class ExecutionAlerter {
         .appendText(execution.getName());
 
     return "Application: " + appLink.write() +
-        "\nScope: "+ execution.getScopeIdentifier()+
+        "\nScope: " + execution.getScopeIdentifier() +
         "\nExecution: " + executionLink.write() +
         "\n\n" + alertMessage;
 
