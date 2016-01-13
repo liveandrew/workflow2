@@ -39,7 +39,6 @@ import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
-import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
@@ -333,6 +332,18 @@ public abstract class Action {
   protected void setStatusMessage(String statusMessage) throws IOException {
     LOG.info("Status Message: " + statusMessage);
     persistence.markStepStatusMessage(fullId(), statusMessage);
+  }
+
+  /**
+   * Same as {@link #setStatusMessage(String)} but only logs failures,
+   * doesn't rethrow.
+   */
+  protected void setStatusMessageSafe(String message) {
+    try {
+      setStatusMessage(message);
+    } catch (Exception e) {
+      LOG.warn("Couldn't set status message.");
+    }
   }
 
   protected void setOptionObjects(StoreReaderLockProvider lockProvider,
