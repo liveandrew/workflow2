@@ -621,11 +621,12 @@ public class WorkflowQueries {
 
   public static List<WorkflowExecution> queryWorkflowExecutions(IDatabases databases,
                                                                 String name,
+                                                                String scope,
                                                                 Integer appType,
                                                                 Long startedAfter,
                                                                 Long startedBefore,
                                                                 Integer limit) throws IOException {
-    return queryWorkflowExecutions(databases, null, name, null, appType, startedAfter, startedBefore, null, limit);
+    return queryWorkflowExecutions(databases, null, name, scope, appType, startedAfter, startedBefore, null, limit);
   }
 
   public static List<WorkflowExecution> queryWorkflowExecutions(IDatabases databases,
