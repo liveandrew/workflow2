@@ -39,6 +39,7 @@ import com.rapleaf.db_schemas.rldb.models.StepDependency;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
+import com.rapleaf.db_schemas.rldb.util.JackUtil;
 
 public class DbPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
@@ -234,7 +235,7 @@ public class DbPersistence implements WorkflowStatePersistence {
   public synchronized void markJobCounters(String stepToken, String jobId, TwoNestedMap<String, String, Long> values) throws IOException {
 
     //  if job failed in setup, don't try to get the job, won't exist.  nothing to record.
-    if(values.isEmpty()){
+    if (values.isEmpty()) {
       return;
     }
 
@@ -278,8 +279,8 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     }
     //  don't want to leave this in forever, debugging transient error on setup failure  (figure out why jobID is here which isn't recorded earlier)
-    catch(Exception e){
-      throw new RuntimeException("Error recording job task info for jobID "+jobId, e);
+    catch (Exception e) {
+      throw new RuntimeException("Error recording job task info for jobID " + jobId, e);
     }
   }
 
@@ -398,68 +399,132 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   @Override
   public synchronized Map<String, StepState> getStepStatuses() throws IOException {
+    return getStates(null);
+  }
+
+  private synchronized Map<String, StepState> getStates(String specificToken) throws IOException {
+
+    long workflowAttemptId = getAttemptId();
+
+    List<StepAttempt.Attributes> attempts = WorkflowQueries.getStepAttempts(rldb,
+        workflowAttemptId,
+        specificToken
+    );
+
+    Map<Long, StepAttempt.Attributes> attemptsById = Maps.newHashMap();
+    for (StepAttempt.Attributes attempt : attempts) {
+      attemptsById.put(attempt.getId(), attempt);
+    }
+
+    List<MapreduceJob.Attributes> mapreduceJobs = WorkflowQueries.getMapreduceJobs(rldb,
+        attemptsById.keySet()
+    );
+
+    Set<Long> jobIds = Sets.newHashSet();
+    Multimap<Long, MapreduceJob.Attributes> jobsByStepId = HashMultimap.create();
+    for (MapreduceJob.Attributes mapreduceJob : mapreduceJobs) {
+      jobsByStepId.put((long)mapreduceJob.getStepAttemptId(), mapreduceJob);
+      jobIds.add(mapreduceJob.getId());
+    }
+
+    List<MapreduceCounter.Attributes> counters = WorkflowQueries.getMapreduceCounters(rldb,
+        jobIds
+    );
+
+    Multimap<Long, MapreduceCounter.Attributes> countersByJobId = HashMultimap.create();
+    for (MapreduceCounter.Attributes counter : counters) {
+      countersByJobId.put((long)counter.getMapreduceJobId(), counter);
+    }
+
+    List<StepAttemptDatastore.Attributes> storeUsages = WorkflowQueries.getStepAttemptDatastores(rldb,
+        attemptsById.keySet()
+    );
+
+    Set<Long> allStores = Sets.newHashSet();
+    for (StepAttemptDatastore.Attributes storeUsage : storeUsages) {
+      allStores.add((long)storeUsage.getWorkflowAttemptDatastoreId());
+    }
+
+    Map<Long, WorkflowAttemptDatastore.Attributes> storesById = JackUtil.attributesById(WorkflowQueries.getWorkflowAttemptDatastores(rldb, allStores, null));
+    TwoNestedMap<String, DSAction, WorkflowAttemptDatastore.Attributes> stepToDatastoreUsages = new TwoNestedMap<>();
+    for (StepAttemptDatastore.Attributes usage : storeUsages) {
+      stepToDatastoreUsages.put(
+          attemptsById.get((long)usage.getStepAttemptId()).getStepToken(),
+          DSAction.findByValue(usage.getDsAction()),
+          storesById.get((long)usage.getWorkflowAttemptDatastoreId())
+      );
+
+    }
+
+    Multimap<String, String> stepToDependencies = HashMultimap.create();
+    for (StepDependency.Attributes dependency : WorkflowQueries.getStepDependencies(rldb, attemptsById.keySet())) {
+      stepToDependencies.put(
+          attemptsById.get((long)dependency.getStepAttemptId()).getStepToken(),
+          attemptsById.get((long)dependency.getDependencyAttemptId()).getStepToken()
+      );
+    }
 
     Map<String, StepState> states = Maps.newHashMap();
-    for (StepAttempt attempt : getAttempt().getStepAttempt()) {
-      String token = attempt.getStepToken();
 
-      states.put(token, getState(token));
+    for (StepAttempt.Attributes attempt : attempts) {
+
+      Multimap<DSAction, DataStoreInfo> infoMap = HashMultimap.create();
+      for (Map.Entry<DSAction, WorkflowAttemptDatastore.Attributes> entry : stepToDatastoreUsages.get(attempt.getStepToken()).entrySet()) {
+        WorkflowAttemptDatastore.Attributes value = entry.getValue();
+        infoMap.put(entry.getKey(), new DataStoreInfo(value.getName(), value.getClassName(), value.getPath(), value.getIntId()));
+      }
+
+      String token = attempt.getStepToken();
+      StepState state = new StepState(
+          token,
+          StepStatus.findByValue(attempt.getStepStatus()),
+          attempt.getActionClass(),
+          Sets.newHashSet(stepToDependencies.get(token)),
+          infoMap)
+          .setFailureMessage(attempt.getFailureCause())
+          .setFailureTrace(attempt.getFailureTrace())
+          .setStatusMessage(attempt.getStatusMessage());
+
+      if (attempt.getStartTime() != null) {
+        state.setStartTimestamp(attempt.getStartTime());
+      }
+
+      if (attempt.getEndTime() != null) {
+        state.setEndTimestamp(attempt.getEndTime());
+      }
+
+      for (MapreduceJob.Attributes job : jobsByStepId.get(attempt.getId())) {
+
+        List<MapReduceJob.Counter> counterList = Lists.newArrayList();
+
+        for (MapreduceCounter.Attributes attributes : countersByJobId.get(job.getId())) {
+          counterList.add(new MapReduceJob.Counter(attributes.getGroup(), attributes.getName(), attributes.getValue()));
+        }
+
+        LaunchedJob launched = new LaunchedJob(job.getJobIdentifier(), job.getJobName(), job.getTrackingUrl());
+        state.addMrjob(new MapReduceJob(launched,
+            new TaskSummary(
+                job.getAvgMapDuration(),
+                job.getMedianMapDuration(),
+                job.getMaxMapDuration(),
+                job.getMinMapDuration(),
+                job.getStdevMapDuration(),
+                job.getAvgReduceDuration(),
+                job.getMedianReduceDuration(),
+                job.getMaxReduceDuration(),
+                job.getMinReduceDuration(),
+                job.getStdevReduceDuration()
+            ),
+            counterList
+        ));
+
+      }
+
+      states.put(token, state);
+
     }
 
     return states;
-  }
-
-  private synchronized StepState getState(String stepToken) throws IOException {
-
-    StepAttempt step = getStep(stepToken);
-
-    Set<String> dependnecies = Sets.newHashSet();
-    for (StepDependency dependency : step.getStepDependencies()) {
-      dependnecies.add(dependency.getDependencyAttempt().getStepToken());
-    }
-
-    Multimap<DSAction, DataStoreInfo> datastores = HashMultimap.create();
-    for (StepAttemptDatastore ds : step.getStepAttemptDatastores()) {
-      datastores.put(DSAction.values()[ds.getDsAction()], asDSInfo(ds.getWorkflowAttemptDatastore()));
-    }
-
-    StepState state = new StepState(step.getStepToken(),
-        StepStatus.values()[step.getStepStatus()],
-        step.getActionClass(),
-        dependnecies,
-        datastores)
-        .setFailureMessage(step.getFailureCause())
-        .setFailureTrace(step.getFailureTrace())
-        .setStatusMessage(step.getStatusMessage());
-
-    for (MapreduceJob job : step.getMapreduceJobs()) {
-
-      List<MapReduceJob.Counter> counters = Lists.newArrayList();
-      for (MapreduceCounter counter : job.getMapreduceCounters()) {
-        counters.add(new MapReduceJob.Counter(counter.getGroup(), counter.getName(), counter.getValue()));
-      }
-
-      state.addMrjob(new MapReduceJob(new LaunchedJob(job.getJobIdentifier(), job.getJobName(), job.getTrackingUrl()),
-          new TaskSummary(
-              job.getAvgMapDuration(), job.getMedianMapDuration(), job.getMaxMapDuration(), job.getMinMapDuration(), job.getStdevMapDuration(),
-              job.getAvgReduceDuration(), job.getMedianReduceDuration(), job.getMaxReduceDuration(), job.getMinReduceDuration(), job.getStdevReduceDuration()
-          ), counters));
-    }
-
-    if (step.getStartTime() != null) {
-      state.setStartTimestamp(step.getStartTime());
-    }
-
-    if (step.getEndTime() != null) {
-      state.setEndTimestamp(step.getEndTime());
-    }
-
-    return state;
-  }
-
-
-  private DataStoreInfo asDSInfo(WorkflowAttemptDatastore store) {
-    return new DataStoreInfo(store.getName(), store.getClassName(), store.getPath(), (int)store.getId());
   }
 
   @Override

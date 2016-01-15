@@ -47,7 +47,6 @@ public class WorkflowJSON {
   public static JSONObject getDbJSONState(IRlDb rldb, DbPersistence persistence) throws JSONException, IOException {
 
     DirectedGraph<Long, DefaultEdge> graph = new SimpleDirectedGraph<>(DefaultEdge.class);
-    removeRedundantEdges(graph);
 
     long workflowAttemptId = persistence.getAttemptId();
 
@@ -64,6 +63,8 @@ public class WorkflowJSON {
     for (StepDependency.Attributes dependency : WorkflowQueries.getStepDependencies(rldb, attemptsById.keySet())) {
       graph.addEdge((long)dependency.getDependencyAttemptId(), (long)dependency.getStepAttemptId());
     }
+
+    removeRedundantEdges(graph);
 
     List<MapreduceJob.Attributes> mapreduceJobs = WorkflowQueries.getMapreduceJobs(rldb,
         attemptsById.keySet()
@@ -90,6 +91,7 @@ public class WorkflowJSON {
     );
 
     List<WorkflowAttemptDatastore.Attributes> stores = WorkflowQueries.getWorkflowAttemptDatastores(rldb,
+        null,
         workflowAttemptId
     );
 

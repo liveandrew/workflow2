@@ -716,8 +716,18 @@ public class WorkflowQueries {
   }
 
   public static List<StepAttempt.Attributes> getStepAttempts(IRlDb rldb, Long workflowAttemptId) throws IOException {
+    return getStepAttempts(rldb, workflowAttemptId, null);
+  }
+
+  public static List<StepAttempt.Attributes> getStepAttempts(IRlDb rldb, Long workflowAttemptId, String stepToken) throws IOException {
     List<StepAttempt.Attributes> executions = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(StepAttempt.TBL).where(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId)).fetch()) {
+    GenericQuery query = rldb.createQuery().from(StepAttempt.TBL).where(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId));
+
+    if(stepToken != null){
+      query = query.where(StepAttempt.STEP_TOKEN.equalTo(stepToken));
+    }
+
+    for (Record record : query.fetch()) {
       executions.add(JackUtil.getModel(StepAttempt.Attributes.class, record));
     }
     return executions;
@@ -755,9 +765,20 @@ public class WorkflowQueries {
     return attemptDatastores;
   }
 
-  public static List<WorkflowAttemptDatastore.Attributes> getWorkflowAttemptDatastores(IRlDb rldb, Long workflowAttemptId) throws IOException {
+  public static List<WorkflowAttemptDatastore.Attributes> getWorkflowAttemptDatastores(IRlDb rldb, Set<Long> ids, Long workflowAttemptId) throws IOException {
     List<WorkflowAttemptDatastore.Attributes> workflowAttemptDatastore = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(WorkflowAttemptDatastore.TBL).where(WorkflowAttemptDatastore.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId)).fetch()) {
+
+    GenericQuery query = rldb.createQuery().from(WorkflowAttemptDatastore.TBL);
+
+    if(workflowAttemptId != null){
+      query = query.where(WorkflowAttemptDatastore.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId));
+    }
+
+    if(ids != null){
+      query = query.where(WorkflowAttemptDatastore.ID.in(ids));
+    }
+
+    for (Record record : query.fetch()) {
       workflowAttemptDatastore.add(JackUtil.getModel(WorkflowAttemptDatastore.Attributes.class, record));
     }
     return workflowAttemptDatastore;
