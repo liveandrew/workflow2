@@ -17,6 +17,7 @@ import com.liveramp.cascading_ext.action.CopyToNfs;
 import com.liveramp.cascading_ext.function.DirectFn;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.rapleaf.cascading_ext.filter.SelectAllNotNull;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.FlowBuilder;
 import com.rapleaf.cascading_ext.workflow2.ProductionWorkflowOptions;
@@ -70,7 +71,7 @@ public class ApplyFunctionToFile {
 
       Pipe pipe = new Pipe("pipe");
       pipe = new Each(pipe, new Fields("line"), new DirectFn<>(new Fields("output"), fn), Fields.RESULTS);
-
+      pipe = new Each(pipe, new Fields("output"), new SelectAllNotNull());
       Tap output = new Hfs(new TextLine(new Fields("line"), new Fields("output")), hdfsOutputPath, SinkMode.REPLACE);
 
       FlowBuilder.FlowClosure transformFile = buildFlow().connect("TransformFile", input, output, pipe);
