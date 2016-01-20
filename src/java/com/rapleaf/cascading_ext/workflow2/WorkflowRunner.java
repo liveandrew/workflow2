@@ -609,8 +609,8 @@ public final class WorkflowRunner {
             AlertRecipients.engineering(notification.serverity())
         );
 
-      }catch(Exception e){
-        LOG.error("Failed to notify AlertsHandler "+handler, e);
+      } catch (Exception e) {
+        LOG.error("Failed to notify AlertsHandler " + handler, e);
       }
 
     }
@@ -675,10 +675,8 @@ public final class WorkflowRunner {
     Set<String> blockedSteps = Sets.newHashSet();
 
     //  get failed steps
-    Map<String, StepState> statuses = persistence.getStepStatuses();
     for (Step step : dependencyGraph.vertexSet()) {
-      StepState state = statuses.get(step.getCheckpointToken());
-      if (state.getStatus() == StepStatus.FAILED) {
+      if (persistence.getStatus(step.getCheckpointToken()) == StepStatus.FAILED) {
         explore.add(step);
       }
     }
