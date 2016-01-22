@@ -1,6 +1,9 @@
 package com.liveramp.cascading_ext.action;
 
 
+import java.util.List;
+
+import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
@@ -11,7 +14,18 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 public class DeleteDataStore extends Action {
 
   private final FileSystem fs;
-  private final DataStore dataStore;
+  private final List<? extends DataStore> dataStores;
+
+  public DeleteDataStore(String checkpointToken, FileSystem fs, List<? extends DataStore> dataStores) {
+    super(checkpointToken);
+
+    this.fs = fs;
+    this.dataStores = dataStores;
+
+    for (DataStore dataStore : dataStores) {
+      readsFrom(dataStore);
+    }
+  }
 
   public DeleteDataStore(String checkpointToken, FileSystem fs, DataStore dataStore) {
     super(checkpointToken);
@@ -21,7 +35,7 @@ public class DeleteDataStore extends Action {
     }
 
     this.fs = fs;
-    this.dataStore = dataStore;
+    this.dataStores = Lists.newArrayList(dataStore);
 
     readsFrom(dataStore);
   }
@@ -33,6 +47,8 @@ public class DeleteDataStore extends Action {
   @SuppressWarnings("PMD.BlacklistedMethods")
   @Override
   protected void execute() throws Exception {
-    fs.delete(new Path(dataStore.getPath()), true);
+    for (DataStore dataStore : dataStores) {
+      fs.delete(new Path(dataStore.getPath()), true);
+    }
   }
 }
