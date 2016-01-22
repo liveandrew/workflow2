@@ -27,6 +27,7 @@ public class DeletePath extends Action {
     this(checkpointToken, hdfsPath, true);
   }
 
+  @SuppressWarnings("PMD.BlacklistedMethods")
   @Override
   protected void execute() throws Exception {
     FileSystem fs = FileSystemHelper.getFileSystemForPath(hdfsPath);
