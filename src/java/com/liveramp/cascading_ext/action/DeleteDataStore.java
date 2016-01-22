@@ -6,6 +6,8 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
@@ -15,6 +17,7 @@ public class DeleteDataStore extends Action {
 
   private final FileSystem fs;
   private final List<? extends DataStore> dataStores;
+  private static Logger LOG = LoggerFactory.getLogger(DeleteDataStore.class);
 
   public DeleteDataStore(String checkpointToken, FileSystem fs, List<? extends DataStore> dataStores) {
     super(checkpointToken);
@@ -48,6 +51,7 @@ public class DeleteDataStore extends Action {
   @Override
   protected void execute() throws Exception {
     for (DataStore dataStore : dataStores) {
+      LOG.info("Deleting " + dataStore.getPath());
       fs.delete(new Path(dataStore.getPath()), true);
     }
   }
