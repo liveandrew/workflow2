@@ -14,6 +14,7 @@ import org.apache.thrift.TBase;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 
+import com.liveramp.cascading_ext.fields.SingleField;
 import com.liveramp.cascading_ext.util.FieldHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.UnitDataStore;
@@ -41,6 +42,10 @@ public class RoutedSinkBinding implements SinkBinding {
     this.routeToTapFactories = new HashMap<>();
     this.routeToSinkFields = new HashMap<>();
     this.dataStores = new HashSet<>();
+  }
+
+  public RoutedSinkBinding(Pipe pipe, SingleField<String> routeField, SingleField<String> valueField) {
+    this(pipe, routeField.getName(), valueField.getName());
   }
 
   public RoutedSinkBinding add(Object route, String sinkField, DataStore store, TapFactory tapFactory) {
