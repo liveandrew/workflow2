@@ -30,8 +30,6 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 
 public abstract class HankDomainBuilderAction extends Action {
 
-  protected final Map<Object, Object> properties;
-
   private final HankDataStore output;
   private final boolean allowSimultaneousDeltas;
   protected HankVersionType versionType;
@@ -103,13 +101,12 @@ public abstract class HankDomainBuilderAction extends Action {
                                  CoordinatorConfigurator configurator,
                                  HankDataStore output,
                                  Map<Object, Object> properties) {
-    super(checkpointToken, tmpRoot);
+    super(checkpointToken, tmpRoot, properties);
     this.versionType = versionType;
     this.shouldPartitionAndSortInput = shouldPartitionAndSortInput;
     this.allowSimultaneousDeltas = allowSimultaneousDeltas;
     this.configurator = configurator;
     this.output = output;
-    this.properties = properties;
   }
 
 
@@ -177,10 +174,7 @@ public abstract class HankDomainBuilderAction extends Action {
       builder.setPartitionToBuild(partitionToBuild);
     }
 
-    properties.putAll(getInheritedProperties());
-    properties.putAll(CascadingHelper.get().getDefaultProperties());
-
-    Flow flow = builder.build(new JobRecordListener(getPersister(), true), CascadingHelper.get().getFlowConnectorFactory(properties), getSources());
+    Flow flow = builder.build(new JobRecordListener(getPersister(), true), CascadingHelper.get().getFlowConnectorFactory(getInheritedProperties()), getSources());
     domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {
