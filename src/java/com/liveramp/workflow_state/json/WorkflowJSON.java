@@ -177,6 +177,7 @@ public class WorkflowJSON {
 
     JSONObject toReturn = new JSONObject()
         .put("name", execution.getName())
+        .put("description", nullStr(attempt.getDescription()))
         .put("host", attempt.getHost())
         .put("id", attempt.getId())
         .put("username", attempt.getSystemUser())
@@ -198,6 +199,13 @@ public class WorkflowJSON {
 
     return toReturn;
 
+  }
+
+  private static String nullStr(String item){
+    if (item == null) {
+      return "";
+    }
+    return item;
   }
 
   private static Long safeTime(Long time) {
