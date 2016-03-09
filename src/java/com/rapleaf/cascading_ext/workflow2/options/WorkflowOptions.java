@@ -38,6 +38,7 @@ public class WorkflowOptions {
   private TrackerURLBuilder urlBuilder;
   private boolean stopOnFailure = false;
   private HostnameProvider hostnameProvider;
+  private String description;
 
   protected WorkflowOptions() {
   }
@@ -48,6 +49,15 @@ public class WorkflowOptions {
 
   public WorkflowOptions setHostnameProvider(HostnameProvider hostnameProvider) {
     this.hostnameProvider = hostnameProvider;
+    return this;
+  }
+
+  public String getDescription(){
+    return description;
+  }
+
+  public WorkflowOptions setDescription(String description){
+    this.description = description;
     return this;
   }
 

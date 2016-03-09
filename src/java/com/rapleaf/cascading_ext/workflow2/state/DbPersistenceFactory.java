@@ -61,6 +61,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   public synchronized DbPersistence prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
                                             String name,
                                             String scopeId,
+                                            String description,
                                             AppType appType,
                                             String host,
                                             String username,
@@ -85,6 +86,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       WorkflowAttempt attempt = createAttempt(host,
           username,
+          description,
           pool,
           priority,
           launchDir,
@@ -226,7 +228,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       WorkflowRunnerNotification.INTERNAL_ERROR
   );
 
-  private WorkflowAttempt createAttempt(String host, String username, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
+  private WorkflowAttempt createAttempt(String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
 
     Map<AlertSeverity, String> recipients = Maps.newHashMap();
     for (AlertSeverity severity : AlertSeverity.values()) {
@@ -235,6 +237,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setStatus(AttemptStatus.INITIALIZING.ordinal())
+        .setDescription(description)
         .setLaunchDir(launchDir)
         .setLaunchJar(launchJar)
         .setErrorEmail(recipients.get(AlertSeverity.ERROR))     //  TODO remove these on attempt once notifications redone

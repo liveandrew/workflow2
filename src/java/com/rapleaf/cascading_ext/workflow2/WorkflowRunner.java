@@ -187,6 +187,7 @@ public final class WorkflowRunner {
     this.persistence = persistenceFactory.prepare(dependencyGraph,
         workflowName,
         options.getScopeIdentifier(),
+        options.getDescription(),
         options.getAppType(),
         options.getHostnameProvider().getHostname(),
         System.getProperty("user.name"),

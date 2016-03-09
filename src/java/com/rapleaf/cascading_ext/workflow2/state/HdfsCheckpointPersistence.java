@@ -52,6 +52,7 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
   public WorkflowStatePersistence prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
                                           String name,
                                           String scopeId,
+                                          String description,
                                           AppType appType,
                                           String host,
                                           String username,

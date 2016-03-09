@@ -147,6 +147,24 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   }
 
   @Test
+  public void testDescription() throws IOException {
+
+    Step first = new Step(new IncrementAction("first"));
+
+    WorkflowRunner wr = new WorkflowRunner("test",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions().setDescription("description1"),
+        first
+    );
+    wr.run();
+
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+
+    assertEquals("description1", rldb.workflowAttempts().find(wr.getPersistence().getAttemptId()).getDescription());
+  }
+
+
+  @Test
   public void testInitialStatus() throws IOException {
     IRlDb rldb = new DatabasesImpl().getRlDb();
 
