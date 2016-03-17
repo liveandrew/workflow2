@@ -14,6 +14,7 @@ import com.liveramp.workflow_monitor.alerts.execution.alerts.DiedUnclean;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.GCTime;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.KilledTasks;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.NearMemoryLimit;
+import com.liveramp.workflow_monitor.alerts.execution.alerts.OutputPerMapTask;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.FromPersistenceGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGenerator;
 import com.rapleaf.db_schemas.DatabasesImpl;
@@ -53,7 +54,8 @@ public class MonitorRunner {
             new KilledTasks(),
             new GCTime(),
             new NearMemoryLimit(),
-            new CPUUsage()
+            new CPUUsage(),
+            new OutputPerMapTask()
         ),
         db
     );

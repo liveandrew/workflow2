@@ -29,6 +29,8 @@ public abstract class MapreduceJobAlertGenerator {
   protected static final String MB_MAPS = "MB_MILLIS_MAPS";
   protected static final String MB_REDUCES = "MB_MILLIS_REDUCES";
 
+  protected static final String MAP_OUTPUT_MATERIALIZED_BYTES = "MAP_OUTPUT_MATERIALIZED_BYTES";
+
   protected static final String CPU_MILLISECONDS = "CPU_MILLISECONDS";
 
   private final Multimap<String, String> countersToFetch;
