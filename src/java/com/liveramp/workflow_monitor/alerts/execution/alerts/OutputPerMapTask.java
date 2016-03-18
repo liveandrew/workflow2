@@ -15,7 +15,7 @@ public class OutputPerMapTask extends JobThresholdAlert {
       .put(JOB_COUNTER_GROUP, LAUNCHED_REDUCES)
       .get();
 
-  private static final long MAX_OUTPUT_THRESHOLD = 5*1000*1000*1000; //  5G
+  private static final long MAX_OUTPUT_THRESHOLD = 5l*1000l*1000l*1000l; //  5G
 
   public OutputPerMapTask() {
     super(MAX_OUTPUT_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS);
