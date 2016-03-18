@@ -1,5 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
+import java.text.DecimalFormat;
+
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;
@@ -15,7 +17,8 @@ public class OutputPerMapTask extends JobThresholdAlert {
       .put(JOB_COUNTER_GROUP, LAUNCHED_REDUCES)
       .get();
 
-  private static final long MAX_OUTPUT_THRESHOLD = 5l*1000l*1000l*1000l; //  5G
+  private static final long ONE_G = 1000L * 1000L * 1000L; //  5G
+  private static final long MAX_OUTPUT_THRESHOLD = 5L *ONE_G; //  5G
 
   public OutputPerMapTask() {
     super(MAX_OUTPUT_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS);
@@ -35,9 +38,11 @@ public class OutputPerMapTask extends JobThresholdAlert {
     return null;
   }
 
+  private static final DecimalFormat df = new DecimalFormat("##.##");
+
   @Override
   protected String getMessage(double value) {
-    return "Map tasks in this job are outputting on average "+value+" post-serialization bytes each.  " +
+    return "Map tasks in this job are outputting on average "+df.format(value/((double)ONE_G))+"GB post-serialization.  " +
         "Reading spills which are this large can cause machine performance problems; please increase the number of " +
         "map tasks this data is spread over.";
   }
