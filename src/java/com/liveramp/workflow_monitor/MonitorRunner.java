@@ -37,7 +37,8 @@ public class MonitorRunner {
             new KilledTasks(),
             new GCTime(),
             new NearMemoryLimit(),
-            new CPUUsage()
+            new CPUUsage(),
+            new OutputPerMapTask()
         ),
         db
     );
