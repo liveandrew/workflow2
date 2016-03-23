@@ -15,8 +15,6 @@ public class CuratorStoreReaderLockProvider extends StoreReaderLockProvider {
 
   public static CuratorStoreReaderLockProvider getProduction() {
     return new CuratorStoreReaderLockProvider(Lists.newArrayList(
-        //  TODO remove first one after everything deployed et all
-        ProductionCuratorProvider.INSTANCE.getFramework(),
         ProductionCuratorProvider.INSTANCE.getFrameworkNew()
     ));
   }
