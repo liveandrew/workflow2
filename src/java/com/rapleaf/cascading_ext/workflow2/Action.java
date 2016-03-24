@@ -7,6 +7,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -46,6 +47,7 @@ import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
+import com.rapleaf.cascading_ext.workflow2.counter.verifier.TemplateTapFiles;
 import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 
 public abstract class Action {
@@ -420,7 +422,7 @@ public abstract class Action {
 
 
   protected JobPersister getPersister(){
-    return new WorkflowJobPersister(persistence, getActionId().resolve(), counterFilter);
+    return new WorkflowJobPersister(persistence, getActionId().resolve(), counterFilter, Lists.<WorkflowJobPersister.CounterVerifier>newArrayList(new TemplateTapFiles()));
   }
 
   protected void completeWithProgress(TrackedOperation tracked){

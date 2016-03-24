@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.liveramp.cascading_ext.flow.JobPersister;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
@@ -14,11 +15,20 @@ public class WorkflowJobPersister implements JobPersister {
   private final WorkflowStatePersistence persistence;
   private final String checkpoint;
   private final CounterFilter filter;
+  private final List<CounterVerifier> verifiers;
 
-  public WorkflowJobPersister(WorkflowStatePersistence persistence, String checkpoint, CounterFilter filter) {
+  public interface CounterVerifier {
+    public void verify(TwoNestedMap<String, String, Long> toRecord);
+  }
+
+  public WorkflowJobPersister(WorkflowStatePersistence persistence,
+                              String checkpoint,
+                              CounterFilter filter,
+                              List<CounterVerifier> verifiers) {
     this.persistence = persistence;
     this.checkpoint = checkpoint;
     this.filter = filter;
+    this.verifiers = verifiers;
   }
 
   @Override
@@ -46,6 +56,10 @@ public class WorkflowJobPersister implements JobPersister {
           toRecord.put(group, name, counters.get(group, name));
         }
       }
+    }
+
+    for (CounterVerifier verifier : verifiers) {
+      verifier.verify(toRecord);
     }
 
     persistence.markJobCounters(checkpoint, jobID, counters);

@@ -26,6 +26,7 @@ import cascading.operation.Filter;
 import cascading.operation.FilterCall;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
+import cascading.tap.BaseTemplateTap;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
