@@ -22,7 +22,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.cascading_ext.util.HadoopProperties;
@@ -52,7 +52,7 @@ public final class WorkflowRunner {
   private static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
 
   private final WorkflowStatePersistence persistence;
-  private final StoreReaderLockProvider lockProvider;
+  private final StoreReaderLocker lockProvider;
   private final ContextStorage storage;
   private final int stepPollInterval;
 
@@ -169,7 +169,7 @@ public final class WorkflowRunner {
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.counterFilter = options.getCounterFilter();
     this.semaphore = new Semaphore(maxConcurrentSteps);
-    this.lockProvider = options.getLockProvider();
+    this.lockProvider = options.getLockProvider().create();
     this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.stepPollInterval = options.getStepPollInterval();
@@ -367,7 +367,10 @@ public final class WorkflowRunner {
       sendSuccessEmail();
       LOG.info(getSuccessSubject());
     } finally {
+      LOG.info("Removing shutdown hook");
       Runtime.getRuntime().removeShutdownHook(shutdownHook);
+      LOG.info("Shutting down lock provider");
+      lockProvider.shutdown();
       LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));
     }
   }

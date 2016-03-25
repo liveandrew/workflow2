@@ -28,6 +28,7 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.flow.JobPersister;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
+import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.ReadResourceContainer;
 import com.liveramp.cascading_ext.resource.Resource;
@@ -74,8 +75,8 @@ public abstract class Action {
 
   private final Multimap<ResourceAction, OldResource> resources = HashMultimap.create();
 
-  private StoreReaderLockProvider lockProvider;
-  private StoreReaderLockProvider.LockManager lockManager;
+  private StoreReaderLocker lockProvider;
+  private StoreReaderLocker.LockManager lockManager;
   private HadoopProperties stepProperties;
   private HadoopProperties combinedProperties;
 
@@ -348,7 +349,7 @@ public abstract class Action {
     }
   }
 
-  protected void setOptionObjects(StoreReaderLockProvider lockProvider,
+  protected void setOptionObjects(StoreReaderLocker lockProvider,
                                   WorkflowStatePersistence persistence,
                                   ContextStorage storage,
                                   CounterFilter counterFilter,
@@ -363,7 +364,7 @@ public abstract class Action {
         .lockProcessStart();
   }
 
-  protected StoreReaderLockProvider getLockProvider() {
+  protected StoreReaderLocker getLockProvider() {
     return lockProvider;
   }
 

@@ -3,6 +3,7 @@ package com.liveramp.cascading_ext.megadesk;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.collect.Lists;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -76,6 +77,9 @@ public class TestResourceSemaphore extends WorkflowTestCase {
   @Test
   public void testWorkflowInterop() throws Exception {
 
+    final TestingCluster cluster = new TestingCluster(3);
+    cluster.start();
+
     VersionedBucketDataStore<StringOrNone> versionedStore =
         new VersionedBucketDataStoreImpl<StringOrNone>(FileSystemHelper.getFS(), "store", getTestRoot() + "/input", "", StringOrNone.class);
 
@@ -86,10 +90,21 @@ public class TestResourceSemaphore extends WorkflowTestCase {
     AtomicBoolean keepGoing = new AtomicBoolean(true);
     AtomicBoolean barrier = new AtomicBoolean(false);
 
+    StoreReaderLockProvider lockProvider = new StoreReaderLockProvider() {
+      @Override
+      public StoreReaderLocker create() {
+
+        CuratorFramework framework = CuratorFrameworkFactory.newClient(cluster.getConnectString(), new RetryNTimes(3, 100));
+        framework.start();
+
+        return new CuratorStoreLocker(Lists.newArrayList(framework));
+      }
+    };
+    WorkflowOptions options = new TestWorkflowOptions().setLockProvider(lockProvider);
+
+
     Step action = new Step(new LongRunningAction("action", keepGoing, barrier, versionedStore));
 
-    StoreReaderLockProvider lockProvider = new CuratorStoreReaderLockProvider(framework);
-    WorkflowOptions options = new TestWorkflowOptions().setLockProvider(lockProvider);
 
     final WorkflowRunner runner = new WorkflowRunner(TestResourceSemaphore.class,
         new DbPersistenceFactory(),
