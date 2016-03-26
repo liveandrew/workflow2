@@ -548,7 +548,7 @@ public class DbPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public String getScopeIdentifier() throws IOException {
+  public synchronized String getScopeIdentifier() throws IOException {
     return getExecution().getScopeIdentifier();
   }
 
