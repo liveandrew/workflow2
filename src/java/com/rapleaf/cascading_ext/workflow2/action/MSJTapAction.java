@@ -7,15 +7,10 @@ import java.util.Map;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import cascading.flow.FlowProcess;
-import cascading.operation.BaseOperation;
-import cascading.operation.Function;
-import cascading.operation.FunctionCall;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
 
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
@@ -23,13 +18,14 @@ import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.partition_mapper.IdentityPartitionMapper;
 import com.rapleaf.cascading_ext.msj_tap.scheme.MSJScheme;
 import com.rapleaf.cascading_ext.msj_tap.split.ApproximateLocalityMerger;
+import com.rapleaf.cascading_ext.msj_tap.split.InsertSplit;
 import com.rapleaf.cascading_ext.msj_tap.split.LocalityGrouper;
+import com.rapleaf.cascading_ext.msj_tap.split.SplitGenerator;
 import com.rapleaf.cascading_ext.msj_tap.split.SplitGrouper;
 import com.rapleaf.cascading_ext.msj_tap.store.PartitionableDataStore;
 import com.rapleaf.cascading_ext.msj_tap.tap.MSJTap;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
-import com.rapleaf.cascading_ext.tap.bucket2.PartitionedBucketScheme;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.workflow2.ActionCallback;
 import com.rapleaf.cascading_ext.workflow2.CascadingAction2;
@@ -157,22 +153,6 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
         Fields.ALL);
 
     completePartitioned("msj-tap", pipe, output, structureFactory);
-  }
-
-  private static class InsertSplit extends BaseOperation implements Function {
-
-    private final SplitGenerator generator;
-
-    public InsertSplit(SplitGenerator generator) {
-      super(new Fields(PartitionedBucketScheme.SPLIT_FIELD));
-      this.generator = generator;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void operate(FlowProcess flowProcess, FunctionCall functionCall) {
-      functionCall.getOutputCollector().add(new Tuple(generator.getSplit(functionCall.getArguments().getObject(0))));
-    }
   }
 
   private List<InputConf<K>> getConfs(List<StoreExtractor<K>> inputs) throws IOException {
