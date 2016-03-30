@@ -398,20 +398,37 @@ public class DbPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public synchronized Map<String, StepState> getStepStatuses() throws IOException {
-    return getStates(null);
+  public synchronized Map<String, StepState> getStepStates() throws IOException {
+    return getStates();
   }
 
-  private synchronized Map<String, StepState> getStates(String specificToken) throws IOException {
+  @Override
+  public synchronized Map<String, StepStatus> getStepStatuses() throws IOException {
+
+    Map<String, StepStatus> statuses = Maps.newHashMap();
+    for (StepAttempt.Attributes attempt : getStepAttempts()) {
+      statuses.put(attempt.getStepToken(), StepStatus.findByValue(attempt.getStepStatus()));
+    }
+
+    return statuses;
+  }
+
+  private synchronized  List<StepAttempt.Attributes> getStepAttempts() throws IOException {
 
     long workflowAttemptId = getAttemptId();
 
-    List<StepAttempt.Attributes> attempts = WorkflowQueries.getStepAttempts(rldb,
+    return WorkflowQueries.getStepAttempts(rldb,
         workflowAttemptId,
-        specificToken
+        null
     );
 
+  }
+
+  private synchronized Map<String, StepState> getStates() throws IOException {
+
     Map<Long, StepAttempt.Attributes> attemptsById = Maps.newHashMap();
+    List<StepAttempt.Attributes> attempts = getStepAttempts();
+
     for (StepAttempt.Attributes attempt : attempts) {
       attemptsById.put(attempt.getId(), attempt);
     }
