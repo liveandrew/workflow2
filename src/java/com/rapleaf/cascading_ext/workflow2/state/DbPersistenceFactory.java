@@ -48,14 +48,7 @@ import com.rapleaf.jack.queries.Records;
 public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
 
-  private final IDatabases databases;
-  private final IRlDb rldb;
-
-  public DbPersistenceFactory() {
-    this.databases = new DatabasesImpl();
-    this.rldb = databases.getRlDb();
-    this.rldb.disableCaching();
-  }
+  public DbPersistenceFactory() {}
 
   @Override
   public synchronized DbPersistence prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
@@ -76,15 +69,20 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
     try {
 
-      Application application = getApplication(name, appType);
+      DatabasesImpl databases = new DatabasesImpl();
+      IRlDb rldb = databases.getRlDb();
+      rldb.disableCaching();
+
+      Application application = getApplication(databases, name, appType);
       LOG.info("Using application: " + application);
 
-      WorkflowExecution execution = getExecution(application, name, appType, scopeId);
+      WorkflowExecution execution = getExecution(databases, application, name, appType, scopeId);
       LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
-      cleanUpRunningAttempts(execution);
+      cleanUpRunningAttempts(databases, execution);
 
-      WorkflowAttempt attempt = createAttempt(host,
+      WorkflowAttempt attempt = createAttempt(databases,
+          host,
           username,
           description,
           pool,
@@ -98,7 +96,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
           implementationBuild
       );
 
-      assertOnlyLiveAttempt(execution, attempt);
+      assertOnlyLiveAttempt(rldb, execution, attempt);
 
       long workflowAttemptId = attempt.getId();
       LOG.info("Using new attempt: " + attempt + " id " + workflowAttemptId);
@@ -124,7 +122,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       Map<String, StepAttempt> attempts = Maps.newHashMap();
       for (Step step : flatSteps.vertexSet()) {
 
-        StepAttempt stepAttempt = createStepAttempt(step, attempt, execution);
+        StepAttempt stepAttempt = createStepAttempt(databases, step, attempt, execution);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
 
         for (Map.Entry<DSAction, DataStore> entry : step.getAction().getAllDatastores().entries()) {
@@ -149,7 +147,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
       }
 
-      return DbPersistence.runPersistence(workflowAttemptId, providedHandler);
+      return DbPersistence.runPersistence(rldb, workflowAttemptId, providedHandler);
 
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -157,7 +155,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private Application getApplication(String name, AppType appType) throws IOException {
+  private Application getApplication(IDatabases databases, String name, AppType appType) throws IOException {
+    IRlDb rldb = databases.getRlDb();
 
     Optional<Application> application = Accessors.firstOrAbsent(rldb.applications().findByName(name));
 
@@ -178,7 +177,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  private void cleanUpRunningAttempts(WorkflowExecution execution) throws IOException {
+  private void cleanUpRunningAttempts(IDatabases databases, WorkflowExecution execution) throws IOException {
+    IRlDb rldb = databases.getRlDb();
 
     List<WorkflowAttempt> prevAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
     LOG.info("Found previous attempts: " + prevAttempts);
@@ -211,7 +211,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
   }
 
-  public void assertOnlyLiveAttempt(WorkflowExecution execution, WorkflowAttempt attempt) throws IOException {
+  public void assertOnlyLiveAttempt(IRlDb rldb, WorkflowExecution execution, WorkflowAttempt attempt) throws IOException {
     List<WorkflowAttempt> liveAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
     if (liveAttempts.size() != 1) {
       attempt.setStatus(AttemptStatus.FAILED.ordinal()).save();
@@ -228,7 +228,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
       WorkflowRunnerNotification.INTERNAL_ERROR
   );
 
-  private WorkflowAttempt createAttempt(String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
+  private WorkflowAttempt createAttempt(IDatabases databases, String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution execution, String remote, String implementationBuild) throws IOException {
+    IRlDb rldb = databases.getRlDb();
 
     Map<AlertSeverity, String> recipients = Maps.newHashMap();
     for (AlertSeverity severity : AlertSeverity.values()) {
@@ -250,7 +251,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
 
     for (WorkflowRunnerNotification notification : configuredNotifications) {
 
-      ConfiguredNotification configured = buildConfiguredNotification(notification, recipients.get(notification.serverity()));
+      ConfiguredNotification configured = buildConfiguredNotification(rldb, notification, recipients.get(notification.serverity()));
       if (configured != null) {
         configured.save();
 
@@ -263,7 +264,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     return attempt;
   }
 
-  private ConfiguredNotification buildConfiguredNotification(WorkflowRunnerNotification notification, String emailForSeverity) throws IOException {
+  private ConfiguredNotification buildConfiguredNotification(IRlDb rldb, WorkflowRunnerNotification notification, String emailForSeverity) throws IOException {
     if (PROVIDED_HANDLER_NOTIFICATIONS.contains(notification)) {
       return rldb.configuredNotifications().create(notification.ordinal()).setProvidedAlertsHandler(true);
     } else {
@@ -285,7 +286,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
   }
 
 
-  private StepAttempt createStepAttempt(Step step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
+  private StepAttempt createStepAttempt(IDatabases databases, Step step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
+    IRlDb rldb = databases.getRlDb();
 
     String token = step.getCheckpointToken();
 
@@ -308,7 +310,8 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
     return StepStatus.WAITING;
   }
 
-  private WorkflowExecution getExecution(Application app, String name, AppType appType, String scopeId) throws IOException {
+  private WorkflowExecution getExecution(IDatabases databases, Application app, String name, AppType appType, String scopeId) throws IOException {
+    IRlDb rldb = databases.getRlDb();
 
     Set<WorkflowExecution> incompleteExecutions = Sets.newHashSet();
     Records records = rldb.createQuery()
