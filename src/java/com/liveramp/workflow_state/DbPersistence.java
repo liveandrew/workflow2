@@ -28,7 +28,6 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.json.WorkflowJSON;
-import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
@@ -64,11 +63,6 @@ public class DbPersistence implements WorkflowStatePersistence {
                                              long workflowAttemptId,
                                              AlertsHandler providedHandler) {
     return new DbPersistence(workflowAttemptId, rldb, true, providedHandler);
-  }
-
-  public static DbPersistence runPersistence(long workflowAttemptId,
-                                             AlertsHandler providedHandler) {
-    return new DbPersistence(workflowAttemptId, new DatabasesImpl().getRlDb(), true, providedHandler);
   }
 
   public static DbPersistence queryPersistence(long workflowAttemptId, IRlDb rldb) {
