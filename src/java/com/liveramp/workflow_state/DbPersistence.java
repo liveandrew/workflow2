@@ -60,6 +60,12 @@ public class DbPersistence implements WorkflowStatePersistence {
   //  a config or builder which the persistence can either directly instantiate (hdfs) or store configuration  of in the db so it can
   //  construct it later when it has to send messages.
 
+  public static DbPersistence runPersistence(IRlDb rldb,
+                                             long workflowAttemptId,
+                                             AlertsHandler providedHandler) {
+    return new DbPersistence(workflowAttemptId, rldb, true, providedHandler);
+  }
+
   public static DbPersistence runPersistence(long workflowAttemptId,
                                              AlertsHandler providedHandler) {
     return new DbPersistence(workflowAttemptId, new DatabasesImpl().getRlDb(), true, providedHandler);
