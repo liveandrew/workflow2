@@ -1331,7 +1331,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     WorkflowRunner stat = execute(new StatAction("stat", input));
 
-    StepState state = stat.getPersistence().getStepStatuses().get("stat");
+    StepState state = stat.getPersistence().getStepStates().get("stat");
     MapReduceJob job = Accessors.only(state.getMrJobsByID().values());
 
     //  unfortunately we can't get real values locally, but prove not fail and not null

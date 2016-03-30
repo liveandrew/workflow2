@@ -68,7 +68,7 @@ public class TimeFormatting {
     StringBuilder toS = new StringBuilder();
 
 
-    Map<String, StepState> statuses = persistence.getStepStatuses();
+    Map<String, StepState> statuses = persistence.getStepStates();
     root.print("", toS, statuses);
 
     return toS.toString();

@@ -506,7 +506,7 @@ public final class WorkflowRunner {
   private String buildStepFailureMessage(String step) throws IOException {
     return "Workflow will continue running non-blocked steps \n\n Step "
         + step + " failed with exception: "
-        + persistence.getStepStatuses().get(step).getFailureMessage();
+        + persistence.getStepStates().get(step).getFailureMessage();
   }
 
   private String buildStepsFailureMessage() throws IOException {
@@ -515,7 +515,7 @@ public final class WorkflowRunner {
     PrintWriter pw = new PrintWriter(sw);
 
     int numFailed = 0;
-    Map<String, StepState> statuses = persistence.getStepStatuses();
+    Map<String, StepState> statuses = persistence.getStepStates();
     for (Map.Entry<String, StepState> status : statuses.entrySet()) {
       if (status.getValue().getStatus() == StepStatus.FAILED) {
         numFailed++;
@@ -535,11 +535,10 @@ public final class WorkflowRunner {
     return sw.toString();
   }
 
-  //  TODO use AttemptStatus when migration done
   public boolean isFailPending() throws IOException {
 
-    for (Map.Entry<String, StepState> entry : persistence.getStepStatuses().entrySet()) {
-      if (entry.getValue().getStatus() == StepStatus.FAILED) {
+    for (Map.Entry<String, StepStatus> entry : persistence.getStepStatuses().entrySet()) {
+      if (entry.getValue() == StepStatus.FAILED) {
         return true;
       }
     }
@@ -678,9 +677,11 @@ public final class WorkflowRunner {
     Queue<Step> explore = Lists.newLinkedList();
     Set<String> blockedSteps = Sets.newHashSet();
 
+    Map<String, StepStatus> allStatuses = persistence.getStepStatuses();
+
     //  get failed steps
     for (Step step : dependencyGraph.vertexSet()) {
-      if (persistence.getStatus(step.getCheckpointToken()) == StepStatus.FAILED) {
+      if (allStatuses.get(step.getCheckpointToken()) == StepStatus.FAILED) {
         explore.add(step);
       }
     }

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.fs.FileSystem;
@@ -120,6 +121,15 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     return getState(stepToken).getStatus();
   }
 
+  @Override
+  public Map<String, StepStatus> getStepStatuses() throws IOException {
+    Map<String, StepStatus> statuses = Maps.newHashMap();
+    for (Map.Entry<String, StepState> entry : getStepStates().entrySet()) {
+      statuses.put(entry.getKey(), entry.getValue().getStatus());
+    }
+    return statuses;
+  }
+
   private StepState getState(String stepToken) {
 
     if (!statuses.containsKey(stepToken)) {
@@ -130,7 +140,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
-  public Map<String, StepState> getStepStatuses() {
+  public Map<String, StepState> getStepStates() {
     return statuses;
   }
 

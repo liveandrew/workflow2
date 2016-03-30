@@ -27,7 +27,6 @@ import com.liveramp.cascading_ext.CascadingUtil;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.flow.JobPersister;
 import com.liveramp.cascading_ext.fs.TrashHelper;
-import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.ReadResourceContainer;
@@ -469,7 +468,7 @@ public abstract class Action {
 
   DurationInfo getDurationInfo() throws IOException {
     String actionId = this.actionId.resolve();
-    Map<String, StepState> stepStatuses = persistence.getStepStatuses();
+    Map<String, StepState> stepStatuses = persistence.getStepStates();
     StepState stepState = stepStatuses.get(actionId);
     return new DurationInfo(stepState.getStartTimestamp(), stepState.getEndTimestamp());
   }
