@@ -3,6 +3,7 @@ package com.liveramp.workflow_state;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -413,7 +414,7 @@ public class DbPersistence implements WorkflowStatePersistence {
     return statuses;
   }
 
-  private synchronized  List<StepAttempt.Attributes> getStepAttempts() throws IOException {
+  private synchronized List<StepAttempt.Attributes> getStepAttempts() throws IOException {
 
     long workflowAttemptId = getAttemptId();
 
@@ -624,13 +625,19 @@ public class DbPersistence implements WorkflowStatePersistence {
       handlers.add(providedHandler);
     }
 
-    for (String email : emailsToAlert) {
+    if (!emailsToAlert.isEmpty()) {
 
-      handlers.add(AlertsHandlers.builder(TeamList.NULL)
-          .setEngineeringRecipient(AlertRecipients.of(email))
-          .setTestMailBuffer(testMailBuffer)
-          .build());
+      AlertsHandlers.Builder builder = AlertsHandlers.builder(TeamList.NULL)  // won't actually get used
+          .setTestMailBuffer(testMailBuffer);
 
+      Iterator<String> iter = emailsToAlert.iterator();
+      builder.setEngineeringRecipient(AlertRecipients.of(iter.next()));
+
+      while(iter.hasNext()){
+        builder.addToEngineeringRecipients(AlertRecipients.of(iter.next()));
+      }
+
+      handlers.add(builder.build());
     }
 
     return handlers;
