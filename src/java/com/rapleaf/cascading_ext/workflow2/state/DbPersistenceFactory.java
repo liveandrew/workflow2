@@ -35,6 +35,7 @@ import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
+import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
@@ -172,6 +173,18 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
         app.setAppType(appType.getValue());
       }
       rldb.applications().save(app);
+
+      //  add DT to the performance notifications for all new applications
+
+      ConfiguredNotification dtNotification = rldb.configuredNotifications()
+          .create(WorkflowRunnerNotification.PERFORMANCE.ordinal())
+          .setEmail("dt-workflow-alerts@liveramp.com");
+      dtNotification.save();
+
+      ApplicationConfiguredNotification appNotif = rldb.applicationConfiguredNotifications()
+          .create(app.getId(), dtNotification.getId());
+      appNotif.save();
+
       return app;
     }
 

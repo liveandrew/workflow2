@@ -13,6 +13,7 @@ import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
@@ -21,6 +22,7 @@ import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
+import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
@@ -53,7 +55,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowExecution ex = rldb.workflowExecutions().create("Workflow", WorkflowExecutionStatus.INCOMPLETE.ordinal())
         .setStartTime(Time.now())
-        .setEndTime(Time.now()+1)
+        .setEndTime(Time.now() + 1)
         .setApplicationId(app.getIntId());
 
     ex.save();
@@ -109,6 +111,12 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
     Application app = Accessors.only(applications);
     assertEquals(2, app.getWorkflowExecution().size());
 
+    assertEquals(1, app.getApplicationConfiguredNotification().size());
+
+    ApplicationConfiguredNotification only = Accessors.only(app.getApplicationConfiguredNotification());
+    assertEquals("dt-workflow-alerts@liveramp.com", only.getConfiguredNotification().getEmail());
+    assertEquals(WorkflowRunnerNotification.PERFORMANCE.ordinal(), only.getConfiguredNotification().getWorkflowRunnerNotification());
+
   }
 
   @Test
@@ -121,7 +129,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowExecution ex = rldb.workflowExecutions().create("Workflow", WorkflowExecutionStatus.INCOMPLETE.ordinal())
         .setStartTime(Time.now())
-        .setEndTime(Time.now()+1)
+        .setEndTime(Time.now() + 1)
         .setApplicationId(app.getIntId());
 
     ex.save();
@@ -159,7 +167,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowExecution ex = rldb.workflowExecutions().create("Workflow", WorkflowExecutionStatus.INCOMPLETE.ordinal())
         .setStartTime(Time.now())
-        .setEndTime(Time.now()+1)
+        .setEndTime(Time.now() + 1)
         .setApplicationId(app.getIntId());
 
     ex.save();
