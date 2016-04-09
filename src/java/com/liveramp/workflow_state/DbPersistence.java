@@ -3,7 +3,6 @@ package com.liveramp.workflow_state;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -628,14 +627,8 @@ public class DbPersistence implements WorkflowStatePersistence {
     if (!emailsToAlert.isEmpty()) {
 
       AlertsHandlers.Builder builder = AlertsHandlers.builder(TeamList.NULL)  // won't actually get used
-          .setTestMailBuffer(testMailBuffer);
-
-      Iterator<String> iter = emailsToAlert.iterator();
-      builder.setEngineeringRecipient(AlertRecipients.of(iter.next()));
-
-      while(iter.hasNext()){
-        builder.addToEngineeringRecipients(AlertRecipients.of(iter.next()));
-      }
+          .setTestMailBuffer(testMailBuffer)
+          .setEngineeringRecipient(AlertRecipients.of(emailsToAlert));
 
       handlers.add(builder.build());
     }
