@@ -76,6 +76,8 @@ import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
+import com.rapleaf.db_schemas.rldb.models.StepAttempt;
+import com.rapleaf.db_schemas.rldb.models.StepDependency;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
@@ -315,10 +317,43 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(StepStatus.FAILED, runner.getPersistence().getStatus("fail"));
 
     assertCollectionEquivalent(Lists.newArrayList(
-            "[ERROR] [TAG] [WORKFLOW] Step has failed in: Test Workflow",
-            "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
+        "[ERROR] [TAG] [WORKFLOW] Step has failed in: Test Workflow",
+        "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
         messages
     );
+
+  }
+
+
+  private static class EmptyMSA extends MultiStepAction {
+
+    public EmptyMSA(String checkpointToken, String tmpRoot) {
+      super(checkpointToken, tmpRoot);
+
+      setSubSteps(Sets.<Step>newHashSet());
+    }
+  }
+
+  @Test
+  public void testEmptyMSA() throws Exception {
+
+    Step step1 = new Step(new EmptyMSA("empty-msa",
+        getTestRoot() + "/tmp"
+    ));
+
+    Step step2 = new Step(new NoOpAction("dep"),
+        step1
+    );
+
+    execute(step2);
+
+    StepDependency dep = Accessors.only(new DatabasesImpl().getRlDb().stepDependencies().findAll());
+
+    StepAttempt attempt1 = dep.getStepAttempt();
+    StepAttempt attempt2 = dep.getDependencyAttempt();
+
+    assertEquals("dep", attempt1.getStepToken());
+    assertEquals("empty-msa__empty-msa-placeholder", attempt2.getStepToken());
 
   }
 
@@ -355,8 +390,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     try {
       execute(step, new TestWorkflowOptions()
-              .setNotificationLevel(level)
-              .setAlertsHandler(handler)
+          .setNotificationLevel(level)
+          .setAlertsHandler(handler)
       );
     } catch (Exception e) {
       //  fine
@@ -445,7 +480,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     }
 
     assertCollectionEquivalent(Lists.newArrayList(
-            "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
+        "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
         messages
     );
 
@@ -1342,6 +1377,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public static class StatAction extends Action {
 
     private final TupleDataStore input;
+
     public StatAction(String checkpointToken, TupleDataStore input) {
       super(checkpointToken);
       this.input = input;

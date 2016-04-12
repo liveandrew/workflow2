@@ -17,6 +17,7 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.event_timer.MultiTimedEvent;
 import com.liveramp.workflow_state.DSAction;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 
 public class MultiStepAction extends Action {
 
@@ -59,6 +60,13 @@ public class MultiStepAction extends Action {
       }
       tokens.add(s.getSimpleCheckpointToken());
     }
+
+    //  all hell will break loose if there are no steps in the MSA, once it gets decomposed into steps (it will get spliced from the dep graph)
+    //  give a placeholder so we propagate dependencies forward
+    if(steps.isEmpty()){
+      steps.add(new Step(new NoOpAction("empty-msa-placeholder")));
+    }
+
     this.steps = steps;
   }
 
