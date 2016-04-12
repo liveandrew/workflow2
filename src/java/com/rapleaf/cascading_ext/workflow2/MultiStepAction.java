@@ -64,10 +64,11 @@ public class MultiStepAction extends Action {
     //  all hell will break loose if there are no steps in the MSA, once it gets decomposed into steps (it will get spliced from the dep graph)
     //  give a placeholder so we propagate dependencies forward
     if(steps.isEmpty()){
-      steps.add(new Step(new NoOpAction("empty-msa-placeholder")));
+      this.steps = Sets.newHashSet(new Step(new NoOpAction("empty-msa-placeholder")));
+    }else{
+      this.steps = steps;
     }
 
-    this.steps = steps;
   }
 
   protected final void setSubStepsFromTail(Step tail) {
