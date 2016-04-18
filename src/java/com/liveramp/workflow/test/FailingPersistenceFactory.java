@@ -11,11 +11,11 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.functional.Fn;
 import com.liveramp.java_support.functional.Fns;
-import com.liveramp.java_support.workflow.TaskSummary;
 import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.StepStatus;
