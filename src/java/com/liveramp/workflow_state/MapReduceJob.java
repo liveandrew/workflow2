@@ -3,7 +3,7 @@ package com.liveramp.workflow_state;
 import java.util.List;
 
 import com.liveramp.commons.state.LaunchedJob;
-import com.liveramp.java_support.workflow.TaskSummary;
+import com.liveramp.commons.state.TaskSummary;
 
 public class MapReduceJob {
 
