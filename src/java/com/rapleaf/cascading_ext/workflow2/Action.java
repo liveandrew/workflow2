@@ -40,6 +40,7 @@ import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.workflow.ActionId;
+import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
@@ -63,7 +64,6 @@ public abstract class Action {
   private final DataStoreBuilder builder;
 
   private ResourceManager resourceManager;
-
 
   //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
   //  which actually make sense...
@@ -300,7 +300,7 @@ public abstract class Action {
 
       if (fs.exists(path)) {
         // delete if tmp store, or if no trash is enabled
-        if (uri.startsWith("/tmp/") || !trashEnabled) {
+        if (TeamTmpDir.pathIsInTmpDir(uri) || !trashEnabled) {
           LOG.info("Deleting " + uri);
           fs.delete(path, true);
           // otherwise, move to trash
