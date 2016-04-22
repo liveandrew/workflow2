@@ -692,7 +692,12 @@ public class WorkflowQueries {
     }
 
     if (scope != null) {
-      query = query.where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scope));
+      //  TODO hack, figure out migrating to a default non-null scope ID to avoid this
+      if(scope.equals("__NULL")){
+        query = query.where(WorkflowExecution.SCOPE_IDENTIFIER.isNull());
+      }else{
+        query = query.where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scope));
+      }
     }
 
     if (startedBefore != null) {
