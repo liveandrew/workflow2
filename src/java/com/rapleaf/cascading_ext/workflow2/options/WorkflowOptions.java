@@ -52,11 +52,11 @@ public class WorkflowOptions {
     return this;
   }
 
-  public String getDescription(){
+  public String getDescription() {
     return description;
   }
 
-  public WorkflowOptions setDescription(String description){
+  public WorkflowOptions setDescription(String description) {
     this.description = description;
     return this;
   }
@@ -101,21 +101,21 @@ public class WorkflowOptions {
     return alertsHandler;
   }
 
-  public WorkflowOptions configureTeam(TeamList team, String subPool){
+  public WorkflowOptions configureTeam(TeamList team, String subPool) {
     addWorkflowProperties(PropertiesUtil.teamPool(team, subPool));
     setAlertsHandler(team);
     return this;
   }
 
-  public WorkflowOptions setAlertsHandler(TeamList team){
+  public WorkflowOptions setAlertsHandler(TeamList team) {
     return setAlertsHandler(team, Optional.<Class<?>>absent());
   }
 
-  public WorkflowOptions setAlertsHandler(TeamList team, Class<?> project){
+  public WorkflowOptions setAlertsHandler(TeamList team, Class<?> project) {
     return setAlertsHandler(team, Optional.<Class<?>>of(project));
   }
 
-  public WorkflowOptions setAlertsHandler(TeamList team, Optional<Class<?>> project){
+  public WorkflowOptions setAlertsHandler(TeamList team, Optional<Class<?>> project) {
     return setAlertsHandler(AlertsHandlers.buildHandlerForTeam(team, project));
   }
 
@@ -189,7 +189,7 @@ public class WorkflowOptions {
   }
 
   public WorkflowOptions setUniqueIdentifier(String uniqueIdentifier) {
-    if(uniqueIdentifier.equals("__NULL")){
+    if (uniqueIdentifier.equals("__NULL")) {
       throw new IllegalArgumentException("This is temporarily a reserved scope, while making scope not null");
     }
     this.uniqueIdentifier = uniqueIdentifier;
