@@ -189,7 +189,7 @@ public class WorkflowOptions {
   }
 
   public WorkflowOptions setUniqueIdentifier(String uniqueIdentifier) {
-    if (uniqueIdentifier.equals("__NULL")) {
+    if (uniqueIdentifier != null && uniqueIdentifier.equals("__NULL")) {
       throw new IllegalArgumentException("This is temporarily a reserved scope, while making scope not null");
     }
     this.uniqueIdentifier = uniqueIdentifier;
