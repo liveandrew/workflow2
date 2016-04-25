@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ResourceManager;
@@ -27,6 +28,7 @@ public class WorkflowOptions {
   private AlertsHandler alertsHandler;
   private HadoopProperties properties = new HadoopProperties(Maps.newHashMap(), false);
   private Set<WorkflowRunnerNotification> enabledNotifications;
+  private Set<WorkflowRunnerNotification> disabledNotifications = Sets.newHashSet();
   private StoreReaderLockProvider lockProvider;
   private ContextStorage storage;
   private String uniqueIdentifier;
@@ -135,6 +137,12 @@ public class WorkflowOptions {
     return this;
   }
 
+  public WorkflowOptions setDisabledNotifications(WorkflowRunnerNotification disabledNotification,
+                                                  WorkflowRunnerNotification... disabledNotifications) {
+    this.disabledNotifications = EnumSet.of(disabledNotification, disabledNotifications);
+    return this;
+  }
+
   public WorkflowOptions setNotificationLevel(Set<WorkflowRunnerNotification> notifications) {
     enabledNotifications = EnumSet.copyOf(notifications);
     return this;
@@ -159,7 +167,7 @@ public class WorkflowOptions {
   }
 
   public Set<WorkflowRunnerNotification> getEnabledNotifications() {
-    return enabledNotifications;
+    return Sets.difference(enabledNotifications, disabledNotifications);
   }
 
   public HadoopProperties getWorkflowJobProperties() {
