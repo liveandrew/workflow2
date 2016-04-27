@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
@@ -33,7 +34,6 @@ import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.util.JackUtil;
 
 public class ExecutionAlerter {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionAlerter.class);
@@ -75,7 +75,7 @@ public class ExecutionAlerter {
     long endTime = System.currentTimeMillis();
     long jobWindow = endTime - 60L * 60L * 1000L;
 
-    Map<Long, MapreduceJob> jobs = JackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
+    Map<Long, MapreduceJob> jobs = BaseJackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
         jobWindow,
         endTime
     ));
@@ -83,7 +83,7 @@ public class ExecutionAlerter {
 
     Set<Long> stepAttemptIds = stepAttemptIds(jobs.values());
 
-    Multimap<Integer, MapreduceCounter> countersByJob = JackUtil.by(WorkflowQueries.getAllJobCounters(db,
+    Multimap<Integer, MapreduceCounter> countersByJob = BaseJackUtil.by(WorkflowQueries.getAllJobCounters(db,
         jobWindow,
         endTime,
         countersToFetch.keySet(),
@@ -92,9 +92,9 @@ public class ExecutionAlerter {
     );
 
     Map<Long, Long> stepAttemptToExecution = WorkflowQueries.getStepAttemptIdtoWorkflowExecutionId(db, stepAttemptIds);
-    Map<Long, StepAttempt> stepsById = JackUtil.byId(db.getRlDb().stepAttempts().query().idIn(stepAttemptIds).find());
+    Map<Long, StepAttempt> stepsById = BaseJackUtil.byId(db.getRlDb().stepAttempts().query().idIn(stepAttemptIds).find());
 
-    Map<Long, WorkflowExecution> relevantExecutions = JackUtil.byId(WorkflowQueries.getExecutionsForStepAttempts(db, stepAttemptIds));
+    Map<Long, WorkflowExecution> relevantExecutions = BaseJackUtil.byId(WorkflowQueries.getExecutionsForStepAttempts(db, stepAttemptIds));
 
     for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
       Class<? extends MapreduceJobAlertGenerator> alertClass = jobAlert.getClass();
