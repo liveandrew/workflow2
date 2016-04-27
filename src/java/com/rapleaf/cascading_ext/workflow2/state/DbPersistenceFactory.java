@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.commons.Accessors;
+import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
@@ -42,7 +43,6 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.util.JackUtil;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
 
@@ -338,7 +338,7 @@ public class DbPersistenceFactory implements WorkflowPersistenceFactory {
         .fetch();
 
     for (Record record : records) {
-      incompleteExecutions.add(new WorkflowExecution(JackUtil.getModel(WorkflowExecution.Attributes.class, record), databases));
+      incompleteExecutions.add(new WorkflowExecution(BaseJackUtil.getModel(WorkflowExecution.Attributes.class, record), databases));
     }
 
     if (incompleteExecutions.size() > 1) {
