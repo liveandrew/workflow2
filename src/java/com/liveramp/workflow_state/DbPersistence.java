@@ -22,6 +22,7 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.commons.state.TaskSummary;
+import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
@@ -38,7 +39,6 @@ import com.rapleaf.db_schemas.rldb.models.StepDependency;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.util.JackUtil;
 
 public class DbPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
@@ -462,7 +462,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       allStores.add((long)storeUsage.getWorkflowAttemptDatastoreId());
     }
 
-    Map<Long, WorkflowAttemptDatastore.Attributes> storesById = JackUtil.attributesById(WorkflowQueries.getWorkflowAttemptDatastores(rldb, allStores, null));
+    Map<Long, WorkflowAttemptDatastore.Attributes> storesById = BaseJackUtil.attributesById(WorkflowQueries.getWorkflowAttemptDatastores(rldb, allStores, null));
     TwoNestedMap<String, DSAction, WorkflowAttemptDatastore.Attributes> stepToDatastoreUsages = new TwoNestedMap<>();
     for (StepAttemptDatastore.Attributes usage : storeUsages) {
       stepToDatastoreUsages.put(

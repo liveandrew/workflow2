@@ -23,6 +23,7 @@ import com.liveramp.commons.collections.map.NestedMultimap;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.importer.generated.AppType;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -575,7 +576,7 @@ public class WorkflowQueries {
     for (Record record : configuredNotifications
         .select(ConfiguredNotification.TBL.getAllColumns())
         .fetch()) {
-      notifications.add(JackUtil.getModel(ConfiguredNotification.Attributes.class, record));
+      notifications.add(BaseJackUtil.getModel(ConfiguredNotification.Attributes.class, record));
     }
 
     return notifications;
@@ -645,7 +646,7 @@ public class WorkflowQueries {
     List<WorkflowExecution> executions = Lists.newArrayList();
 
     for (Record record : fetch) {
-      executions.add(new WorkflowExecution(JackUtil.getModel(WorkflowExecution.Attributes.class, record), databases));
+      executions.add(new WorkflowExecution(BaseJackUtil.getModel(WorkflowExecution.Attributes.class, record), databases));
     }
 
     return executions;
@@ -733,7 +734,7 @@ public class WorkflowQueries {
     }
 
     for (Record record : query.fetch()) {
-      executions.add(JackUtil.getModel(StepAttempt.Attributes.class, record));
+      executions.add(BaseJackUtil.getModel(StepAttempt.Attributes.class, record));
     }
     return executions;
   }
@@ -741,7 +742,7 @@ public class WorkflowQueries {
   public static List<StepDependency.Attributes> getStepDependencies(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
     List<StepDependency.Attributes> dependencies = Lists.newArrayList();
     for (Record record : rldb.createQuery().from(StepDependency.TBL).where(StepDependency.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds).or(StepDependency.DEPENDENCY_ATTEMPT_ID.as(Long.class).in(stepAttemptIds))).fetch()) {
-      dependencies.add(JackUtil.getModel(StepDependency.Attributes.class, record));
+      dependencies.add(BaseJackUtil.getModel(StepDependency.Attributes.class, record));
     }
     return dependencies;
   }
@@ -749,7 +750,7 @@ public class WorkflowQueries {
   public static List<MapreduceJob.Attributes> getMapreduceJobs(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
     List<MapreduceJob.Attributes> jobs = Lists.newArrayList();
     for (Record record : rldb.createQuery().from(MapreduceJob.TBL).where(MapreduceJob.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds)).fetch()) {
-      jobs.add(JackUtil.getModel(MapreduceJob.Attributes.class, record));
+      jobs.add(BaseJackUtil.getModel(MapreduceJob.Attributes.class, record));
     }
     return jobs;
   }
@@ -757,7 +758,7 @@ public class WorkflowQueries {
   public static List<MapreduceCounter.Attributes> getMapreduceCounters(IRlDb rldb, Set<Long> mapreduceJobIds) throws IOException {
     List<MapreduceCounter.Attributes> counters = Lists.newArrayList();
     for (Record record : rldb.createQuery().from(MapreduceCounter.TBL).where(MapreduceCounter.MAPREDUCE_JOB_ID.as(Long.class).in(mapreduceJobIds)).fetch()) {
-      counters.add(JackUtil.getModel(MapreduceCounter.Attributes.class, record));
+      counters.add(BaseJackUtil.getModel(MapreduceCounter.Attributes.class, record));
     }
     return counters;
   }
@@ -765,7 +766,7 @@ public class WorkflowQueries {
   public static List<StepAttemptDatastore.Attributes> getStepAttemptDatastores(IRlDb rldb, Set<Long> stepIds) throws IOException {
     List<StepAttemptDatastore.Attributes> attemptDatastores = Lists.newArrayList();
     for (Record record : rldb.createQuery().from(StepAttemptDatastore.TBL).where(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class).in(stepIds)).fetch()) {
-      attemptDatastores.add(JackUtil.getModel(StepAttemptDatastore.Attributes.class, record));
+      attemptDatastores.add(BaseJackUtil.getModel(StepAttemptDatastore.Attributes.class, record));
     }
     return attemptDatastores;
   }
@@ -784,7 +785,7 @@ public class WorkflowQueries {
     }
 
     for (Record record : query.fetch()) {
-      workflowAttemptDatastore.add(JackUtil.getModel(WorkflowAttemptDatastore.Attributes.class, record));
+      workflowAttemptDatastore.add(BaseJackUtil.getModel(WorkflowAttemptDatastore.Attributes.class, record));
     }
     return workflowAttemptDatastore;
   }

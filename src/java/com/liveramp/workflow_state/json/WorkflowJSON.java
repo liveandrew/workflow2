@@ -21,6 +21,7 @@ import org.json.JSONObject;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.map.MapBuilder;
+import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DbPersistence;
@@ -40,7 +41,6 @@ import com.rapleaf.db_schemas.rldb.models.StepDependency;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.util.JackUtil;
 
 public class WorkflowJSON {
 
@@ -223,7 +223,7 @@ public class WorkflowJSON {
   }
 
   public static JSONObject toJSON(IRlDb rldb, boolean details, String processStatusFilter, WorkflowExecution execution, Collection<WorkflowAttempt> atts) throws IOException, JSONException {
-    List<WorkflowAttempt> attempts = JackUtil.sortDescending(atts);
+    List<WorkflowAttempt> attempts = BaseJackUtil.sortDescending(atts);
 
     if (!attempts.isEmpty()) {
       WorkflowAttempt attempt = Accessors.first(attempts);
@@ -310,22 +310,22 @@ public class WorkflowJSON {
   }
 
   public static JSONObject toJSON(Application.Attributes notification) {
-    return JackUtil.toJSON(notification, Collections.<Enum, Class<? extends Enum>>emptyMap(), "");
+    return BaseJackUtil.toJSON(notification, Collections.<Enum, Class<? extends Enum>>emptyMap(), "");
   }
 
   public static JSONObject toJSON(ConfiguredNotification.Attributes notification) {
-    return JackUtil.toJSON(notification, MapBuilder.<ConfiguredNotification._Fields, Class<? extends Enum>>of(ConfiguredNotification._Fields.workflow_runner_notification, WorkflowRunnerNotification.class).get(), "");
+    return BaseJackUtil.toJSON(notification, MapBuilder.<ConfiguredNotification._Fields, Class<? extends Enum>>of(ConfiguredNotification._Fields.workflow_runner_notification, WorkflowRunnerNotification.class).get(), "");
   }
 
   public static JSONObject toJSON(WorkflowAttempt.Attributes attempt) {
-    return JackUtil.toJSON(attempt, MapBuilder.<WorkflowAttempt._Fields, Class<? extends Enum>>of(WorkflowAttempt._Fields.status, AttemptStatus.class).get(), "");
+    return BaseJackUtil.toJSON(attempt, MapBuilder.<WorkflowAttempt._Fields, Class<? extends Enum>>of(WorkflowAttempt._Fields.status, AttemptStatus.class).get(), "");
   }
 
   public static JSONObject toJSON(WorkflowExecution.Attributes execution) {
-    return JackUtil.toJSON(execution, MapBuilder.<WorkflowExecution._Fields, Class<? extends Enum>>of(WorkflowExecution._Fields.status, WorkflowExecutionStatus.class).get(), "");
+    return BaseJackUtil.toJSON(execution, MapBuilder.<WorkflowExecution._Fields, Class<? extends Enum>>of(WorkflowExecution._Fields.status, WorkflowExecutionStatus.class).get(), "");
   }
 
   public static JSONObject toJSON(StepAttempt.Attributes attempt) {
-    return JackUtil.toJSON(attempt, MapBuilder.<StepAttempt._Fields, Class<? extends Enum>>of(StepAttempt._Fields.step_status, StepStatus.class).get(), "");
+    return BaseJackUtil.toJSON(attempt, MapBuilder.<StepAttempt._Fields, Class<? extends Enum>>of(StepAttempt._Fields.step_status, StepStatus.class).get(), "");
   }
 }
