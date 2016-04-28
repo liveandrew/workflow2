@@ -125,7 +125,8 @@ public class ExecutionAlerter {
   }
 
   private void generateExecutionAlerts() throws IOException, URISyntaxException {
-    long executionWindow = System.currentTimeMillis() - 7 * 24L * 60L * 60L * 1000L;
+    long fetchTime = System.currentTimeMillis();
+    long executionWindow = fetchTime - 7 * 24L * 60L * 60L * 1000L;
     LOG.info("Fetching executions to attempts since " + executionWindow);
 
     Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, executionWindow, null, null, null);
@@ -138,7 +139,7 @@ public class ExecutionAlerter {
       for (WorkflowExecution execution : attempts.keySet()) {
         long executionId = execution.getId();
 
-        AlertMessage alert = executionAlert.generateAlert(execution, attempts.get(execution));
+        AlertMessage alert = executionAlert.generateAlert(fetchTime, execution, attempts.get(execution));
         if (alert != null) {
           if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
             sentProdAlerts.put(executionId, alertClass);

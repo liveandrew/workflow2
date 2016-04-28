@@ -90,7 +90,7 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
   private static class TestExecutionGenerator implements ExecutionAlertGenerator {
 
     @Override
-    public AlertMessage generateAlert(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
+    public AlertMessage generateAlert(long time, WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
       return new AlertMessage("Alerting about execution " + execution.getId(), WorkflowRunnerNotification.PERFORMANCE);
     }
   }

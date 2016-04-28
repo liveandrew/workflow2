@@ -8,5 +8,5 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 
 public interface ExecutionAlertGenerator {
-  public AlertMessage generateAlert(WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException;
+  public AlertMessage generateAlert(long fetchTime, WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException;
 }
