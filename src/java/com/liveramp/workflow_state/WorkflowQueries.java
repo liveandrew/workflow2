@@ -206,7 +206,10 @@ public class WorkflowQueries {
 
   //  it's dumb to require both but it lets us avoid extra db lookups
   public static ProcessStatus getProcessStatus(WorkflowAttempt attempt, WorkflowExecution execution, int missedHeartbeatsThreshold) throws IOException {
+    return getProcessStatus(System.currentTimeMillis(), attempt, execution, missedHeartbeatsThreshold);
+  }
 
+  public static ProcessStatus getProcessStatus(long fetchTime, WorkflowAttempt attempt, WorkflowExecution execution, int missedHeartbeatsThreshold){
     Long lastHeartbeat = attempt.getLastHeartbeat();
 
     Integer status = attempt.getStatus();
@@ -216,7 +219,7 @@ public class WorkflowQueries {
     }
 
     //  assume dead (OOME killed, etc) if no heartbeat for 4x interval
-    if (System.currentTimeMillis() - lastHeartbeat >
+    if (fetchTime - lastHeartbeat >
         missedHeartbeatsThreshold * DbPersistence.HEARTBEAT_INTERVAL) {
 
       //  let manual cleanup get rid of the timeout status
