@@ -24,7 +24,7 @@ public class ProductionWorkflowOptions extends WorkflowOptions {
     setNotificationLevel(WorkflowNotificationLevel.DEBUG);
     setLockProvider(new MockStoreReaderLockProvider());
     setStorage(new ContextStorage.None());
-    setStepPollInterval(3000);  // be nice to production DB
+    setStepPollInterval(6000);  // be nice to production DB
     setCounterFilter(CounterFilters.all());
     setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL));
     setHostnameProvider(new DefaultHostnameProvider());

@@ -433,7 +433,9 @@ public final class WorkflowRunner {
         // back around the loop.
         semaphore.release();
         try {
+
           Thread.sleep(stepPollInterval);
+
         } catch (InterruptedException e) {
           LOG.debug("Interrupted waiting for step to become ready", e);
         }
