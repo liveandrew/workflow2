@@ -740,7 +740,7 @@ public class WorkflowQueries {
   public static Map<String, StepStatus> getStepStatuses(IRlDb rldb, Long workflowAttemptId, String stepToken) throws IOException {
     Map<String, StepStatus> statuses = Maps.newHashMap();
     for (Record record : queryStepAttempts(rldb, workflowAttemptId, stepToken).select(StepAttempt.STEP_TOKEN, StepAttempt.STEP_STATUS).fetch()) {
-      statuses.put(record.getString(StepAttempt.STEP_TOKEN), StepStatus.findByValue(record.getInt(StepAttempt.STEP_STATUS)));
+      statuses.put(record.get(StepAttempt.STEP_TOKEN), StepStatus.findByValue(record.get(StepAttempt.STEP_STATUS)));
     }
     return statuses;
   }
