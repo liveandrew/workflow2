@@ -732,7 +732,7 @@ public class WorkflowQueries {
     List<StepAttempt.Attributes> executions = Lists.newArrayList();
 
     for (Record record : queryStepAttempts(rldb, workflowAttemptId, stepToken).select(StepAttempt.TBL.getAllColumns()).fetch()) {
-      executions.add(BaseJackUtil.getModel(StepAttempt.Attributes.class, record));
+      executions.add(record.getAttributes(StepAttempt.TBL));
     }
     return executions;
   }
