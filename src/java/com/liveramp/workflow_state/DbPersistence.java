@@ -394,7 +394,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   @Override
   public synchronized StepStatus getStatus(String stepToken) throws IOException {
-    return StepStatus.findByValue(getStep(stepToken).getStepStatus());
+    return WorkflowQueries.getStepStatuses(rldb, workflowAttemptId, stepToken).get(stepToken);
   }
 
   @Override
@@ -404,30 +404,17 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   @Override
   public synchronized Map<String, StepStatus> getStepStatuses() throws IOException {
-
-    Map<String, StepStatus> statuses = Maps.newHashMap();
-    for (StepAttempt.Attributes attempt : getStepAttempts()) {
-      statuses.put(attempt.getStepToken(), StepStatus.findByValue(attempt.getStepStatus()));
-    }
-
-    return statuses;
-  }
-
-  private synchronized List<StepAttempt.Attributes> getStepAttempts() throws IOException {
-
-    long workflowAttemptId = getAttemptId();
-
-    return WorkflowQueries.getStepAttempts(rldb,
-        workflowAttemptId,
-        null
-    );
-
+    return WorkflowQueries.getStepStatuses(rldb, workflowAttemptId, null);
   }
 
   private synchronized Map<String, StepState> getStates() throws IOException {
 
     Map<Long, StepAttempt.Attributes> attemptsById = Maps.newHashMap();
-    List<StepAttempt.Attributes> attempts = getStepAttempts();
+
+    List<StepAttempt.Attributes> attempts = WorkflowQueries.getStepAttempts(rldb,
+        workflowAttemptId,
+        null
+    );
 
     for (StepAttempt.Attributes attempt : attempts) {
       attemptsById.put(attempt.getId(), attempt);

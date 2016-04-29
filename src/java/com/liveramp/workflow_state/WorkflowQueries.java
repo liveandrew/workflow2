@@ -727,16 +727,29 @@ public class WorkflowQueries {
 
   public static List<StepAttempt.Attributes> getStepAttempts(IRlDb rldb, Long workflowAttemptId, String stepToken) throws IOException {
     List<StepAttempt.Attributes> executions = Lists.newArrayList();
+
+    for (Record record : queryStepAttempts(rldb, workflowAttemptId, stepToken).select(StepAttempt.TBL.getAllColumns()).fetch()) {
+      executions.add(BaseJackUtil.getModel(StepAttempt.Attributes.class, record));
+    }
+    return executions;
+  }
+
+  public static Map<String, StepStatus> getStepStatuses(IRlDb rldb, Long workflowAttemptId, String stepToken) throws IOException {
+    Map<String, StepStatus> statuses = Maps.newHashMap();
+    for (Record record : queryStepAttempts(rldb, workflowAttemptId, stepToken).select(StepAttempt.STEP_TOKEN, StepAttempt.STEP_STATUS).fetch()) {
+      statuses.put(record.getString(StepAttempt.STEP_TOKEN), StepStatus.findByValue(record.getInt(StepAttempt.STEP_STATUS)));
+    }
+    return statuses;
+  }
+
+  private static GenericQuery queryStepAttempts(IRlDb rldb, Long workflowAttemptId, String stepToken){
     GenericQuery query = rldb.createQuery().from(StepAttempt.TBL).where(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId));
 
     if(stepToken != null){
       query = query.where(StepAttempt.STEP_TOKEN.equalTo(stepToken));
     }
 
-    for (Record record : query.fetch()) {
-      executions.add(BaseJackUtil.getModel(StepAttempt.Attributes.class, record));
-    }
-    return executions;
+    return query;
   }
 
   public static List<StepDependency.Attributes> getStepDependencies(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
