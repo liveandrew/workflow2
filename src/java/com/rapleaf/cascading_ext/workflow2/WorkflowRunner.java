@@ -66,8 +66,6 @@ public final class WorkflowRunner {
    */
   private final int maxConcurrentSteps;
 
-  private boolean stopOnFailure;
-
   private final DirectedGraph<Step, DefaultEdge> dependencyGraph;
 
   /**
@@ -175,7 +173,6 @@ public final class WorkflowRunner {
     this.stepPollInterval = options.getStepPollInterval();
     this.resourceManager = options.getResourceManager();
     this.trackerURLBuilder = options.getUrlBuilder();
-    this.stopOnFailure = options.getStopOnFailure();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps);
@@ -720,11 +717,6 @@ public final class WorkflowRunner {
   }
 
   private boolean shouldKeepStartingSteps() throws IOException {
-
-    if (stopOnFailure && isFailPending()) {
-      return false;
-    }
-
     return persistence.getShutdownRequest() == null && internalErrors.isEmpty() && existUnblockedSteps();
   }
 
