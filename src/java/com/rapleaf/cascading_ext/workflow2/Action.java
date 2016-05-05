@@ -400,6 +400,7 @@ public abstract class Action {
   private FlowConnector buildFlowConnector(Map<Object, Object> properties) {
     return CascadingUtil.buildFlowConnector(
         new JobConf(),
+        getPersister(),
         properties,
         CascadingHelper.get().resolveFlowStepStrategies(),
         CascadingHelper.get().getInvalidPropertyValues()

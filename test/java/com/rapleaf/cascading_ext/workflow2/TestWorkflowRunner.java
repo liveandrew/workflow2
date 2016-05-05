@@ -85,6 +85,7 @@ import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
@@ -317,8 +318,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(StepStatus.FAILED, runner.getPersistence().getStatus("fail"));
 
     assertCollectionEquivalent(Lists.newArrayList(
-        "[ERROR] [TAG] [WORKFLOW] Step has failed in: Test Workflow",
-        "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
+            "[ERROR] [TAG] [WORKFLOW] Step has failed in: Test Workflow",
+            "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
         messages
     );
 
@@ -390,8 +391,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     try {
       execute(step, new TestWorkflowOptions()
-          .setNotificationLevel(level)
-          .setAlertsHandler(handler)
+              .setNotificationLevel(level)
+              .setAlertsHandler(handler)
       );
     } catch (Exception e) {
       //  fine
@@ -480,7 +481,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     }
 
     assertCollectionEquivalent(Lists.newArrayList(
-        "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
+            "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
         messages
     );
 
@@ -1371,6 +1372,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     //  unfortunately we can't get real values locally, but prove not fail and not null
     assertEquals(0L, job.getTaskSummary().getAvgMapDuration().longValue());
+    assertNotNull(job.getTaskSummary().getTaskFailures());
 
   }
 
