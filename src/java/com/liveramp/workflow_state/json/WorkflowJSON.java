@@ -123,15 +123,16 @@ public class WorkflowJSON {
 
       Map<String, JSONObject> mapReduceJobs = Maps.newHashMap();
       for (MapreduceJob.Attributes mapreduceJob : jobsByStepId.get(stepId)) {
-        Collection<MapreduceCounter.Attributes> stepCounters = countersByJobId.get(mapreduceJob.getId());
+        long jobID = mapreduceJob.getId();
+        Collection<MapreduceCounter.Attributes> stepCounters = countersByJobId.get(jobID);
 
         mapReduceJobs.put(mapreduceJob.getJobIdentifier(),
-            new JSONObject()
+             new JSONObject()
                 .put("job_id", mapreduceJob.getJobIdentifier())
                 .put("job_name", mapreduceJob.getJobName())
                 .put("tracking_url", mapreduceJob.getTrackingUrl())
-                .put("counters", toJSONDb(stepCounters)))
-                .put("task_exceptions", toJSON(taskExceptionsByJobId.get(mapreduceJob.getId())));
+                .put("counters", toJSONDb(stepCounters))
+                .put("task_exceptions", toJSON(taskExceptionsByJobId.get(jobID))));
       }
 
       steps.put(new JSONObject()
