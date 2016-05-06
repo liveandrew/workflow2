@@ -32,6 +32,7 @@ import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
+import com.rapleaf.db_schemas.rldb.models.MapreduceJobTaskException;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.StepAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.StepDependency;
@@ -769,6 +770,17 @@ public class WorkflowQueries {
       jobs.add(BaseJackUtil.getModel(MapreduceJob.Attributes.class, record));
     }
     return jobs;
+  }
+
+  public static List<MapreduceJobTaskException.Attributes> getMapreduceJobTaskExceptions(IRlDb rldb, Set<Long> mapreduceJobIds) throws IOException {
+    List<MapreduceJobTaskException.Attributes> exceptions = Lists.newArrayList();
+
+    for (Record record : rldb.createQuery().from(MapreduceJobTaskException.TBL)
+        .where(MapreduceJobTaskException.MAPREDUCE_JOB_ID.as(Long.class).in(mapreduceJobIds)).fetch()) {
+      exceptions.add(record.getAttributes(MapreduceJobTaskException.TBL));
+    }
+
+    return exceptions;
   }
 
   public static List<MapreduceCounter.Attributes> getMapreduceCounters(IRlDb rldb, Set<Long> mapreduceJobIds) throws IOException {

@@ -35,6 +35,7 @@ import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
+import com.rapleaf.db_schemas.rldb.models.MapreduceJobTaskException;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.StepAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.StepDependency;
@@ -83,9 +84,19 @@ public class WorkflowJSON {
 
     Multimap<Long, MapreduceCounter.Attributes> countersByJobId = HashMultimap.create();
     for (MapreduceCounter.Attributes counter : counters) {
-      countersByJobId.put((long)counter.getMapreduceJobId(), counter);
+      countersByJobId.put((long)counter.getMapreduceJobId(), counter); 
     }
 
+    List<MapreduceJobTaskException.Attributes> exceptions = WorkflowQueries.getMapreduceJobTaskExceptions(rldb,
+        jobIds
+    );
+
+    Multimap<Long, MapreduceJobTaskException.Attributes> taskExceptionsByJobId = HashMultimap.create();
+
+    for (MapreduceJobTaskException.Attributes exception : exceptions) {
+     taskExceptionsByJobId.put((long) exception.getMapreduceJobId(), exception);
+    }
+    
     List<StepAttemptDatastore.Attributes> storeUsages = WorkflowQueries.getStepAttemptDatastores(rldb,
         attemptsById.keySet()
     );
@@ -119,7 +130,8 @@ public class WorkflowJSON {
                 .put("job_id", mapreduceJob.getJobIdentifier())
                 .put("job_name", mapreduceJob.getJobName())
                 .put("tracking_url", mapreduceJob.getTrackingUrl())
-                .put("counters", toJSONDb(stepCounters)));
+                .put("counters", toJSONDb(stepCounters)))
+                .put("task_exceptions", toJSON(taskExceptionsByJobId.get(mapreduceJob.getId())));
       }
 
       steps.put(new JSONObject()
@@ -262,6 +274,8 @@ public class WorkflowJSON {
     return null;
   }
 
+
+
   private static JSONArray toJSONDb(Collection<MapreduceCounter.Attributes> counters) throws JSONException {
     JSONArray array = new JSONArray();
     for (MapreduceCounter.Attributes counter : counters) {
@@ -307,6 +321,18 @@ public class WorkflowJSON {
     } else {
       return provided;
     }
+  }
+
+  public static JSONArray toJSON(Collection<MapreduceJobTaskException.Attributes> exceptions){
+    JSONArray array = new JSONArray();
+    for (MapreduceJobTaskException.Attributes exception : exceptions) {
+      array.put(toJSON(exception));
+    }
+    return array;
+  }
+
+  public static JSONObject toJSON(MapreduceJobTaskException.Attributes exception){
+    return BaseJackUtil.toJSON(exception, Collections.<MapreduceJobTaskException._Fields, Class<? extends Enum>>emptyMap(), "");
   }
 
   public static JSONObject toJSON(Application.Attributes notification) {
