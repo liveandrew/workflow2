@@ -21,6 +21,7 @@ import com.liveramp.commons.collections.map.MapBuilder;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.LaunchedJob;
+import com.liveramp.commons.state.TaskFailure;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
@@ -33,6 +34,7 @@ import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
+import com.rapleaf.db_schemas.rldb.models.MapreduceJobTaskException;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.StepAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.StepDependency;
@@ -140,8 +142,8 @@ public class DbPersistence implements WorkflowStatePersistence {
     LOG.info("Marking step " + stepToken + " as running");
 
     update(getStep(stepToken), stepFields()
-        .put(StepAttempt._Fields.step_status, StepStatus.RUNNING.ordinal())
-        .put(StepAttempt._Fields.start_time, System.currentTimeMillis())
+            .put(StepAttempt._Fields.step_status, StepStatus.RUNNING.ordinal())
+            .put(StepAttempt._Fields.start_time, System.currentTimeMillis())
     );
 
   }
@@ -157,14 +159,14 @@ public class DbPersistence implements WorkflowStatePersistence {
     StepAttempt step = getStep(stepToken);
 
     update(step, stepFields()
-        .put(StepAttempt._Fields.failure_cause, StringUtils.substring(t.getMessage(), 0, 255))
-        .put(StepAttempt._Fields.failure_trace, StringUtils.substring(sw.toString(), 0, 10000))
-        .put(StepAttempt._Fields.step_status, StepStatus.FAILED.ordinal())
-        .put(StepAttempt._Fields.end_time, System.currentTimeMillis())
+            .put(StepAttempt._Fields.failure_cause, StringUtils.substring(t.getMessage(), 0, 255))
+            .put(StepAttempt._Fields.failure_trace, StringUtils.substring(sw.toString(), 0, 10000))
+            .put(StepAttempt._Fields.step_status, StepStatus.FAILED.ordinal())
+            .put(StepAttempt._Fields.end_time, System.currentTimeMillis())
     );
 
     save(getAttempt()
-        .setStatus(AttemptStatus.FAIL_PENDING.ordinal())
+            .setStatus(AttemptStatus.FAIL_PENDING.ordinal())
     );
 
   }
@@ -191,7 +193,7 @@ public class DbPersistence implements WorkflowStatePersistence {
     Assertions.assertCanRevert(rldb, execution);
 
     update(getStep(stepToken), stepFields()
-        .put(StepAttempt._Fields.step_status, StepStatus.REVERTED.ordinal())
+            .put(StepAttempt._Fields.step_status, StepStatus.REVERTED.ordinal())
     );
 
     //  set execution to not complete
@@ -204,7 +206,7 @@ public class DbPersistence implements WorkflowStatePersistence {
     LOG.info("Marking step status message: " + stepToken + " message " + newMessage);
 
     update(getStep(stepToken), stepFields()
-        .put(StepAttempt._Fields.status_message, StringUtils.substring(newMessage, 0, 255))
+            .put(StepAttempt._Fields.status_message, StringUtils.substring(newMessage, 0, 255))
     );
 
   }
@@ -268,7 +270,7 @@ public class DbPersistence implements WorkflowStatePersistence {
           .setMaxMapDuration(info.getMaxMapDuration())
           .setMinMapDuration(info.getMinMapDuration())
           .setStdevMapDuration(info.getMapDurationStDev())
-          //  reduce
+              //  reduce
           .setAvgReduceDuration(info.getAvgReduceDuration())
           .setMedianReduceDuration(info.getMedianReduceDuration())
           .setMaxReduceDuration(info.getMaxReduceDuration())
@@ -277,6 +279,12 @@ public class DbPersistence implements WorkflowStatePersistence {
 
           .save();
 
+      for (TaskFailure taskFailure : info.getTaskFailures()) {
+        rldb.mapreduceJobTaskExceptions().create(
+            (int)job.getId(),
+            taskFailure.getTaskAttemptID(),
+            taskFailure.getError());
+      }
     }
     //  don't want to leave this in forever, debugging transient error on setup failure  (figure out why jobID is here which isn't recorded earlier)
     catch (Exception e) {
@@ -297,8 +305,8 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     LOG.info("Starting attempt: " + getAttempt());
     save(getAttempt()
-        .setStatus(AttemptStatus.RUNNING.ordinal())
-        .setStartTime(System.currentTimeMillis())
+            .setStatus(AttemptStatus.RUNNING.ordinal())
+            .setStartTime(System.currentTimeMillis())
     );
 
   }
@@ -310,7 +318,7 @@ public class DbPersistence implements WorkflowStatePersistence {
     Assertions.assertLive(attempt);
 
     save(getExecution()
-        .setPoolOverride(pool)
+            .setPoolOverride(pool)
     );
 
   }
@@ -323,7 +331,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     LOG.info("Setting priority: " + priority);
     save(attempt
-        .setPriority(priority)
+            .setPriority(priority)
     );
 
   }
@@ -358,8 +366,8 @@ public class DbPersistence implements WorkflowStatePersistence {
       if (WorkflowQueries.workflowComplete(getExecution())) {
         LOG.info("Marking execution as complete");
         save(getExecution()
-            .setStatus(WorkflowExecutionStatus.COMPLETE.ordinal())
-            .setEndTime(System.currentTimeMillis())
+                .setStatus(WorkflowExecutionStatus.COMPLETE.ordinal())
+                .setEndTime(System.currentTimeMillis())
         );
       }
 
@@ -506,6 +514,13 @@ public class DbPersistence implements WorkflowStatePersistence {
         }
 
         LaunchedJob launched = new LaunchedJob(job.getJobIdentifier(), job.getJobName(), job.getTrackingUrl());
+
+        List<TaskFailure> taskFailureList = Lists.newArrayList();
+
+        for (MapreduceJobTaskException exception : rldb.mapreduceJobTaskExceptions().findByMapreduceJobId(job.getIntId())) {
+          taskFailureList.add(new TaskFailure(exception.getTaskAttemptId(), exception.getException()));
+        }
+
         state.addMrjob(new MapReduceJob(launched,
             new TaskSummary(
                 job.getAvgMapDuration(),
@@ -517,7 +532,8 @@ public class DbPersistence implements WorkflowStatePersistence {
                 job.getMedianReduceDuration(),
                 job.getMaxReduceDuration(),
                 job.getMinReduceDuration(),
-                job.getStdevReduceDuration()
+                job.getStdevReduceDuration(),
+                taskFailureList
             ),
             counterList
         ));
@@ -653,7 +669,7 @@ public class DbPersistence implements WorkflowStatePersistence {
   private synchronized void heartbeat() {
     try {
       save(getAttempt()
-          .setLastHeartbeat(System.currentTimeMillis())
+              .setLastHeartbeat(System.currentTimeMillis())
       );
     } catch (IOException e) {
       try {
