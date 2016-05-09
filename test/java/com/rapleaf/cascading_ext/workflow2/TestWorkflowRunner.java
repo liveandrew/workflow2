@@ -49,6 +49,7 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
+import com.liveramp.workflow.test.MonitoredPersistenceFactory;
 import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.MapReduceJob;
@@ -1374,6 +1375,50 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(0L, job.getTaskSummary().getAvgMapDuration().longValue());
     assertNotNull(job.getTaskSummary().getTaskFailures());
 
+  }
+
+  @Test
+  public void testSimultaneousConcurrent() throws IOException {
+
+    //  simple -- confirm we are not calling getStepStatuses for each step
+
+    Set<Step> heads = Sets.newHashSet();
+    for (int i = 0; i < 50; i++) {
+      heads.add(new Step(new DelayAction("step-" + i)));
+    }
+
+    Step tail = new Step(new NoOpAction("tail"), heads);
+
+    WorkflowRunner runner = new WorkflowRunner(
+        TestWorkflowRunner.class.getName(),
+        new MonitoredPersistenceFactory(new DbPersistenceFactory()),
+        new TestWorkflowOptions()
+            .setStepPollInterval(2000)
+            //  concurrency 200
+            .setMaxConcurrentSteps(200),
+        tail
+    );
+    runner.run();
+
+    MonitoredPersistenceFactory.MonitoredPersistence monitoredPersistence =
+        (MonitoredPersistenceFactory.MonitoredPersistence)runner.getPersistence();
+
+    //  three times through the loop, once checking if we had step failures
+    assertEquals(7, monitoredPersistence.getGetStepStatusCalls());
+
+  }
+
+
+  public static class DelayAction extends Action {
+
+    public DelayAction(String checkpointToken) {
+      super(checkpointToken);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      Thread.sleep(1000);
+    }
   }
 
   public static class StatAction extends Action {

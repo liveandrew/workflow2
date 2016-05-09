@@ -51,6 +51,8 @@ public final class WorkflowRunner {
   private static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
   private static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
 
+  private static final long ONE_SECOND = 1000;
+
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLocker lockProvider;
   private final ContextStorage storage;
@@ -391,62 +393,62 @@ public final class WorkflowRunner {
     }
   }
 
+  private void doRunLoop() throws IOException {
+    try {
+      while (pendingSteps.size() > 0 && shouldKeepStartingSteps() && existUnblockedSteps()) {
+        // process any completed/failed steps
+        clearFinishedSteps();
+
+        // acquire semaphore so we don't do any polling until there are free permits
+        semaphore.acquire();
+
+        //  release the permit so it can be taken by a step
+        semaphore.release();
+
+        // check if there are any startable steps
+        List<StepRunner> startableSteps = getStartableSteps();
+
+        //  start each of them.  if we block for a while waiting for a free permit, that's fine
+        for (StepRunner startableStep : startableSteps) {
+
+          semaphore.acquire();
+
+          //  we only check for shutdown requests here because we know that we do have a runnable step already
+          if (!shouldKeepStartingSteps()) {
+            LOG.info("Exiting early because of internal error or shutdown request");
+            semaphore.release();
+            return;
+          }
+
+          // start one startable
+          runningSteps.add(startableStep);
+          pendingSteps.remove(startableStep);
+          startStep(startableStep);
+
+          // note that we explicitly don't release the semaphore here. this is
+          // because the actual step runner thread will release it when it's
+          // complete (or failed).
+
+        }
+
+        //  if there was nothing to do this time, block for a while before trying again
+        //  otherwise, we may have blocked for a while, and now want to poll immediately
+        if (startableSteps.isEmpty()) {
+          Thread.sleep(stepPollInterval);
+        }
+      }
+    } catch (InterruptedException e) {
+      LOG.debug("Interrupted waiting to acquire semaphore.", e);
+    }
+
+
+  }
+
   private void runInternal() throws IOException {
+
     // keep trying to start new components for as long as we are allowed and
     // there are components left to start
-    while (shouldKeepStartingSteps() && pendingSteps.size() > 0) {
-      // process any completed/failed steps
-      clearFinishedSteps();
-
-      // we check again here because we want to make sure we don't bother to
-      // try acquiring the semaphore if we should shut down.
-      if (!shouldKeepStartingSteps()) {
-        break;
-      }
-
-      // acquire semaphore
-      try {
-        semaphore.acquire();
-      } catch (InterruptedException e) {
-        LOG.debug("Interrupted waiting to acquire semaphore.", e);
-        continue;
-      }
-
-      // we do this check *again* because this time, we might have been told
-      // to shut down while we were waiting on the semaphore.
-      if (!shouldKeepStartingSteps()) {
-        // VERY important to release the semaphore here, otherwise the "wait
-        // for completion" thing below will block indefinitely.
-        semaphore.release();
-        break;
-      }
-
-      // check if there are any startable steps
-      StepRunner startableStep = getStartableStep();
-
-      if (startableStep == null) {
-        // we didn't find any step to start, so wait a little.
-        // important to release the semaphore here, because we're going to go
-        // back around the loop.
-        semaphore.release();
-        try {
-
-          Thread.sleep(stepPollInterval);
-
-        } catch (InterruptedException e) {
-          LOG.debug("Interrupted waiting for step to become ready", e);
-        }
-      } else {
-        // start one startable
-        runningSteps.add(startableStep);
-        pendingSteps.remove(startableStep);
-        startStep(startableStep);
-
-        // note that we explicitly don't release the semaphore here. this is
-        // because the actual step runner thread will release it when it's
-        // complete (or failed).
-      }
-    }
+    doRunLoop();
 
     // acquire all the permits on the semaphore. this will guarantee that zero
     // components are running.
@@ -707,17 +709,21 @@ public final class WorkflowRunner {
 
   }
 
-  private StepRunner getStartableStep() throws IOException {
+  private List<StepRunner> getStartableSteps() throws IOException {
+
+    Map<String, StepStatus> stepStatuses = persistence.getStepStatuses();
+
+    List<StepRunner> allStartable = Lists.newArrayList();
     for (StepRunner cr : pendingSteps) {
-      if (cr.allDependenciesCompleted()) {
-        return cr;
+      if (cr.allDependenciesCompleted(stepStatuses)) {
+        allStartable.add(cr);
       }
     }
-    return null;
+    return allStartable;
   }
 
   private boolean shouldKeepStartingSteps() throws IOException {
-    return persistence.getShutdownRequest() == null && internalErrors.isEmpty() && existUnblockedSteps();
+    return persistence.getShutdownRequest() == null && internalErrors.isEmpty();
   }
 
   public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
@@ -804,10 +810,10 @@ public final class WorkflowRunner {
       return step.getCheckpointToken();
     }
 
-    public boolean allDependenciesCompleted() throws IOException {
+    public boolean allDependenciesCompleted(Map<String, StepStatus> statuses) throws IOException {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if (!StepStatus.NON_BLOCKING.contains(state.getStatus(dep.getCheckpointToken()))) {
+        if (!StepStatus.NON_BLOCKING.contains(statuses.get(dep.getCheckpointToken()))) {
           return false;
         }
       }
