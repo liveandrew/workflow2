@@ -51,8 +51,6 @@ public final class WorkflowRunner {
   private static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
   private static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
 
-  private static final long ONE_SECOND = 1000;
-
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLocker lockProvider;
   private final ContextStorage storage;
