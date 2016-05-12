@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import com.google.common.collect.Maps;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.thrift.TBase;
 import org.slf4j.Logger;
@@ -15,6 +14,7 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntryCollector;
 
+import com.liveramp.cascading_tools.properties.PropertiesBuilder;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
@@ -91,7 +91,10 @@ public class CompactMSJStore<T extends Comparable, K extends Comparable> extends
 
 
   public CompactMSJStore(String checkpointToken, String tmpDir, Class<T> outputType, final MSJDataStore<K> store, BucketDataStore<T> tempStore) throws InstantiationException, IllegalAccessException {
-    super(checkpointToken, tmpDir, Maps.newHashMap(),
+    super(checkpointToken, tmpDir, new PropertiesBuilder()
+            .mapHeapSize(950)
+            .reduceHeapSize(950)
+            .build(),
         new ExtractorsList().add(store, store.getExtractor()),
         new AllJoin<K>(outputType),
         tempStore,
