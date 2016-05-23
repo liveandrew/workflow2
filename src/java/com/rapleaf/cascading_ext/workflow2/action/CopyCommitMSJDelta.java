@@ -9,8 +9,8 @@ public class CopyCommitMSJDelta<RecordType, KeyType extends Comparable> extends 
   private final BucketDataStore<RecordType> versionToCommit;
   private final MSJDataStore<KeyType> store;
 
-  public CopyCommitMSJDelta(String checkpointToken, BucketDataStore<RecordType> versionToCommit, MSJDataStore<KeyType> store) {
-    super(checkpointToken);
+  public CopyCommitMSJDelta(String checkpointToken, String tmpDir, BucketDataStore<RecordType> versionToCommit, MSJDataStore<KeyType> store) {
+    super(checkpointToken, tmpDir);
 
     this.versionToCommit = versionToCommit;
     this.store = store;
@@ -22,7 +22,7 @@ public class CopyCommitMSJDelta<RecordType, KeyType extends Comparable> extends 
   @Override
   protected void execute() throws Exception {
     String tmpStorePath = FileSystemHelper.getRandomTemporaryPath().toString();
-    versionToCommit.getBucket().snapshot(tmpStorePath);
+    versionToCommit.getBucket().snapshot(tmpStorePath, getTmpRoot()+"/snapshot_tmp");
     store.commitDelta(tmpStorePath);
   }
 }

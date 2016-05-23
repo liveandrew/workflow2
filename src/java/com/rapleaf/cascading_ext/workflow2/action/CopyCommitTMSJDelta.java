@@ -7,7 +7,7 @@ import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 
 public class CopyCommitTMSJDelta<T extends TBase<?, ?>> extends CopyCommitMSJDelta<T, BytesWritable> {
-  public CopyCommitTMSJDelta(String checkpointToken, BucketDataStore<T> versionToPersist, TMSJDataStore<T> store) {
-    super(checkpointToken, versionToPersist, store);
+  public CopyCommitTMSJDelta(String checkpointToken, String tmpDir, BucketDataStore<T> versionToPersist, TMSJDataStore<T> store) {
+    super(checkpointToken, tmpDir, versionToPersist, store);
   }
 }
