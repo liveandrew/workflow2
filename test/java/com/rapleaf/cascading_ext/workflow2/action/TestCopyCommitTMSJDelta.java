@@ -38,7 +38,7 @@ public class TestCopyCommitTMSJDelta extends WorkflowTestCase {
 
   @Test
   public void testIt() throws IOException {
-    execute(new CopyCommitTMSJDelta<PIN>("copy-commit-tmsj-delta", delta, pins));
+    execute(new CopyCommitTMSJDelta<PIN>("copy-commit-tmsj-delta", getTestRoot()+"/tmp", delta, pins));
 
     Assert.assertArrayEquals(
         HRap.getValues(pins).toArray(),
