@@ -2,20 +2,25 @@ package com.liveramp.workflow_state.controller;
 
 import java.io.IOException;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
+import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 
 //  TODO not liking all the staticness of this.  figure out later
@@ -47,6 +52,20 @@ public class ApplicationController {
       return false;
     }
   }
+
+  public static int numRunningInstances(IDatabases db, AppType appType) throws  IOException {
+    Multimap<WorkflowExecution, WorkflowAttempt> incomplete = WorkflowQueries.getExecutionsToAttempts(db, appType, WorkflowExecutionStatus.INCOMPLETE);
+
+    int runningInstances = 0;
+    for (Map.Entry<WorkflowExecution, WorkflowAttempt> entry : incomplete.entries()) {
+      if (WorkflowQueries.getProcessStatus(entry.getValue(), entry.getKey()) == ProcessStatus.ALIVE) {
+        runningInstances++;
+      }
+    }
+
+    return runningInstances;
+  }
+
 
   public static void addConfiguredNotifications(IRlDb rlDb, String workflowName, String email, Set<WorkflowRunnerNotification> notifications) throws IOException {
     Application application = Accessors.only(rlDb.applications().findByName(workflowName));

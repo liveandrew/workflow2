@@ -488,6 +488,14 @@ public class WorkflowQueries {
   }
 
   public static Multimap<WorkflowExecution, WorkflowAttempt> getExecutionsToAttempts(IDatabases databases,
+                                                                                     AppType appType,
+                                                                                     WorkflowExecutionStatus status) throws IOException {
+
+    return getExecutionsToAttempts(databases, null, null, null, appType.getValue(), null, null, status, null);
+
+  }
+
+  public static Multimap<WorkflowExecution, WorkflowAttempt> getExecutionsToAttempts(IDatabases databases,
                                                                                      Long id,
                                                                                      String name,
                                                                                      String scope,
