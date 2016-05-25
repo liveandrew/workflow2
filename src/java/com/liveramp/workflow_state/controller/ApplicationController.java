@@ -39,7 +39,7 @@ public class ApplicationController {
 
   public static void cancelIfIncompleteExecution(IRlDb rlDb, AppType appType, String scopeIdentifier) throws IOException {
     Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(rlDb, appType, scopeIdentifier);
-    if (latestExecution.isPresent() && latestExecution.get().getStatus() == WorkflowExecutionStatus.INCOMPLETE.ordinal()) {
+    if (isIncomplete(latestExecution)) {
       ExecutionController.cancelExecution(rlDb, latestExecution.get());
     }
   }
@@ -54,13 +54,7 @@ public class ApplicationController {
   }
 
   public static boolean isLatestExecutionIncomplete(IRlDb rlDb, AppType appType, String scopeIdentifier) throws IOException {
-    Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(rlDb, appType, scopeIdentifier);
-
-    if(latestExecution.isPresent()){
-      return WorkflowExecutionStatus.findByValue(latestExecution.get().getStatus()) == WorkflowExecutionStatus.INCOMPLETE;
-    }
-
-    return false;
+    return isIncomplete(WorkflowQueries.getLatestExecution(rlDb, appType, scopeIdentifier));
   }
 
   public static int numRunningInstances(IDatabases db, AppType appType) throws  IOException {
@@ -116,6 +110,11 @@ public class ApplicationController {
       }
     }
 
+  }
+
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  private static boolean isIncomplete(Optional<WorkflowExecution> execution){
+    return execution.isPresent() && execution.get().getStatus() == WorkflowExecutionStatus.INCOMPLETE.ordinal();
   }
 
 }
