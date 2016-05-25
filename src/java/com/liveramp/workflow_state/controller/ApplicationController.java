@@ -53,6 +53,16 @@ public class ApplicationController {
     }
   }
 
+  public static boolean isLatestExecutionIncomplete(IRlDb rlDb, AppType appType, String scopeIdentifier) throws IOException {
+    Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(rlDb, appType, scopeIdentifier);
+
+    if(latestExecution.isPresent()){
+      return WorkflowExecutionStatus.findByValue(latestExecution.get().getStatus()) == WorkflowExecutionStatus.INCOMPLETE;
+    }
+
+    return false;
+  }
+
   public static int numRunningInstances(IDatabases db, AppType appType) throws  IOException {
     Multimap<WorkflowExecution, WorkflowAttempt> incomplete = WorkflowQueries.getExecutionsToAttempts(db, appType, WorkflowExecutionStatus.INCOMPLETE);
 
