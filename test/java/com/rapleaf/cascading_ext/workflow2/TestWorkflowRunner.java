@@ -76,6 +76,7 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
+import com.rapleaf.cascading_ext.workflow2.state.MultiShutdownHook;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -1451,7 +1452,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   }
 
   @Test
-  public void testStepCreationFailure() throws IOException {
+  public void testStepCreationFailure() throws IOException, InterruptedException {
 
     //  initialize the workflow with a name and scope to get an execution ID
     InitializedWorkflow<InitializedDbPersistence> workflow = new DbPersistenceFactory().initialize(
@@ -1462,7 +1463,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     //  pretend we failed before getting to new WorkflowRunner().run()
     //  we can't really test jvm shutdown behavior, so run the shutdown hook manually
-    workflow.getShutdownHook().start();
+    MultiShutdownHook hook = workflow.getShutdownHook();
+    hook.start();
+    hook.join();
 
     InitializedDbPersistence dbInitialized = workflow.getInitializedPersistence();
 
