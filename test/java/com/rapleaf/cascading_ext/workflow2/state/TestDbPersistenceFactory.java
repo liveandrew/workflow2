@@ -153,7 +153,8 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
       }
     });
 
-    assertTrue(exception.getCause().getMessage().startsWith("Cannot start, a previous attempt is still alive!"));
+
+    assertTrue(exception.getMessage().startsWith("Cannot start, a previous attempt is still alive!"));
 
   }
 

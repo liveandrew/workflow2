@@ -10,23 +10,29 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class MonitoredPersistenceFactory implements WorkflowPersistenceFactory {
+public class MonitoredPersistenceFactory<INITIALIZED extends InitializedPersistence> extends WorkflowPersistenceFactory<INITIALIZED> {
 
-  private final WorkflowPersistenceFactory delegate;
+  private final WorkflowPersistenceFactory<INITIALIZED> delegate;
 
-  public MonitoredPersistenceFactory(WorkflowPersistenceFactory delegate) {
+  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<INITIALIZED> delegate) {
     this.delegate = delegate;
   }
 
   @Override
-  public MonitoredPersistence prepare(DirectedGraph<Step, DefaultEdge> flatSteps, String name, String scopeId, String description, AppType appType, String host, String username, String pool, String priority, String launchDir, String launchJar, Set<WorkflowRunnerNotification> configuredNotifications, AlertsHandler configuredHandler, String remote, String implementationBuild) {
-    return new MonitoredPersistence(delegate.prepare(flatSteps, name, scopeId, description, appType, host, username, pool, priority, launchDir, launchJar, configuredNotifications, configuredHandler, remote, implementationBuild));
+  public INITIALIZED initializeInternal(String name, String scopeId, String description, AppType appType, String host, String username, String pool, String priority, String launchDir, String launchJar, Set<WorkflowRunnerNotification> configuredNotifications, AlertsHandler providedHandler, String remote, String implementationBuild) throws IOException {
+    return delegate.initializeInternal(name, scopeId, description, appType, host, username, pool, priority, launchDir, launchJar, configuredNotifications, providedHandler, remote, implementationBuild);
+  }
+
+  @Override
+  public MonitoredPersistence prepare(INITIALIZED initialized, DirectedGraph<Step, DefaultEdge> flatSteps) {
+    return new MonitoredPersistence(delegate.prepare(initialized, flatSteps));
   }
 
   public static class MonitoredPersistence extends ForwardingPersistence{

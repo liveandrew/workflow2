@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -52,6 +53,7 @@ import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow.test.MonitoredPersistenceFactory;
 import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DbPersistence;
+import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.StepStatus;
@@ -73,6 +75,7 @@ import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
+import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -103,18 +106,21 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     new DatabasesImpl().getRlDb().deleteAll();
   }
 
-  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, Step tail) {
+  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, Step tail) throws IOException {
     return buildWfr(persistence, Sets.newHashSet(tail));
   }
 
-  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, Set<Step> tailSteps) {
+  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, Set<Step> tailSteps) throws IOException {
     return buildWfr(persistence, new TestWorkflowOptions(), tailSteps);
   }
 
-  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, WorkflowOptions opts, Set<Step> tailSteps) {
+  private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, WorkflowOptions opts, Set<Step> tailSteps) throws IOException {
     return new WorkflowRunner("Test Workflow", persistence, opts, tailSteps);
   }
 
+  private InitializedWorkflow buildWf(WorkflowPersistenceFactory persistence, WorkflowOptions opts) throws IOException {
+    return persistence.initialize("Test Workflow", opts);
+  }
 
   @Test
   public void testSimple1() throws Exception {
@@ -139,15 +145,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testRetainPool() throws IOException {
 
-    Step first = new Step(new IncrementAction("first"));
-
-    WorkflowRunner wr = new WorkflowRunner("test",
-        new DbPersistenceFactory(),
-        new TestWorkflowOptions().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")),
-        first
+    assertEquals("root.dev-tools.some_pool", WorkflowPersistenceFactory
+        .findDefaultValue(new TestWorkflowOptions().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")).getWorkflowJobProperties(),
+            "mapreduce.job.queuename",
+            "default"
+        )
     );
-
-    assertEquals("root.dev-tools.some_pool", wr.findDefaultValue("mapreduce.job.queuename", "default"));
   }
 
   @Test
@@ -319,8 +322,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(StepStatus.FAILED, runner.getPersistence().getStatus("fail"));
 
     assertCollectionEquivalent(Lists.newArrayList(
-            "[ERROR] [TAG] [WORKFLOW] Step has failed in: Test Workflow",
-            "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
+        "[ERROR] [TAG] [WORKFLOW] Step has failed in: Test Workflow",
+        "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
         messages
     );
 
@@ -392,8 +395,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     try {
       execute(step, new TestWorkflowOptions()
-              .setNotificationLevel(level)
-              .setAlertsHandler(handler)
+          .setNotificationLevel(level)
+          .setAlertsHandler(handler)
       );
     } catch (Exception e) {
       //  fine
@@ -482,7 +485,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     }
 
     assertCollectionEquivalent(Lists.newArrayList(
-            "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
+        "[ERROR] [TAG] [WORKFLOW] Failed: Test Workflow"),
         messages
     );
 
@@ -857,16 +860,24 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     testSandboxDir(dbPersistenceFactory);
   }
 
-  public void testSandboxDir(WorkflowPersistenceFactory persistence) throws Exception {
+  private void testSandboxDir(WorkflowPersistenceFactory persistence) throws Exception {
+
+    InitializedWorkflow wf = buildWf(
+        persistence,
+        new TestWorkflowOptions().setSandboxDir("//fake/path")
+    );
+
     try {
-      WorkflowRunner wfr = buildWfr(persistence,
-          new TestWorkflowOptions().setSandboxDir("//fake/path"),
+
+      new WorkflowRunner(
+          wf,
           Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"), fakeStep("b", "/path/of/fakeness"))
-      );
-      wfr.run();
+      ).run();
+
       fail("There was an invalid path!");
     } catch (Exception e) {
-      // expected
+      //  so we can try again in this jvm
+      wf.getInitializedPersistence().stop();
     }
 
     WorkflowRunner wfr = buildWfr(persistence,
@@ -1408,6 +1419,97 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
+
+  @Test
+  public void testInitializeBeforePrepare() throws IOException {
+
+    AtomicLong workflowID = new AtomicLong();
+
+    //  initialize the workflow with a name and scope to get an execution ID
+    InitializedWorkflow workflow = new DbPersistenceFactory().initialize(
+        new TestWorkflowOptions()
+            .setUniqueIdentifier("1")
+            .setAppType(AppType.HUMAN_INTERVENTION)
+    );
+
+    //  verify that it shows up as running after initialization
+    assertTrue(ApplicationController.isRunning(new DatabasesImpl().getRlDb(), AppType.HUMAN_INTERVENTION, "1"));
+
+    //  prove we can use it to do stuff when creating steps
+    Step step = new Step(new SetStep(
+        "step",
+        workflowID,
+        workflow.getInitializedPersistence().getExecutionId())
+    );
+
+    //  then run the workflow
+    WorkflowRunner runner = new WorkflowRunner(workflow, Sets.<Step>newHashSet(step));
+    runner.run();
+
+    assertEquals(runner.getPersistence().getExecutionId(), workflowID.get());
+
+  }
+
+  @Test
+  public void testStepCreationFailure() throws IOException {
+
+    //  initialize the workflow with a name and scope to get an execution ID
+    InitializedWorkflow<InitializedDbPersistence> workflow = new DbPersistenceFactory().initialize(
+        "Test Workflow",
+        new TestWorkflowOptions()
+            .setUniqueIdentifier("1")
+    );
+
+    //  pretend we failed before getting to new WorkflowRunner().run()
+    //  we can't really test jvm shutdown behavior, so run the shutdown hook manually
+    workflow.getShutdownHook().start();
+
+    InitializedDbPersistence dbInitialized = workflow.getInitializedPersistence();
+
+    //  verify that the shutdown hook failed the attempt
+    assertEquals(WorkflowExecutionStatus.INCOMPLETE.ordinal(), dbInitialized.getExecution().getStatus());
+    assertEquals(AttemptStatus.FAILED.ordinal(), dbInitialized.getAttempt().getStatus().intValue());
+
+    //  try again
+    workflow = new DbPersistenceFactory().initialize(
+        "Test Workflow",
+        new TestWorkflowOptions()
+            .setUniqueIdentifier("1")
+    );
+
+    Step step = new Step(new NoOpAction("no-op"));
+
+    WorkflowRunner runner = new WorkflowRunner(workflow, Sets.<Step>newHashSet(step));
+    runner.run();
+
+    dbInitialized = workflow.getInitializedPersistence();
+
+    //  verify that the shutdown hook failed the attempt
+    assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(), dbInitialized.getExecution().getStatus());
+    assertEquals(AttemptStatus.FINISHED.ordinal(), dbInitialized.getAttempt().getStatus().intValue());
+    assertEquals(StepStatus.COMPLETED, runner.getPersistence().getStepStatuses().get("no-op"));
+
+  }
+
+
+  private static class SetStep extends Action {
+
+    private final AtomicLong value;
+    private final long executionID;
+
+    public SetStep(String checkpointToken,
+                   AtomicLong value,
+                   long executionID) {
+      super(checkpointToken);
+      this.value = value;
+      this.executionID = executionID;
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      this.value.set(executionID);
+    }
+  }
 
   public static class DelayAction extends Action {
 

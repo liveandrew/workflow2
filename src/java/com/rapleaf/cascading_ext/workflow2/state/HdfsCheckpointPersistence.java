@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +34,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.support.Rap;
 
-public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
+public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<InMemoryInitializedPersistence> {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
   private final String checkpointDir;
@@ -49,21 +50,26 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
   }
 
   @Override
-  public WorkflowStatePersistence prepare(DirectedGraph<Step, DefaultEdge> flatSteps,
-                                          String name,
-                                          String scopeId,
-                                          String description,
-                                          AppType appType,
-                                          String host,
-                                          String username,
-                                          String pool,
-                                          String priority,
-                                          String launchDir,
-                                          String launchJar,
-                                          Set<WorkflowRunnerNotification> configuredNotifications,
-                                          AlertsHandler configuredHandler,
-                                          String remote,
-                                          String implementationBuild) {
+  public InMemoryInitializedPersistence initializeInternal(String name,
+                                                           String scopeId,
+                                                           String description,
+                                                           AppType appType,
+                                                           String host,
+                                                           String username,
+                                                           String pool,
+                                                           String priority,
+                                                           String launchDir,
+                                                           String launchJar,
+                                                           Set<WorkflowRunnerNotification> configuredNotifications,
+                                                           AlertsHandler providedHandler,
+                                                           String remote,
+                                                           String implementationBuild) throws IOException {
+    return new InMemoryInitializedPersistence(name, priority, pool, host, username, providedHandler, configuredNotifications);
+  }
+
+  @Override
+  public WorkflowStatePersistence prepare(InMemoryInitializedPersistence persistence,
+                                          DirectedGraph<Step, DefaultEdge> flatSteps) {
 
     FileSystem fs = FileSystemHelper.getFS();
 
@@ -131,15 +137,9 @@ public class HdfsCheckpointPersistence implements WorkflowPersistenceFactory {
           checkpointDir,
           deleteOnSuccess,
           Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID())),
-          name,
-          priority,
-          pool,
-          host,
-          username,
           statuses,
           datastores,
-          configuredNotifications,
-          configuredHandler
+          persistence
       );
 
     } catch (Exception e) {

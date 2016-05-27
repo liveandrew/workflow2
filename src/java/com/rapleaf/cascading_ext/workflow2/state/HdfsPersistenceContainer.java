@@ -35,6 +35,8 @@ import com.liveramp.workflow_state.json.WorkflowJSON;
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger (HdfsPersistenceContainer.class);
 
+  private final InMemoryInitializedPersistence initializedPersistence;
+
   private final String checkpointDir;
   private final boolean deleteCheckpointsOnSuccess;
   private final FileSystem fs;
@@ -44,42 +46,23 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private String shutdownReason;
 
   private final String id;
-  private final String name;
-  private String priority;
-  private String pool;
-  private final String host;
-  private final String username;
-  private final AlertsHandler handler;
-  private final Set<WorkflowRunnerNotification> configuredNotifications;
 
   public HdfsPersistenceContainer(String checkpointDir,
                                   boolean deleteOnSuccess,
                                   String id,
-                                  String name,
-                                  String priority,
-                                  String pool,
-                                  String host,
-                                  String username,
                                   Map<String, StepState> statuses,
                                   List<DataStoreInfo> datastores,
-                                  Set<WorkflowRunnerNotification> configuredNotifications,
-                                  AlertsHandler providedHandler) {
+                                  InMemoryInitializedPersistence initializedPersistence) {
 
     this.checkpointDir = checkpointDir;
     this.deleteCheckpointsOnSuccess = deleteOnSuccess;
     this.fs = FileSystemHelper.getFS();
 
     this.id = id;
-    this.name = name;
-    this.priority = priority;
-    this.pool = pool;
-    this.host = host;
-    this.username = username;
     this.statuses = statuses;
     this.datastores = datastores;
-    this.handler = providedHandler;
-    this.configuredNotifications = configuredNotifications;
 
+    this.initializedPersistence = initializedPersistence;
   }
 
 
@@ -151,17 +134,17 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public String getPriority() {
-    return priority;
+    return initializedPersistence.getPriority();
   }
 
   @Override
   public String getPool() {
-    return pool;
+    return initializedPersistence.getPool();
   }
 
   @Override
   public String getName() {
-    return name;
+    return initializedPersistence.getName();
   }
 
   @Override
@@ -181,8 +164,8 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException {
-    if(configuredNotifications.contains(notification)) {
-      return Lists.newArrayList(handler);
+    if(initializedPersistence.getConfiguredNotifications().contains(notification)) {
+      return Lists.newArrayList(initializedPersistence.getHandler());
     }
     return Lists.newArrayList();
   }
@@ -287,12 +270,12 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public void markPool(String pool) {
-    this.pool = pool;
+    this.initializedPersistence.setPool(pool);
   }
 
   @Override
   public void markPriority(String priority) {
-    this.priority = priority;
+    this.initializedPersistence.setPriority(priority);
   }
 
 }

@@ -16,7 +16,6 @@ import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.apache.hadoop.mapred.JobConf;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
@@ -24,9 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ResourceManager;
-import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.cascading_ext.util.HadoopProperties;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
@@ -42,14 +39,16 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
+import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
+import com.rapleaf.cascading_ext.workflow2.state.MultiShutdownHook;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.util.TimeFormatting;
 
 public final class WorkflowRunner {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowRunner.class);
 
-  private static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
-  private static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
+  public static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
+  public static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
 
   private final WorkflowStatePersistence persistence;
   private final StoreReaderLocker lockProvider;
@@ -86,7 +85,7 @@ public final class WorkflowRunner {
    */
   private final Set<StepRunner> completedSteps = new HashSet<StepRunner>();
 
-  private final Thread shutdownHook;
+  private final MultiShutdownHook shutdownHook;
 
   private boolean alreadyRun;
   private final CounterFilter counterFilter;
@@ -94,75 +93,79 @@ public final class WorkflowRunner {
   private final TrackerURLBuilder trackerURLBuilder;
 
 
-  public WorkflowRunner(Class klass, Step tail) {
+  public WorkflowRunner(Class klass, Step tail) throws IOException {
     this(klass, new DbPersistenceFactory(), tail);
   }
 
-  public WorkflowRunner(Class klass, WorkflowOptions options, Step tail) {
+  public WorkflowRunner(Class klass, WorkflowOptions options, Step tail) throws IOException {
     this(klass, new DbPersistenceFactory(), options, tail);
   }
 
-  public WorkflowRunner(Class klass, Set<Step> tailSteps) {
+  public WorkflowRunner(Class klass, Set<Step> tailSteps) throws IOException {
     this(klass, new DbPersistenceFactory(), tailSteps);
   }
 
-  public WorkflowRunner(Class klass, WorkflowOptions options, Set<Step> tailSteps) {
+  public WorkflowRunner(Class klass, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
     this(klass, new DbPersistenceFactory(), options, tailSteps);
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
-  public WorkflowRunner(WorkflowOptions options, Step tail) {
+  public WorkflowRunner(WorkflowOptions options, Step tail) throws IOException {
     this(new DbPersistenceFactory(), options, tail);
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
-  public WorkflowRunner(WorkflowOptions options, Set<Step> tailSteps) {
+  public WorkflowRunner(WorkflowOptions options, Set<Step> tailSteps) throws IOException {
     this(new DbPersistenceFactory(), options, tailSteps);
   }
 
 
-  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) throws IOException {
     this(workflowName, persistence, options, Sets.newHashSet(tail));
   }
 
-  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, Step tail) {
+  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, Step tail) throws IOException {
     this(klass.getName(), persistence, tail);
   }
 
-  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, WorkflowOptions options, final Step first, Step... rest) {
+  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, WorkflowOptions options, final Step first, Step... rest) throws IOException {
     this(klass.getName(), persistence, options, combine(first, rest));
   }
 
-  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) {
+  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
     this(klass.getName(), persistence, options, tailSteps);
   }
 
-  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, Set<Step> tailSteps) {
+  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, Set<Step> tailSteps) throws IOException {
     this(klass, persistence, new ProductionWorkflowOptions(), tailSteps);
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
-  public WorkflowRunner(WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) {
-    this(getName(options), persistence, options, tailSteps);
+  public WorkflowRunner(WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
+    this(persistence.initialize(options), tailSteps);
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
-  public WorkflowRunner(WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) {
-    this(getName(options), persistence, options, Sets.newHashSet(tail));
+  public WorkflowRunner(WorkflowPersistenceFactory persistence, WorkflowOptions options, Step tail) throws IOException {
+    this(persistence, options, Sets.newHashSet(tail));
   }
 
-  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) {
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Step tail) throws IOException {
     this(workflowName, persistence, Sets.newHashSet(tail));
   }
 
-  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Set<Step> tail) {
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Set<Step> tail) throws IOException {
     this(workflowName, persistence, new ProductionWorkflowOptions(), Sets.newHashSet(tail));
   }
 
-  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistenceFactory, WorkflowOptions options, Set<Step> tailSteps) {
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistenceFactory, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
+    this(persistenceFactory.initialize(workflowName, options), tailSteps);
+  }
 
-    //  TODO we can move name into WorkflowOptions and do this verification when setting it there.  eliminate contructors here
-    verifyName(workflowName, options);
+
+  public WorkflowRunner(InitializedWorkflow initializedData, Set<Step> tailSteps) {
+
+    WorkflowOptions options = initializedData.getOptions();
 
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
     this.counterFilter = options.getCounterFilter();
@@ -179,24 +182,7 @@ public final class WorkflowRunner {
 
     assertSandbox(options.getSandboxDir());
 
-    HadoopJarUtil.ScmInfo scmInfo = HadoopJarUtil.getRemoteAndCommit();
-
-    this.persistence = persistenceFactory.prepare(dependencyGraph,
-        workflowName,
-        options.getScopeIdentifier(),
-        options.getDescription(),
-        options.getAppType(),
-        options.getHostnameProvider().getHostname(),
-        System.getProperty("user.name"),
-        findDefaultValue(JOB_POOL_PARAM, "default"),
-        findDefaultValue(JOB_PRIORITY_PARAM, "NORMAL"),
-        System.getProperty("user.dir"),
-        HadoopJarUtil.getLaunchJarName(),
-        options.getEnabledNotifications(),
-        options.getAlertsHandler(),
-        scmInfo.getGitRemote(),
-        scmInfo.getRevision()
-    );
+    this.persistence = initializedData.prepare(dependencyGraph);
 
     linkPersistence();
 
@@ -211,7 +197,20 @@ public final class WorkflowRunner {
       pendingSteps.add(runner);
     }
 
-    this.shutdownHook = new Thread(new ShutdownHook(), "Shutdown Hook for " + workflowName);
+    this.shutdownHook = initializedData.getShutdownHook();
+    this.shutdownHook.add(new MultiShutdownHook.Hook() {
+      @Override
+      public void onShutdown() throws Exception {
+        LOG.info("Marking running steps as failed");
+        for (StepRunner runningStep : runningSteps) {
+          persistence.markStepFailed(
+              runningStep.step.getCheckpointToken(),
+              new RuntimeException("Workflow process killed!")
+          );
+        }
+      }
+    });
+
   }
 
   private void linkPersistence() {
@@ -222,29 +221,6 @@ public final class WorkflowRunner {
         throw new RuntimeException("Could not link resource root to persistence: " + e);
       }
     }
-  }
-
-  private void verifyName(String name, WorkflowOptions options) {
-    AppType appType = options.getAppType();
-    if (appType != null) {
-      if (!appType.name().equals(name)) {
-        throw new RuntimeException("Workflow name cannot conflict with AppType name!");
-      }
-    } else {
-      for (AppType a : AppType.values()) {
-        if (a.name().equals(name)) {
-          throw new RuntimeException("Provided workflow name " + name + " is already an AppType");
-        }
-      }
-    }
-  }
-
-  private static String getName(WorkflowOptions options) {
-    AppType appType = options.getAppType();
-    if (appType == null) {
-      throw new RuntimeException("AppType must be set in WorkflowOptions!");
-    }
-    return appType.name();
   }
 
   private void setStepContextObjects(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
@@ -355,8 +331,6 @@ public final class WorkflowRunner {
 
       persistence.markWorkflowStarted();
 
-      Runtime.getRuntime().addShutdownHook(shutdownHook);
-
       // Run internal
       runInternal();
 
@@ -369,25 +343,6 @@ public final class WorkflowRunner {
       LOG.info("Shutting down lock provider");
       lockProvider.shutdown();
       LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));
-    }
-  }
-
-  private class ShutdownHook implements Runnable {
-    @Override
-    public void run() {
-      try {
-        LOG.info("Process killed, updating persistence.");
-        for (StepRunner runningStep : runningSteps) {
-          persistence.markStepFailed(
-              runningStep.step.getCheckpointToken(),
-              new RuntimeException("Workflow process killed!")
-          );
-        }
-        persistence.markWorkflowStopped();
-        LOG.info("Finished cleaning up status");
-      } catch (Exception e) {
-        LOG.info("Failed to cleanly shutdown", e);
-      }
     }
   }
 
@@ -624,25 +579,6 @@ public final class WorkflowRunner {
 
   public String getTrackerURL() throws IOException {
     return trackerURLBuilder.buildURL(persistence);
-  }
-
-  protected String findDefaultValue(String property, String defaultValue) {
-
-    //  fall back to static jobconf props if not set elsewhere
-    JobConf jobconf = CascadingHelper.get().getJobConf();
-
-    if (workflowJobProperties.containsKey(property)) {
-      return (String)workflowJobProperties.get(property);
-    }
-
-    String value = jobconf.get(property);
-
-    if (value != null) {
-      return value;
-    }
-
-    //  only really expect in tests
-    return defaultValue;
   }
 
   private String getReasonForShutdownRequest() throws IOException {
