@@ -48,67 +48,25 @@ public class DbPersistence implements WorkflowStatePersistence {
   public static final long HEARTBEAT_INTERVAL = 15 * 1000; //  15s
   public static final int NUM_HEARTBEAT_TIMEOUTS = 4;  //  if an attempt misses 4 heartbeats, assume it is dead
 
-  private final IRlDb rldb;
-  private final long workflowAttemptId;
-
-  private final Thread heartbeatThread;
-  private final AlertsHandler providedHandler;
   private final MailBuffer testMailBuffer;
-
-  //  TODO I don't like the the boolean or alerts handler which are only sometimes set.
-  //  this should get split into separate interfaces for run persistence, query persistence, and controller persistence.
-  //  ideally, WorkflowOptions could get helpers added so that people don't actually pass in an AlertsHandler, they pass in
-  //  a config or builder which the persistence can either directly instantiate (hdfs) or store configuration  of in the db so it can
-  //  construct it later when it has to send messages.
-
-  public static DbPersistence runPersistence(IRlDb rldb,
-                                             long workflowAttemptId,
-                                             AlertsHandler providedHandler) {
-    return new DbPersistence(workflowAttemptId, rldb, true, providedHandler);
-  }
+  private final InitializedDbPersistence init;
 
   public static DbPersistence queryPersistence(long workflowAttemptId, IRlDb rldb) {
-    return new DbPersistence(workflowAttemptId, rldb, false, null);
+    return new DbPersistence(new InitializedDbPersistence(workflowAttemptId, rldb, false, null));
   }
 
-  private DbPersistence(long workflowAttemptId, IRlDb rldb, boolean runMode, AlertsHandler providedHandler) {
-    this.rldb = rldb;
-    this.rldb.disableCaching();
-    this.workflowAttemptId = workflowAttemptId;
-    this.testMailBuffer = new MailBuffer.ListBuffer();
+  public DbPersistence(InitializedDbPersistence initialization) {
 
-    if (runMode) {
-      this.heartbeatThread = new Thread(new Heartbeat());
-      this.heartbeatThread.setDaemon(true);
-      this.heartbeatThread.start();
-      this.providedHandler = providedHandler;
-    } else {
-      this.heartbeatThread = null;
-      this.providedHandler = null;
-    }
+    this.testMailBuffer = new MailBuffer.ListBuffer();
+    this.init = initialization;
+
   }
 
   private StepAttempt getStep(String stepToken) throws IOException {
-    return Accessors.only(rldb.stepAttempts().query()
-        .workflowAttemptId((int)workflowAttemptId)
+    return Accessors.only(init.getDb().stepAttempts().query()
+        .workflowAttemptId((int)init.getAttemptId())
         .stepToken(stepToken)
         .find());
-  }
-
-  private WorkflowAttempt getAttempt() throws IOException {
-    return rldb.workflowAttempts().find(workflowAttemptId);
-  }
-
-  private WorkflowExecution getExecution() throws IOException {
-    return getAttempt().getWorkflowExecution();
-  }
-
-  private synchronized void save(WorkflowExecution execution) throws IOException {
-    rldb.workflowExecutions().save(execution);
-  }
-
-  private synchronized void save(WorkflowAttempt attempt) throws IOException {
-    rldb.workflowAttempts().save(attempt);
   }
 
   private synchronized void update(StepAttempt attempt, MapBuilder<StepAttempt._Fields, Object> valuesBuilder) throws IOException {
@@ -129,7 +87,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       attempt.setField(value.getKey(), value.getValue());
     }
 
-    rldb.stepAttempts().save(attempt);
+    init.getDb().stepAttempts().save(attempt);
 
   }
 
@@ -142,8 +100,8 @@ public class DbPersistence implements WorkflowStatePersistence {
     LOG.info("Marking step " + stepToken + " as running");
 
     update(getStep(stepToken), stepFields()
-            .put(StepAttempt._Fields.step_status, StepStatus.RUNNING.ordinal())
-            .put(StepAttempt._Fields.start_time, System.currentTimeMillis())
+        .put(StepAttempt._Fields.step_status, StepStatus.RUNNING.ordinal())
+        .put(StepAttempt._Fields.start_time, System.currentTimeMillis())
     );
 
   }
@@ -159,15 +117,13 @@ public class DbPersistence implements WorkflowStatePersistence {
     StepAttempt step = getStep(stepToken);
 
     update(step, stepFields()
-            .put(StepAttempt._Fields.failure_cause, StringUtils.substring(t.getMessage(), 0, 255))
-            .put(StepAttempt._Fields.failure_trace, StringUtils.substring(sw.toString(), 0, 10000))
-            .put(StepAttempt._Fields.step_status, StepStatus.FAILED.ordinal())
-            .put(StepAttempt._Fields.end_time, System.currentTimeMillis())
+        .put(StepAttempt._Fields.failure_cause, StringUtils.substring(t.getMessage(), 0, 255))
+        .put(StepAttempt._Fields.failure_trace, StringUtils.substring(sw.toString(), 0, 10000))
+        .put(StepAttempt._Fields.step_status, StepStatus.FAILED.ordinal())
+        .put(StepAttempt._Fields.end_time, System.currentTimeMillis())
     );
 
-    save(getAttempt()
-            .setStatus(AttemptStatus.FAIL_PENDING.ordinal())
-    );
+    init.save(init.getAttempt().setStatus(AttemptStatus.FAIL_PENDING.ordinal()));
 
   }
 
@@ -185,19 +141,19 @@ public class DbPersistence implements WorkflowStatePersistence {
   public synchronized void markStepReverted(String stepToken) throws IOException {
     LOG.info("Marking step " + stepToken + " as reverted");
 
-    WorkflowExecution execution = getExecution();
+    WorkflowExecution execution = init.getExecution();
 
     //  verify this is the latest execution
     //  verify workflow attempt not running
     //  can't cancel attempt already cancelled or finished
-    Assertions.assertCanRevert(rldb, execution);
+    Assertions.assertCanRevert(init.getDb(), execution);
 
     update(getStep(stepToken), stepFields()
-            .put(StepAttempt._Fields.step_status, StepStatus.REVERTED.ordinal())
+        .put(StepAttempt._Fields.step_status, StepStatus.REVERTED.ordinal())
     );
 
     //  set execution to not complete
-    save(execution.setStatus(WorkflowExecutionStatus.INCOMPLETE.ordinal()));
+    init.save(execution.setStatus(WorkflowExecutionStatus.INCOMPLETE.ordinal()));
 
   }
 
@@ -206,7 +162,7 @@ public class DbPersistence implements WorkflowStatePersistence {
     LOG.info("Marking step status message: " + stepToken + " message " + newMessage);
 
     update(getStep(stepToken), stepFields()
-            .put(StepAttempt._Fields.status_message, StringUtils.substring(newMessage, 0, 255))
+        .put(StepAttempt._Fields.status_message, StringUtils.substring(newMessage, 0, 255))
     );
 
   }
@@ -215,15 +171,16 @@ public class DbPersistence implements WorkflowStatePersistence {
   public synchronized void markStepRunningJob(String stepToken, String jobId, String jobName, String trackingURL) throws IOException {
 
     StepAttempt step = getStep(stepToken);
+    IRlDb conn = init.getDb();
 
-    List<MapreduceJob> saved = rldb.mapreduceJobs().query()
+    List<MapreduceJob> saved = conn.mapreduceJobs().query()
         .stepAttemptId((int)step.getId())
         .jobIdentifier(jobId)
         .find();
 
     if (saved.isEmpty()) {
       LOG.info("Marking step " + stepToken + " as running job " + jobId);
-      MapreduceJob job = rldb.mapreduceJobs().create(
+      MapreduceJob job = conn.mapreduceJobs().create(
           jobId,
           jobName,
           trackingURL
@@ -243,9 +200,10 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     StepAttempt step = getStep(stepToken);
     MapreduceJob job = getMapreduceJob(jobId, step);
+    IRlDb conn = init.getDb();
 
     for (TwoNestedMap.Entry<String, String, Long> value : values) {
-      rldb.mapreduceCounters().create(
+      conn.mapreduceCounters().create(
           (int)job.getId(),
           value.getK1(),
           value.getK2(),
@@ -262,6 +220,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
       StepAttempt step = getStep(stepToken);
       MapreduceJob job = getMapreduceJob(jobId, step);
+      IRlDb conn = init.getDb();
 
       job
           //  map
@@ -270,7 +229,7 @@ public class DbPersistence implements WorkflowStatePersistence {
           .setMaxMapDuration(info.getMaxMapDuration())
           .setMinMapDuration(info.getMinMapDuration())
           .setStdevMapDuration(info.getMapDurationStDev())
-              //  reduce
+          //  reduce
           .setAvgReduceDuration(info.getAvgReduceDuration())
           .setMedianReduceDuration(info.getMedianReduceDuration())
           .setMaxReduceDuration(info.getMaxReduceDuration())
@@ -280,7 +239,7 @@ public class DbPersistence implements WorkflowStatePersistence {
           .save();
 
       for (TaskFailure taskFailure : info.getTaskFailures()) {
-        rldb.mapreduceJobTaskExceptions().create(
+        conn.mapreduceJobTaskExceptions().create(
             (int)job.getId(),
             taskFailure.getTaskAttemptID(),
             taskFailure.getError());
@@ -293,20 +252,20 @@ public class DbPersistence implements WorkflowStatePersistence {
   }
 
   private MapreduceJob getMapreduceJob(String jobId, StepAttempt step) throws IOException {
-    return Accessors.only(rldb.mapreduceJobs().query()
+    IRlDb conn = init.getDb();
+    return Accessors.only(conn.mapreduceJobs().query()
         .stepAttemptId((int)step.getId())
         .jobIdentifier(jobId)
         .find());
   }
 
-
   @Override
   public synchronized void markWorkflowStarted() throws IOException {
 
-    LOG.info("Starting attempt: " + getAttempt());
-    save(getAttempt()
-            .setStatus(AttemptStatus.RUNNING.ordinal())
-            .setStartTime(System.currentTimeMillis())
+    LOG.info("Starting attempt: " + init.getAttempt());
+    init.save(init.getAttempt()
+        .setStatus(AttemptStatus.RUNNING.ordinal())
+        .setStartTime(System.currentTimeMillis())
     );
 
   }
@@ -314,11 +273,11 @@ public class DbPersistence implements WorkflowStatePersistence {
   @Override
   public synchronized void markPool(String pool) throws IOException {
 
-    WorkflowAttempt attempt = getAttempt();
+    WorkflowAttempt attempt = init.getAttempt();
     Assertions.assertLive(attempt);
 
-    save(getExecution()
-            .setPoolOverride(pool)
+    init.save(init.getExecution()
+        .setPoolOverride(pool)
     );
 
   }
@@ -326,12 +285,12 @@ public class DbPersistence implements WorkflowStatePersistence {
   @Override
   public synchronized void markPriority(String priority) throws IOException {
 
-    WorkflowAttempt attempt = getAttempt();
+    WorkflowAttempt attempt = init.getAttempt();
     Assertions.assertLive(attempt);
 
     LOG.info("Setting priority: " + priority);
-    save(attempt
-            .setPriority(priority)
+    init.save(attempt
+        .setPriority(priority)
     );
 
   }
@@ -339,7 +298,7 @@ public class DbPersistence implements WorkflowStatePersistence {
   @Override
   public synchronized void markShutdownRequested(String providedReason) throws IOException {
 
-    WorkflowAttempt attempt = getAttempt();
+    WorkflowAttempt attempt = init.getAttempt();
     Assertions.assertLive(attempt);
 
     String reason = WorkflowJSON.getShutdownReason(providedReason);
@@ -352,57 +311,20 @@ public class DbPersistence implements WorkflowStatePersistence {
       attempt.setStatus(AttemptStatus.SHUTDOWN_PENDING.ordinal());
     }
 
-    save(attempt);
+    init.save(attempt);
 
   }
 
-  //  this method is carefully not synchronized, because we don't want a deadlock with the heartbeat waiting to heartbeat.
   @Override
   public void markWorkflowStopped() throws IOException {
-
-    synchronized (this) {
-      LOG.info("Marking workflow stopped");
-
-      if (WorkflowQueries.workflowComplete(getExecution())) {
-        LOG.info("Marking execution as complete");
-        save(getExecution()
-                .setStatus(WorkflowExecutionStatus.COMPLETE.ordinal())
-                .setEndTime(System.currentTimeMillis())
-        );
-      }
-
-      WorkflowAttempt attempt = getAttempt()
-          .setEndTime(System.currentTimeMillis());
-
-      LOG.info("Stopping attempt: " + attempt);
-      if (attempt.getStatus() == AttemptStatus.FAIL_PENDING.ordinal()) {
-        attempt.setStatus(AttemptStatus.FAILED.ordinal());
-      } else if (attempt.getStatus() == AttemptStatus.SHUTDOWN_PENDING.ordinal()) {
-        attempt.setStatus(AttemptStatus.SHUTDOWN.ordinal());
-      } else if (attempt.getStatus() == AttemptStatus.FAILED.ordinal()) {
-        LOG.info("Attempt was already stopped (via shutdown hook probably)");
-      } else {
-        attempt.setStatus(AttemptStatus.FINISHED.ordinal());
-      }
-
-      LOG.info("Marking status of attempt " + attempt.getId() + " as " + attempt.getStatus());
-
-      save(attempt);
-
-    }
-
-    heartbeatThread.interrupt();
-    try {
-      heartbeatThread.join();
-    } catch (InterruptedException e) {
-      LOG.error("Failed to interrupt heartbeat thread!");
-    }
-
+    init.stop();
   }
+
+
 
   @Override
   public synchronized StepStatus getStatus(String stepToken) throws IOException {
-    return WorkflowQueries.getStepStatuses(rldb, workflowAttemptId, stepToken).get(stepToken);
+    return WorkflowQueries.getStepStatuses(init.getDb(), init.getAttemptId(), stepToken).get(stepToken);
   }
 
   @Override
@@ -412,15 +334,16 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   @Override
   public synchronized Map<String, StepStatus> getStepStatuses() throws IOException {
-    return WorkflowQueries.getStepStatuses(rldb, workflowAttemptId, null);
+    return WorkflowQueries.getStepStatuses(init.getDb(), init.getAttemptId(), null);
   }
 
   private synchronized Map<String, StepState> getStates() throws IOException {
 
     Map<Long, StepAttempt.Attributes> attemptsById = Maps.newHashMap();
+    IRlDb conn = init.getDb();
 
-    List<StepAttempt.Attributes> attempts = WorkflowQueries.getStepAttempts(rldb,
-        workflowAttemptId,
+    List<StepAttempt.Attributes> attempts = WorkflowQueries.getStepAttempts(conn,
+        init.getAttemptId(),
         null
     );
 
@@ -428,7 +351,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       attemptsById.put(attempt.getId(), attempt);
     }
 
-    List<MapreduceJob.Attributes> mapreduceJobs = WorkflowQueries.getMapreduceJobs(rldb,
+    List<MapreduceJob.Attributes> mapreduceJobs = WorkflowQueries.getMapreduceJobs(conn,
         attemptsById.keySet()
     );
 
@@ -439,7 +362,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       jobIds.add(mapreduceJob.getId());
     }
 
-    List<MapreduceCounter.Attributes> counters = WorkflowQueries.getMapreduceCounters(rldb,
+    List<MapreduceCounter.Attributes> counters = WorkflowQueries.getMapreduceCounters(conn,
         jobIds
     );
 
@@ -448,7 +371,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       countersByJobId.put((long)counter.getMapreduceJobId(), counter);
     }
 
-    List<StepAttemptDatastore.Attributes> storeUsages = WorkflowQueries.getStepAttemptDatastores(rldb,
+    List<StepAttemptDatastore.Attributes> storeUsages = WorkflowQueries.getStepAttemptDatastores(conn,
         attemptsById.keySet()
     );
 
@@ -457,7 +380,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       allStores.add((long)storeUsage.getWorkflowAttemptDatastoreId());
     }
 
-    Map<Long, WorkflowAttemptDatastore.Attributes> storesById = BaseJackUtil.attributesById(WorkflowQueries.getWorkflowAttemptDatastores(rldb, allStores, null));
+    Map<Long, WorkflowAttemptDatastore.Attributes> storesById = BaseJackUtil.attributesById(WorkflowQueries.getWorkflowAttemptDatastores(conn, allStores, null));
     TwoNestedMap<String, DSAction, WorkflowAttemptDatastore.Attributes> stepToDatastoreUsages = new TwoNestedMap<>();
     for (StepAttemptDatastore.Attributes usage : storeUsages) {
       stepToDatastoreUsages.put(
@@ -469,7 +392,7 @@ public class DbPersistence implements WorkflowStatePersistence {
     }
 
     Multimap<String, String> stepToDependencies = HashMultimap.create();
-    for (StepDependency.Attributes dependency : WorkflowQueries.getStepDependencies(rldb, attemptsById.keySet())) {
+    for (StepDependency.Attributes dependency : WorkflowQueries.getStepDependencies(conn, attemptsById.keySet())) {
       stepToDependencies.put(
           attemptsById.get((long)dependency.getStepAttemptId()).getStepToken(),
           attemptsById.get((long)dependency.getDependencyAttemptId()).getStepToken()
@@ -517,7 +440,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
         List<TaskFailure> taskFailureList = Lists.newArrayList();
 
-        for (MapreduceJobTaskException exception : rldb.mapreduceJobTaskExceptions().findByMapreduceJobId(job.getIntId())) {
+        for (MapreduceJobTaskException exception : conn.mapreduceJobTaskExceptions().findByMapreduceJobId(job.getIntId())) {
           taskFailureList.add(new TaskFailure(exception.getTaskAttemptId(), exception.getException()));
         }
 
@@ -546,59 +469,61 @@ public class DbPersistence implements WorkflowStatePersistence {
 
     return states;
   }
-
   @Override
   public synchronized String getShutdownRequest() throws IOException {
-    return getAttempt().getShutdownReason();
+    return init.getAttempt().getShutdownReason();
   }
 
   @Override
   public synchronized String getPriority() throws IOException {
-    return getAttempt().getPriority();
+    return init.getAttempt().getPriority();
   }
 
   @Override
   public synchronized String getPool() throws IOException {
-    return WorkflowQueries.getPool(getAttempt(), getExecution());
+    return WorkflowQueries.getPool(init.getAttempt(), init.getExecution());
   }
 
   @Override
   public synchronized String getName() throws IOException {
-    return getExecution().getApplication().getName();
+    return init.getExecution().getApplication().getName();
   }
 
   @Override
   public synchronized String getScopeIdentifier() throws IOException {
-    return getExecution().getScopeIdentifier();
+    return init.getExecution().getScopeIdentifier();
   }
 
   @Override
   public synchronized String getId() throws IOException {
-    return Long.toString(getAttempt().getId());
+    return Long.toString(init.getAttempt().getId());
   }
 
   @Override
   public synchronized AttemptStatus getStatus() throws IOException {
-    return AttemptStatus.findByValue(getAttempt().getStatus());
+    return AttemptStatus.findByValue(init.getAttempt().getStatus());
   }
+
+
 
   @Override
   public synchronized List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException {
 
     List<ConfiguredNotification.Attributes> allNotifications = Lists.newArrayList();
+    IRlDb conn = init.getDb();
 
-    allNotifications.addAll(WorkflowQueries.getAttemptNotifications(rldb,
+    allNotifications.addAll(WorkflowQueries.getAttemptNotifications(conn,
         notification,
-        workflowAttemptId
+        init.getAttemptId()
     ));
 
-    allNotifications.addAll(WorkflowQueries.getExecutionNotifications(rldb,
+    allNotifications.addAll(WorkflowQueries.getExecutionNotifications(conn,
         getExecutionId(),
         notification
     ));
 
-    allNotifications.addAll(WorkflowQueries.getApplicationNotifications(rldb,
-        getExecution().getApplicationId().longValue(),
+    allNotifications.addAll(WorkflowQueries.getApplicationNotifications(conn,
+        init.getExecution().getApplicationId().longValue(),
         notification
     ));
 
@@ -620,6 +545,7 @@ public class DbPersistence implements WorkflowStatePersistence {
     if (useProvided) {
 
       //  if they used other constructor (see note up top about how to fix this... maybe)
+      AlertsHandler providedHandler = init.getProvidedHandler();
       if (providedHandler == null) {
         throw new RuntimeException("Provided alerts handler not available for notification " + notification);
       }
@@ -642,22 +568,22 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   @Override
   public synchronized ThreeNestedMap<String, String, String, Long> getCountersByStep() throws IOException {
-    return WorkflowQueries.getCountersByStep(rldb, getExecutionId());
+    return WorkflowQueries.getCountersByStep(init.getDb(), getExecutionId());
   }
 
   @Override
   public synchronized TwoNestedMap<String, String, Long> getFlatCounters() throws IOException {
-    return WorkflowQueries.getFlatCounters(rldb, getExecutionId());
+    return WorkflowQueries.getFlatCounters(init.getDb(), getExecutionId());
   }
 
   @Override
   public synchronized long getExecutionId() throws IOException {
-    return getExecution().getId();
+    return init.getExecution().getId();
   }
 
   @Override
   public synchronized long getAttemptId() throws IOException {
-    return workflowAttemptId;
+    return init.getAttemptId();
   }
 
   //  for testing
@@ -666,34 +592,5 @@ public class DbPersistence implements WorkflowStatePersistence {
     return testMailBuffer;
   }
 
-  private synchronized void heartbeat() {
-    try {
-      save(getAttempt()
-              .setLastHeartbeat(System.currentTimeMillis())
-      );
-    } catch (IOException e) {
-      try {
-        markShutdownRequested("Requesting shutdown because heartbeat thread lost database connection: " + e.getMessage());
-      } catch (IOException e1) {
-        //  fine
-      }
-      throw new RuntimeException(e);
-    }
-  }
 
-  private class Heartbeat implements Runnable {
-    @Override
-    public void run() {
-      //noinspection InfiniteLoopStatement
-      while (!Thread.interrupted()) {
-        try {
-          Thread.sleep(HEARTBEAT_INTERVAL);
-          heartbeat();
-        } catch (InterruptedException e) {
-          LOG.info("Heartbeat thread killed");
-          return;
-        }
-      }
-    }
-  }
 }
