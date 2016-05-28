@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.megadesk.MockStoreReaderLockProvider;
+import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.DefaultHostnameProvider;
@@ -28,6 +29,7 @@ public class ProductionWorkflowOptions extends WorkflowOptions {
     setCounterFilter(CounterFilters.all());
     setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL));
     setHostnameProvider(new DefaultHostnameProvider());
+    setResourceManager(ResourceManagers.notImplemented());
 
   }
 }

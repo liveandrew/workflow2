@@ -209,16 +209,10 @@ public abstract class Action {
   }
 
   protected <T> T get(ReadResource<T> resource) {
-    if (resourceManager == null) {
-      throw new RuntimeException("Cannot call get() without providing a ResourceManager to the WorkflowRunner.");
-    }
     return (T)resourceManager.read(resource);
   }
 
   protected <T, R extends WriteResource<T>> void set(R resource, T value) {
-    if (resourceManager == null) {
-      throw new RuntimeException("Cannot call set() without providing a ResourceManager to the WorkflowRunner.");
-    }
     resourceManager.write(resource, value);
   }
 
@@ -245,10 +239,6 @@ public abstract class Action {
       prepDirs();
 
       lockManager.lockConsumeStart();
-
-      if (!(readResources.isEmpty() && writeResources.isEmpty()) && resourceManager == null) {
-        throw new RuntimeException("Cannot call readsFrom() or creates() on resources without setting a ResourceManager in the WorkflowOptions!");
-      }
 
       LOG.info("Setting read resources");
       for (Resource resource : readResources.keySet()) {

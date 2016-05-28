@@ -214,12 +214,10 @@ public final class WorkflowRunner {
   }
 
   private void linkPersistence() {
-    if (resourceManager != null) {
-      try {
-        resourceManager.linkResourceRoot(persistence);
-      } catch (IOException e) {
-        throw new RuntimeException("Could not link resource root to persistence: " + e);
-      }
+    try {
+      resourceManager.linkResourceRoot(persistence);
+    } catch (IOException e) {
+      throw new RuntimeException("Could not link resource root to persistence: " + e);
     }
   }
 
