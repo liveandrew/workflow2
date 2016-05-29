@@ -184,8 +184,6 @@ public final class WorkflowRunner {
 
     this.persistence = initializedData.prepare(dependencyGraph);
 
-    linkPersistence();
-
     removeRedundantEdges(dependencyGraph);
     setStepContextObjects(dependencyGraph);
 
@@ -211,14 +209,6 @@ public final class WorkflowRunner {
       }
     });
 
-  }
-
-  private void linkPersistence() {
-    try {
-      resourceManager.linkResourceRoot(persistence);
-    } catch (IOException e) {
-      throw new RuntimeException("Could not link resource root to persistence: " + e);
-    }
   }
 
   private void setStepContextObjects(DirectedGraph<Step, DefaultEdge> dependencyGraph) {

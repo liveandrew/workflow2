@@ -64,6 +64,11 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
 
     Runtime.getRuntime().addShutdownHook(hook);
 
+    options.getResourceManager().setVersion(
+        initialized.getExecutionId(),
+        getClass().getName()
+    );
+
     return new InitializedWorkflow<>(workflowName, options, initialized, this, hook);
   }
 
