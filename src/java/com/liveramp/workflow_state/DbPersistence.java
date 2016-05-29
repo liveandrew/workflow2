@@ -317,10 +317,8 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   @Override
   public void markWorkflowStopped() throws IOException {
-    init.stop();
+    init.markWorkflowStopped();
   }
-
-
 
   @Override
   public synchronized StepStatus getStatus(String stepToken) throws IOException {

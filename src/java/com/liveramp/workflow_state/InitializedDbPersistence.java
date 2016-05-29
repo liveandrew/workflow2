@@ -49,7 +49,7 @@ public class InitializedDbPersistence implements InitializedPersistence {
 
   //  this method is carefully not synchronized, because we don't want a deadlock with the heartbeat waiting to heartbeat.
   @Override
-  public void stop() throws IOException {
+  public void markWorkflowStopped() throws IOException {
 
     synchronized (this) {
       LOG.info("Marking workflow stopped");

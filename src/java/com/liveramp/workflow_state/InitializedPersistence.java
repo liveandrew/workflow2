@@ -9,6 +9,6 @@ public interface InitializedPersistence {
   long getExecutionId() throws IOException;
   long getAttemptId() throws IOException;
 
-  public void stop() throws IOException;
+  public void markWorkflowStopped() throws IOException;
 
 }

@@ -10,7 +10,7 @@ import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 
 //  TODO somehow split up the interfaces here.  dunno how.
-public interface WorkflowStatePersistence {
+public interface WorkflowStatePersistence extends InitializedPersistence{
 
   //  user-defined-action triggered
   public void markStepStatusMessage(String stepToken, String newMessage) throws IOException;
@@ -25,7 +25,6 @@ public interface WorkflowStatePersistence {
 
   //  WorkflowRunner
   public void markWorkflowStarted() throws IOException;
-  public void markWorkflowStopped() throws IOException;
 
   //  UI / manually controlled
   public void markStepReverted(String stepToken) throws IOException;
@@ -47,8 +46,6 @@ public interface WorkflowStatePersistence {
   public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException;
 
   //  should these belong somewhere else?  only really implemented in db-backed one
-  public long getExecutionId() throws IOException;
-  public long getAttemptId() throws IOException;
   public ThreeNestedMap<String, String, String, Long> getCountersByStep() throws IOException;
   public TwoNestedMap<String, String, Long> getFlatCounters() throws IOException;
 
