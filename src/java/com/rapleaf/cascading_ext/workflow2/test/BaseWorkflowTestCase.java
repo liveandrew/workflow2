@@ -6,7 +6,7 @@ import java.util.Set;
 import com.google.common.collect.Sets;
 import org.apache.log4j.Level;
 
-import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.rapleaf.cascading_ext.workflow2.Action;
@@ -41,7 +41,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(Sets.newHashSet(step));
   }
 
-  public WorkflowRunner execute(Step step, ResourceManager resourceManager) throws IOException {
+  public WorkflowRunner execute(Step step, ResourceDeclarer resourceManager) throws IOException {
     return execute(Sets.newHashSet(step), resourceManager);
   }
 
@@ -49,7 +49,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(Sets.newHashSet(new Step(action)));
   }
 
-  public WorkflowRunner execute(Action action, ResourceManager resourceManager) throws IOException {
+  public WorkflowRunner execute(Action action, ResourceDeclarer resourceManager) throws IOException {
     return execute(Sets.newHashSet(new Step(action)), resourceManager);
   }
 
@@ -84,7 +84,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return workflowRunner;
   }
 
-  public WorkflowRunner execute(Set<Step> steps, ResourceManager resourceManager) throws IOException {
+  public WorkflowRunner execute(Set<Step> steps, ResourceDeclarer resourceManager) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner("Test workflow",
         new DbPersistenceFactory(),
         new TestWorkflowOptions()
