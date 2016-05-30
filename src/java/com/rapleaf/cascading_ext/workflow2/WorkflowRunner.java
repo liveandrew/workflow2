@@ -163,7 +163,7 @@ public final class WorkflowRunner {
   }
 
 
-  public WorkflowRunner(InitializedWorkflow initializedData, Set<Step> tailSteps) {
+  public WorkflowRunner(InitializedWorkflow initializedData, Set<Step> tailSteps) throws IOException {
 
     WorkflowOptions options = initializedData.getOptions();
 
@@ -174,7 +174,6 @@ public final class WorkflowRunner {
     this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.stepPollInterval = options.getStepPollInterval();
-    this.resourceManager = options.getResourceManager();
     this.trackerURLBuilder = options.getUrlBuilder();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
@@ -182,6 +181,7 @@ public final class WorkflowRunner {
 
     assertSandbox(options.getSandboxDir());
 
+    this.resourceManager = initializedData.getManager();
     this.persistence = initializedData.prepare(dependencyGraph);
 
     removeRedundantEdges(dependencyGraph);

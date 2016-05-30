@@ -878,7 +878,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       fail("There was an invalid path!");
     } catch (Exception e) {
       //  so we can try again in this jvm
-      wf.getInitializedPersistence().stop();
+      wf.getInitializedPersistence().markWorkflowStopped();
     }
 
     WorkflowRunner wfr = buildWfr(persistence,

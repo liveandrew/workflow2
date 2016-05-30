@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2.state;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -14,20 +15,27 @@ public class InitializedWorkflow<INITIALIZED extends InitializedPersistence> {
   private final WorkflowOptions options;
   private final INITIALIZED persistence;
   private final WorkflowPersistenceFactory<INITIALIZED> factory;
+  private final ResourceManager manager;
   private final MultiShutdownHook hook;
 
   protected InitializedWorkflow(String workflowName,
                                 WorkflowOptions options,
                                 INITIALIZED reservedPersistence,
                                 WorkflowPersistenceFactory<INITIALIZED> factory,
+                                ResourceManager manager,
                                 MultiShutdownHook hook){
 
     this.workflowName = workflowName;
     this.options = options;
     this.persistence = reservedPersistence;
     this.factory = factory;
+    this.manager = manager;
     this.hook = hook;
 
+  }
+
+  public ResourceManager getManager() {
+    return manager;
   }
 
   public String getWorkflowName() {

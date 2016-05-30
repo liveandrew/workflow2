@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.cascading_ext.fs.TrashHelper;
+import com.liveramp.cascading_ext.resource.CheckpointUtil;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.LaunchedJob;
@@ -33,9 +33,9 @@ import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_state.json.WorkflowJSON;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
-  private static final Logger LOG = LoggerFactory.getLogger (HdfsPersistenceContainer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
-  private final InMemoryInitializedPersistence initializedPersistence;
+  private final HdfsInitializedPersistence initializedPersistence;
 
   private final String checkpointDir;
   private final boolean deleteCheckpointsOnSuccess;
@@ -52,7 +52,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
                                   String id,
                                   Map<String, StepState> statuses,
                                   List<DataStoreInfo> datastores,
-                                  InMemoryInitializedPersistence initializedPersistence) {
+                                  HdfsInitializedPersistence initializedPersistence) {
 
     this.checkpointDir = checkpointDir;
     this.deleteCheckpointsOnSuccess = deleteOnSuccess;
@@ -77,8 +77,8 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     if (allStepsSucceeded() && shutdownReason == null) {
       try {
         if (deleteCheckpointsOnSuccess) {
-          LOG.debug("Deleting checkpoint dir " + checkpointDir);
-          TrashHelper.deleteUsingTrashIfEnabled(fs, new Path(checkpointDir));
+          LOG.debug("Deleting checkpoints in checkpoint dir " + checkpointDir);
+          CheckpointUtil.clearCheckpoints(fs, new Path(checkpointDir));
         }
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -164,7 +164,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException {
-    if(initializedPersistence.getConfiguredNotifications().contains(notification)) {
+    if (initializedPersistence.getConfiguredNotifications().contains(notification)) {
       return Lists.newArrayList(initializedPersistence.getHandler());
     }
     return Lists.newArrayList();
@@ -182,7 +182,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public long getExecutionId() throws IOException {
-    throw new RuntimeException("Not supported by hdfs persistence");
+    return initializedPersistence.getExecutionId();
   }
 
   @Override
@@ -211,7 +211,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
         .setEndTimestamp(System.currentTimeMillis());
 
   }
-  
+
   @Override
   public void markStepCompleted(String stepToken) throws IOException {
     LOG.info("Writing out checkpoint token for " + stepToken);

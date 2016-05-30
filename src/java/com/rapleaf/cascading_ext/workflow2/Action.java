@@ -327,7 +327,7 @@ public abstract class Action {
   }
 
   /**
-   * Same as {@link #setStatusMessage(String)} but only logs failures,
+   * Same as {@link #setStatusMessage(String)} but only logs failures
    * doesn't rethrow.
    */
   protected void setStatusMessageSafe(String message) {

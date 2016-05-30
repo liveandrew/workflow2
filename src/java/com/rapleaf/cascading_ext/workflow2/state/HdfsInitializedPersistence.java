@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.util.Set;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.hadoop.fs.FileSystem;
 
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
-public class InMemoryInitializedPersistence implements InitializedPersistence {
+public class HdfsInitializedPersistence implements InitializedPersistence {
 
+  private final Long executionID;
   private final String name;
   private String priority;
   private String pool;
@@ -18,8 +20,18 @@ public class InMemoryInitializedPersistence implements InitializedPersistence {
   private final String username;
   private final AlertsHandler handler;
   private final Set<WorkflowRunnerNotification> configuredNotifications;
+  private final FileSystem fs;
 
-  public InMemoryInitializedPersistence(String name, String priority, String pool, String host, String username, AlertsHandler handler, Set<WorkflowRunnerNotification> configuredNotifications) {
+  public HdfsInitializedPersistence(Long executionID,
+                                    String name,
+                                    String priority,
+                                    String pool,
+                                    String host,
+                                    String username,
+                                    AlertsHandler handler,
+                                    Set<WorkflowRunnerNotification> configuredNotifications,
+                                    FileSystem fs) {
+    this.executionID = executionID;
     this.name = name;
     this.priority = priority;
     this.pool = pool;
@@ -27,11 +39,12 @@ public class InMemoryInitializedPersistence implements InitializedPersistence {
     this.username = username;
     this.handler = handler;
     this.configuredNotifications = configuredNotifications;
+    this.fs = fs;
   }
 
   @Override
   public long getExecutionId() throws IOException {
-    throw new NotImplementedException();
+    return executionID;
   }
 
   @Override
@@ -40,8 +53,12 @@ public class InMemoryInitializedPersistence implements InitializedPersistence {
   }
 
   @Override
-  public void stop() throws IOException {
+  public void markWorkflowStopped() throws IOException {
     //  no op
+  }
+
+  public FileSystem getFs() {
+    return fs;
   }
 
   public String getName() {

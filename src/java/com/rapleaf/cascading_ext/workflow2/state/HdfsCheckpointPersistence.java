@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.cascading_ext.resource.CheckpointUtil;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_state.DSAction;
@@ -34,7 +35,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.support.Rap;
 
-public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<InMemoryInitializedPersistence> {
+public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsInitializedPersistence> {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
   private final String checkpointDir;
@@ -50,35 +51,65 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<InMemo
   }
 
   @Override
-  public InMemoryInitializedPersistence initializeInternal(String name,
-                                                           String scopeId,
-                                                           String description,
-                                                           AppType appType,
-                                                           String host,
-                                                           String username,
-                                                           String pool,
-                                                           String priority,
-                                                           String launchDir,
-                                                           String launchJar,
-                                                           Set<WorkflowRunnerNotification> configuredNotifications,
-                                                           AlertsHandler providedHandler,
-                                                           String remote,
-                                                           String implementationBuild) throws IOException {
-    return new InMemoryInitializedPersistence(name, priority, pool, host, username, providedHandler, configuredNotifications);
+  public HdfsInitializedPersistence initializeInternal(String name,
+                                                       String scopeId,
+                                                       String description,
+                                                       AppType appType,
+                                                       String host,
+                                                       String username,
+                                                       String pool,
+                                                       String priority,
+                                                       String launchDir,
+                                                       String launchJar,
+                                                       Set<WorkflowRunnerNotification> configuredNotifications,
+                                                       AlertsHandler providedHandler,
+                                                       String remote,
+                                                       String implementationBuild) throws IOException {
+
+    FileSystem fs = FileSystemHelper.getFS();
+
+    Path checkpointDirPath = new Path(checkpointDir);
+    LOG.info("Creating checkpoint dir " + checkpointDir);
+    fs.mkdirs(checkpointDirPath);
+
+    long currentExecution = getAttemptExecutionId(fs, checkpointDirPath);
+    LOG.info("Writing execution ID to state:  "+currentExecution);
+
+    CheckpointUtil.writeExecutionId(currentExecution, fs, checkpointDirPath);
+
+    return new HdfsInitializedPersistence(currentExecution, name, priority, pool, host, username, providedHandler, configuredNotifications, fs);
+  }
+
+  private long getAttemptExecutionId(FileSystem fs, Path checkpointDirPath) throws IOException {
+
+    long latest = CheckpointUtil.getLatestExecutionId(fs, checkpointDirPath);
+
+    //  we are resuming
+    if (CheckpointUtil.existCheckpoints(checkpointDirPath)) {
+      LOG.info("Resuming execution, using ID "+latest);
+      return latest;
+    }
+    //  new execution
+    else {
+
+      long next = latest + 1;
+      LOG.info("New execution, using ID "+next);
+
+      return next;
+    }
+
   }
 
   @Override
-  public WorkflowStatePersistence prepare(InMemoryInitializedPersistence persistence,
+  public WorkflowStatePersistence prepare(HdfsInitializedPersistence persistence,
                                           DirectedGraph<Step, DefaultEdge> flatSteps) {
 
-    FileSystem fs = FileSystemHelper.getFS();
+    FileSystem fs = persistence.getFs();
 
     Map<String, StepState> statuses = Maps.newHashMap();
     List<DataStoreInfo> datastores = Lists.newArrayList();
 
     try {
-      LOG.info("Creating checkpoint dir " + checkpointDir);
-      fs.mkdirs(new Path(checkpointDir));
 
       Map<DataStore, DataStoreInfo> dataStoreToRep = Maps.newHashMap();
 

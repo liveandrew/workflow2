@@ -9,7 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
-import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.importer.generated.AppType;
@@ -35,7 +35,7 @@ public class WorkflowOptions {
   private AppType appType;
   private Integer stepPollInterval;
   private CounterFilter counterFilter;
-  private ResourceManager resourceManager;
+  private ResourceDeclarer resourceDeclarer;
   private String sandboxDir;
   private TrackerURLBuilder urlBuilder;
   private HostnameProvider hostnameProvider;
@@ -147,13 +147,13 @@ public class WorkflowOptions {
     return this;
   }
 
-  public WorkflowOptions setResourceManager(ResourceManager resourceManager) {
-    this.resourceManager = resourceManager;
+  public WorkflowOptions setResourceManager(ResourceDeclarer resourceManager) {
+    this.resourceDeclarer = resourceManager;
     return this;
   }
 
-  public ResourceManager getResourceManager() {
-    return this.resourceManager;
+  public ResourceDeclarer getResourceManager() {
+    return this.resourceDeclarer;
   }
 
   public Set<WorkflowRunnerNotification> getEnabledNotifications() {

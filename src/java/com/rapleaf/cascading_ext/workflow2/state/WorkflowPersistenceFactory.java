@@ -9,6 +9,8 @@ import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.cascading_ext.resource.ResourceDeclarer;
+import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.importer.generated.AppType;
@@ -58,18 +60,23 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
     hook.add(new MultiShutdownHook.Hook() {
       @Override
       public void onShutdown() throws Exception {
-        initialized.stop();
+        initialized.markWorkflowStopped();
       }
     });
 
-    Runtime.getRuntime().addShutdownHook(hook);
+    ResourceDeclarer resourceDeclarer = options.getResourceManager();
 
-    options.getResourceManager().setVersion(
+    //  TODO sweep after migration to version / type
+    resourceDeclarer.linkResourceRoot(initialized);
+
+    ResourceManager resourceManager = resourceDeclarer.create(
         initialized.getExecutionId(),
-        getClass().getName()
+        initialized.getClass().getName()
     );
 
-    return new InitializedWorkflow<>(workflowName, options, initialized, this, hook);
+    Runtime.getRuntime().addShutdownHook(hook);
+
+    return new InitializedWorkflow<>(workflowName, options, initialized, this, resourceManager, hook);
   }
 
 
