@@ -111,11 +111,18 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public InitializedWorkflow<InitializedDbPersistence> initializeWorkflow() throws IOException {
-    return new DbPersistenceFactory().initialize(
-        TEST_WORKFLOW_NAME,
-        new TestWorkflowOptions()
-            .setResourceManager(ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getRlDb())));
+    return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getRlDb()));
   }
+
+  public InitializedWorkflow<InitializedDbPersistence> initializeWorkflow(String workflowName,
+                                                                          ResourceDeclarer declarer) throws IOException {
+    return new DbPersistenceFactory().initialize(
+        workflowName,
+        new TestWorkflowOptions()
+            .setResourceManager(declarer));
+
+  }
+
 
   public void executeWorkflowFOff(WorkflowRunnable foff) throws Exception {
     WorkflowRunner runner = execute(foff.getSteps(), foff.getOptions());
