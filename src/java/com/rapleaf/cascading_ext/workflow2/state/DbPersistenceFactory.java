@@ -124,12 +124,16 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
 
       Map<DataStore, WorkflowAttemptDatastore> datastores = Maps.newHashMap();
       for (DataStore store : allStores) {
-        datastores.put(store, rldb.workflowAttemptDatastores().create(
-            (int)workflowAttemptId,
-            store.getName(),
-            store.getPath(),
-            store.getClass().getName()
-        ));
+        try {
+          datastores.put(store, rldb.workflowAttemptDatastores().create(
+              (int)workflowAttemptId,
+              store.getName(),
+              store.getPath(),
+              store.getClass().getName()
+          ));
+        } catch (NullPointerException e) {
+          throw new RuntimeException(store.getPath(), e);
+        }
       }
 
       Map<String, StepAttempt> attempts = Maps.newHashMap();
