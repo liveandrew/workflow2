@@ -23,7 +23,7 @@ import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
 
 public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
-  private static final String TEST_WORKFLOW_NAME = "Test Workflow";
+  private static final String TEST_WORKFLOW_NAME = "Test workflow";
 
   private final InMemoryContext context;
 
