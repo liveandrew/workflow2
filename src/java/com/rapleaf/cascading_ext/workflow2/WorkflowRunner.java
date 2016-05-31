@@ -162,6 +162,9 @@ public final class WorkflowRunner {
     this(persistenceFactory.initialize(workflowName, options), tailSteps);
   }
 
+  public WorkflowRunner(InitializedWorkflow initializedData, Step tail) throws IOException {
+    this(initializedData, Sets.newHashSet(tail));
+  }
 
   public WorkflowRunner(InitializedWorkflow initializedData, Set<Step> tailSteps) throws IOException {
 

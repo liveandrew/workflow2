@@ -8,6 +8,7 @@ import org.apache.log4j.Level;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
+import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
@@ -18,9 +19,11 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
+import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
 
 public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
+  private static final String TEST_WORKFLOW_NAME = "Test Workflow";
 
   private final InMemoryContext context;
 
@@ -74,24 +77,44 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public WorkflowRunner execute(Set<Step> steps, WorkflowOptions options, ContextStorage storage) throws IOException {
-    WorkflowRunner workflowRunner = new WorkflowRunner("Test workflow",
+    WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
         new DbPersistenceFactory(),
         options
             .setStorage(storage)
-            .setResourceManager(ResourceManagers.inMemoryResourceManager("Test Workflow", null, new DatabasesImpl().getRlDb())),
+            .setResourceManager(ResourceManagers.inMemoryResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getRlDb())),
         steps);
     workflowRunner.run();
     return workflowRunner;
   }
 
+  public WorkflowRunner execute(InitializedWorkflow workflow, Action tail) throws IOException {
+    return execute(workflow, Sets.<Step>newHashSet(new Step(tail)));
+  }
+
+  public WorkflowRunner execute(InitializedWorkflow workflow, Set<Step> tails) throws IOException {
+    WorkflowRunner workflowRunner = new WorkflowRunner(
+        workflow,
+        tails
+    );
+    workflowRunner.run();
+    return workflowRunner;
+  }
+
   public WorkflowRunner execute(Set<Step> steps, ResourceDeclarer resourceManager) throws IOException {
-    WorkflowRunner workflowRunner = new WorkflowRunner("Test workflow",
+    WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
         new DbPersistenceFactory(),
         new TestWorkflowOptions()
             .setResourceManager(resourceManager),
         steps);
     workflowRunner.run();
     return workflowRunner;
+  }
+
+  public InitializedWorkflow<InitializedDbPersistence> initializeWorkflow() throws IOException {
+    return new DbPersistenceFactory().initialize(
+        TEST_WORKFLOW_NAME,
+        new TestWorkflowOptions()
+            .setResourceManager(ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getRlDb())));
   }
 
   public void executeWorkflowFOff(WorkflowRunnable foff) throws Exception {
