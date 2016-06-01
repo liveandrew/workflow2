@@ -11,10 +11,9 @@ import org.junit.Test;
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_ext.resource.ResourceManager;
-import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.cascading_ext.resource.WriteResource;
-import com.rapleaf.db_schemas.DatabasesImpl;
-import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.liveramp.workflow_state.InitializedDbPersistence;
+import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.rldb.models.ResourceRoot;
 
 public class TestWorkflowWithResources extends WorkflowTestCase {
@@ -36,9 +35,10 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
 
   @Test
   public void testContextTool() throws IOException {
-    IRlDb rlDb = new DatabasesImpl().getRlDb();
 
-    ResourceManager<String, ResourceRoot> resourceManager = ResourceManagers.dbResourceManager("name", null, rlDb);
+    InitializedWorkflow<InitializedDbPersistence> workflow = initializeWorkflow();
+    ResourceManager<String, ResourceRoot> resourceManager = workflow.getManager();
+
     SimpleContext context = new SimpleContext();
 
     context = resourceManager.manage(context);

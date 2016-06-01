@@ -9,13 +9,19 @@ import org.junit.Test;
 
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.Resource;
+import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.cascading_ext.resource.WriteResource;
+import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
+import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.db_schemas.rldb.models.ResourceRoot;
+
+import static org.junit.Assert.fail;
 
 public class TestResourceWorkflowIntegration extends WorkflowTestCase {
 
@@ -37,7 +43,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
   public void testHdfsStorage() throws IOException {
     testStorage(new RMFactory() {
       @Override
-      public ResourceManager make() throws IOException {
+      public ResourceDeclarer<String, String> make() throws IOException {
         return ResourceManagers.hdfsResourceManager(getTestRoot() + "/" + name, name, null, rlDb);
       }
     });
@@ -47,37 +53,45 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
   public void testDbStorage() throws IOException {
     testStorage(new RMFactory() {
       @Override
-      public ResourceManager make() throws IOException {
+      public ResourceDeclarer<String, ResourceRoot> make() throws IOException {
         return ResourceManagers.dbResourceManager(name, null, rlDb);
       }
     });
   }
 
   private <T> void testStorage(RMFactory manager) throws IOException {
-    WorkflowRunner runner = getRunner(manager.make(), previousNumbers);
-    runner.run();
+
+    InitializedWorkflow<InitializedDbPersistence> workflow = new DbPersistenceFactory().initialize(name,
+        new TestWorkflowOptions().setResourceManager(manager.make())
+    );
+    execute(workflow, getSteps(workflow.getManager(), previousNumbers));
 
     // should fail the first time
     shouldFail = true;
-    runner = getRunner(manager.make(), expectedNumbers);
+
+    workflow = new DbPersistenceFactory().initialize(name,
+        new TestWorkflowOptions().setResourceManager(manager.make())
+    );
+
     try {
-      runner.run();
+      execute(workflow, getSteps(workflow.getManager(), expectedNumbers));
+      fail();
     } catch (RuntimeException e) {
+      //  expected
     }
 
     shouldFail = false;
-    runner = getRunner(manager.make(), expectedNumbers);
-    runner.run();
+
+    workflow = new DbPersistenceFactory().initialize(name,
+        new TestWorkflowOptions().setResourceManager(manager.make())
+    );
+
+    execute(workflow, getSteps(workflow.getManager(), expectedNumbers));
+
   }
 
-  private <T> WorkflowRunner getRunner(ResourceManager manager, Set<Long> numbersToWrite) throws IOException {
-    Step resourceTest = new Step(new ResourceTest(manager, getTestRoot(), numbersToWrite));
-    return new WorkflowRunner(
-        ResourceTest.class,
-        new DbPersistenceFactory(),
-        new TestWorkflowOptions().setResourceManager(manager),
-        resourceTest
-    );
+  private Set<Step> getSteps(ResourceManager<String, ?> manager, Set<Long> numbersToWrite) throws IOException {
+    return Sets.newHashSet(new Step(new ResourceTest(manager, getTestRoot(), numbersToWrite)));
   }
 
   private static class ResourceTest extends MultiStepAction {
@@ -156,7 +170,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
 
   private interface RMFactory {
 
-    ResourceManager make() throws IOException;
+    ResourceDeclarer make() throws IOException;
 
   }
 }
