@@ -66,9 +66,6 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
 
     ResourceDeclarer resourceDeclarer = options.getResourceManager();
 
-    //  TODO sweep after migration to version / type
-    resourceDeclarer.linkResourceRoot(initialized);
-
     ResourceManager resourceManager = resourceDeclarer.create(
         initialized.getExecutionId(),
         initialized.getClass().getName()
