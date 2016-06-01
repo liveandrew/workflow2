@@ -105,6 +105,6 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     }, writesResource);
 
 
-    execute(Sets.newHashSet(readsResource), resourceManager);
+    execute(workflow, Sets.newHashSet(readsResource));
   }
 }
