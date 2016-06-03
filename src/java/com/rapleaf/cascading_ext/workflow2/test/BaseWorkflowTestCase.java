@@ -91,6 +91,10 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(workflow, Sets.<Step>newHashSet(new Step(tail)));
   }
 
+  public WorkflowRunner execute(InitializedWorkflow workflow, Step tail) throws IOException {
+    return execute(workflow, Sets.<Step>newHashSet(tail));
+  }
+
   public WorkflowRunner execute(InitializedWorkflow workflow, Set<Step> tails) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(
         workflow,
