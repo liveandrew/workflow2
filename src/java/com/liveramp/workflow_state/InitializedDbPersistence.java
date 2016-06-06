@@ -16,6 +16,7 @@ public class InitializedDbPersistence implements InitializedPersistence {
 
   private static final Logger LOG = LoggerFactory.getLogger(InitializedDbPersistence.class);
 
+  private final Object lock = new Object();
   private final IRlDb rldb;
   private final long workflowAttemptId;
   private final Thread heartbeatThread;
@@ -38,20 +39,25 @@ public class InitializedDbPersistence implements InitializedPersistence {
   }
 
   @Override
-  public synchronized long getExecutionId() throws IOException {
-    return getExecution().getId();
+  public long getExecutionId() throws IOException {
+    synchronized (lock) {
+      return getExecution().getId();
+    }
   }
 
   @Override
-  public synchronized long getAttemptId() throws IOException {
-    return workflowAttemptId;
+  public long getAttemptId() throws IOException {
+    synchronized (lock) {
+      return workflowAttemptId;
+    }
   }
 
   //  this method is carefully not synchronized, because we don't want a deadlock with the heartbeat waiting to heartbeat.
   @Override
   public void markWorkflowStopped() throws IOException {
 
-    synchronized (this) {
+    synchronized (lock) {
+
       LOG.info("Marking workflow stopped");
 
       WorkflowAttempt attempt = getAttempt()
@@ -60,9 +66,7 @@ public class InitializedDbPersistence implements InitializedPersistence {
       if (attempt.getStatus() == AttemptStatus.INITIALIZING.ordinal()) {
         LOG.info("Workflow initialized without executing, assuming failure");
         attempt.setStatus(AttemptStatus.FAILED.ordinal());
-      }
-
-      else {
+      } else {
 
         if (WorkflowQueries.workflowComplete(getExecution())) {
           LOG.info("Marking execution as complete");
@@ -100,30 +104,40 @@ public class InitializedDbPersistence implements InitializedPersistence {
   }
 
 
-  public synchronized WorkflowAttempt getAttempt() throws IOException {
-    return rldb.workflowAttempts().find(workflowAttemptId);
+  public WorkflowAttempt getAttempt() throws IOException {
+    synchronized (lock) {
+      return rldb.workflowAttempts().find(workflowAttemptId);
+    }
   }
 
-  public synchronized WorkflowExecution getExecution() throws IOException {
-    return getAttempt().getWorkflowExecution();
+  public WorkflowExecution getExecution() throws IOException {
+    synchronized (lock) {
+      return getAttempt().getWorkflowExecution();
+    }
   }
 
   public IRlDb getDb() {
     return rldb;
   }
 
+  protected Object getLock() {
+    return lock;
+  }
 
   protected AlertsHandler getProvidedHandler() {
     return providedHandler;
   }
 
-
-  protected synchronized void save(WorkflowExecution execution) throws IOException {
-    rldb.workflowExecutions().save(execution);
+  protected void save(WorkflowExecution execution) throws IOException {
+    synchronized (lock) {
+      rldb.workflowExecutions().save(execution);
+    }
   }
 
-  protected synchronized void save(WorkflowAttempt attempt) throws IOException {
-    rldb.workflowAttempts().save(attempt);
+  protected void save(WorkflowAttempt attempt) throws IOException {
+    synchronized (lock) {
+      rldb.workflowAttempts().save(attempt);
+    }
   }
 
   private class Heartbeat implements Runnable {
@@ -142,14 +156,16 @@ public class InitializedDbPersistence implements InitializedPersistence {
     }
   }
 
-  private synchronized void heartbeat() {
-    try {
-      save(getAttempt()
-          .setLastHeartbeat(System.currentTimeMillis())
-      );
-    } catch (IOException e) {
-      LOG.error("Failed to record heartbeat: ", e);
-      throw new RuntimeException(e);
+  private void heartbeat() {
+    synchronized (lock) {
+      try {
+        save(getAttempt()
+            .setLastHeartbeat(System.currentTimeMillis())
+        );
+      } catch (IOException e) {
+        LOG.error("Failed to record heartbeat: ", e);
+        throw new RuntimeException(e);
+      }
     }
   }
 
