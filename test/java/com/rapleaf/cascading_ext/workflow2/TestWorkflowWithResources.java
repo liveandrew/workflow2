@@ -8,17 +8,20 @@ import com.cedarsoftware.util.io.JsonReader;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import junit.framework.Assert;
+import org.apache.hadoop.fs.Path;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import com.liveramp.cascading_ext.resource.DbPersistenceRestartDeterminer;
 import com.liveramp.cascading_ext.resource.DbStorage;
 import com.liveramp.cascading_ext.resource.DbStorageRootDeterminer;
+import com.liveramp.cascading_ext.resource.HdfsStorage;
+import com.liveramp.cascading_ext.resource.HdfsStorageRootDeterminer;
 import com.liveramp.cascading_ext.resource.NameAndScope;
 import com.liveramp.cascading_ext.resource.ReadResource;
-import com.liveramp.cascading_ext.resource.ResourceDeclarerContainer;
 import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
+import com.liveramp.cascading_ext.resource.ResourceDeclarerContainer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.cascading_ext.resource.ResourceStorages;
@@ -35,6 +38,7 @@ import com.rapleaf.db_schemas.rldb.models.ResourceRoot;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class TestWorkflowWithResources extends WorkflowTestCase {
 
@@ -73,8 +77,122 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     return ResourceStorages.dbStorage(rldb, Maps.<Class, JsonReader.ClassFactory>newHashMap());
   }
 
+  private HdfsStorage getHdfsStorage() {
+    return ResourceStorages.hdfsStorage();
+  }
+
+  private ResourceDeclarer<String, String> getDeclarer(IRlDb rldb, HdfsStorage storage, String workflowRoot) throws IOException {
+
+    ResourceDeclarerContainer<String, String> declarer = new ResourceDeclarerContainer<>(
+        storage,
+        new ResourceDeclarerContainer.MethodNameTagger(),
+        new RootManager<>(
+            new HdfsStorageRootDeterminer(workflowRoot),
+            new DbPersistenceRestartDeterminer(rldb),
+            new NameAndScope("Test Workflow", null))
+    );
+
+    return declarer;
+  }
+
+
   @Test
-  public void testResourceVersions() throws IOException {
+  public void testHdfsResourceVersions() throws IOException {
+
+    String tmpRoot = getTestRoot()+"/workflow";
+
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+
+    HdfsStorage storage = getHdfsStorage();
+    ResourceDeclarer<String, String> declarer = getDeclarer(rldb, storage, tmpRoot);
+    Resource<Integer> resource = declarer.<Integer>emptyResource("resource");
+    Step step = new Step(new SetResource("step-1", resource));
+    Step step2 = new Step(new FailingAction("step-2"), step);
+
+    WorkflowRunner runner = new WorkflowRunner(
+        "Test Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions().setResourceManager(declarer),
+        Sets.newHashSet(step2)
+    );
+
+    try {
+      runner.run();
+    } catch (Exception e) {
+      //  no-op
+    }
+
+    String origRoot = storage.getRoot();
+    Path rootPath = new Path(origRoot);
+
+    assertTrue(getFS().exists(rootPath));
+    assertEquals(Long.parseLong(rootPath.getName()), runner.getPersistence().getExecutionId());
+    assertEquals(InitializedDbPersistence.class.getName(), rootPath.getParent().getName());
+
+    storage = getHdfsStorage();
+    declarer = getDeclarer(rldb, storage, tmpRoot);
+    resource = declarer.emptyResource("resource");
+    step = new Step(new SetResource("step-1", resource));
+    step2 = new Step(new ReadResouce("step-2", resource), step);
+
+
+    new WorkflowRunner("Test Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions().setResourceManager(declarer),
+        Sets.newHashSet(step2)
+    ).run();
+
+    String rootRecord = storage.getRoot();
+
+    assertEquals(rootRecord, origRoot);
+
+    storage = getHdfsStorage();
+    declarer = getDeclarer(rldb, storage, tmpRoot);
+    resource = declarer.emptyResource("resource");
+    step = new Step(new SetResource("step-1", resource));
+    step2 = new Step(new ReadResouce("step-2", resource), step);
+
+
+    new WorkflowRunner("Test Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions().setResourceManager(getDeclarer(rldb, storage, tmpRoot)),
+        Sets.newHashSet(step2)
+    ).run();
+
+    assertFalse(storage.getRoot() == origRoot);
+
+  }
+
+  public static class SetResource extends Action {
+
+    private final WriteResource<Integer> resource;
+    public SetResource(String checkpointToken, Resource<Integer> resourcez) {
+      super(checkpointToken);
+      this.resource = creates(resourcez);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      set(resource, 1);
+    }
+  }
+
+  public static class ReadResouce extends Action {
+
+    private final ReadResource<Integer> resource;
+    public ReadResouce(String checkpointToken, Resource<Integer> resource) {
+      super(checkpointToken);
+      this.resource = readsFrom(resource);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      assertEquals(1, get(resource).intValue());
+    }
+  }
+
+  @Test
+  public void testDbResourceVersions() throws IOException {
 
     IRlDb rldb = new DatabasesImpl().getRlDb();
     DbStorage storage = getStorage(rldb);
@@ -194,6 +312,66 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     assertEquals(root.getVersion().longValue(), runner.getPersistence().getExecutionId());
     assertEquals(InitializedDbPersistence.class.getName(), root.getVersionType());
     assertEquals(null, root.getName());
+  }
+
+  @Test
+  public void testHdfsMigration() throws IOException {
+
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+    String workflowTmp = getTestRoot() + "/workflow";
+
+
+    // start and fail the workflow using an in memory manager, so we don't have a version around
+
+    Step step = new Step(new NoOpAction("step-1"));
+    Step step2 = new Step(new FailingAction("step-2"), step);
+
+    try {
+      new WorkflowRunner("Test Workflow",
+          new DbPersistenceFactory(),
+          new TestWorkflowOptions().setResourceManager(ResourceManagers.inMemoryResourceManager("Test Workflow", rldb)),
+          Sets.newHashSet(step2)
+      ).run();
+    }catch(Exception e){
+      // no-op
+    }
+
+    //  restart using db manager and make sure it resumes using the old root
+
+    step = new Step(new NoOpAction("step-1"));
+    step2 = new Step(new NoOpAction("step-2"), step);
+
+    HdfsStorage storage = getHdfsStorage();
+
+    new WorkflowRunner("Test Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions().setResourceManager(getDeclarer(rldb, storage, workflowTmp)),
+        Sets.newHashSet(step2)
+    ).run();
+
+    //  assert that workflow resumes with it
+
+    assertEquals(new Path(workflowTmp+"/resources/0"), new Path(storage.getRoot()));
+
+    //  next execution doesn't
+
+    step = new Step(new NoOpAction("step-1"));
+    step2 = new Step(new NoOpAction("step-2"), step);
+
+    storage = getHdfsStorage();
+
+    WorkflowRunner runner = new WorkflowRunner("Test Workflow",
+        new DbPersistenceFactory(),
+        new TestWorkflowOptions().setResourceManager(getDeclarer(rldb, storage, workflowTmp)),
+        Sets.newHashSet(step2)
+    );
+    runner.run();
+
+    String root = storage.getRoot();
+    Path rootPath = new Path(root);
+
+    assertEquals(Long.parseLong(rootPath.getName()), runner.getPersistence().getExecutionId());
+    assertEquals(InitializedDbPersistence.class.getName(), rootPath.getParent().getName());
   }
 
 
