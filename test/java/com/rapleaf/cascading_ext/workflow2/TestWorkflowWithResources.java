@@ -12,18 +12,15 @@ import org.apache.hadoop.fs.Path;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import com.liveramp.cascading_ext.resource.DbPersistenceRestartDeterminer;
 import com.liveramp.cascading_ext.resource.DbStorage;
 import com.liveramp.cascading_ext.resource.DbStorageRootDeterminer;
 import com.liveramp.cascading_ext.resource.HdfsStorage;
 import com.liveramp.cascading_ext.resource.HdfsStorageRootDeterminer;
-import com.liveramp.cascading_ext.resource.NameAndScope;
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerContainer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
-import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.cascading_ext.resource.ResourceStorages;
 import com.liveramp.cascading_ext.resource.RootManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
@@ -64,9 +61,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
         storage,
         new ResourceDeclarerContainer.MethodNameTagger(),
         new RootManager<>(
-            new DbStorageRootDeterminer(rldb),
-            new DbPersistenceRestartDeterminer(rldb),
-            new NameAndScope("Test Workflow", null))
+            new DbStorageRootDeterminer(rldb))
     );
 
     return declarer;
@@ -87,9 +82,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
         storage,
         new ResourceDeclarerContainer.MethodNameTagger(),
         new RootManager<>(
-            new HdfsStorageRootDeterminer(workflowRoot),
-            new DbPersistenceRestartDeterminer(rldb),
-            new NameAndScope("Test Workflow", null))
+            new HdfsStorageRootDeterminer(workflowRoot))
     );
 
     return declarer;
@@ -250,132 +243,6 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     assertFalse(storage.getRoot().getId() == origId);
 
   }
-
-  @Test
-  public void testMigration() throws IOException {
-
-    IRlDb rldb = new DatabasesImpl().getRlDb();
-
-
-    // start and fail the workflow using an in memory manager, so we don't have a version around
-
-    Step step = new Step(new NoOpAction("step-1"));
-    Step step2 = new Step(new FailingAction("step-2"), step);
-
-    try {
-      new WorkflowRunner("Test Workflow",
-          new DbPersistenceFactory(),
-          new TestWorkflowOptions().setResourceManager(ResourceManagers.inMemoryResourceManager("Test Workflow", rldb)),
-          Sets.newHashSet(step2)
-      ).run();
-    }catch(Exception e){
-      // no-op
-    }
-
-    //  set up old resource root (using name)
-
-    ResourceRoot oldRoot = rldb.resourceRoots().create("Test Workflow",
-        System.currentTimeMillis(),
-        System.currentTimeMillis(), null, null, null
-    );
-
-    //  restart using db manager and make sure it resumes using the old root
-
-    step = new Step(new NoOpAction("step-1"));
-    step2 = new Step(new NoOpAction("step-2"), step);
-
-    DbStorage storage = getStorage(rldb);
-
-    new WorkflowRunner("Test Workflow",
-        new DbPersistenceFactory(),
-        new TestWorkflowOptions().setResourceManager(getDeclarer(rldb, storage)),
-        Sets.newHashSet(step2)
-    ).run();
-
-    //  assert that workflow resumes with it
-    assertEquals(oldRoot.getId(), storage.getRoot().getId());
-
-    //  next execution doesn't
-
-    step = new Step(new NoOpAction("step-1"));
-    step2 = new Step(new NoOpAction("step-2"), step);
-
-    storage = getStorage(rldb);
-
-    WorkflowRunner runner = new WorkflowRunner("Test Workflow",
-        new DbPersistenceFactory(),
-        new TestWorkflowOptions().setResourceManager(getDeclarer(rldb, storage)),
-        Sets.newHashSet(step2)
-    );
-    runner.run();
-
-    ResourceRoot root = storage.getRoot();
-
-    assertEquals(root.getVersion().longValue(), runner.getPersistence().getExecutionId());
-    assertEquals(InitializedDbPersistence.class.getName(), root.getVersionType());
-    assertEquals(null, root.getName());
-  }
-
-  @Test
-  public void testHdfsMigration() throws IOException {
-
-    IRlDb rldb = new DatabasesImpl().getRlDb();
-    String workflowTmp = getTestRoot() + "/workflow";
-
-
-    // start and fail the workflow using an in memory manager, so we don't have a version around
-
-    Step step = new Step(new NoOpAction("step-1"));
-    Step step2 = new Step(new FailingAction("step-2"), step);
-
-    try {
-      new WorkflowRunner("Test Workflow",
-          new DbPersistenceFactory(),
-          new TestWorkflowOptions().setResourceManager(ResourceManagers.inMemoryResourceManager("Test Workflow", rldb)),
-          Sets.newHashSet(step2)
-      ).run();
-    }catch(Exception e){
-      // no-op
-    }
-
-    //  restart using db manager and make sure it resumes using the old root
-
-    step = new Step(new NoOpAction("step-1"));
-    step2 = new Step(new NoOpAction("step-2"), step);
-
-    HdfsStorage storage = getHdfsStorage();
-
-    new WorkflowRunner("Test Workflow",
-        new DbPersistenceFactory(),
-        new TestWorkflowOptions().setResourceManager(getDeclarer(rldb, storage, workflowTmp)),
-        Sets.newHashSet(step2)
-    ).run();
-
-    //  assert that workflow resumes with it
-
-    assertEquals(new Path(workflowTmp+"/resources/0"), new Path(storage.getRoot()));
-
-    //  next execution doesn't
-
-    step = new Step(new NoOpAction("step-1"));
-    step2 = new Step(new NoOpAction("step-2"), step);
-
-    storage = getHdfsStorage();
-
-    WorkflowRunner runner = new WorkflowRunner("Test Workflow",
-        new DbPersistenceFactory(),
-        new TestWorkflowOptions().setResourceManager(getDeclarer(rldb, storage, workflowTmp)),
-        Sets.newHashSet(step2)
-    );
-    runner.run();
-
-    String root = storage.getRoot();
-    Path rootPath = new Path(root);
-
-    assertEquals(Long.parseLong(rootPath.getName()), runner.getPersistence().getExecutionId());
-    assertEquals(InitializedDbPersistence.class.getName(), rootPath.getParent().getName());
-  }
-
 
   @Test
   public void testContextTool() throws IOException {
