@@ -131,8 +131,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
             DataStoreInfo info = new DataStoreInfo(
                 dataStore.getName(),
                 dataStore.getClass().getName(),
-                dataStore.getPath(),
-                dataStoreToRep.size()
+                dataStore.getPath()
             );
 
             dataStoreToRep.put(dataStore, info);

@@ -99,7 +99,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   @Test
   public void testHdfsResourceVersions() throws IOException {
 
-    String tmpRoot = getTestRoot()+"/workflow";
+    String tmpRoot = getTestRoot() + "/workflow";
 
     IRlDb rldb = new DatabasesImpl().getRlDb();
 
@@ -166,6 +166,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   public static class SetResource extends Action {
 
     private final WriteResource<Integer> resource;
+
     public SetResource(String checkpointToken, Resource<Integer> resourcez) {
       super(checkpointToken);
       this.resource = creates(resourcez);
@@ -180,6 +181,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   public static class ReadResouce extends Action {
 
     private final ReadResource<Integer> resource;
+
     public ReadResouce(String checkpointToken, Resource<Integer> resource) {
       super(checkpointToken);
       this.resource = readsFrom(resource);
