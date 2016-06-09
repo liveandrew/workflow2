@@ -6,13 +6,11 @@ public class DataStoreInfo {
   private final String name;
   private final String className;
   private final String path;
-  private final Integer indexInFlow;
 
-  public DataStoreInfo(String name, String className, String path, Integer indexInFlow) {
+  public DataStoreInfo(String name, String className, String path) {
     this.name = name;
     this.className = className;
     this.path = path;
-    this.indexInFlow = indexInFlow;
   }
 
   public String getName() {
@@ -23,9 +21,6 @@ public class DataStoreInfo {
   }
   public String getPath() {
     return path;
-  }
-  public Integer getId() {
-    return indexInFlow;
   }
 
   @Override
@@ -40,9 +35,6 @@ public class DataStoreInfo {
     DataStoreInfo that = (DataStoreInfo)o;
 
     if (className != null ? !className.equals(that.className) : that.className != null) {
-      return false;
-    }
-    if (indexInFlow != null ? !indexInFlow.equals(that.indexInFlow) : that.indexInFlow != null) {
       return false;
     }
     if (name != null ? !name.equals(that.name) : that.name != null) {
@@ -60,7 +52,6 @@ public class DataStoreInfo {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (className != null ? className.hashCode() : 0);
     result = 31 * result + (path != null ? path.hashCode() : 0);
-    result = 31 * result + (indexInFlow != null ? indexInFlow.hashCode() : 0);
     return result;
   }
 }

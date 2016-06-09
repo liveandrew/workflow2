@@ -441,7 +441,7 @@ public class DbPersistence implements WorkflowStatePersistence {
         Multimap<DSAction, DataStoreInfo> infoMap = HashMultimap.create();
         for (Map.Entry<DSAction, WorkflowAttemptDatastore.Attributes> entry : stepToDatastoreUsages.get(attempt.getStepToken()).entrySet()) {
           WorkflowAttemptDatastore.Attributes value = entry.getValue();
-          infoMap.put(entry.getKey(), new DataStoreInfo(value.getName(), value.getClassName(), value.getPath(), value.getIntId()));
+          infoMap.put(entry.getKey(), new DataStoreInfo(value.getName(), value.getClassName(), value.getPath()));
         }
 
         String token = attempt.getStepToken();
