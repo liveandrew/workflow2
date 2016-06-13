@@ -210,7 +210,7 @@ public class WorkflowQueries {
     return getProcessStatus(System.currentTimeMillis(), attempt, execution, missedHeartbeatsThreshold);
   }
 
-  public static ProcessStatus getProcessStatus(long fetchTime, WorkflowAttempt attempt, WorkflowExecution execution, int missedHeartbeatsThreshold){
+  public static ProcessStatus getProcessStatus(long fetchTime, WorkflowAttempt attempt, WorkflowExecution execution, int missedHeartbeatsThreshold) {
     Long lastHeartbeat = attempt.getLastHeartbeat();
 
     Integer status = attempt.getStatus();
@@ -706,9 +706,9 @@ public class WorkflowQueries {
 
     if (scope != null) {
       //  TODO hack, figure out migrating to a default non-null scope ID to avoid this
-      if(scope.equals("__NULL")){
+      if (scope.equals("__NULL")) {
         query = query.where(WorkflowExecution.SCOPE_IDENTIFIER.isNull());
-      }else{
+      } else {
         query = query.where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scope));
       }
     }
@@ -754,10 +754,10 @@ public class WorkflowQueries {
     return statuses;
   }
 
-  private static GenericQuery queryStepAttempts(IRlDb rldb, Long workflowAttemptId, String stepToken){
+  private static GenericQuery queryStepAttempts(IRlDb rldb, Long workflowAttemptId, String stepToken) {
     GenericQuery query = rldb.createQuery().from(StepAttempt.TBL).where(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId));
 
-    if(stepToken != null){
+    if (stepToken != null) {
       query = query.where(StepAttempt.STEP_TOKEN.equalTo(stepToken));
     }
 
@@ -812,11 +812,11 @@ public class WorkflowQueries {
 
     GenericQuery query = rldb.createQuery().from(WorkflowAttemptDatastore.TBL);
 
-    if(workflowAttemptId != null){
+    if (workflowAttemptId != null) {
       query = query.where(WorkflowAttemptDatastore.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId));
     }
 
-    if(ids != null){
+    if (ids != null) {
       query = query.where(WorkflowAttemptDatastore.ID.in(ids));
     }
 
@@ -863,6 +863,13 @@ public class WorkflowQueries {
 
   }
 
+  //  TODO keeping both versions temporarily for performance testing
+  public static GenericQuery getMapreduceCounters2(IRlDb rldb, Set<String> stepToken, String name, Integer appType, Long endedAfter, Long endedBefore,
+                                                   Set<String> specificGroups,
+                                                   Set<String> specificNames) throws IOException {
+    return getMapreduceCounters(getStepAttempts2(rldb, stepToken, name, appType, endedAfter, endedBefore), specificGroups, specificNames);
+  }
+
   public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, String name, Integer appType, Long startedAfter, Long startedBefore,
                                                   Set<String> specificGroups,
                                                   Set<String> specificNames) throws IOException {
@@ -892,6 +899,16 @@ public class WorkflowQueries {
     }
 
     return query;
+  }
+
+  public static GenericQuery getStepAttempts2(IRlDb rldb, Set<String> stepTokens, String name, Integer appType, Long endedAfter, Long endedBefore) throws IOException {
+    return filterStepAttempts(
+        joinStepAttempts(workflowExecutionQuery(rldb, name, appType, null, null)),
+        stepTokens,
+        null,
+        endedAfter,
+        endedBefore
+    );
   }
 
   public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, String name, Integer appType, Long startedAfter, Long startedBefore) throws IOException {
@@ -924,6 +941,12 @@ public class WorkflowQueries {
   }
 
   private static GenericQuery filterStepAttempts(GenericQuery stepQuery, Set<String> stepToken, EnumSet<StepStatus> inStatuses) {
+    return filterStepAttempts(stepQuery, stepToken, inStatuses, null, null);
+  }
+
+  private static GenericQuery filterStepAttempts(GenericQuery stepQuery, Set<String> stepToken, EnumSet<StepStatus> inStatuses,
+                                                 Long endedAfter,
+                                                 Long endedBefore) {
 
     if (stepToken != null) {
       stepQuery = stepQuery.where(StepAttempt.STEP_TOKEN.in(Sets.newHashSet(stepToken)));
@@ -937,6 +960,14 @@ public class WorkflowQueries {
       }
 
       stepQuery = stepQuery.where(StepAttempt.STEP_STATUS.in(inStatusInts));
+    }
+
+    if(endedAfter != null){
+      stepQuery = stepQuery.where(StepAttempt.END_TIME.greaterThan(endedAfter));
+    }
+
+    if(endedBefore != null){
+      stepQuery = stepQuery.where(StepAttempt.END_TIME.lessThan(endedBefore));
     }
 
     return stepQuery;
