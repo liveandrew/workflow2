@@ -1,6 +1,5 @@
 package com.liveramp.workflow_state;
 
-//  TODO remove this class, replace usages with WorkflowAttemptDatastore
 public class DataStoreInfo {
 
   private final String name;
