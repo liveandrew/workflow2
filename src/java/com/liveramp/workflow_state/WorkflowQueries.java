@@ -864,16 +864,10 @@ public class WorkflowQueries {
   }
 
   //  TODO keeping both versions temporarily for performance testing
-  public static GenericQuery getMapreduceCounters2(IRlDb rldb, Set<String> stepToken, String name, Integer appType, Long endedAfter, Long endedBefore,
+  public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, String name, Integer appType, Long endedAfter, Long endedBefore,
                                                    Set<String> specificGroups,
                                                    Set<String> specificNames) throws IOException {
-    return getMapreduceCounters(getStepAttempts2(rldb, stepToken, name, appType, endedAfter, endedBefore), specificGroups, specificNames);
-  }
-
-  public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, String name, Integer appType, Long startedAfter, Long startedBefore,
-                                                  Set<String> specificGroups,
-                                                  Set<String> specificNames) throws IOException {
-    return getMapreduceCounters(getStepAttempts(rldb, stepToken, name, appType, startedAfter, startedBefore), specificGroups, specificNames);
+    return getMapreduceCounters(getStepAttempts(rldb, stepToken, name, appType, endedAfter, endedBefore), specificGroups, specificNames);
   }
 
   public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, Set<Long> workflowExecutionIds,
@@ -901,7 +895,7 @@ public class WorkflowQueries {
     return query;
   }
 
-  public static GenericQuery getStepAttempts2(IRlDb rldb, Set<String> stepTokens, String name, Integer appType, Long endedAfter, Long endedBefore) throws IOException {
+  public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, String name, Integer appType, Long endedAfter, Long endedBefore) throws IOException {
     return filterStepAttempts(
         joinStepAttempts(workflowExecutionQuery(rldb, name, appType, null, null)),
         stepTokens,
@@ -910,15 +904,6 @@ public class WorkflowQueries {
         endedBefore
     );
   }
-
-  public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, String name, Integer appType, Long startedAfter, Long startedBefore) throws IOException {
-    return filterStepAttempts(
-        joinStepAttempts(workflowExecutionQuery(rldb, name, appType, startedAfter, startedBefore)),
-        stepTokens,
-        null
-    );
-  }
-
   public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, Set<Long> workflowExecutionIds) throws IOException {
 
     GenericQuery attempts = rldb.createQuery().from(WorkflowAttempt.TBL)
