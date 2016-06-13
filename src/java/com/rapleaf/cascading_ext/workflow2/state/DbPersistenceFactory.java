@@ -24,14 +24,14 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow_state.Assertions;
 import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.DbPersistence;
+import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -105,7 +105,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
   }
 
   @Override
-  public synchronized DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<Step, DefaultEdge> flatSteps) {
+  public synchronized DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<IStep, DefaultEdge> flatSteps) {
 
     try {
 
@@ -113,17 +113,16 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
       IRlDb rldb = persistence.getDb();
       WorkflowAttempt attempt = persistence.getAttempt();
       WorkflowExecution execution = persistence.getExecution();
+      Set<DataStoreInfo> allStores = Sets.newHashSet();
 
-      Set<DataStore> allStores = Sets.newHashSet();
-
-      for (Step step : flatSteps.vertexSet()) {
-        for (DataStore store : step.getAction().getAllDatastores().values()) {
+      for (IStep step : flatSteps.vertexSet()) {
+        for (DataStoreInfo store : step.getDataStores().values()) {
           allStores.add(store);
         }
       }
 
-      Map<DataStore, WorkflowAttemptDatastore> datastores = Maps.newHashMap();
-      for (DataStore store : allStores) {
+      Map<DataStoreInfo, WorkflowAttemptDatastore> datastores = Maps.newHashMap();
+      for (DataStoreInfo store : allStores) {
         datastores.put(store, rldb.workflowAttemptDatastores().create(
             (int)workflowAttemptId,
             store.getName(),
@@ -133,12 +132,12 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
       }
 
       Map<String, StepAttempt> attempts = Maps.newHashMap();
-      for (Step step : flatSteps.vertexSet()) {
+      for (IStep step : flatSteps.vertexSet()) {
 
         StepAttempt stepAttempt = createStepAttempt(rldb, step, attempt, execution);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
 
-        for (Map.Entry<DSAction, DataStore> entry : step.getAction().getAllDatastores().entries()) {
+        for (Map.Entry<DSAction, DataStoreInfo> entry : step.getDataStores().entries()) {
           rldb.stepAttemptDatastores().create(
               (int)stepAttempt.getId(),
               (int)datastores.get(entry.getValue()).getId(),
@@ -150,8 +149,8 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
 
       for (DefaultEdge edge : flatSteps.edgeSet()) {
 
-        Step dep = flatSteps.getEdgeTarget(edge);
-        Step step = flatSteps.getEdgeSource(edge);
+        IStep dep = flatSteps.getEdgeTarget(edge);
+        IStep step = flatSteps.getEdgeSource(edge);
 
         rldb.stepDependencies().create(
             (int)attempts.get(step.getCheckpointToken()).getId(),
@@ -310,7 +309,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
   }
 
 
-  private StepAttempt createStepAttempt(IRlDb rldb, Step step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
+  private StepAttempt createStepAttempt(IRlDb rldb, IStep step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
 
     String token = step.getCheckpointToken();
 
@@ -318,7 +317,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
         getInitialStatus(token, execution).ordinal(),
         null,
         null,
-        step.getAction().getClass().getName(),
+        step.getActionClass(),
         ""
     );
 

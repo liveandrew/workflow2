@@ -6,10 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.fs.FileStatus;
@@ -24,15 +22,12 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.resource.CheckpointUtil;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
+import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.support.Rap;
 
 public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsInitializedPersistence> {
@@ -102,53 +97,27 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
 
   @Override
   public WorkflowStatePersistence prepare(HdfsInitializedPersistence persistence,
-                                          DirectedGraph<Step, DefaultEdge> flatSteps) {
+                                          DirectedGraph<IStep, DefaultEdge> flatSteps) {
 
     FileSystem fs = persistence.getFs();
 
     Map<String, StepState> statuses = Maps.newHashMap();
-    List<DataStoreInfo> datastores = Lists.newArrayList();
 
     try {
 
-      Map<DataStore, DataStoreInfo> dataStoreToRep = Maps.newHashMap();
-
-      for (Step val : flatSteps.vertexSet()) {
-        Action action = val.getAction();
+      for (IStep val : flatSteps.vertexSet()) {
 
         Set<String> dependencies = Sets.newHashSet();
         for (DefaultEdge edge : flatSteps.outgoingEdgesOf(val)) {
           dependencies.add(flatSteps.getEdgeTarget(edge).getCheckpointToken());
         }
 
-        Multimap<DSAction, DataStoreInfo> stepDsInfo = HashMultimap.create();
-
-        for (Map.Entry<DSAction, DataStore> entry : val.getAction().getAllDatastores().entries()) {
-          DataStore dataStore = entry.getValue();
-
-          if (!dataStoreToRep.containsKey(dataStore)) {
-
-            DataStoreInfo info = new DataStoreInfo(
-                dataStore.getName(),
-                dataStore.getClass().getName(),
-                dataStore.getPath()
-            );
-
-            dataStoreToRep.put(dataStore, info);
-            datastores.add(info);
-
-          }
-
-          stepDsInfo.put(entry.getKey(), dataStoreToRep.get(dataStore));
-
-        }
-
         statuses.put(val.getCheckpointToken(), new StepState(
             val.getCheckpointToken(),
             StepStatus.WAITING,
-            action.getClass().getSimpleName(),
+            val.getActionClass(),
             dependencies,
-            stepDsInfo
+            val.getDataStores()
         ));
 
       }
@@ -168,7 +137,6 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
           deleteOnSuccess,
           Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID())),
           statuses,
-          datastores,
           persistence
       );
 

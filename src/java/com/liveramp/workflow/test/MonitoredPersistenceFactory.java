@@ -10,11 +10,11 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
 public class MonitoredPersistenceFactory<INITIALIZED extends InitializedPersistence> extends WorkflowPersistenceFactory<INITIALIZED> {
@@ -31,7 +31,7 @@ public class MonitoredPersistenceFactory<INITIALIZED extends InitializedPersiste
   }
 
   @Override
-  public MonitoredPersistence prepare(INITIALIZED initialized, DirectedGraph<Step, DefaultEdge> flatSteps) {
+  public MonitoredPersistence prepare(INITIALIZED initialized, DirectedGraph<IStep, DefaultEdge> flatSteps) {
     return new MonitoredPersistence(delegate.prepare(initialized, flatSteps));
   }
 

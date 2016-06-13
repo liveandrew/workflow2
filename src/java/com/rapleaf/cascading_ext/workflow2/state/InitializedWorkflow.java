@@ -4,9 +4,9 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 
 public class InitializedWorkflow<INITIALIZED extends InitializedPersistence> {
@@ -50,7 +50,7 @@ public class InitializedWorkflow<INITIALIZED extends InitializedPersistence> {
     return persistence;
   }
 
-  public WorkflowStatePersistence prepare(DirectedGraph<Step, DefaultEdge> steps){
+  public WorkflowStatePersistence prepare(DirectedGraph<IStep, DefaultEdge> steps){
     return factory.prepare(persistence, steps);
   }
 

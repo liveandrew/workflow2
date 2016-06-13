@@ -15,11 +15,11 @@ import com.liveramp.cascading_ext.util.HadoopJarUtil;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 
 import static com.rapleaf.cascading_ext.workflow2.WorkflowRunner.JOB_POOL_PARAM;
@@ -136,5 +136,5 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
   }
 
 
-  public abstract WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<Step, DefaultEdge> flatSteps);
+  public abstract WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<IStep, DefaultEdge> flatSteps);
 }

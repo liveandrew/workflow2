@@ -24,7 +24,6 @@ import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_state.AttemptStatus;
-import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.StepStatus;
@@ -42,7 +41,6 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private final FileSystem fs;
 
   private final Map<String, StepState> statuses;
-  private final List<DataStoreInfo> datastores;
   private String shutdownReason;
 
   private final String id;
@@ -51,7 +49,6 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
                                   boolean deleteOnSuccess,
                                   String id,
                                   Map<String, StepState> statuses,
-                                  List<DataStoreInfo> datastores,
                                   HdfsInitializedPersistence initializedPersistence) {
 
     this.checkpointDir = checkpointDir;
@@ -60,7 +57,6 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
     this.id = id;
     this.statuses = statuses;
-    this.datastores = datastores;
 
     this.initializedPersistence = initializedPersistence;
   }

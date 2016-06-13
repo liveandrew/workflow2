@@ -11,10 +11,10 @@ import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.functional.Fn;
 import com.liveramp.java_support.functional.Fns;
+import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
 public class FailingPersistenceFactory<INITIALIZED extends InitializedPersistence> extends WorkflowPersistenceFactory<INITIALIZED> {
@@ -40,7 +40,7 @@ public class FailingPersistenceFactory<INITIALIZED extends InitializedPersistenc
   }
 
   @Override
-  public WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<Step, DefaultEdge> flatSteps) {
+  public WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<IStep, DefaultEdge> flatSteps) {
     return new FailingPersistence(delegate.prepare(persistence, flatSteps), stepsToFailFullNames);
   }
 
