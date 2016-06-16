@@ -119,7 +119,7 @@ public class CascadingAction2 extends MultiStepAction {
    * handle {@link Tap#equals(Object)} so {@link cascading.tap.MultiSourceTap}
    * will make it lose some behaviour.
    * */
-  protected Pipe bindSources(String name, Collection<SourceStoreBinding> bindings) {
+  protected Pipe bindSources(String name, Collection<? extends SourceStoreBinding> bindings) {
     int i = 0;
     Pipe[] pipes = new Pipe[bindings.size()];
     for (SourceStoreBinding binding : bindings) {
