@@ -216,22 +216,32 @@ public class DbPersistence implements WorkflowStatePersistence {
   public void markJobCounters(String stepToken, String jobId, TwoNestedMap<String, String, Long> values) throws IOException {
     synchronized (lock) {
 
-      //  if job failed in setup, don't try to get the job, won't exist.  nothing to record.
-      if (values.isEmpty()) {
-        return;
-      }
-
-      StepAttempt step = getStep(stepToken);
-      MapreduceJob job = getMapreduceJob(jobId, step);
       IRlDb conn = init.getDb();
 
-      for (TwoNestedMap.Entry<String, String, Long> value : values) {
-        conn.mapreduceCounters().create(
-            (int)job.getId(),
-            value.getK1(),
-            value.getK2(),
-            value.getValue()
-        );
+      try {
+        conn.setAutoCommit(false);
+
+        //  if job failed in setup, don't try to get the job, won't exist.  nothing to record.
+        if (values.isEmpty()) {
+          return;
+        }
+
+        StepAttempt step = getStep(stepToken);
+        MapreduceJob job = getMapreduceJob(jobId, step);
+
+        for (TwoNestedMap.Entry<String, String, Long> value : values) {
+          conn.mapreduceCounters().create(
+              (int)job.getId(),
+              value.getK1(),
+              value.getK2(),
+              value.getValue()
+          );
+        }
+
+        conn.commit();
+
+      } finally {
+        conn.setAutoCommit(true);
       }
 
     }
@@ -239,13 +249,15 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   @Override
   public void markJobTaskInfo(String stepToken, String jobId, TaskSummary info) throws IOException {
+
+    IRlDb conn = init.getDb();
     synchronized (lock) {
 
       try {
+        conn.setAutoCommit(false);
 
         StepAttempt step = getStep(stepToken);
         MapreduceJob job = getMapreduceJob(jobId, step);
-        IRlDb conn = init.getDb();
 
         job
             //  map
@@ -269,10 +281,17 @@ public class DbPersistence implements WorkflowStatePersistence {
               taskFailure.getTaskAttemptID(),
               taskFailure.getError());
         }
+
+        conn.commit();
+
       }
       //  don't want to leave this in forever, debugging transient error on setup failure  (figure out why jobID is here which isn't recorded earlier)
       catch (Exception e) {
         throw new RuntimeException("Error recording job task info for jobID " + jobId, e);
+      }
+
+      finally {
+        conn.setAutoCommit(true);
       }
     }
   }
