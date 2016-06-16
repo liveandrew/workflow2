@@ -106,11 +106,12 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
 
   @Override
   public synchronized DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<IStep, DefaultEdge> flatSteps) {
+    IRlDb rldb = persistence.getDb();
 
     try {
+      rldb.setAutoCommit(false);
 
       long workflowAttemptId = persistence.getAttemptId();
-      IRlDb rldb = persistence.getDb();
       WorkflowAttempt attempt = persistence.getAttempt();
       WorkflowExecution execution = persistence.getExecution();
       Set<DataStoreInfo> allStores = Sets.newHashSet();
@@ -131,11 +132,21 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
         ));
       }
 
+      //  save datastores
+      rldb.commit();
+
       Map<String, StepAttempt> attempts = Maps.newHashMap();
       for (IStep step : flatSteps.vertexSet()) {
 
         StepAttempt stepAttempt = createStepAttempt(rldb, step, attempt, execution);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
+      }
+
+      //  save created steps
+      rldb.commit();;
+
+      for (IStep step : flatSteps.vertexSet()) {
+        StepAttempt stepAttempt = attempts.get(step.getCheckpointToken());
 
         for (Map.Entry<DSAction, DataStoreInfo> entry : step.getDataStores().entries()) {
           rldb.stepAttemptDatastores().create(
@@ -146,6 +157,9 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
         }
 
       }
+
+      //  save refs to steps
+      rldb.commit();
 
       for (DefaultEdge edge : flatSteps.edgeSet()) {
 
@@ -159,10 +173,15 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
 
       }
 
+      //  save step deps
+      rldb.commit();
+
       return new DbPersistence(persistence);
 
     } catch (Exception e) {
       throw new RuntimeException(e);
+    }finally {
+      rldb.setAutoCommit(true);
     }
 
   }
