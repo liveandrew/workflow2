@@ -23,7 +23,7 @@ public class TypedStoreBinding<S, T extends TapFactory> extends SourceStoreBindi
   }
 
   @Override
-  T getTapFactory() {
+  public T getTapFactory() {
     return tapFactory;
   }
 }
