@@ -20,24 +20,15 @@ public class SourceStoreBinding {
     this.pipeFactory = pipeFactory;
   }
 
-  /**
-   * Intentionally package-private
-   */
   Collection<? extends DataStore> getStores() {
     return stores;
   }
 
-  /**
-   * Intentionally package-private
-   */
-  TapFactory getTapFactory() {
+  public TapFactory getTapFactory() {
     return tapFactory;
   }
 
-  /**
-   * Intentionally package-private
-   */
-  Pipe getPipe(Pipe pipe) {
+  public Pipe getPipe(Pipe pipe) {
     return pipeFactory.getPipe(pipe);
   }
 }
