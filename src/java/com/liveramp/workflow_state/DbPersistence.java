@@ -240,7 +240,14 @@ public class DbPersistence implements WorkflowStatePersistence {
 
         conn.commit();
 
-      } finally {
+      }
+
+      catch (Exception e) {
+        conn.rollback();
+        throw e;
+      }
+
+      finally {
         conn.setAutoCommit(true);
       }
 
@@ -279,14 +286,16 @@ public class DbPersistence implements WorkflowStatePersistence {
           conn.mapreduceJobTaskExceptions().create(
               (int)job.getId(),
               taskFailure.getTaskAttemptID(),
-              taskFailure.getError());
+              taskFailure.getError()
+          );
         }
 
         conn.commit();
 
       }
-      //  don't want to leave this in forever, debugging transient error on setup failure  (figure out why jobID is here which isn't recorded earlier)
+
       catch (Exception e) {
+        conn.rollback();
         throw new RuntimeException("Error recording job task info for jobID " + jobId, e);
       }
 
