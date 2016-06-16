@@ -179,6 +179,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
       return new DbPersistence(persistence);
 
     } catch (Exception e) {
+      rldb.rollback();
       throw new RuntimeException(e);
     }finally {
       rldb.setAutoCommit(true);
