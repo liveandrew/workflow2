@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import cascading.flow.FlowListener;
+import cascading.pipe.Merge;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
@@ -107,6 +108,26 @@ public class CascadingAction2 extends MultiStepAction {
 
   protected Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding) {
     return bindSource(name, sourceStoreBinding, new ActionCallback.Default());
+  }
+
+  /** Analogous to {@link #bindSource(String, Collection)} but for
+   * {@link SourceStoreBinding}s. We can't use a
+   * {@link cascading.tap.MultiSourceTap} since that forces all
+   * {@link cascading.scheme.Scheme}s to be the same for every tap.
+   *
+   * {@link com.rapleaf.cascading_ext.tap.bucket2.BucketTap2} doesn't strictly
+   * handle {@link Tap#equals(Object)} so {@link cascading.tap.MultiSourceTap}
+   * will make it lose some behaviour.
+   * */
+  protected Pipe bindSources(String name, Collection<SourceStoreBinding> bindings) {
+    int i = 0;
+    Pipe[] pipes = new Pipe[bindings.size()];
+    for (SourceStoreBinding binding : bindings) {
+      pipes[i] = bindSource(name + i, binding);
+      i++;
+    }
+
+    return new Merge(name, pipes);
   }
 
   protected Pipe bindSource(String name, SourceStoreBinding sourceStoreBinding, ActionCallback callback) {

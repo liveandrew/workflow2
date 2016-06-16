@@ -2,11 +2,13 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.thrift.TException;
 import org.junit.Test;
@@ -28,6 +30,8 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.filter.DirectFilter;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
+import com.rapleaf.cascading_ext.pipe.PipeFactory;
+import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.tap.bucket2.BucketTap2;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
@@ -192,6 +196,38 @@ public class TestCascadingAction2 extends WorkflowTestCase {
     assertEquals(Lists.newArrayList(PIN.email("good@gmail.com")), HRap.getValuesFromBucket(sideOutput));
   }
 
+  @Test
+  public void testDoubleBinding() throws IOException, TException {
+    BucketDataStore<PIN> input1 = builder().getBucketDataStore("input1", PIN.class);
+    BucketDataStore<PIN> input2 = builder().getBucketDataStore("input2", PIN.class);
+    BucketDataStore<PIN> output = builder().getBucketDataStore("real-output", PIN.class);
+
+    ThriftBucketHelper.writeToBucket(input1.getBucket(), PIN.email("good@gmail.com"));
+    ThriftBucketHelper.writeToBucket(input2.getBucket(), PIN.email("other@gmail.com"));
+
+    execute(new MyDoubleAction(
+        "somestep",
+        getTestRoot() + "/tmp",
+        Sets.newHashSet(
+            new SourceStoreBinding(Collections.singleton(input1), new TapFactory.SimpleFactory(input1), new PipeFactory.Fresh()),
+            new SourceStoreBinding(Collections.singleton(input2), new TapFactory.SimpleFactory(input2), new PipeFactory.Fresh())),
+        output
+    ));
+
+    assertCollectionEquivalent(Sets.newHashSet(PIN.email("good@gmail.com"), PIN.email("other@gmail.com")), HRap.getValuesFromBucket(output));
+  }
+
+  private static class MyDoubleAction extends CascadingAction2 {
+    public MyDoubleAction(String checkpointToken, String tmpRoot,
+                          Collection<SourceStoreBinding> ssbs,
+                          final BucketDataStore<PIN> output) {
+      super(checkpointToken, tmpRoot);
+
+      Pipe pipe = bindSources("in", ssbs);
+      pipe = new Each(pipe, new Identity());
+      complete("out", pipe, output);
+    }
+  }
 
   public static class MyFancyAction extends CascadingAction2 {
 
