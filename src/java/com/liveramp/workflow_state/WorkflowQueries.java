@@ -15,6 +15,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.comparators.ReverseComparator;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
 import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
+import com.rapleaf.db_schemas.rldb.models.ApplicationCounterSummary;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
@@ -47,8 +49,11 @@ import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
+import com.rapleaf.jack.queries.where_operators.Between;
 import com.rapleaf.jack.queries.where_operators.In;
 import com.rapleaf.jack.queries.where_operators.IsNull;
+
+import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 
 public class WorkflowQueries {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowQueries.class);
@@ -863,7 +868,20 @@ public class WorkflowQueries {
 
   }
 
-  //  TODO keeping both versions temporarily for performance testing
+  public static GenericQuery getExecutionsByEndQuery(IRlDb rldb, LocalDate startDate, LocalDate endDate) {
+    return rldb.createQuery().from(WorkflowExecution.TBL)
+        .where(WorkflowExecution.END_TIME.between(startDate.toDate().getTime(), endDate.toDate().getTime()))
+        .select(WorkflowExecution.NAME, COUNT(WorkflowExecution.ID));
+  }
+
+  public static List<ApplicationCounterSummary> getSummaries(IRlDb rldb, Multimap<String, String> countersToQuery, LocalDate startDate, LocalDate endDate) throws IOException {
+    return rldb.applicationCounterSummaries().query()
+        .whereDate(new Between<>(startDate.toDateTimeAtStartOfDay().getMillis(), endDate.toDateTimeAtStartOfDay().getMillis()-1))  // stupid mysql
+        .whereGroup(new In<>(countersToQuery.keySet()))
+        .whereName(new In<>(countersToQuery.values()))
+        .find();
+  }
+
   public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, String name, Integer appType, Long endedAfter, Long endedBefore,
                                                    Set<String> specificGroups,
                                                    Set<String> specificNames) throws IOException {
