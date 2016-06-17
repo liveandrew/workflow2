@@ -24,7 +24,6 @@ import com.liveramp.commons.collections.map.NestedMultimap;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.importer.generated.AppType;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -43,7 +42,6 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecutionConfiguredNotification;
-import com.rapleaf.db_schemas.rldb.util.JackUtil;
 import com.rapleaf.jack.queries.Column;
 import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.QueryOrder;
@@ -74,7 +72,8 @@ public class WorkflowQueries {
       return null;
     }
 
-    return JackUtil.getFullModel(WorkflowExecution.class, WorkflowExecution.Attributes.class, Accessors.only(records), rldb.getDatabases());
+
+   return Accessors.only(records).getModel(WorkflowExecution.TBL, rldb.getDatabases());
   }
 
   public static Optional<WorkflowExecution> getLatestExecution(IRlDb rldb, AppType type, String scopeIdentifier) throws IOException {
@@ -93,7 +92,7 @@ public class WorkflowQueries {
       return Optional.absent();
     }
 
-    return Optional.of(JackUtil.getFullModel(WorkflowExecution.class, WorkflowExecution.Attributes.class, Accessors.only(records), rldb.getDatabases()));
+    return Optional.of(Accessors.only(records).getModel(WorkflowExecution.TBL, rldb.getDatabases()));
   }
 
   //  TODO temporary for some scripts while stuff is getting migrated
@@ -367,7 +366,7 @@ public class WorkflowQueries {
     for (Record record : completeMapreduceJobQuery(databases,
         endedAfter, endedBefore)
         .select(MapreduceJob.TBL.getAllColumns()).fetch()) {
-      jobs.add(JackUtil.getFullModel(MapreduceJob.class, MapreduceJob.Attributes.class, record, databases));
+      jobs.add(record.getModel(MapreduceJob.TBL, databases));
     }
 
     return jobs;
@@ -407,7 +406,7 @@ public class WorkflowQueries {
     for (Record record : databases.getRlDb().createQuery().from(WorkflowExecution.TBL)
         .where(WorkflowExecution.ID.in(ids))
         .fetch()) {
-      executions.add(JackUtil.getFullModel(WorkflowExecution.class, WorkflowExecution.Attributes.class, record, databases));
+      executions.add(record.getModel(WorkflowExecution.TBL, databases));
     }
 
     return executions;
@@ -434,7 +433,7 @@ public class WorkflowQueries {
     List<MapreduceCounter> counters = Lists.newArrayList();
     for (Record record : counterQuery
         .select(MapreduceCounter.TBL.getAllColumns()).fetch()) {
-      counters.add(JackUtil.getFullModel(MapreduceCounter.class, MapreduceCounter.Attributes.class, record, databases));
+      counters.add(record.getModel(MapreduceCounter.TBL, databases));
     }
 
     return counters;
@@ -482,7 +481,7 @@ public class WorkflowQueries {
 
       Integer appId = record.getInt(WorkflowExecution.APPLICATION_ID);
       Integer dsAction = record.getInt(StepAttemptDatastore.DS_ACTION);
-      WorkflowAttemptDatastore model = JackUtil.getFullModel(WorkflowAttemptDatastore.class, WorkflowAttemptDatastore.Attributes.class, record, databases);
+      WorkflowAttemptDatastore model = record.getModel(WorkflowAttemptDatastore.TBL, databases);
 
       stores.put(appId.longValue(), DSAction.findByValue(dsAction), model);
 
@@ -593,7 +592,7 @@ public class WorkflowQueries {
     for (Record record : configuredNotifications
         .select(ConfiguredNotification.TBL.getAllColumns())
         .fetch()) {
-      notifications.add(BaseJackUtil.getModel(ConfiguredNotification.Attributes.class, record));
+      notifications.add(record.getAttributes(ConfiguredNotification.TBL));
     }
 
     return notifications;
@@ -608,7 +607,7 @@ public class WorkflowQueries {
     for (Record record : databases.getRlDb().createQuery().from(WorkflowAttempt.TBL)
         .where(WorkflowAttempt.END_TIME.between(endedAfter, endedBefore))
         .fetch()) {
-      workflowAttempts.add(JackUtil.getFullModel(WorkflowAttempt.class, WorkflowAttempt.Attributes.class, record, databases));
+      workflowAttempts.add(record.getModel(WorkflowAttempt.TBL, databases));
     }
     return workflowAttempts;
 
@@ -632,7 +631,7 @@ public class WorkflowQueries {
     for (Record record : databases.getRlDb().createQuery().from(WorkflowAttempt.TBL)
         .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).in(workflowExecutionIds))
         .fetch()) {
-      workflowAttempts.add(JackUtil.getFullModel(WorkflowAttempt.class, WorkflowAttempt.Attributes.class, record, databases));
+      workflowAttempts.add(record.getModel(WorkflowAttempt.TBL, databases));
     }
     return workflowAttempts;
   }
@@ -663,7 +662,7 @@ public class WorkflowQueries {
     List<WorkflowExecution> executions = Lists.newArrayList();
 
     for (Record record : fetch) {
-      executions.add(new WorkflowExecution(BaseJackUtil.getModel(WorkflowExecution.Attributes.class, record), databases));
+      executions.add(record.getModel(WorkflowExecution.TBL, databases));
     }
 
     return executions;
@@ -772,7 +771,7 @@ public class WorkflowQueries {
   public static List<StepDependency.Attributes> getStepDependencies(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
     List<StepDependency.Attributes> dependencies = Lists.newArrayList();
     for (Record record : rldb.createQuery().from(StepDependency.TBL).where(StepDependency.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds).or(StepDependency.DEPENDENCY_ATTEMPT_ID.as(Long.class).in(stepAttemptIds))).fetch()) {
-      dependencies.add(BaseJackUtil.getModel(StepDependency.Attributes.class, record));
+      dependencies.add(record.getAttributes(StepDependency.TBL));
     }
     return dependencies;
   }
@@ -780,7 +779,7 @@ public class WorkflowQueries {
   public static List<MapreduceJob.Attributes> getMapreduceJobs(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
     List<MapreduceJob.Attributes> jobs = Lists.newArrayList();
     for (Record record : rldb.createQuery().from(MapreduceJob.TBL).where(MapreduceJob.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds)).fetch()) {
-      jobs.add(BaseJackUtil.getModel(MapreduceJob.Attributes.class, record));
+      jobs.add(record.getAttributes(MapreduceJob.TBL));
     }
     return jobs;
   }
@@ -799,7 +798,7 @@ public class WorkflowQueries {
   public static List<MapreduceCounter.Attributes> getMapreduceCounters(IRlDb rldb, Set<Long> mapreduceJobIds) throws IOException {
     List<MapreduceCounter.Attributes> counters = Lists.newArrayList();
     for (Record record : rldb.createQuery().from(MapreduceCounter.TBL).where(MapreduceCounter.MAPREDUCE_JOB_ID.as(Long.class).in(mapreduceJobIds)).fetch()) {
-      counters.add(BaseJackUtil.getModel(MapreduceCounter.Attributes.class, record));
+      counters.add(record.getAttributes(MapreduceCounter.TBL));
     }
     return counters;
   }
@@ -807,7 +806,7 @@ public class WorkflowQueries {
   public static List<StepAttemptDatastore.Attributes> getStepAttemptDatastores(IRlDb rldb, Set<Long> stepIds) throws IOException {
     List<StepAttemptDatastore.Attributes> attemptDatastores = Lists.newArrayList();
     for (Record record : rldb.createQuery().from(StepAttemptDatastore.TBL).where(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class).in(stepIds)).fetch()) {
-      attemptDatastores.add(BaseJackUtil.getModel(StepAttemptDatastore.Attributes.class, record));
+      attemptDatastores.add(record.getAttributes(StepAttemptDatastore.TBL));
     }
     return attemptDatastores;
   }
@@ -826,7 +825,7 @@ public class WorkflowQueries {
     }
 
     for (Record record : query.fetch()) {
-      workflowAttemptDatastore.add(BaseJackUtil.getModel(WorkflowAttemptDatastore.Attributes.class, record));
+      workflowAttemptDatastore.add(record.getAttributes(WorkflowAttemptDatastore.TBL));
     }
     return workflowAttemptDatastore;
   }
