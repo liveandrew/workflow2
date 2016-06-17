@@ -871,7 +871,8 @@ public class WorkflowQueries {
   public static GenericQuery getExecutionsByEndQuery(IRlDb rldb, LocalDate startDate, LocalDate endDate) {
     return rldb.createQuery().from(WorkflowExecution.TBL)
         .where(WorkflowExecution.END_TIME.between(startDate.toDate().getTime(), endDate.toDate().getTime()))
-        .select(WorkflowExecution.NAME, COUNT(WorkflowExecution.ID));
+        .select(WorkflowExecution.NAME, COUNT(WorkflowExecution.ID))
+        .groupBy(WorkflowExecution.NAME);
   }
 
   public static List<ApplicationCounterSummary> getSummaries(IRlDb rldb, Multimap<String, String> countersToQuery, LocalDate startDate, LocalDate endDate) throws IOException {
