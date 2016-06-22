@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
@@ -33,7 +34,13 @@ public class DeleteDataStore extends Action {
   public DeleteDataStore(String checkpointToken, FileSystem fs, DataStore dataStore) {
     super(checkpointToken);
 
-    if (!dataStore.getPath().startsWith("/tmp/")) {
+    boolean isTmp = false;
+
+    for (TeamTmpDir dir : TeamTmpDir.values()) {
+      isTmp |= dataStore.getPath().startsWith(dir.getTmpDir());
+    }
+
+    if (!isTmp) {
       throw new IllegalArgumentException("DeleteDataStore should only be used for temporary stores");
     }
 
