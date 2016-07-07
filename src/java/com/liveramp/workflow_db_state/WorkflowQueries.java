@@ -1,4 +1,4 @@
-package com.liveramp.workflow_state;
+package com.liveramp.workflow_db_state;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -24,24 +24,31 @@ import com.liveramp.commons.collections.map.NestedMultimap;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.databases.workflow_db.IDatabases;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
+import com.liveramp.databases.workflow_db.models.Application;
+import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotification;
+import com.liveramp.databases.workflow_db.models.ApplicationCounterSummary;
+import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
+import com.liveramp.databases.workflow_db.models.MapreduceCounter;
+import com.liveramp.databases.workflow_db.models.MapreduceJob;
+import com.liveramp.databases.workflow_db.models.MapreduceJobTaskException;
+import com.liveramp.databases.workflow_db.models.StepAttempt;
+import com.liveramp.databases.workflow_db.models.StepAttemptDatastore;
+import com.liveramp.databases.workflow_db.models.StepDependency;
+import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowAttemptConfiguredNotification;
+import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
+import com.liveramp.databases.workflow_db.models.WorkflowExecution;
+import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNotification;
 import com.liveramp.importer.generated.AppType;
-import com.rapleaf.db_schemas.IDatabases;
-import com.rapleaf.db_schemas.rldb.IRlDb;
-import com.rapleaf.db_schemas.rldb.models.Application;
-import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
-import com.rapleaf.db_schemas.rldb.models.ApplicationCounterSummary;
-import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
-import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
-import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
-import com.rapleaf.db_schemas.rldb.models.MapreduceJobTaskException;
-import com.rapleaf.db_schemas.rldb.models.StepAttempt;
-import com.rapleaf.db_schemas.rldb.models.StepAttemptDatastore;
-import com.rapleaf.db_schemas.rldb.models.StepDependency;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptConfiguredNotification;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
-import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.db_schemas.rldb.models.WorkflowExecutionConfiguredNotification;
+import com.liveramp.workflow_state.AttemptStatus;
+import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.DbPersistence;
+import com.liveramp.workflow_state.ProcessStatus;
+import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow_state.WorkflowExecutionStatus;
+import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.jack.queries.Column;
 import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.QueryOrder;
@@ -56,11 +63,11 @@ import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 public class WorkflowQueries {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowQueries.class);
 
-  public static Optional<Application> getApplication(IRlDb rldb, String name) throws IOException {
+  public static Optional<Application> getApplication(IWorkflowDb rldb, String name) throws IOException {
     return Accessors.firstOrAbsent(rldb.applications().findByName(name));
   }
 
-  public static Set<WorkflowExecution.Attributes> getIncompleteExecutions(IRlDb rldb, String name, String scopeId) throws IOException {
+  public static Set<WorkflowExecution.Attributes> getIncompleteExecutions(IWorkflowDb rldb, String name, String scopeId) throws IOException {
     Set<WorkflowExecution.Attributes> incompleteExecutions = Sets.newHashSet();
     Records records = rldb.createQuery()
         .from(Application.TBL)
@@ -77,13 +84,14 @@ public class WorkflowQueries {
     }
 
     if (incompleteExecutions.size() > 1) {
-      throw new RuntimeException("Found multiple incomplete workflow executions!");
+      throw new RuntimeException("Found multiple incomplete workflow executions for name: "+name+" scope: "+scopeId);
     }
+
     return incompleteExecutions;
   }
 
-  public static WorkflowExecution getLatestExecution(IRlDb rldb, String name, String scopeIdentifier) throws IOException {
-    Records records = rldb.createQuery()
+  public static WorkflowExecution getLatestExecution(IWorkflowDb db, String name, String scopeIdentifier) throws IOException {
+    Records records = db.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
         .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
@@ -99,11 +107,11 @@ public class WorkflowQueries {
     }
 
 
-   return Accessors.only(records).getModel(WorkflowExecution.TBL, rldb.getDatabases());
+    return Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases());
   }
 
-  public static Optional<WorkflowExecution> getLatestExecution(IRlDb rldb, AppType type, String scopeIdentifier) throws IOException {
-    Records records = rldb.createQuery()
+  public static Optional<WorkflowExecution> getLatestExecution(IWorkflowDb db, AppType type, String scopeIdentifier) throws IOException {
+    Records records = db.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
         .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
@@ -118,12 +126,12 @@ public class WorkflowQueries {
       return Optional.absent();
     }
 
-    return Optional.of(Accessors.only(records).getModel(WorkflowExecution.TBL, rldb.getDatabases()));
+    return Optional.of(Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases()));
   }
 
   //  TODO temporary for some scripts while stuff is getting migrated
-  public static boolean hasExecution(IRlDb rldb, AppType type, String scopeIdentifier) throws IOException {
-    return !rldb.createQuery()
+  public static boolean hasExecution(IWorkflowDb db, AppType type, String scopeIdentifier) throws IOException {
+    return !db.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
         .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
@@ -135,8 +143,8 @@ public class WorkflowQueries {
   }
 
   //  TODO temporary for some scripts while stuff is getting migrated
-  public static boolean hasExecution(IRlDb rldb, String name, String scopeIdentifier) throws IOException {
-    return !rldb.createQuery()
+  public static boolean hasExecution(IWorkflowDb db, String name, String scopeIdentifier) throws IOException {
+    return !db.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
         .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
@@ -147,8 +155,8 @@ public class WorkflowQueries {
         .fetch().isEmpty();
   }
 
-  public static WorkflowExecutionStatus getLatestExecutionStatus(IRlDb rlDb, AppType appType, String scopeIdentifier) throws IOException {
-    Optional<WorkflowExecution> execution = WorkflowQueries.getLatestExecution(rlDb, appType, scopeIdentifier);
+  public static WorkflowExecutionStatus getLatestExecutionStatus(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
+    Optional<WorkflowExecution> execution = getLatestExecution(db, appType, scopeIdentifier);
     if (execution.isPresent()) {
       return WorkflowExecutionStatus.findByValue(execution.get().getStatus());
     } else {
@@ -156,8 +164,8 @@ public class WorkflowQueries {
     }
   }
 
-  public static WorkflowExecutionStatus getLatestExecutionStatus(IRlDb rlDb, String name, String scopeIdentifier) throws IOException {
-    WorkflowExecution execution = WorkflowQueries.getLatestExecution(rlDb, name, scopeIdentifier);
+  public static WorkflowExecutionStatus getLatestExecutionStatus(IWorkflowDb db, String name, String scopeIdentifier) throws IOException {
+    WorkflowExecution execution = getLatestExecution(db, name, scopeIdentifier);
     if (execution == null) {
       return null;
     }
@@ -267,17 +275,17 @@ public class WorkflowQueries {
 
   public static List<WorkflowExecution> getDiedUncleanExecutions(IDatabases databases, AppType app, long windowDays, int missedHeartbeatsThreshold) throws IOException {
 
-    List<WorkflowExecution> executions = WorkflowQueries.queryWorkflowExecutions(databases, null, null, null, null,
+    List<WorkflowExecution> executions = queryWorkflowExecutions(databases, null, null, null, null,
         System.currentTimeMillis() - windowDays * 24 * 60 * 60 * 1000, null, WorkflowExecutionStatus.INCOMPLETE, null
     );
 
     List<WorkflowExecution> dead = Lists.newArrayList();
 
     for (WorkflowExecution execution : executions) {
-      Optional<WorkflowAttempt> attemptOptional = WorkflowQueries.getLatestAttemptOptional(execution);
+      Optional<WorkflowAttempt> attemptOptional = getLatestAttemptOptional(execution);
 
       if (attemptOptional.isPresent()) {
-        if (WorkflowQueries.getProcessStatus(attemptOptional.get(), execution, missedHeartbeatsThreshold) == ProcessStatus.TIMED_OUT) {
+        if (getProcessStatus(attemptOptional.get(), execution, missedHeartbeatsThreshold) == ProcessStatus.TIMED_OUT) {
           if (app == null || execution.getApplication().getAppType().equals(app.getValue())) {
             dead.add(execution);
           }
@@ -300,9 +308,9 @@ public class WorkflowQueries {
     return true;
   }
 
-  public static boolean isLatestExecution(IRlDb rldb, WorkflowExecution execution) throws IOException {
+  public static boolean isLatestExecution(IWorkflowDb db, WorkflowExecution execution) throws IOException {
 
-    WorkflowExecution latestExecution = getLatestExecution(rldb,
+    WorkflowExecution latestExecution = getLatestExecution(db,
         execution.getName(),
         execution.getScopeIdentifier()
     );
@@ -315,9 +323,9 @@ public class WorkflowQueries {
   }
 
   //  either steps or cancel
-  public static boolean canRevert(IRlDb rldb, WorkflowExecution execution) throws IOException {
+  public static boolean canRevert(IWorkflowDb db, WorkflowExecution execution) throws IOException {
 
-    if (!WorkflowQueries.isLatestExecution(rldb, execution)) {
+    if (!isLatestExecution(db, execution)) {
       LOG.info("Execution is not latest");
       return false;
     }
@@ -327,7 +335,7 @@ public class WorkflowQueries {
       return false;
     }
 
-    if (WorkflowQueries.getProcessStatus(getLatestAttempt(execution), execution) == ProcessStatus.ALIVE) {
+    if (getProcessStatus(getLatestAttempt(execution), execution) == ProcessStatus.ALIVE) {
       LOG.info("Process is still alive");
       return false;
     }
@@ -335,10 +343,10 @@ public class WorkflowQueries {
     return true;
   }
 
-  public static ThreeNestedMap<String, String, String, Long> getCountersByStep(IRlDb rldb, Long workflowExecution) throws IOException {
+  public static ThreeNestedMap<String, String, String, Long> getCountersByStep(IWorkflowDb db, Long workflowExecution) throws IOException {
     ThreeNestedMap<String, String, String, Long> counters = new ThreeNestedMap<>();
 
-    for (Record record : getCompleteStepCounters(rldb, workflowExecution).select(StepAttempt.STEP_TOKEN, MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
+    for (Record record : getCompleteStepCounters(db, workflowExecution).select(StepAttempt.STEP_TOKEN, MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
         .fetch()) {
       counters.put(record.getString(StepAttempt.STEP_TOKEN),
           record.getString(MapreduceCounter.GROUP),
@@ -350,10 +358,10 @@ public class WorkflowQueries {
     return counters;
   }
 
-  public static TwoNestedMap<String, String, Long> getFlatCounters(IRlDb rldb, Long workflowExecution) throws IOException {
+  public static TwoNestedMap<String, String, Long> getFlatCounters(IWorkflowDb db, Long workflowExecution) throws IOException {
     TwoNestedCountingMap<String, String> counters = new TwoNestedCountingMap<>(0l);
 
-    for (Record record : getCompleteStepCounters(rldb, workflowExecution).select(MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
+    for (Record record : getCompleteStepCounters(db, workflowExecution).select(MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
         .fetch()) {
       counters.incrementAndGet(record.getString(MapreduceCounter.GROUP),
           record.getString(MapreduceCounter.NAME),
@@ -368,7 +376,7 @@ public class WorkflowQueries {
                                                        Long endedAfter,
                                                        Long endedBefore) {
 
-    GenericQuery stepAttempts = databases.getRlDb().createQuery().from(StepAttempt.TBL)
+    GenericQuery stepAttempts = databases.getWorkflowDb().createQuery().from(StepAttempt.TBL)
         .where(StepAttempt.END_TIME.isNotNull())
         .where(StepAttempt.STEP_STATUS.equalTo(StepStatus.COMPLETED.ordinal()));
 
@@ -410,7 +418,7 @@ public class WorkflowQueries {
   }
 
   private static GenericQuery stepAttemptToExecutionQuery(IDatabases databases, Collection<Long> stepAttemptIds) {
-    return databases.getRlDb().createQuery().from(WorkflowExecution.TBL)
+    return databases.getWorkflowDb().createQuery().from(WorkflowExecution.TBL)
         .innerJoin(WorkflowAttempt.TBL)
         .on(WorkflowAttempt.WORKFLOW_EXECUTION_ID.equalTo(WorkflowExecution.ID.as(Integer.class)))
         .innerJoin(StepAttempt.TBL)
@@ -429,7 +437,7 @@ public class WorkflowQueries {
     }
 
     Set<WorkflowExecution> executions = Sets.newHashSet();
-    for (Record record : databases.getRlDb().createQuery().from(WorkflowExecution.TBL)
+    for (Record record : databases.getWorkflowDb().createQuery().from(WorkflowExecution.TBL)
         .where(WorkflowExecution.ID.in(ids))
         .fetch()) {
       executions.add(record.getModel(WorkflowExecution.TBL, databases));
@@ -466,15 +474,15 @@ public class WorkflowQueries {
 
   }
 
-  public static List<WorkflowAttempt> getLiveWorkflowAttempts(IRlDb rldb,
+  public static List<WorkflowAttempt> getLiveWorkflowAttempts(IWorkflowDb db,
                                                               Long executionId) throws IOException {
 
-    List<WorkflowAttempt> attempts = rldb.workflowAttempts().query()
+    List<WorkflowAttempt> attempts = db.workflowAttempts().query()
         .workflowExecutionId(executionId.intValue())
         .whereStatus(new In<>(AttemptStatus.LIVE_STATUSES))
         .find();
 
-    attempts.addAll(rldb.workflowAttempts().query()
+    attempts.addAll(db.workflowAttempts().query()
         .workflowExecutionId(executionId.intValue())
         .whereStatus(new IsNull<Integer>())
         .find()
@@ -484,7 +492,7 @@ public class WorkflowQueries {
   }
 
   public static List<Application> getAllApplications(IDatabases databases) throws IOException {
-    return databases.getRlDb().applications().findAll();
+    return databases.getWorkflowDb().applications().findAll();
   }
 
   public static NestedMultimap<Long, DSAction, WorkflowAttemptDatastore> getApplicationIdToWorkflowAttemptDatastores(IDatabases databases,
@@ -495,7 +503,7 @@ public class WorkflowQueries {
     columns.add(WorkflowExecution.APPLICATION_ID);
     columns.add(StepAttemptDatastore.DS_ACTION);
 
-    GenericQuery on = joinStepAttempts(workflowExecutionQuery(databases.getRlDb(), null, null, startedAfter, startedBefore))
+    GenericQuery on = joinStepAttempts(workflowExecutionQuery(databases.getWorkflowDb(), null, null, startedAfter, startedBefore))
         .innerJoin(StepAttemptDatastore.TBL)
         .on(StepAttempt.ID.equalTo(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class)))
         .innerJoin(WorkflowAttemptDatastore.TBL)
@@ -550,8 +558,8 @@ public class WorkflowQueries {
     return executionAttempts;
   }
 
-  public static List<ConfiguredNotification.Attributes> getAttemptNotifications(IRlDb rldb, WorkflowRunnerNotification type, Long attemptId) throws IOException {
-    return getNotifications(rldb.createQuery().from(WorkflowAttemptConfiguredNotification.TBL)
+  public static List<ConfiguredNotification.Attributes> getAttemptNotifications(IWorkflowDb db, WorkflowRunnerNotification type, Long attemptId) throws IOException {
+    return getNotifications(db.createQuery().from(WorkflowAttemptConfiguredNotification.TBL)
             .where(WorkflowAttemptConfiguredNotification.WORKFLOW_ATTEMPT_ID.equalTo(attemptId))
             .innerJoin(ConfiguredNotification.TBL)
             .on(WorkflowAttemptConfiguredNotification.CONFIGURED_NOTIFICATION_ID.equalTo(ConfiguredNotification.ID)),
@@ -560,20 +568,20 @@ public class WorkflowQueries {
     );
   }
 
-  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IRlDb rldb, Long executionId) throws IOException {
-    return getExecutionNotifications(rldb, executionId, null, null);
+  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Long executionId) throws IOException {
+    return getExecutionNotifications(db, executionId, null, null);
   }
 
-  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IRlDb rldb, Long executionId, String email) throws IOException {
-    return getExecutionNotifications(rldb, executionId, null, email);
+  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Long executionId, String email) throws IOException {
+    return getExecutionNotifications(db, executionId, null, email);
   }
 
-  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IRlDb rldb, Long executionId, WorkflowRunnerNotification type) throws IOException {
-    return getExecutionNotifications(rldb, executionId, type, null);
+  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Long executionId, WorkflowRunnerNotification type) throws IOException {
+    return getExecutionNotifications(db, executionId, type, null);
   }
 
-  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IRlDb rldb, Long executionId, WorkflowRunnerNotification type, String email) throws IOException {
-    return getNotifications(rldb.createQuery().from(WorkflowExecutionConfiguredNotification.TBL)
+  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Long executionId, WorkflowRunnerNotification type, String email) throws IOException {
+    return getNotifications(db.createQuery().from(WorkflowExecutionConfiguredNotification.TBL)
             .where(WorkflowExecutionConfiguredNotification.WORKFLOW_EXECUTION_ID.equalTo(executionId))
             .innerJoin(ConfiguredNotification.TBL)
             .on(WorkflowExecutionConfiguredNotification.CONFIGURED_NOTIFICATION_ID.equalTo(ConfiguredNotification.ID)),
@@ -582,20 +590,20 @@ public class WorkflowQueries {
     );
   }
 
-  public static List<ConfiguredNotification.Attributes> getApplicationNotifications(IRlDb rldb, Long applicationId) throws IOException {
-    return getApplicationNotifications(rldb, applicationId, null, null);
+  public static List<ConfiguredNotification.Attributes> getApplicationNotifications(IWorkflowDb db, Long applicationId) throws IOException {
+    return getApplicationNotifications(db, applicationId, null, null);
   }
 
-  public static List<ConfiguredNotification.Attributes> getApplicationNotifications(IRlDb rldb, Long applicationId, WorkflowRunnerNotification type) throws IOException {
-    return getApplicationNotifications(rldb, applicationId, type, null);
+  public static List<ConfiguredNotification.Attributes> getApplicationNotifications(IWorkflowDb db, Long applicationId, WorkflowRunnerNotification type) throws IOException {
+    return getApplicationNotifications(db, applicationId, type, null);
   }
 
-  public static List<ConfiguredNotification.Attributes> getApplicationNotifications(IRlDb rldb, Long applicationId, String email) throws IOException {
-    return getApplicationNotifications(rldb, applicationId, null, email);
+  public static List<ConfiguredNotification.Attributes> getApplicationNotifications(IWorkflowDb db, Long applicationId, String email) throws IOException {
+    return getApplicationNotifications(db, applicationId, null, email);
   }
 
-  public static List<ConfiguredNotification.Attributes> getApplicationNotifications(IRlDb rldb, Long applicationId, WorkflowRunnerNotification type, String email) throws IOException {
-    return getNotifications(rldb.createQuery().from(ApplicationConfiguredNotification.TBL)
+  public static List<ConfiguredNotification.Attributes> getApplicationNotifications(IWorkflowDb db, Long applicationId, WorkflowRunnerNotification type, String email) throws IOException {
+    return getNotifications(db.createQuery().from(ApplicationConfiguredNotification.TBL)
             .where(ApplicationConfiguredNotification.APPLICATION_ID.equalTo(applicationId))
             .innerJoin(ConfiguredNotification.TBL)
             .on(ApplicationConfiguredNotification.CONFIGURED_NOTIFICATION_ID.equalTo(ConfiguredNotification.ID)),
@@ -630,7 +638,7 @@ public class WorkflowQueries {
                                                           Long endedBefore) throws IOException {
 
     List<WorkflowAttempt> workflowAttempts = Lists.newArrayList();
-    for (Record record : databases.getRlDb().createQuery().from(WorkflowAttempt.TBL)
+    for (Record record : databases.getWorkflowDb().createQuery().from(WorkflowAttempt.TBL)
         .where(WorkflowAttempt.END_TIME.between(endedAfter, endedBefore))
         .fetch()) {
       workflowAttempts.add(record.getModel(WorkflowAttempt.TBL, databases));
@@ -639,9 +647,9 @@ public class WorkflowQueries {
 
   }
 
-  //  public static Map<Long, Multimap<DSAction, WorkflowAttemptDatastore>> getApplicationDSActions(IDatabases rldb, Long startedAfter, Long startedBefore) throws IOException {
+  //  public static Map<Long, Multimap<DSAction, WorkflowAttemptDatastore>> getApplicationDSActions(IDatabases db, Long startedAfter, Long startedBefore) throws IOException {
   //
-  //    GenericQuery genericQuery = workflowExecutionQuery(rldb.getRlDb(), null, null, startedAfter, startedBefore);
+  //    GenericQuery genericQuery = workflowExecutionQuery(db.getWorkflowDb(), null, null, startedAfter, startedBefore);
   //
   //    workflowAttemptquer
   //
@@ -654,7 +662,7 @@ public class WorkflowQueries {
                                                           Set<Long> workflowExecutionIds) throws IOException {
 
     List<WorkflowAttempt> workflowAttempts = Lists.newArrayList();
-    for (Record record : databases.getRlDb().createQuery().from(WorkflowAttempt.TBL)
+    for (Record record : databases.getWorkflowDb().createQuery().from(WorkflowAttempt.TBL)
         .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).in(workflowExecutionIds))
         .fetch()) {
       workflowAttempts.add(record.getModel(WorkflowAttempt.TBL, databases));
@@ -681,7 +689,7 @@ public class WorkflowQueries {
                                                                 Long startedBefore,
                                                                 WorkflowExecutionStatus status,
                                                                 Integer limit) throws IOException {
-    Records fetch = workflowExecutionQuery(databases.getRlDb(), id, name, scope, appType, startedAfter, startedBefore, status, limit)
+    Records fetch = workflowExecutionQuery(databases.getWorkflowDb(), id, name, scope, appType, startedAfter, startedBefore, status, limit)
         .select(WorkflowExecution.TBL.getAllColumns())
         .fetch();
 
@@ -694,11 +702,11 @@ public class WorkflowQueries {
     return executions;
   }
 
-  public static GenericQuery workflowExecutionQuery(IRlDb rldb, String name, Integer appType, Long startedAfter, Long startedBefore) throws IOException {
-    return workflowExecutionQuery(rldb, null, name, null, appType, startedAfter, startedBefore, null, null);
+  public static GenericQuery workflowExecutionQuery(IWorkflowDb db, String name, Integer appType, Long startedAfter, Long startedBefore) throws IOException {
+    return workflowExecutionQuery(db, null, name, null, appType, startedAfter, startedBefore, null, null);
   }
 
-  public static GenericQuery workflowExecutionQuery(IRlDb rldb,
+  public static GenericQuery workflowExecutionQuery(IWorkflowDb db,
                                                     Long id,
                                                     String name,
                                                     String scope,
@@ -708,7 +716,7 @@ public class WorkflowQueries {
                                                     WorkflowExecutionStatus status,
                                                     Integer limit) throws IOException {
 
-    GenericQuery.Builder queryb = rldb.createQuery();
+    GenericQuery.Builder queryb = db.createQuery();
     GenericQuery query;
 
     if (name != null || appType != null) {
@@ -763,29 +771,29 @@ public class WorkflowQueries {
     return query;
   }
 
-  public static List<StepAttempt.Attributes> getStepAttempts(IRlDb rldb, Long workflowAttemptId) throws IOException {
-    return getStepAttempts(rldb, workflowAttemptId, null);
+  public static List<StepAttempt.Attributes> getStepAttempts(IWorkflowDb db, Long workflowAttemptId) throws IOException {
+    return getStepAttempts(db, workflowAttemptId, null);
   }
 
-  public static List<StepAttempt.Attributes> getStepAttempts(IRlDb rldb, Long workflowAttemptId, String stepToken) throws IOException {
+  public static List<StepAttempt.Attributes> getStepAttempts(IWorkflowDb db, Long workflowAttemptId, String stepToken) throws IOException {
     List<StepAttempt.Attributes> executions = Lists.newArrayList();
 
-    for (Record record : queryStepAttempts(rldb, workflowAttemptId, stepToken).select(StepAttempt.TBL.getAllColumns()).fetch()) {
+    for (Record record : queryStepAttempts(db, workflowAttemptId, stepToken).select(StepAttempt.TBL.getAllColumns()).fetch()) {
       executions.add(record.getAttributes(StepAttempt.TBL));
     }
     return executions;
   }
 
-  public static Map<String, StepStatus> getStepStatuses(IRlDb rldb, Long workflowAttemptId, String stepToken) throws IOException {
+  public static Map<String, StepStatus> getStepStatuses(IWorkflowDb db, Long workflowAttemptId, String stepToken) throws IOException {
     Map<String, StepStatus> statuses = Maps.newHashMap();
-    for (Record record : queryStepAttempts(rldb, workflowAttemptId, stepToken).select(StepAttempt.STEP_TOKEN, StepAttempt.STEP_STATUS).fetch()) {
+    for (Record record : queryStepAttempts(db, workflowAttemptId, stepToken).select(StepAttempt.STEP_TOKEN, StepAttempt.STEP_STATUS).fetch()) {
       statuses.put(record.get(StepAttempt.STEP_TOKEN), StepStatus.findByValue(record.get(StepAttempt.STEP_STATUS)));
     }
     return statuses;
   }
 
-  private static GenericQuery queryStepAttempts(IRlDb rldb, Long workflowAttemptId, String stepToken) {
-    GenericQuery query = rldb.createQuery().from(StepAttempt.TBL).where(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId));
+  private static GenericQuery queryStepAttempts(IWorkflowDb db, Long workflowAttemptId, String stepToken) {
+    GenericQuery query = db.createQuery().from(StepAttempt.TBL).where(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId));
 
     if (stepToken != null) {
       query = query.where(StepAttempt.STEP_TOKEN.equalTo(stepToken));
@@ -794,26 +802,26 @@ public class WorkflowQueries {
     return query;
   }
 
-  public static List<StepDependency.Attributes> getStepDependencies(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
+  public static List<StepDependency.Attributes> getStepDependencies(IWorkflowDb db, Set<Long> stepAttemptIds) throws IOException {
     List<StepDependency.Attributes> dependencies = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(StepDependency.TBL).where(StepDependency.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds).or(StepDependency.DEPENDENCY_ATTEMPT_ID.as(Long.class).in(stepAttemptIds))).fetch()) {
+    for (Record record : db.createQuery().from(StepDependency.TBL).where(StepDependency.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds).or(StepDependency.DEPENDENCY_ATTEMPT_ID.as(Long.class).in(stepAttemptIds))).fetch()) {
       dependencies.add(record.getAttributes(StepDependency.TBL));
     }
     return dependencies;
   }
 
-  public static List<MapreduceJob.Attributes> getMapreduceJobs(IRlDb rldb, Set<Long> stepAttemptIds) throws IOException {
+  public static List<MapreduceJob.Attributes> getMapreduceJobs(IWorkflowDb db, Set<Long> stepAttemptIds) throws IOException {
     List<MapreduceJob.Attributes> jobs = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(MapreduceJob.TBL).where(MapreduceJob.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds)).fetch()) {
+    for (Record record : db.createQuery().from(MapreduceJob.TBL).where(MapreduceJob.STEP_ATTEMPT_ID.as(Long.class).in(stepAttemptIds)).fetch()) {
       jobs.add(record.getAttributes(MapreduceJob.TBL));
     }
     return jobs;
   }
 
-  public static List<MapreduceJobTaskException.Attributes> getMapreduceJobTaskExceptions(IRlDb rldb, Set<Long> mapreduceJobIds) throws IOException {
+  public static List<MapreduceJobTaskException.Attributes> getMapreduceJobTaskExceptions(IWorkflowDb db, Set<Long> mapreduceJobIds) throws IOException {
     List<MapreduceJobTaskException.Attributes> exceptions = Lists.newArrayList();
 
-    for (Record record : rldb.createQuery().from(MapreduceJobTaskException.TBL)
+    for (Record record : db.createQuery().from(MapreduceJobTaskException.TBL)
         .where(MapreduceJobTaskException.MAPREDUCE_JOB_ID.as(Long.class).in(mapreduceJobIds)).fetch()) {
       exceptions.add(record.getAttributes(MapreduceJobTaskException.TBL));
     }
@@ -821,26 +829,26 @@ public class WorkflowQueries {
     return exceptions;
   }
 
-  public static List<MapreduceCounter.Attributes> getMapreduceCounters(IRlDb rldb, Set<Long> mapreduceJobIds) throws IOException {
+  public static List<MapreduceCounter.Attributes> getMapreduceCounters(IWorkflowDb db, Set<Long> mapreduceJobIds) throws IOException {
     List<MapreduceCounter.Attributes> counters = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(MapreduceCounter.TBL).where(MapreduceCounter.MAPREDUCE_JOB_ID.as(Long.class).in(mapreduceJobIds)).fetch()) {
+    for (Record record : db.createQuery().from(MapreduceCounter.TBL).where(MapreduceCounter.MAPREDUCE_JOB_ID.as(Long.class).in(mapreduceJobIds)).fetch()) {
       counters.add(record.getAttributes(MapreduceCounter.TBL));
     }
     return counters;
   }
 
-  public static List<StepAttemptDatastore.Attributes> getStepAttemptDatastores(IRlDb rldb, Set<Long> stepIds) throws IOException {
+  public static List<StepAttemptDatastore.Attributes> getStepAttemptDatastores(IWorkflowDb db, Set<Long> stepIds) throws IOException {
     List<StepAttemptDatastore.Attributes> attemptDatastores = Lists.newArrayList();
-    for (Record record : rldb.createQuery().from(StepAttemptDatastore.TBL).where(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class).in(stepIds)).fetch()) {
+    for (Record record : db.createQuery().from(StepAttemptDatastore.TBL).where(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class).in(stepIds)).fetch()) {
       attemptDatastores.add(record.getAttributes(StepAttemptDatastore.TBL));
     }
     return attemptDatastores;
   }
 
-  public static List<WorkflowAttemptDatastore.Attributes> getWorkflowAttemptDatastores(IRlDb rldb, Set<Long> ids, Long workflowAttemptId) throws IOException {
+  public static List<WorkflowAttemptDatastore.Attributes> getWorkflowAttemptDatastores(IWorkflowDb db, Set<Long> ids, Long workflowAttemptId) throws IOException {
     List<WorkflowAttemptDatastore.Attributes> workflowAttemptDatastore = Lists.newArrayList();
 
-    GenericQuery query = rldb.createQuery().from(WorkflowAttemptDatastore.TBL);
+    GenericQuery query = db.createQuery().from(WorkflowAttemptDatastore.TBL);
 
     if (workflowAttemptId != null) {
       query = query.where(WorkflowAttemptDatastore.WORKFLOW_ATTEMPT_ID.as(Long.class).equalTo(workflowAttemptId));
@@ -858,20 +866,20 @@ public class WorkflowQueries {
 
   //  join queries
 
-  public static GenericQuery getStepAttempts(IRlDb rldb, Long execution, Set<String> latestTokens, EnumSet<StepStatus> statuses) {
-    return filterStepAttempts(joinStepAttempts(rldb.createQuery().from(WorkflowExecution.TBL)
+  public static GenericQuery getStepAttempts(IWorkflowDb db, Long execution, Set<String> latestTokens, EnumSet<StepStatus> statuses) {
+    return filterStepAttempts(joinStepAttempts(db.createQuery().from(WorkflowExecution.TBL)
             .where(WorkflowExecution.ID.equalTo(execution))),
         latestTokens,
         statuses
     );
   }
 
-  public static GenericQuery getCompleteStepCounters(IRlDb rldb, Long executionId) throws IOException {
+  public static GenericQuery getCompleteStepCounters(IWorkflowDb db, Long executionId) throws IOException {
 
     //  TODO can use one query for this whole thing probably
-    WorkflowExecution execution = rldb.workflowExecutions().find(executionId);
+    WorkflowExecution execution = db.workflowExecutions().find(executionId);
 
-    WorkflowAttempt latestAttempt = WorkflowQueries.getLatestAttempt(execution);
+    WorkflowAttempt latestAttempt = getLatestAttempt(execution);
     List<StepAttempt> steps = latestAttempt.getStepAttempt();
 
     Set<String> latestTokens = Sets.newHashSet();
@@ -879,7 +887,7 @@ public class WorkflowQueries {
       latestTokens.add(attempt.getStepToken());
     }
 
-    return rldb.createQuery()
+    return db.createQuery()
         .from(StepAttempt.TBL)
         .where(StepAttempt.STEP_TOKEN.in(latestTokens))
         .where(StepAttempt.STEP_STATUS.equalTo(StepStatus.COMPLETED.ordinal()))
@@ -893,31 +901,31 @@ public class WorkflowQueries {
 
   }
 
-  public static GenericQuery getExecutionsByEndQuery(IRlDb rldb, LocalDate startDate, LocalDate endDate) {
-    return rldb.createQuery().from(WorkflowExecution.TBL)
+  public static GenericQuery getExecutionsByEndQuery(IWorkflowDb db, LocalDate startDate, LocalDate endDate) {
+    return db.createQuery().from(WorkflowExecution.TBL)
         .where(WorkflowExecution.END_TIME.between(startDate.toDate().getTime(), endDate.toDate().getTime()))
         .select(WorkflowExecution.NAME, COUNT(WorkflowExecution.ID))
         .groupBy(WorkflowExecution.NAME);
   }
 
-  public static List<ApplicationCounterSummary> getSummaries(IRlDb rldb, Multimap<String, String> countersToQuery, LocalDate startDate, LocalDate endDate) throws IOException {
-    return rldb.applicationCounterSummaries().query()
+  public static List<ApplicationCounterSummary> getSummaries(IWorkflowDb db, Multimap<String, String> countersToQuery, LocalDate startDate, LocalDate endDate) throws IOException {
+    return db.applicationCounterSummaries().query()
         .whereDate(new Between<>(startDate.toDateTimeAtStartOfDay().getMillis(), endDate.toDateTimeAtStartOfDay().getMillis()-1))  // stupid mysql
         .whereGroup(new In<>(countersToQuery.keySet()))
         .whereName(new In<>(countersToQuery.values()))
         .find();
   }
 
-  public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, String name, Integer appType, Long endedAfter, Long endedBefore,
-                                                   Set<String> specificGroups,
-                                                   Set<String> specificNames) throws IOException {
-    return getMapreduceCounters(getStepAttempts(rldb, stepToken, name, appType, endedAfter, endedBefore), specificGroups, specificNames);
-  }
-
-  public static GenericQuery getMapreduceCounters(IRlDb rldb, Set<String> stepToken, Set<Long> workflowExecutionIds,
+  public static GenericQuery getMapreduceCounters(IWorkflowDb db, Set<String> stepToken, String name, Integer appType, Long endedAfter, Long endedBefore,
                                                   Set<String> specificGroups,
                                                   Set<String> specificNames) throws IOException {
-    return getMapreduceCounters(getStepAttempts(rldb, stepToken, workflowExecutionIds), specificGroups, specificNames);
+    return getMapreduceCounters(getStepAttempts(db, stepToken, name, appType, endedAfter, endedBefore), specificGroups, specificNames);
+  }
+
+  public static GenericQuery getMapreduceCounters(IWorkflowDb db, Set<String> stepToken, Set<Long> workflowExecutionIds,
+                                                  Set<String> specificGroups,
+                                                  Set<String> specificNames) throws IOException {
+    return getMapreduceCounters(getStepAttempts(db, stepToken, workflowExecutionIds), specificGroups, specificNames);
   }
 
   public static GenericQuery getMapreduceCounters(GenericQuery stepQuery,
@@ -939,18 +947,18 @@ public class WorkflowQueries {
     return query;
   }
 
-  public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, String name, Integer appType, Long endedAfter, Long endedBefore) throws IOException {
+  public static GenericQuery getStepAttempts(IWorkflowDb db, Set<String> stepTokens, String name, Integer appType, Long endedAfter, Long endedBefore) throws IOException {
     return filterStepAttempts(
-        joinStepAttempts(workflowExecutionQuery(rldb, name, appType, null, null)),
+        joinStepAttempts(workflowExecutionQuery(db, name, appType, null, null)),
         stepTokens,
         null,
         endedAfter,
         endedBefore
     );
   }
-  public static GenericQuery getStepAttempts(IRlDb rldb, Set<String> stepTokens, Set<Long> workflowExecutionIds) throws IOException {
+  public static GenericQuery getStepAttempts(IWorkflowDb db, Set<String> stepTokens, Set<Long> workflowExecutionIds) throws IOException {
 
-    GenericQuery attempts = rldb.createQuery().from(WorkflowAttempt.TBL)
+    GenericQuery attempts = db.createQuery().from(WorkflowAttempt.TBL)
         .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).in(workflowExecutionIds))
         .innerJoin(StepAttempt.TBL)
         .on(WorkflowAttempt.ID.equalTo(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class)));
