@@ -240,14 +240,10 @@ public class DbPersistence implements WorkflowStatePersistence {
 
         conn.commit();
 
-      }
-
-      catch (Exception e) {
+      } catch (Exception e) {
         conn.rollback();
         throw e;
-      }
-
-      finally {
+      } finally {
         conn.setAutoCommit(true);
       }
 
@@ -279,7 +275,8 @@ public class DbPersistence implements WorkflowStatePersistence {
             .setMaxReduceDuration(info.getMaxReduceDuration())
             .setMinReduceDuration(info.getMinReduceDuration())
             .setStdevReduceDuration(info.getReduceDurationStDev())
-
+            .setTasksSampled(info.getNumTasksSampled())
+            .setTasksFailedInSample(info.getNumFailed())
             .save();
 
         for (TaskFailure taskFailure : info.getTaskFailures()) {
@@ -292,14 +289,10 @@ public class DbPersistence implements WorkflowStatePersistence {
 
         conn.commit();
 
-      }
-
-      catch (Exception e) {
+      } catch (Exception e) {
         conn.rollback();
         throw new RuntimeException("Error recording job task info for jobID " + jobId, e);
-      }
-
-      finally {
+      } finally {
         conn.setAutoCommit(true);
       }
     }
