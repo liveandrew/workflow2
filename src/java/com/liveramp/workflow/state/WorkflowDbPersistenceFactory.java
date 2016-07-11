@@ -1,4 +1,4 @@
-package com.rapleaf.cascading_ext.workflow2.state;
+package com.liveramp.workflow.state;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,38 +15,40 @@ import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.databases.workflow_db.DatabasesImpl;
+import com.liveramp.databases.workflow_db.IDatabases;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
+import com.liveramp.databases.workflow_db.models.Application;
+import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotification;
+import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
+import com.liveramp.databases.workflow_db.models.StepAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowAttemptConfiguredNotification;
+import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
+import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
-import com.liveramp.workflow_state.Assertions;
+import com.liveramp.workflow_db_state.Assertions;
+import com.liveramp.workflow_db_state.DbPersistence;
+import com.liveramp.workflow_db_state.InitializedDbPersistence;
+import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
-import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.IStep;
-import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
-import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
-import com.rapleaf.db_schemas.DatabasesImpl;
-import com.rapleaf.db_schemas.IDatabases;
+import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.rldb.IRlDb;
-import com.rapleaf.db_schemas.rldb.models.Application;
-import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
-import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
-import com.rapleaf.db_schemas.rldb.models.StepAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptConfiguredNotification;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
-import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 
-public class DbPersistenceFactory extends WorkflowPersistenceFactory<InitializedDbPersistence> {
+public class WorkflowDbPersistenceFactory extends WorkflowPersistenceFactory<InitializedDbPersistence> {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
 
-  public DbPersistenceFactory() {
+  public WorkflowDbPersistenceFactory() {
   }
 
   @Override
@@ -67,13 +69,16 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
 
 
     DatabasesImpl databases = new DatabasesImpl();
-    IRlDb rldb = databases.getRlDb();
-    rldb.disableCaching();
+    IWorkflowDb workflowDb = databases.getWorkflowDb();
+    workflowDb.disableCaching();
 
-    Application application = getApplication(rldb, name, appType);
+    //  first, make sure there is no incomplete execution in the old DB
+    assertMigrationSafety(name, scopeId);
+
+    Application application = getApplication(workflowDb, name, appType);
     LOG.info("Using application: " + application);
 
-    WorkflowExecution.Attributes execution = getExecution(rldb, application, name, appType, scopeId);
+    WorkflowExecution.Attributes execution = getExecution(workflowDb, application, name, appType, scopeId);
     LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
     cleanUpRunningAttempts(databases, execution);
@@ -93,17 +98,17 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
         implementationBuild
     );
 
-    assertOnlyLiveAttempt(rldb, execution, attempt);
+    assertOnlyLiveAttempt(workflowDb, execution, attempt);
 
     long workflowAttemptId = attempt.getId();
     LOG.info("Using new attempt: " + attempt + " id " + workflowAttemptId);
 
-    return new InitializedDbPersistence(attempt.getId(), rldb, true, providedHandler);
+    return new InitializedDbPersistence(attempt.getId(), workflowDb, true, providedHandler);
   }
 
   @Override
   public synchronized DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<IStep, DefaultEdge> flatSteps) {
-    IRlDb rldb = persistence.getDb();
+    IWorkflowDb rldb = persistence.getDb();
 
     try {
       rldb.setAutoCommit(false);
@@ -184,7 +189,29 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
 
   }
 
-  private Application getApplication(IRlDb rldb, String name, AppType appType) throws IOException {
+  private void assertMigrationSafety(String name, String scopeId) throws IOException {
+
+    IRlDb rlDb = new com.rapleaf.db_schemas.DatabasesImpl().getRlDb();
+
+    Optional<com.rapleaf.db_schemas.rldb.models.Application> app = com.liveramp.workflow_state.WorkflowQueries.getApplication(rlDb, name);
+
+    //  new app -- totally fine to run in new DB
+    if(!app.isPresent()){
+      return;
+    }
+
+    Set<com.rapleaf.db_schemas.rldb.models.WorkflowExecution.Attributes> incomplete = com.liveramp.workflow_state.WorkflowQueries.getIncompleteExecutions(rlDb,
+        name,
+        scopeId
+    );
+
+    if(!incomplete.isEmpty()){
+      throw new RuntimeException("Will not launch workflow using workflow_db because executions are incomplete in rldb: "+incomplete);
+    }
+
+  }
+
+  private Application getApplication(IWorkflowDb rldb, String name, AppType appType) throws IOException {
 
     Optional<Application> application = WorkflowQueries.getApplication(rldb, name);
 
@@ -218,7 +245,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
   }
 
   private void cleanUpRunningAttempts(IDatabases databases, WorkflowExecution.Attributes execution) throws IOException {
-    IRlDb rldb = databases.getRlDb();
+    IWorkflowDb rldb = databases.getWorkflowDb();
 
     List<WorkflowAttempt> prevAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
     LOG.info("Found previous attempts: " + prevAttempts);
@@ -251,7 +278,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
 
   }
 
-  public void assertOnlyLiveAttempt(IRlDb rldb, WorkflowExecution.Attributes execution, WorkflowAttempt attempt) throws IOException {
+  public void assertOnlyLiveAttempt(IWorkflowDb rldb, WorkflowExecution.Attributes execution, WorkflowAttempt attempt) throws IOException {
     List<WorkflowAttempt> liveAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
     if (liveAttempts.size() != 1) {
       attempt.setStatus(AttemptStatus.FAILED.ordinal()).save();
@@ -269,7 +296,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
   );
 
   private WorkflowAttempt createAttempt(IDatabases databases, String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution.Attributes execution, String remote, String implementationBuild) throws IOException {
-    IRlDb rldb = databases.getRlDb();
+    IWorkflowDb rldb = databases.getWorkflowDb();
 
     Map<AlertSeverity, String> recipients = Maps.newHashMap();
     for (AlertSeverity severity : AlertSeverity.values()) {
@@ -304,7 +331,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
     return attempt;
   }
 
-  private ConfiguredNotification buildConfiguredNotification(IRlDb rldb, WorkflowRunnerNotification notification, String emailForSeverity) throws IOException {
+  private ConfiguredNotification buildConfiguredNotification(IWorkflowDb rldb, WorkflowRunnerNotification notification, String emailForSeverity) throws IOException {
     if (PROVIDED_HANDLER_NOTIFICATIONS.contains(notification)) {
       return rldb.configuredNotifications().create(notification.ordinal()).setProvidedAlertsHandler(true);
     } else {
@@ -326,7 +353,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
   }
 
 
-  private StepAttempt createStepAttempt(IRlDb rldb, IStep step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
+  private StepAttempt createStepAttempt(IWorkflowDb rldb, IStep step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
 
     String token = step.getCheckpointToken();
 
@@ -349,7 +376,7 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
     return StepStatus.WAITING;
   }
 
-  private WorkflowExecution.Attributes getExecution(IRlDb rldb, Application app, String name, AppType appType, String scopeId) throws IOException {
+  private WorkflowExecution.Attributes getExecution(IWorkflowDb rldb, Application app, String name, AppType appType, String scopeId) throws IOException {
 
     Set<WorkflowExecution.Attributes> incompleteExecutions = WorkflowQueries.getIncompleteExecutions(rldb, name, scopeId);
 
@@ -380,5 +407,6 @@ public class DbPersistenceFactory extends WorkflowPersistenceFactory<Initialized
     }
 
   }
+
 
 }

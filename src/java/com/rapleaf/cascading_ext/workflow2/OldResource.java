@@ -7,7 +7,7 @@ public class OldResource<T> {
   private final String relativeId;
   private final ActionId parent;
 
-  protected OldResource(String relativeId, ActionId parent) {
+  public OldResource(String relativeId, ActionId parent) {
     this.relativeId = relativeId;
     this.parent = parent;
   }

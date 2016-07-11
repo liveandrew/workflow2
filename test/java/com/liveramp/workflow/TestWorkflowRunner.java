@@ -1,4 +1,4 @@
-package com.rapleaf.cascading_ext.workflow2;
+package com.liveramp.workflow;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -37,6 +37,13 @@ import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.databases.workflow_db.DatabasesImpl;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
+import com.liveramp.databases.workflow_db.models.Application;
+import com.liveramp.databases.workflow_db.models.StepAttempt;
+import com.liveramp.databases.workflow_db.models.StepDependency;
+import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessage;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
@@ -50,25 +57,41 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
+import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow.test.MonitoredPersistenceFactory;
+import com.liveramp.workflow_db_state.DbPersistence;
+import com.liveramp.workflow_db_state.InitializedDbPersistence;
+import com.liveramp.workflow_db_state.WorkflowQueries;
+import com.liveramp.workflow_db_state.controller.ApplicationController;
+import com.liveramp.workflow_db_state.controller.ExecutionController;
 import com.liveramp.workflow_state.AttemptStatus;
-import com.liveramp.workflow_state.DbPersistence;
-import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
-import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.liveramp.workflow_state.controller.ApplicationController;
-import com.liveramp.workflow_state.controller.ExecutionController;
 import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
+import com.rapleaf.cascading_ext.workflow2.Action;
+import com.rapleaf.cascading_ext.workflow2.CascadingAction2;
+import com.rapleaf.cascading_ext.workflow2.DelayedFailingAction;
+import com.rapleaf.cascading_ext.workflow2.FailingAction;
+import com.rapleaf.cascading_ext.workflow2.FlipAction;
+import com.rapleaf.cascading_ext.workflow2.HdfsContextStorage;
+import com.rapleaf.cascading_ext.workflow2.IncrementAction2;
+import com.rapleaf.cascading_ext.workflow2.LockedAction;
+import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
+import com.rapleaf.cascading_ext.workflow2.OldResource;
+import com.rapleaf.cascading_ext.workflow2.Step;
+import com.rapleaf.cascading_ext.workflow2.UnlockWaitAction;
+import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
+import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
+import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.action.PersistNewVersion;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
@@ -78,38 +101,31 @@ import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.MultiShutdownHook;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
-import com.rapleaf.db_schemas.DatabasesImpl;
-import com.rapleaf.db_schemas.rldb.IRlDb;
-import com.rapleaf.db_schemas.rldb.models.Application;
-import com.rapleaf.db_schemas.rldb.models.StepAttempt;
-import com.rapleaf.db_schemas.rldb.models.StepDependency;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
-//  TODO don't modify this class -- modify com.liverammp.workflow.TestWorkflowRunner.  getting swept after migration
 public class TestWorkflowRunner extends WorkflowTestCase {
 
   private WorkflowPersistenceFactory hdfsPersistenceFactory = new HdfsCheckpointPersistence(getTestRoot() + "/hdfs_root");
 
-  private WorkflowPersistenceFactory dbPersistenceFactory = new DbPersistenceFactory();
+  private WorkflowPersistenceFactory dbPersistenceFactory = new WorkflowDbPersistenceFactory();
 
   @Before
   public void prepare() throws Exception {
     IncrementAction.counter = 0;
-    new DatabasesImpl().getRlDb().deleteAll();
+    new DatabasesImpl().getWorkflowDb().deleteAll();
   }
 
   private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, Step tail) throws IOException {
-    return buildWfr(persistence, Sets.newHashSet(tail));
+    return buildWfr(persistence, newHashSet(tail));
   }
 
   private WorkflowRunner buildWfr(WorkflowPersistenceFactory persistence, Set<Step> tailSteps) throws IOException {
@@ -161,13 +177,13 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step first = new Step(new IncrementAction("first"));
 
     WorkflowRunner wr = new WorkflowRunner("test",
-        new DbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(),
         new TestWorkflowOptions().setDescription("description1"),
         first
     );
     wr.run();
 
-    IRlDb rldb = new DatabasesImpl().getRlDb();
+    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
 
     assertEquals("description1", rldb.workflowAttempts().find(wr.getPersistence().getAttemptId()).getDescription());
   }
@@ -175,7 +191,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   @Test
   public void testInitialStatus() throws IOException {
-    IRlDb rldb = new DatabasesImpl().getRlDb();
+    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
 
     Step first = new Step(new IncrementAction("first"));
     WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(rldb.workflowExecutions().find(buildWfr(dbPersistenceFactory, first).getPersistence().getExecutionId()));
@@ -209,14 +225,14 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   @Test
   public void testNotificationDestinations() throws IOException {
-    IRlDb rldb = new DatabasesImpl().getRlDb();
+    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
     rldb.disableCaching();
 
     MailBuffer providedBuffer = new MailBuffer.ListBuffer();
 
     Step one = new Step(new FailingAction("fail"));
 
-    WorkflowRunner wr = new WorkflowRunner("test", new DbPersistenceFactory(), new TestWorkflowOptions()
+    WorkflowRunner wr = new WorkflowRunner("test", new WorkflowDbPersistenceFactory(), new TestWorkflowOptions()
         .setNotificationLevel(WorkflowNotificationLevel.ERROR)
         .setAlertsHandler(AlertsHandlers.builder(TeamList.DEV_TOOLS).setTestMailBuffer(providedBuffer).build()),
         one);
@@ -309,7 +325,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
             return new RecipientListBuilder();
           }
 
-        }), Sets.newHashSet(one, three));
+        }), newHashSet(one, three));
 
     try {
       runner.run();
@@ -352,9 +368,14 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         step1
     );
 
-    execute(step2);
+    new WorkflowRunner(
+        "Test Workflow",
+        new WorkflowDbPersistenceFactory(),
+        new TestWorkflowOptions(),
+        Sets.<Step>newHashSet(step2)
+    ).run();
 
-    StepDependency dep = Accessors.only(new DatabasesImpl().getRlDb().stepDependencies().findAll());
+    StepDependency dep = Accessors.only(new DatabasesImpl().getWorkflowDb().stepDependencies().findAll());
 
     StepAttempt attempt1 = dep.getStepAttempt();
     StepAttempt attempt2 = dep.getDependencyAttempt();
@@ -411,7 +432,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   private static class SubjectAlertHandler implements AlertsHandler {
 
-    private final Set<String> subjects = Sets.newHashSet();
+    private final Set<String> subjects = newHashSet();
 
     public Set<String> getSubjects() {
       return subjects;
@@ -510,7 +531,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step two = new Step(new FailingAction("two"), one);
     Step three = new Step(new IncrementAction2("three", int2), two);
 
-    WorkflowRunner run = new WorkflowRunner("Test Workflow", persistence, new TestWorkflowOptions(), Sets.newHashSet(three));
+    WorkflowRunner run = new WorkflowRunner("Test Workflow", persistence, new TestWorkflowOptions(), newHashSet(three));
 
     try {
       run.run();
@@ -526,7 +547,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     two = new Step(new NoOpAction("two"), one);
     three = new Step(new IncrementAction2("three", int2), two);
 
-    run = new WorkflowRunner("Test Workflow", persistence, new TestWorkflowOptions(), Sets.newHashSet(three));
+    run = new WorkflowRunner("Test Workflow", persistence, new TestWorkflowOptions(), newHashSet(three));
     run.run();
 
     assertEquals(1, int1.intValue());
@@ -631,7 +652,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     Wrapper<Exception> exception = new Wrapper<>();
     WorkflowRunner run = new WorkflowRunner("Test Workflow", factory, new TestWorkflowOptions().setMaxConcurrentSteps(2),
-        Sets.newHashSet(fail, last));
+        newHashSet(fail, last));
 
     WorkflowStatePersistence persistence = run.getPersistence();
 
@@ -675,7 +696,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step after = new Step(new FlipAction("after", didExecute), fail);
 
     Wrapper<Exception> exception = new Wrapper<Exception>();
-    WorkflowRunner run = new WorkflowRunner("Test Workflow", factory, new TestWorkflowOptions(), Sets.newHashSet(after));
+    WorkflowRunner run = new WorkflowRunner("Test Workflow", factory, new TestWorkflowOptions(), newHashSet(after));
     WorkflowStatePersistence persistence = run.getPersistence();
 
     Thread t = run(run, exception);
@@ -718,7 +739,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step after = new Step(new IncrementAction2("after", postConter), step);
 
     Wrapper<Exception> exception = new Wrapper<Exception>();
-    WorkflowRunner run = new WorkflowRunner("Test Workflow", factory, new TestWorkflowOptions(), Sets.newHashSet(after));
+    WorkflowRunner run = new WorkflowRunner("Test Workflow", factory, new TestWorkflowOptions(), newHashSet(after));
 
     WorkflowStatePersistence peristence = run.getPersistence();
 
@@ -745,7 +766,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     //  restart
 
-    run = new WorkflowRunner("Test Workflow", factory, new TestWorkflowOptions(), Sets.newHashSet(after));
+    run = new WorkflowRunner("Test Workflow", factory, new TestWorkflowOptions(), newHashSet(after));
     peristence = run.getPersistence();
 
     t = run(run, exception);
@@ -840,7 +861,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testDuplicateCheckpoints(WorkflowPersistenceFactory factory) throws IOException {
     try {
 
-      HashSet<Step> tails = Sets.newHashSet(
+      HashSet<Step> tails = newHashSet(
           new Step(new IncrementAction("a")),
           new Step(new IncrementAction("a")));
 
@@ -873,7 +894,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
       new WorkflowRunner(
           wf,
-          Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"), fakeStep("b", "/path/of/fakeness"))
+          newHashSet(fakeStep("a", "/fake/EVIL/../path"), fakeStep("b", "/path/of/fakeness"))
       ).run();
 
       fail("There was an invalid path!");
@@ -884,7 +905,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     WorkflowRunner wfr = buildWfr(persistence,
         new TestWorkflowOptions().setSandboxDir("//fake/path"),
-        Sets.newHashSet(fakeStep("a", "/fake/EVIL/../path"),
+        newHashSet(fakeStep("a", "/fake/EVIL/../path"),
             fakeStep("b", "/fake/./path")));
     wfr.run();
 
@@ -914,10 +935,25 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         return "." + path;
       }
     };
-    Action action = new IncrementAction(checkpointToken);
-    action.creates(dataStore);
-    action.createsTemporary(dataStore);
+    Action action = new CreateStores(checkpointToken,
+        dataStore,
+        dataStore
+    );
     return new Step(action);
+  }
+
+  public static class CreateStores extends Action {
+    
+    public CreateStores(String checkpoint, DataStore creates, DataStore createsTemporary){
+      super(checkpoint);
+      creates(creates);
+      createsTemporary(createsTemporary);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      // no op
+    }
   }
 
   @Test
@@ -929,6 +965,20 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testPathNesting2() throws IOException, ClassNotFoundException {
     testPathNesting(dbPersistenceFactory);
   }
+
+  public static class IncrementAction extends Action {
+    public IncrementAction(String checkpointToken) {
+      super(checkpointToken);
+    }
+
+    public static int counter = 0;
+
+    @Override
+    public void execute() {
+      counter++;
+    }
+  }
+
 
   public void testPathNesting(WorkflowPersistenceFactory factory) throws IOException, ClassNotFoundException {
 
@@ -945,7 +995,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         "test workflow",
         factory,
         options,
-        Sets.newHashSet(step)
+        newHashSet(step)
     );
     wfr.run();
     WorkflowStatePersistence persistence = wfr.getPersistence();
@@ -964,13 +1014,13 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     TupleDataStore store = new TupleDataStoreImpl("store", tmpRoot + "/parent-step-tmp-stores/consume-resource-tmp-stores/", "tup_out", new Fields("string"));
     List<Tuple> tups = HRap.getAllTuples(store.getTap());
 
-    assertCollectionEquivalent(Sets.newHashSet(tups), Lists.<Tuple>newArrayList(new Tuple(1)));
+    assertCollectionEquivalent(newHashSet(tups), Lists.<Tuple>newArrayList(new Tuple(1)));
 
   }
 
   @Test
   public void integrationTestCancelComplete() throws Exception {
-    IRlDb rldb = new DatabasesImpl().getRlDb();
+    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
 
     AtomicInteger step1Count = new AtomicInteger(0);
     AtomicInteger step2Count = new AtomicInteger(0);
@@ -1011,7 +1061,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   @Test
   public void integrationTestCancelTwoDeep() throws Exception {
-    IRlDb rldb = new DatabasesImpl().getRlDb();
+    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
     rldb.disableCaching();
 
     //  complete, fail, wait
@@ -1074,14 +1124,14 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
-  public static WorkflowExecutionStatus getExecutionStatus(IRlDb rldb, WorkflowStatePersistence persistence) throws IOException {
+  public static WorkflowExecutionStatus getExecutionStatus(IWorkflowDb rldb, WorkflowStatePersistence persistence) throws IOException {
     return WorkflowExecutionStatus.findByValue(rldb.workflowExecutions().find(persistence.getExecutionId()).getStatus());
   }
 
   @Test
   public void testCancelWorkflow() throws IOException {
 
-    final IRlDb rldb = new DatabasesImpl().getRlDb();
+    final IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
     rldb.disableCaching();
 
     AtomicInteger step1Count = new AtomicInteger(0);
@@ -1153,14 +1203,14 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testCancelApplication() throws Exception {
 
-    IRlDb rldb = new DatabasesImpl().getRlDb();
+    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
 
     Step step1 = new Step(new NoOpAction("step1"));
 
     WorkflowRunner restartedWorkflow = new WorkflowRunner("HUMAN_INTERVENTION",
         dbPersistenceFactory,
         new TestWorkflowOptions().setAppType(AppType.HUMAN_INTERVENTION),
-        Sets.newHashSet(step1)
+        newHashSet(step1)
     );
 
     restartedWorkflow.run();
@@ -1272,7 +1322,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     WorkflowRunner runner = new WorkflowRunner("Test Workflow",
         new DbPersistenceFactory(),
         new TestWorkflowOptions(),
-        Sets.newHashSet(step, step2)
+        newHashSet(step, step2)
     );
 
     runner.run();
@@ -1310,7 +1360,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     WorkflowRunner runner = new WorkflowRunner("Test Workflow",
         new DbPersistenceFactory(),
         new TestWorkflowOptions(),
-        Sets.newHashSet(step2)
+        newHashSet(step2)
     );
 
     try {
@@ -1325,7 +1375,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     runner = new WorkflowRunner("Test Workflow",
         new DbPersistenceFactory(),
         new TestWorkflowOptions(),
-        Sets.newHashSet(step2)
+        newHashSet(step2)
     );
 
     runner.run();
@@ -1395,7 +1445,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     //  simple -- confirm we are not calling getStepStatuses for each step
 
-    Set<Step> heads = Sets.newHashSet();
+    Set<Step> heads = newHashSet();
     for (int i = 0; i < 50; i++) {
       heads.add(new Step(new DelayAction("step-" + i)));
     }
@@ -1403,7 +1453,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step tail = new Step(new NoOpAction("tail"), heads);
 
     WorkflowRunner runner = new WorkflowRunner(
-        TestWorkflowRunner.class.getName(),
+        getClass().getName(),
         new MonitoredPersistenceFactory(new DbPersistenceFactory()),
         new TestWorkflowOptions()
             .setStepPollInterval(2000)
@@ -1428,14 +1478,14 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     AtomicLong workflowID = new AtomicLong();
 
     //  initialize the workflow with a name and scope to get an execution ID
-    InitializedWorkflow workflow = new DbPersistenceFactory().initialize(
+    InitializedWorkflow workflow = new WorkflowDbPersistenceFactory().initialize(
         new TestWorkflowOptions()
             .setUniqueIdentifier("1")
             .setAppType(AppType.HUMAN_INTERVENTION)
     );
 
     //  verify that it shows up as running after initialization
-    assertTrue(ApplicationController.isRunning(new DatabasesImpl().getRlDb(), AppType.HUMAN_INTERVENTION, "1"));
+    assertTrue(ApplicationController.isRunning(new DatabasesImpl().getWorkflowDb(), AppType.HUMAN_INTERVENTION, "1"));
 
     //  prove we can use it to do stuff when creating steps
     Step step = new Step(new SetStep(
@@ -1456,7 +1506,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testStepCreationFailure() throws IOException, InterruptedException {
 
     //  initialize the workflow with a name and scope to get an execution ID
-    InitializedWorkflow<InitializedDbPersistence> workflow = new DbPersistenceFactory().initialize(
+    InitializedWorkflow<InitializedDbPersistence> workflow = new WorkflowDbPersistenceFactory().initialize(
         "Test Workflow",
         new TestWorkflowOptions()
             .setUniqueIdentifier("1")
@@ -1475,7 +1525,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals(AttemptStatus.FAILED.ordinal(), dbInitialized.getAttempt().getStatus().intValue());
 
     //  try again
-    workflow = new DbPersistenceFactory().initialize(
+    workflow = new WorkflowDbPersistenceFactory().initialize(
         "Test Workflow",
         new TestWorkflowOptions()
             .setUniqueIdentifier("1")
