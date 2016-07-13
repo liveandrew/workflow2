@@ -23,13 +23,13 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_state.json.WorkflowJSON;
+import com.rapleaf.types.person_data.WorkflowAttemptStatus;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
@@ -154,7 +154,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
-  public AttemptStatus getStatus() throws IOException {
+  public WorkflowAttemptStatus getStatus() throws IOException {
     throw new NotImplementedException();
   }
 

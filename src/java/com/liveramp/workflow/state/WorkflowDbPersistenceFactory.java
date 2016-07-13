@@ -35,7 +35,6 @@ import com.liveramp.workflow_db_state.Assertions;
 import com.liveramp.workflow_db_state.DbPersistence;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow_db_state.WorkflowQueries;
-import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.IStep;
@@ -44,6 +43,7 @@ import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.rldb.IRlDb;
+import com.rapleaf.types.person_data.WorkflowAttemptStatus;
 
 public class WorkflowDbPersistenceFactory extends WorkflowPersistenceFactory<InitializedDbPersistence> {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
@@ -258,7 +258,7 @@ public class WorkflowDbPersistenceFactory extends WorkflowPersistenceFactory<Ini
       //  otherwise it is safe to clean up
       LOG.info("Marking old running attempt as FAILED: " + attempt);
       attempt
-          .setStatus(AttemptStatus.FAILED.ordinal())
+          .setStatus(WorkflowAttemptStatus.FAILED.ordinal())
           .setEndTime(System.currentTimeMillis())
           .save();
 
@@ -281,7 +281,7 @@ public class WorkflowDbPersistenceFactory extends WorkflowPersistenceFactory<Ini
   public void assertOnlyLiveAttempt(IWorkflowDb rldb, WorkflowExecution.Attributes execution, WorkflowAttempt attempt) throws IOException {
     List<WorkflowAttempt> liveAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
     if (liveAttempts.size() != 1) {
-      attempt.setStatus(AttemptStatus.FAILED.ordinal()).save();
+      attempt.setStatus(WorkflowAttemptStatus.FAILED.ordinal()).save();
       throw new RuntimeException("Multiple live attempts found for workflow execution! " + liveAttempts + " Not starting workflow.");
     }
   }
@@ -304,7 +304,7 @@ public class WorkflowDbPersistenceFactory extends WorkflowPersistenceFactory<Ini
     }
 
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
-        .setStatus(AttemptStatus.INITIALIZING.ordinal())
+        .setStatus(WorkflowAttemptStatus.INITIALIZING.ordinal())
         .setDescription(description)
         .setLaunchDir(launchDir)
         .setLaunchJar(launchJar)

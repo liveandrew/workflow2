@@ -51,7 +51,6 @@ import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow.test.MonitoredPersistenceFactory;
-import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.MapReduceJob;
@@ -88,6 +87,7 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
+import com.rapleaf.types.person_data.WorkflowAttemptStatus;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
@@ -179,7 +179,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     Step first = new Step(new IncrementAction("first"));
     WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(rldb.workflowExecutions().find(buildWfr(dbPersistenceFactory, first).getPersistence().getExecutionId()));
-    assertEquals(AttemptStatus.INITIALIZING.ordinal(), attempt.getStatus().intValue());
+    assertEquals(WorkflowAttemptStatus.INITIALIZING.ordinal(), attempt.getStatus().intValue());
 
   }
 
@@ -1051,12 +1051,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     }
 
     Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, getExecutionStatus(rldb, pers2));
-    assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
+    assertEquals(WorkflowAttemptStatus.FINISHED, pers2.getStatus());
 
     pers1.markStepReverted("step1");
 
     Assert.assertEquals(WorkflowExecutionStatus.INCOMPLETE, getExecutionStatus(rldb, pers2));
-    assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
+    assertEquals(WorkflowAttemptStatus.FINISHED, pers2.getStatus());
 
     step1 = new Step(new IncrementAction2("step1", step1Count));
     step2 = new Step(new IncrementAction2("step2", step2Count), step1);
@@ -1066,7 +1066,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     testWorkflow.run();
 
     Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, getExecutionStatus(rldb, pers2));
-    assertEquals(AttemptStatus.FINISHED, pers2.getStatus());
+    assertEquals(WorkflowAttemptStatus.FINISHED, pers2.getStatus());
 
     assertEquals(2, step1Count.get());
     assertEquals(1, step2Count.get());
@@ -1472,7 +1472,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     //  verify that the shutdown hook failed the attempt
     assertEquals(WorkflowExecutionStatus.INCOMPLETE.ordinal(), dbInitialized.getExecution().getStatus());
-    assertEquals(AttemptStatus.FAILED.ordinal(), dbInitialized.getAttempt().getStatus().intValue());
+    assertEquals(WorkflowAttemptStatus.FAILED.ordinal(), dbInitialized.getAttempt().getStatus().intValue());
 
     //  try again
     workflow = new DbPersistenceFactory().initialize(
@@ -1490,7 +1490,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     //  verify that the shutdown hook failed the attempt
     assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(), dbInitialized.getExecution().getStatus());
-    assertEquals(AttemptStatus.FINISHED.ordinal(), dbInitialized.getAttempt().getStatus().intValue());
+    assertEquals(WorkflowAttemptStatus.FINISHED.ordinal(), dbInitialized.getAttempt().getStatus().intValue());
     assertEquals(StepStatus.COMPLETED, runner.getPersistence().getStepStatuses().get("no-op"));
 
   }

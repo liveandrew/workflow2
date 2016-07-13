@@ -16,7 +16,6 @@ import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotificati
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
@@ -26,6 +25,7 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.types.person_data.WorkflowAttemptStatus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -39,15 +39,15 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
   @Test
   public void testAutoCleanup() throws Exception {
-    testAutoCleanup(AttemptStatus.RUNNING);
+    testAutoCleanup(WorkflowAttemptStatus.RUNNING);
   }
 
   @Test
   public void testAutoCleanup2() throws Exception {
-    testAutoCleanup(AttemptStatus.INITIALIZING);
+    testAutoCleanup(WorkflowAttemptStatus.INITIALIZING);
   }
 
-  public void testAutoCleanup(AttemptStatus dead) throws IOException {
+  public void testAutoCleanup(WorkflowAttemptStatus dead) throws IOException {
     IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
     rldb.disableCaching();
 
@@ -75,7 +75,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
     workflowRunner.run();
 
-    assertEquals(AttemptStatus.FAILED.ordinal(),
+    assertEquals(WorkflowAttemptStatus.FAILED.ordinal(),
         rldb.workflowAttempts().find(workflowAttempt.getId()).getStatus().intValue());
 
     assertEquals(StepStatus.FAILED.ordinal(),
@@ -137,7 +137,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
     long currentTime = System.currentTimeMillis();
 
     WorkflowAttempt workflowAttempt = rldb.workflowAttempts().create((int)ex.getId(), "bpodgursky", "default", "default", "localhost")
-        .setStatus(AttemptStatus.RUNNING.ordinal())
+        .setStatus(WorkflowAttemptStatus.RUNNING.ordinal())
         .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * 2));
     workflowAttempt.save();
 
