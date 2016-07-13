@@ -39,9 +39,9 @@ import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.StepStatus;
-import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.types.person_data.WorkflowAttemptStatus;
+import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 public class WorkflowJSON {
 

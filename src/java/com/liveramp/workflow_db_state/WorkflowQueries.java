@@ -47,7 +47,6 @@ import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowEnums;
-import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.jack.queries.Column;
 import com.rapleaf.jack.queries.GenericQuery;
@@ -57,6 +56,7 @@ import com.rapleaf.jack.queries.Records;
 import com.rapleaf.jack.queries.where_operators.Between;
 import com.rapleaf.jack.queries.where_operators.In;
 import com.rapleaf.jack.queries.where_operators.IsNull;
+import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 

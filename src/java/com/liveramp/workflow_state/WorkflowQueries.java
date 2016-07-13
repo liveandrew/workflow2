@@ -50,6 +50,7 @@ import com.rapleaf.jack.queries.Records;
 import com.rapleaf.jack.queries.where_operators.Between;
 import com.rapleaf.jack.queries.where_operators.In;
 import com.rapleaf.jack.queries.where_operators.IsNull;
+import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 

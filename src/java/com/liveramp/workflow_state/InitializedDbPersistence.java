@@ -10,6 +10,7 @@ import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.types.person_data.WorkflowAttemptStatus;
+import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 import static com.liveramp.workflow_state.DbPersistence.HEARTBEAT_INTERVAL;
 
