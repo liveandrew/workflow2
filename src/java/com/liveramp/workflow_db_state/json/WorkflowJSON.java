@@ -36,12 +36,12 @@ import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.workflow_db_state.DbPersistence;
 import com.liveramp.workflow_db_state.WorkflowQueries;
-import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.rapleaf.types.person_data.WorkflowAttemptStatus;
 
 public class WorkflowJSON {
 
@@ -204,7 +204,7 @@ public class WorkflowJSON {
 
     toReturn.put("process_status", WorkflowQueries.getProcessStatus(attempt, execution));
     toReturn.put("is_latest_execution", WorkflowQueries.isLatestExecution(db, execution));
-    toReturn.put("status", AttemptStatus.findByValue(attempt.getStatus()));
+    toReturn.put("status", WorkflowAttemptStatus.findByValue(attempt.getStatus()));
     toReturn.put("execution_status", WorkflowExecutionStatus.findByValue(execution.getStatus()));
 
     toReturn.put("execution", toJSON(execution.getAttributes()))
@@ -345,7 +345,7 @@ public class WorkflowJSON {
   }
 
   public static JSONObject toJSON(WorkflowAttempt.Attributes attempt) {
-    return BaseJackUtil.toJSON(attempt, MapBuilder.<WorkflowAttempt._Fields, Class<? extends Enum>>of(WorkflowAttempt._Fields.status, AttemptStatus.class).get(), "");
+    return BaseJackUtil.toJSON(attempt, MapBuilder.<WorkflowAttempt._Fields, Class<? extends Enum>>of(WorkflowAttempt._Fields.status, WorkflowAttemptStatus.class).get(), "");
   }
 
   public static JSONObject toJSON(WorkflowExecution.Attributes execution) {

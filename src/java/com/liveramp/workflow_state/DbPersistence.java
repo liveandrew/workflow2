@@ -41,6 +41,7 @@ import com.rapleaf.db_schemas.rldb.models.StepDependency;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
+import com.rapleaf.types.person_data.WorkflowAttemptStatus;
 
 public class DbPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
@@ -133,7 +134,7 @@ public class DbPersistence implements WorkflowStatePersistence {
           .put(StepAttempt._Fields.end_time, System.currentTimeMillis())
       );
 
-      init.save(init.getAttempt().setStatus(AttemptStatus.FAIL_PENDING.ordinal()));
+      init.save(init.getAttempt().setStatus(WorkflowAttemptStatus.FAIL_PENDING.ordinal()));
 
     }
   }
@@ -312,7 +313,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
       LOG.info("Starting attempt: " + init.getAttempt());
       init.save(init.getAttempt()
-          .setStatus(AttemptStatus.RUNNING.ordinal())
+          .setStatus(WorkflowAttemptStatus.RUNNING.ordinal())
           .setStartTime(System.currentTimeMillis())
       );
 
@@ -359,8 +360,8 @@ public class DbPersistence implements WorkflowStatePersistence {
       attempt.setShutdownReason(reason);
 
       //  don't override fail pending (is there a better way?)
-      if (attempt.getStatus() != AttemptStatus.FAIL_PENDING.ordinal()) {
-        attempt.setStatus(AttemptStatus.SHUTDOWN_PENDING.ordinal());
+      if (attempt.getStatus() != WorkflowAttemptStatus.FAIL_PENDING.ordinal()) {
+        attempt.setStatus(WorkflowAttemptStatus.SHUTDOWN_PENDING.ordinal());
       }
 
       init.save(attempt);
@@ -570,9 +571,9 @@ public class DbPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public AttemptStatus getStatus() throws IOException {
+  public WorkflowAttemptStatus getStatus() throws IOException {
     synchronized (lock) {
-      return AttemptStatus.findByValue(init.getAttempt().getStatus());
+      return WorkflowAttemptStatus.findByValue(init.getAttempt().getStatus());
     }
   }
 

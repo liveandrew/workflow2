@@ -245,7 +245,7 @@ public class WorkflowQueries {
 
     Integer status = attempt.getStatus();
 
-    if (!AttemptStatus.LIVE_STATUSES.contains(status)) {
+    if (!WorkflowEnums.LIVE_ATTEMPT_STATUSES.contains(status)) {
       return ProcessStatus.STOPPED;
     }
 
@@ -471,7 +471,7 @@ public class WorkflowQueries {
 
     List<WorkflowAttempt> attempts = rldb.workflowAttempts().query()
         .workflowExecutionId(executionId.intValue())
-        .whereStatus(new In<>(AttemptStatus.LIVE_STATUSES))
+        .whereStatus(new In<>(WorkflowEnums.LIVE_ATTEMPT_STATUSES))
         .find();
 
     attempts.addAll(rldb.workflowAttempts().query()

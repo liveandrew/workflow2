@@ -8,6 +8,7 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.rapleaf.types.person_data.WorkflowAttemptStatus;
 
 //  TODO somehow split up the interfaces here.  dunno how.
 public interface WorkflowStatePersistence extends InitializedPersistence{
@@ -42,7 +43,7 @@ public interface WorkflowStatePersistence extends InitializedPersistence{
   public String getName() throws IOException;
   public String getScopeIdentifier() throws IOException;
   public String getId() throws IOException;
-  public AttemptStatus getStatus() throws IOException;
+  public WorkflowAttemptStatus getStatus() throws IOException;
   public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException;
 
   //  should these belong somewhere else?  only really implemented in db-backed one

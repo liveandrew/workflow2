@@ -42,11 +42,11 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNotification;
 import com.liveramp.importer.generated.AppType;
-import com.liveramp.workflow_state.AttemptStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow_state.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.jack.queries.Column;
@@ -253,7 +253,7 @@ public class WorkflowQueries {
 
     Integer status = attempt.getStatus();
 
-    if (!AttemptStatus.LIVE_STATUSES.contains(status)) {
+    if (!WorkflowEnums.LIVE_ATTEMPT_STATUSES.contains(status)) {
       return ProcessStatus.STOPPED;
     }
 
@@ -479,7 +479,7 @@ public class WorkflowQueries {
 
     List<WorkflowAttempt> attempts = db.workflowAttempts().query()
         .workflowExecutionId(executionId.intValue())
-        .whereStatus(new In<>(AttemptStatus.LIVE_STATUSES))
+        .whereStatus(new In<>(WorkflowEnums.LIVE_ATTEMPT_STATUSES))
         .find();
 
     attempts.addAll(db.workflowAttempts().query()

@@ -9,6 +9,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
+import com.rapleaf.types.person_data.WorkflowAttemptStatus;
 
 import static com.liveramp.workflow_state.DbPersistence.HEARTBEAT_INTERVAL;
 
@@ -63,9 +64,9 @@ public class InitializedDbPersistence implements InitializedPersistence {
       WorkflowAttempt attempt = getAttempt()
           .setEndTime(System.currentTimeMillis());
 
-      if (attempt.getStatus() == AttemptStatus.INITIALIZING.ordinal()) {
+      if (attempt.getStatus() == WorkflowAttemptStatus.INITIALIZING.ordinal()) {
         LOG.info("Workflow initialized without executing, assuming failure");
-        attempt.setStatus(AttemptStatus.FAILED.ordinal());
+        attempt.setStatus(WorkflowAttemptStatus.FAILED.ordinal());
       } else {
 
         if (WorkflowQueries.workflowComplete(getExecution())) {
@@ -77,14 +78,14 @@ public class InitializedDbPersistence implements InitializedPersistence {
         }
 
         LOG.info("Stopping attempt: " + attempt);
-        if (attempt.getStatus() == AttemptStatus.FAIL_PENDING.ordinal()) {
-          attempt.setStatus(AttemptStatus.FAILED.ordinal());
-        } else if (attempt.getStatus() == AttemptStatus.SHUTDOWN_PENDING.ordinal()) {
-          attempt.setStatus(AttemptStatus.SHUTDOWN.ordinal());
-        } else if (attempt.getStatus() == AttemptStatus.FAILED.ordinal()) {
+        if (attempt.getStatus() == WorkflowAttemptStatus.FAIL_PENDING.ordinal()) {
+          attempt.setStatus(WorkflowAttemptStatus.FAILED.ordinal());
+        } else if (attempt.getStatus() == WorkflowAttemptStatus.SHUTDOWN_PENDING.ordinal()) {
+          attempt.setStatus(WorkflowAttemptStatus.SHUTDOWN.ordinal());
+        } else if (attempt.getStatus() == WorkflowAttemptStatus.FAILED.ordinal()) {
           LOG.info("Attempt was already stopped (via shutdown hook probably)");
         } else {
-          attempt.setStatus(AttemptStatus.FINISHED.ordinal());
+          attempt.setStatus(WorkflowAttemptStatus.FINISHED.ordinal());
         }
 
       }
