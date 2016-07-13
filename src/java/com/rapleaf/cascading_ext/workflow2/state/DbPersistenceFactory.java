@@ -27,7 +27,6 @@ import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.StepStatus;
-import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.DatabasesImpl;
@@ -42,6 +41,7 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.types.person_data.WorkflowAttemptStatus;
+import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 public class DbPersistenceFactory extends WorkflowPersistenceFactory<InitializedDbPersistence> {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);

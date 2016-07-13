@@ -11,7 +11,6 @@ import org.junit.Test;
 import com.liveramp.commons.Accessors;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.StepStatus;
-import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
@@ -26,6 +25,7 @@ import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.types.person_data.WorkflowAttemptStatus;
+import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

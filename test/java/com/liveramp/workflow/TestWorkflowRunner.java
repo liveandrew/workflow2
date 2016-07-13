@@ -67,7 +67,6 @@ import com.liveramp.workflow_db_state.controller.ExecutionController;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.StepStatus;
-import com.liveramp.workflow_state.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.HRap;
@@ -104,6 +103,7 @@ import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.person_data.WorkflowAttemptStatus;
+import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static junit.framework.Assert.assertFalse;
