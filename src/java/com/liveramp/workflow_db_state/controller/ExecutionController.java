@@ -13,12 +13,12 @@ import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNotification;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_db_state.Assertions;
 import com.liveramp.workflow_db_state.DbPersistence;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 public class ExecutionController {
 

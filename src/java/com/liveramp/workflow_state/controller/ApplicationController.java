@@ -11,6 +11,7 @@ import com.google.common.collect.Sets;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
@@ -21,7 +22,6 @@ import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 //  TODO not liking all the staticness of this.  figure out later
 public class ApplicationController {

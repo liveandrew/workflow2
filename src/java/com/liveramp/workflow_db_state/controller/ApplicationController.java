@@ -18,10 +18,10 @@ import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 //  TODO not liking all the staticness of this.  figure out later
 public class ApplicationController {

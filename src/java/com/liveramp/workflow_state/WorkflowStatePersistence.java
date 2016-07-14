@@ -8,7 +8,7 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.rapleaf.types.person_data.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
 
 //  TODO somehow split up the interfaces here.  dunno how.
 public interface WorkflowStatePersistence extends InitializedPersistence{

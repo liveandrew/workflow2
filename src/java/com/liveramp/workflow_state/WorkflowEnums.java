@@ -4,7 +4,7 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-import com.rapleaf.types.person_data.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
 
 public class WorkflowEnums {
 

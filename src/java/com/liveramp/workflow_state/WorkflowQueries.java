@@ -25,6 +25,7 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.Application;
@@ -50,7 +51,6 @@ import com.rapleaf.jack.queries.Records;
 import com.rapleaf.jack.queries.where_operators.Between;
 import com.rapleaf.jack.queries.where_operators.In;
 import com.rapleaf.jack.queries.where_operators.IsNull;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 

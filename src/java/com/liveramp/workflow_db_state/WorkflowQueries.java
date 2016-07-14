@@ -42,6 +42,7 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNotification;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.ProcessStatus;
@@ -56,7 +57,6 @@ import com.rapleaf.jack.queries.Records;
 import com.rapleaf.jack.queries.where_operators.Between;
 import com.rapleaf.jack.queries.where_operators.In;
 import com.rapleaf.jack.queries.where_operators.IsNull;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 
