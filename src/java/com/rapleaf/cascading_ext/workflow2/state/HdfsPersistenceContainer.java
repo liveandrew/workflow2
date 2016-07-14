@@ -29,7 +29,7 @@ import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_state.json.WorkflowJSON;
-import com.rapleaf.types.person_data.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);

@@ -24,8 +24,8 @@ import com.rapleaf.db_schemas.rldb.models.ApplicationConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.types.person_data.WorkflowAttemptStatus;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

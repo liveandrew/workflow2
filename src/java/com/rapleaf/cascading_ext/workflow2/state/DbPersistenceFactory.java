@@ -20,6 +20,8 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.Assertions;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
@@ -40,8 +42,6 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.types.person_data.WorkflowAttemptStatus;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 public class DbPersistenceFactory extends WorkflowPersistenceFactory<InitializedDbPersistence> {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);

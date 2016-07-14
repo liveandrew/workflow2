@@ -24,8 +24,8 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
-import com.rapleaf.types.person_data.WorkflowAttemptStatus;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

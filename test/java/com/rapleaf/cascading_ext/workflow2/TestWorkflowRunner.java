@@ -86,8 +86,8 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
-import com.rapleaf.types.person_data.WorkflowAttemptStatus;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
