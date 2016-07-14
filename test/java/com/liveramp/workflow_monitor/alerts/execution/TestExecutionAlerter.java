@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.alerts_handler.InMemoryAlertsHandler;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGenerator;
 import com.liveramp.workflow_state.StepStatus;
@@ -21,7 +22,6 @@ import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
-import com.rapleaf.types.person_data.WorkflowExecutionStatus;
 
 import static org.junit.Assert.assertEquals;
 
