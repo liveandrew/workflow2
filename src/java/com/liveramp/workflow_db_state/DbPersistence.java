@@ -40,13 +40,14 @@ import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
-import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow_state.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_state.json.WorkflowJSON;
@@ -91,7 +92,7 @@ public class DbPersistence implements WorkflowStatePersistence {
         StepStatus newStatus = StepStatus.findByValue((Integer)values.get(StepAttempt._Fields.step_status));
         StepStatus current = StepStatus.findByValue(attempt.getStepStatus());
 
-        if (!StepStatus.VALID_TRANSITIONS.get(current).contains(newStatus)) {
+        if (!WorkflowEnums.VALID_STEP_STATUS_TRANSITIONS.get(current).contains(newStatus)) {
           throw new RuntimeException("Cannot move step " + attempt + "from status " + current + " to " + newStatus + "!");
         }
 

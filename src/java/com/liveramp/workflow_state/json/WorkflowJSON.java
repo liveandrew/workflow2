@@ -27,7 +27,7 @@ import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.ProcessStatus;
-import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.rldb.IRlDb;

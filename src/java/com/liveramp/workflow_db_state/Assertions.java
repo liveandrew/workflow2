@@ -7,7 +7,7 @@ import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.workflow_state.ProcessStatus;
-import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow.types.StepStatus;
 
 public class Assertions {
 

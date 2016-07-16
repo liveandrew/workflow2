@@ -2,6 +2,7 @@ package com.liveramp.workflow_state;
 
 import java.io.IOException;
 
+import com.liveramp.workflow.types.StepStatus;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
