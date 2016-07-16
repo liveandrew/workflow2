@@ -13,7 +13,7 @@ import com.liveramp.java_support.alerts_handler.InMemoryAlertsHandler;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGenerator;
-import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
