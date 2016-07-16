@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.workflow_state.DbPersistence;
-import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;

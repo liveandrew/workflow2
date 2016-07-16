@@ -28,10 +28,11 @@ import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.StepState;
-import com.liveramp.workflow_state.StepStatus;
 import com.liveramp.workflow_state.WorkflowConstants;
+import com.liveramp.workflow_state.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
@@ -693,7 +694,7 @@ public final class WorkflowRunner {
         public void run() {
           String stepToken = step.getCheckpointToken();
           try {
-            if (StepStatus.NON_BLOCKING.contains(state.getStatus(stepToken))) {
+            if (WorkflowEnums.NON_BLOCKING_STEP_STATUSES.contains(state.getStatus(stepToken))) {
               LOG.info("Step " + stepToken + " was executed successfully in a prior run. Skipping.");
             } else {
 
@@ -738,7 +739,7 @@ public final class WorkflowRunner {
     public boolean allDependenciesCompleted(Map<String, StepStatus> statuses) throws IOException {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
         Step dep = dependencyGraph.getEdgeTarget(edge);
-        if (!StepStatus.NON_BLOCKING.contains(statuses.get(dep.getCheckpointToken()))) {
+        if (!WorkflowEnums.NON_BLOCKING_STEP_STATUSES.contains(statuses.get(dep.getCheckpointToken()))) {
           return false;
         }
       }

@@ -10,7 +10,7 @@ import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow_state.StepState;
-import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 

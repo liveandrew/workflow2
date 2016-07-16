@@ -23,13 +23,14 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow.types.StepStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
-import com.liveramp.workflow_state.StepStatus;
+import com.liveramp.workflow_state.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_state.json.WorkflowJSON;
-import com.liveramp.workflow.types.WorkflowAttemptStatus;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
@@ -86,7 +87,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private boolean allStepsSucceeded() {
 
     for (Map.Entry<String, StepState> stepStatuses : statuses.entrySet()) {
-      if (!StepStatus.NON_BLOCKING.contains(stepStatuses.getValue().getStatus())) {
+      if (!WorkflowEnums.NON_BLOCKING_STEP_STATUSES.contains(stepStatuses.getValue().getStatus())) {
         return false;
       }
     }
