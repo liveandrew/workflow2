@@ -189,7 +189,7 @@ public class MultiStepAction extends Action {
   }
 
   @Override
-  TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
+  protected TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
     TwoNestedCountingMap<String, String> map = new TwoNestedCountingMap<>(0L);
     for (Step step : steps) {
       map.incrementAll(step.getAction().getStepCounters());
