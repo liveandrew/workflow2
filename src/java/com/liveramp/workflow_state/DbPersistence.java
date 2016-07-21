@@ -286,6 +286,7 @@ public class DbPersistence implements WorkflowStatePersistence {
           conn.mapreduceJobTaskExceptions().create(
               (int)job.getId(),
               taskFailure.getTaskAttemptID(),
+              taskFailure.getHosturl(),
               taskFailure.getError()
           );
         }
@@ -500,7 +501,7 @@ public class DbPersistence implements WorkflowStatePersistence {
           List<TaskFailure> taskFailureList = Lists.newArrayList();
 
           for (MapreduceJobTaskException exception : conn.mapreduceJobTaskExceptions().findByMapreduceJobId(job.getIntId())) {
-            taskFailureList.add(new TaskFailure(exception.getTaskAttemptId(), exception.getException()));
+            taskFailureList.add(new TaskFailure(exception.getTaskAttemptId(), exception.getHostUrl(), exception.getException()));
           }
 
           state.addMrjob(new MapReduceJob(launched,
