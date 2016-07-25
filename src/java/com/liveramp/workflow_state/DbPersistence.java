@@ -286,8 +286,8 @@ public class DbPersistence implements WorkflowStatePersistence {
           conn.mapreduceJobTaskExceptions().create(
               (int)job.getId(),
               taskFailure.getTaskAttemptID(),
-              taskFailure.getHosturl(),
-              taskFailure.getError()
+              taskFailure.getError(),
+              taskFailure.getHosturl()
           );
         }
 
