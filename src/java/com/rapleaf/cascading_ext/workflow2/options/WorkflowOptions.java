@@ -12,6 +12,7 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
+import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
@@ -27,7 +28,7 @@ public class WorkflowOptions {
 
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
-  private OverridableProperties properties = new HadoopProperties(Maps.newHashMap(), false);
+  private OverridableProperties properties = new NestedProperties(Maps.newHashMap(), false);
   private Set<WorkflowRunnerNotification> enabledNotifications;
   private Set<WorkflowRunnerNotification> disabledNotifications = Sets.newHashSet();
   private StoreReaderLockProvider lockProvider;
