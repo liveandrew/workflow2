@@ -39,6 +39,7 @@ import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
@@ -368,7 +369,7 @@ public abstract class Action {
 
   protected Map<Object, Object> getInheritedProperties(Map<Object, Object> childProperties) {
 
-    HadoopProperties childProps = new HadoopProperties(childProperties, false);
+    NestedProperties childProps = new NestedProperties(childProperties, false);
 
     if (combinedProperties != null) {
       return childProps.override(combinedProperties).getPropertiesMap();
