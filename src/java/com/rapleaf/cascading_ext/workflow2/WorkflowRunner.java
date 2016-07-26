@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ResourceManager;
-import com.liveramp.cascading_ext.util.HadoopProperties;
+import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
@@ -673,7 +673,7 @@ public final class WorkflowRunner {
     }
 
     private OverridableProperties buildInheritedProperties() throws IOException {
-      HadoopProperties.Builder uiPropertiesBuilder = new HadoopProperties.Builder();
+      NestedProperties.Builder uiPropertiesBuilder = new NestedProperties.Builder();
       String priority = persistence.getPriority();
       String pool = persistence.getPool();
 
