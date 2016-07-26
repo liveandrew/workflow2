@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.mapred.JobConf;
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopJarUtil;
-import com.liveramp.cascading_ext.util.HadoopProperties;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_state.IStep;
@@ -37,7 +38,8 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
 
     HadoopJarUtil.ScmInfo scmInfo = HadoopJarUtil.getRemoteAndCommit();
 
-    HadoopProperties properties = options.getWorkflowJobProperties();
+    OverridableProperties properties = options.getWorkflowJobProperties();
+    Map<Object, Object> resolvedProps = properties.getPropertiesMap();
 
     final INITIALIZED initialized = initializeInternal(
         workflowName,
@@ -46,8 +48,8 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
         options.getAppType(),
         options.getHostnameProvider().getHostname(),
         System.getProperty("user.name"),
-        findDefaultValue(properties, JOB_POOL_PARAM, "default"),
-        findDefaultValue(properties, JOB_PRIORITY_PARAM, "NORMAL"),
+        findDefaultValue(resolvedProps, JOB_POOL_PARAM, "default"),
+        findDefaultValue(resolvedProps, JOB_PRIORITY_PARAM, "NORMAL"),
         System.getProperty("user.dir"),
         HadoopJarUtil.getLaunchJarName(),
         options.getEnabledNotifications(),
@@ -77,7 +79,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
   }
 
 
-  public static String findDefaultValue(HadoopProperties properties, String property, String defaultValue) {
+  public static String findDefaultValue(Map<Object, Object> properties, String property, String defaultValue) {
 
     //  fall back to static jobconf props if not set elsewhere
     JobConf jobconf = CascadingHelper.get().getJobConf();

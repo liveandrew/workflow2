@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.util.HadoopProperties;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
@@ -59,7 +60,7 @@ public final class WorkflowRunner {
   //  set this if something fails in a step (outside user-code) so we don't keep trying to start steps
   private List<Exception> internalErrors = new CopyOnWriteArrayList<Exception>();
 
-  private HadoopProperties workflowJobProperties;
+  private OverridableProperties workflowJobProperties;
 
   /**
    * how many components will we allow to execute simultaneously?
@@ -671,7 +672,7 @@ public final class WorkflowRunner {
       this.state = state;
     }
 
-    private HadoopProperties buildInheritedProperties() throws IOException {
+    private OverridableProperties buildInheritedProperties() throws IOException {
       HadoopProperties.Builder uiPropertiesBuilder = new HadoopProperties.Builder();
       String priority = persistence.getPriority();
       String pool = persistence.getPool();

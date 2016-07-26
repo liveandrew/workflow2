@@ -12,6 +12,7 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
@@ -26,7 +27,7 @@ public class WorkflowOptions {
 
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
-  private HadoopProperties properties = new HadoopProperties(Maps.newHashMap(), false);
+  private OverridableProperties properties = new HadoopProperties(Maps.newHashMap(), false);
   private Set<WorkflowRunnerNotification> enabledNotifications;
   private Set<WorkflowRunnerNotification> disabledNotifications = Sets.newHashSet();
   private StoreReaderLockProvider lockProvider;
@@ -142,7 +143,7 @@ public class WorkflowOptions {
     return addWorkflowHadoopProperties(new HadoopProperties(propertiesMap, false));
   }
 
-  public WorkflowOptions addWorkflowHadoopProperties(HadoopProperties newProperties) {
+  public WorkflowOptions addWorkflowHadoopProperties(OverridableProperties newProperties) {
     this.properties = newProperties.override(this.properties);
     return this;
   }
@@ -160,7 +161,7 @@ public class WorkflowOptions {
     return Sets.difference(enabledNotifications, disabledNotifications);
   }
 
-  public HadoopProperties getWorkflowJobProperties() {
+  public OverridableProperties getWorkflowJobProperties() {
     return properties.override(CascadingHelper.get().getDefaultHadoopProperties());
   }
 

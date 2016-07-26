@@ -51,11 +51,13 @@ import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow.test.MonitoredPersistenceFactory;
+import com.liveramp.workflow.types.StepStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
-import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
@@ -86,8 +88,6 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
-import com.liveramp.workflow.types.WorkflowAttemptStatus;
-import com.liveramp.workflow.types.WorkflowExecutionStatus;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
@@ -148,7 +148,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testRetainPool() throws IOException {
 
     assertEquals("root.dev-tools.some_pool", WorkflowPersistenceFactory
-        .findDefaultValue(new TestWorkflowOptions().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")).getWorkflowJobProperties(),
+        .findDefaultValue(new TestWorkflowOptions().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")).getWorkflowJobProperties().getPropertiesMap(),
             "mapreduce.job.queuename",
             "default"
         )

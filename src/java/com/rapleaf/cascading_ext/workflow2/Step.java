@@ -12,8 +12,8 @@ import java.util.concurrent.Callable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.IStep;
@@ -109,7 +109,7 @@ public final class Step implements IStep {
     };
   }
 
-  public void run(HadoopProperties properties) {
+  public void run(OverridableProperties properties) {
     action.internalExecute(properties);
   }
 }

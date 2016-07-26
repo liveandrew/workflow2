@@ -39,6 +39,7 @@ import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow_state.DSAction;
@@ -76,8 +77,8 @@ public abstract class Action {
 
   private StoreReaderLocker lockProvider;
   private StoreReaderLocker.LockManager lockManager;
-  private HadoopProperties stepProperties;
-  private HadoopProperties combinedProperties;
+  private OverridableProperties stepProperties;
+  private OverridableProperties combinedProperties;
 
   private FileSystem fs;
 
@@ -229,7 +230,7 @@ public abstract class Action {
     return actionId.resolve();
   }
 
-  protected final void internalExecute(HadoopProperties parentProperties) {
+  protected final void internalExecute(OverridableProperties parentProperties) {
 
     try {
 
