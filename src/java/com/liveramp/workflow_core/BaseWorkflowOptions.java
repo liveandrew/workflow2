@@ -14,7 +14,7 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.options.HostnameProvider;
 
-public class BaseWorkflowOptions<T extends BaseWorkflowOptions> {
+public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
