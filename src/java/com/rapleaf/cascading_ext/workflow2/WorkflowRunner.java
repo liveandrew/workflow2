@@ -53,8 +53,9 @@ public final class WorkflowRunner {
   public static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
 
   private final WorkflowStatePersistence persistence;
-  private final StoreReaderLocker lockProvider;
-  private final ContextStorage storage;
+
+  private final ExecuteConfig context;
+
   private final int stepPollInterval;
 
   //  set this if something fails in a step (outside user-code) so we don't keep trying to start steps
@@ -90,8 +91,6 @@ public final class WorkflowRunner {
   private final MultiShutdownHook shutdownHook;
 
   private boolean alreadyRun;
-  private final CounterFilter counterFilter;
-  private final ResourceManager<?, ?> resourceManager;
   private final TrackerURLBuilder trackerURLBuilder;
 
 
@@ -173,21 +172,24 @@ public final class WorkflowRunner {
     WorkflowOptions options = initializedData.getOptions();
 
     this.maxConcurrentSteps = options.getMaxConcurrentSteps();
-    this.counterFilter = options.getCounterFilter();
     this.semaphore = new Semaphore(maxConcurrentSteps);
-    this.lockProvider = options.getLockProvider().create();
-    this.storage = options.getStorage();
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.stepPollInterval = options.getStepPollInterval();
     this.trackerURLBuilder = options.getUrlBuilder();
+    this.context = new ExecuteConfig(
+        options.getLockProvider().create(),
+        options.getStorage(),
+        options.getCounterFilter(),
+        initializedData.getManager()
+    );
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps);
 
     assertSandbox(options.getSandboxDir());
 
-    this.resourceManager = initializedData.getManager();
     this.persistence = initializedData.prepare(dependencyGraph);
+
 
     removeRedundantEdges(dependencyGraph);
     setStepContextObjects(dependencyGraph);
@@ -219,20 +221,41 @@ public final class WorkflowRunner {
   private void setStepContextObjects(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
     for (Step step : dependencyGraph.vertexSet()) {
       step.getAction().setOptionObjects(
-          this.lockProvider,
           this.persistence,
-          this.storage,
-          this.counterFilter,
-          this.resourceManager
+          this.context
       );
     }
   }
 
-//  public static class Context {
-//    ResourceManager resourceManager;
-//
-//
-//  }
+  public static class ExecuteConfig {
+    private StoreReaderLocker lockProvider;
+    private transient ContextStorage storage;
+    private transient CounterFilter counterFilter;
+    private ResourceManager resourceManager;
+
+    public ExecuteConfig(StoreReaderLocker lockProvider, ContextStorage storage, CounterFilter counterFilter, ResourceManager resourceManager) {
+      this.lockProvider = lockProvider;
+      this.storage = storage;
+      this.counterFilter = counterFilter;
+      this.resourceManager = resourceManager;
+    }
+
+    public StoreReaderLocker getLockProvider() {
+      return lockProvider;
+    }
+
+    public ContextStorage getStorage() {
+      return storage;
+    }
+
+    public CounterFilter getCounterFilter() {
+      return counterFilter;
+    }
+
+    public ResourceManager getResourceManager() {
+      return resourceManager;
+    }
+  }
 
   private static HashSet<Step> combine(final Step first, Step... rest) {
     HashSet<Step> s = new HashSet<Step>(Arrays.asList(rest));
@@ -340,7 +363,7 @@ public final class WorkflowRunner {
       LOG.info("Removing shutdown hook");
       Runtime.getRuntime().removeShutdownHook(shutdownHook);
       LOG.info("Shutting down lock provider");
-      lockProvider.shutdown();
+      context.getLockProvider().shutdown();
       LOG.info("Timing statistics:\n" + TimeFormatting.getFormattedTimes(dependencyGraph, persistence));
     }
   }
