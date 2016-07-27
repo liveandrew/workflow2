@@ -14,7 +14,6 @@ import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.ContextStorage;
-import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 
 public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
@@ -24,35 +23,11 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   private CounterFilter counterFilter;
   private ResourceDeclarer resourceDeclarer;
 
-  private TrackerURLBuilder urlBuilder;
-  private HostnameProvider hostnameProvider;
-
   private OverridableProperties properties = new NestedProperties(Maps.newHashMap(), false);
 
 
   protected WorkflowOptions() {
   }
-
-
-  public HostnameProvider getHostnameProvider() {
-    return hostnameProvider;
-  }
-
-  public WorkflowOptions setHostnameProvider(HostnameProvider hostnameProvider) {
-    this.hostnameProvider = hostnameProvider;
-    return this;
-  }
-
-
-  public WorkflowOptions setUrlBuilder(TrackerURLBuilder urlBuilder) {
-    this.urlBuilder = urlBuilder;
-    return this;
-  }
-
-  public TrackerURLBuilder getUrlBuilder() {
-    return urlBuilder;
-  }
-
 
   public WorkflowOptions addWorkflowProperties(Map<Object, Object> propertiesMap) {
     return addWorkflowHadoopProperties(new HadoopProperties(propertiesMap, false));
