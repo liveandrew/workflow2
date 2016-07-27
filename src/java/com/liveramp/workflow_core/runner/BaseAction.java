@@ -25,13 +25,19 @@ public abstract class BaseAction<Config> {
   private OverridableProperties stepProperties;
   private OverridableProperties combinedProperties;
 
+  //  TODO this doesn't really belong here
+  private boolean failOnCounterFetch = true;
+
   private transient WorkflowStatePersistence persistence;
   private Config config;
 
   public BaseAction(String checkpointToken, Map<Object, Object> properties){
     this.actionId = new ActionId(checkpointToken);
     this.stepProperties = new NestedProperties(properties, false);
+  }
 
+  public void setFailOnCounterFetch(boolean value) {
+    this.failOnCounterFetch = value;
   }
 
   public ActionId getActionId() {
@@ -56,6 +62,10 @@ public abstract class BaseAction<Config> {
 
   protected Config getConfig() {
     return config;
+  }
+
+  protected boolean isFailOnCounterFetch() {
+    return failOnCounterFetch;
   }
 
   //  before workflow runs
