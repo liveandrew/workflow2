@@ -12,6 +12,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
+import com.rapleaf.cascading_ext.workflow2.options.HostnameProvider;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions> {
 
@@ -27,6 +28,17 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions> {
 
   private TrackerURLBuilder urlBuilder;
 
+  private HostnameProvider hostnameProvider;
+
+
+  public HostnameProvider getHostnameProvider() {
+    return hostnameProvider;
+  }
+
+  public T setHostnameProvider(HostnameProvider hostnameProvider) {
+    this.hostnameProvider = hostnameProvider;
+    return (T) this;
+  }
 
   public T setUrlBuilder(TrackerURLBuilder urlBuilder) {
     this.urlBuilder = urlBuilder;
