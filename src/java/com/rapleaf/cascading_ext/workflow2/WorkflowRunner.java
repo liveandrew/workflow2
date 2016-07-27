@@ -32,6 +32,7 @@ import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.workflow.formatting.TimeFormatting;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
@@ -47,7 +48,6 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
-import com.rapleaf.cascading_ext.workflow2.util.TimeFormatting;
 
 public final class WorkflowRunner {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowRunner.class);
