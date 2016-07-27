@@ -34,18 +34,17 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.cascading_ext.resource.WriteResourceContainer;
-import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
-import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.liveramp.workflow_core.runner.BaseAction;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
@@ -53,10 +52,9 @@ import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.counter.verifier.TemplateTapFiles;
 import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 
-public abstract class Action {
+public abstract class Action extends BaseAction {
   private static final Logger LOG = LoggerFactory.getLogger(Action.class);
 
-  private final ActionId actionId;
   private final String tmpRoot;
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
@@ -78,8 +76,6 @@ public abstract class Action {
 
   private StoreReaderLocker lockProvider;
   private StoreReaderLocker.LockManager lockManager;
-  private OverridableProperties stepProperties;
-  private OverridableProperties combinedProperties;
 
   private FileSystem fs;
 
@@ -102,9 +98,9 @@ public abstract class Action {
   }
 
   public Action(String checkpointToken, String tmpRoot, Map<Object, Object> properties) {
-    this.actionId = new ActionId(checkpointToken);
-    this.stepProperties = new HadoopProperties(properties, false);
-    this.resourceFactory = new ResourceFactory(actionId);
+    super(checkpointToken, properties);
+
+    this.resourceFactory = new ResourceFactory(getActionId());
 
     if (tmpRoot != null) {
       this.tmpRoot = tmpRoot + "/" + checkpointToken + "-tmp-stores";
@@ -114,10 +110,6 @@ public abstract class Action {
       this.builder = null;
     }
 
-  }
-
-  public ActionId getActionId() {
-    return actionId;
   }
 
   protected FileSystem getFS() throws IOException {
@@ -185,9 +177,6 @@ public abstract class Action {
     datastores.put(action, store);
   }
 
-  // Don't call this method directly!
-  protected abstract void execute() throws Exception;
-
   public DataStoreBuilder builder() {
     return builder;
   }
@@ -227,45 +216,29 @@ public abstract class Action {
     storage.set(resource, value);
   }
 
-  public String fullId() {
-    return actionId.resolve();
-  }
+  @Override
+  protected final void preExecute() throws Exception {
+    //  only set properties not explicitly set by the step
 
-  protected final void internalExecute(OverridableProperties parentProperties) {
+    prepDirs();
 
-    try {
+    lockManager.lockConsumeStart();
 
-      //  only set properties not explicitly set by the step
-      combinedProperties = stepProperties.override(parentProperties);
-
-      prepDirs();
-
-      lockManager.lockConsumeStart();
-
-      LOG.info("Setting read resources");
-      for (Resource resource : readResources.keySet()) {
-        readResources.get(resource).setResource(resourceManager.getReadPermission(resource));
-      }
-
-      LOG.info("Setting write resources");
-      for (Resource resource : writeResources.keySet()) {
-        writeResources.get(resource).setResource(resourceManager.getWritePermission(resource));
-      }
-
-      execute();
-
-    } catch (Throwable t) {
-      LOG.error("Action " + fullId() + " failed due to Throwable", t);
-      throw wrapRuntimeException(t);
-    } finally {
-
-      lockManager.release();
-
+    LOG.info("Setting read resources");
+    for (Resource resource : readResources.keySet()) {
+      readResources.get(resource).setResource(resourceManager.getReadPermission(resource));
     }
+
+    LOG.info("Setting write resources");
+    for (Resource resource : writeResources.keySet()) {
+      writeResources.get(resource).setResource(resourceManager.getWritePermission(resource));
+    }
+
   }
 
-  private static RuntimeException wrapRuntimeException(Throwable t) {
-    return (t instanceof RuntimeException) ? (RuntimeException)t : new RuntimeException(t);
+  @Override
+  protected final void onFinish(){
+    lockManager.release();
   }
 
   public Set<DataStore> getDatastores(DSAction... actions) {
@@ -309,11 +282,6 @@ public abstract class Action {
       throw new RuntimeException("Temp root not set for action " + this.toString());
     }
     return tmpRoot;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + " [checkpointToken=" + getActionId().getRelativeName() + "]";
   }
 
   /**
@@ -371,12 +339,14 @@ public abstract class Action {
 
     NestedProperties childProps = new NestedProperties(childProperties, false);
 
+    OverridableProperties combinedProperties = getCombinedProperties();
+
     if (combinedProperties != null) {
       return childProps.override(combinedProperties).getPropertiesMap();
     }
     //TODO Sweep direct calls to execute() so we don't have to do this!
     else {
-      return childProps.override(stepProperties.override(CascadingHelper.get().getDefaultHadoopProperties()))
+      return childProps.override(getStepProperties().override(CascadingHelper.get().getDefaultHadoopProperties()))
           .getPropertiesMap();
     }
   }
@@ -386,7 +356,7 @@ public abstract class Action {
   }
 
   protected FlowConnector buildFlowConnector() {
-    return CascadingHelper.get().getFlowConnector(combinedProperties.getPropertiesMap());
+    return CascadingHelper.get().getFlowConnector(getCombinedProperties().getPropertiesMap());
   }
 
   private FlowConnector buildFlowConnector(Map<Object, Object> properties) {
@@ -454,15 +424,13 @@ public abstract class Action {
   }
 
   protected TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
-    String actionId = this.actionId.resolve();
     ThreeNestedMap<String, String, String, Long> allCounters = persistence.getCountersByStep();
-    return allCounters.get(actionId);
+    return allCounters.get(getActionId().resolve());
   }
 
   DurationInfo getDurationInfo() throws IOException {
-    String actionId = this.actionId.resolve();
     Map<String, StepState> stepStatuses = persistence.getStepStates();
-    StepState stepState = stepStatuses.get(actionId);
+    StepState stepState = stepStatuses.get(getActionId().resolve());
     return new DurationInfo(stepState.getStartTimestamp(), stepState.getEndTimestamp());
   }
 

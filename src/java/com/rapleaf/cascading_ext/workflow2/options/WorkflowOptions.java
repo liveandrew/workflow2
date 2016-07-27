@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
-import com.liveramp.cascading_ext.util.HadoopProperties;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
@@ -30,7 +29,7 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   }
 
   public WorkflowOptions addWorkflowProperties(Map<Object, Object> propertiesMap) {
-    return addWorkflowHadoopProperties(new HadoopProperties(propertiesMap, false));
+    return addWorkflowHadoopProperties(new NestedProperties(propertiesMap, false));
   }
 
   public WorkflowOptions addWorkflowHadoopProperties(OverridableProperties newProperties) {

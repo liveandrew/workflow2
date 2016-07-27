@@ -228,6 +228,12 @@ public final class WorkflowRunner {
     }
   }
 
+//  public static class Context {
+//    ResourceManager resourceManager;
+//
+//
+//  }
+
   private static HashSet<Step> combine(final Step first, Step... rest) {
     HashSet<Step> s = new HashSet<Step>(Arrays.asList(rest));
     s.add(first);
