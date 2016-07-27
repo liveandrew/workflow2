@@ -3,6 +3,7 @@ package com.liveramp.workflow_core.runner;
 import java.io.IOException;
 import java.util.Map;
 
+import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +12,8 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.workflow.ActionId;
+import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
@@ -67,7 +70,10 @@ public abstract class BaseAction<Config> {
   //  after execute, either fail or succeed
   protected abstract void postExecute();
 
-  //  not really public : / make package private after cleanup
+  //  inputs and outputs of the action
+  public abstract Multimap<DSAction, DataStoreInfo> getAllDataStoreInfo();
+
+    //  not really public : / make package private after cleanup
   public final void setOptionObjects(WorkflowStatePersistence persistence,
                                      Config context){
     this.persistence = persistence;
