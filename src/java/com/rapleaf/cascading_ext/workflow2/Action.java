@@ -72,9 +72,6 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
   private FileSystem fs;
 
-
-  private boolean failOnCounterFetch = true;
-
   public Action(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
   }
@@ -366,7 +363,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     JobPersister persister = getPersister();
     tracked.complete(
         persister,
-        failOnCounterFetch
+        isFailOnCounterFetch()
     );
   }
 
@@ -380,11 +377,6 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
       return completeWithProgress(buildFlow(properties).connect(name, source, sink, tail));
     }
   }
-
-  public void setFailOnCounterFetch(boolean value) {
-    this.failOnCounterFetch = value;
-  }
-
 
   //  everything we feel like exposing to pre-execute hooks in CA2.  I don't really love that it's here, but this way
   //  we don't have to make these methods public.  there should be a cleaner way but I can't think of it.

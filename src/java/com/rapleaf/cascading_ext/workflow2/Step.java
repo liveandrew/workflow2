@@ -12,13 +12,14 @@ import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.collections.properties.OverridableProperties;
+import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.IStep;
 
 public final class Step implements IStep {
 
-  private final Action action;
+  private final BaseAction action;
   private final Set<Step> dependencies;
   private Set<Step> children;
 
@@ -53,7 +54,7 @@ public final class Step implements IStep {
     return Collections.unmodifiableSet(dependencies);
   }
 
-  public Action getAction() {
+  public BaseAction getAction() {
     return action;
   }
 

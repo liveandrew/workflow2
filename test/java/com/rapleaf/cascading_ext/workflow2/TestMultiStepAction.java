@@ -7,6 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 
+import com.liveramp.workflow_core.runner.BaseAction;
+
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
@@ -49,7 +51,8 @@ public class TestMultiStepAction extends WorkflowTestCase {
 
     //  assert that the tmp root is set
     assertEquals(getTestRoot()+"/msa-tmp-stores", msa.getTmpRoot());
-    assertEquals(getTestRoot()+"/msa-tmp-stores/a-tmp-stores", a.getAction().getTmpRoot());
+    BaseAction action = a.getAction();
+    assertEquals(getTestRoot()+"/msa-tmp-stores/a-tmp-stores", ((Action)action).getTmpRoot());
 
     assertEquals(new HashSet<Step>(Arrays.asList(a, b, g)), msa.getHeadSteps());
   }
