@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -31,13 +33,13 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowConstants;
 import com.liveramp.workflow_state.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
@@ -305,9 +307,9 @@ public final class WorkflowRunner {
     return persistence;
   }
 
-  private void checkStepsSandboxViolation(Set<DataStore> dataStores, String sandboxDir) throws IOException {
+  private void checkStepsSandboxViolation(Collection<DataStoreInfo> dataStores, String sandboxDir) throws IOException {
     if (dataStores != null) {
-      for (DataStore dataStore : dataStores) {
+      for (DataStoreInfo dataStore : dataStores) {
         if (!isSubPath(sandboxDir, dataStore.getPath())) {
           throw new IOException("Step wants to write outside of sandbox \""
               + sandboxDir + "\"" + " into \"" + dataStore.getPath() + "\"");
@@ -323,8 +325,10 @@ public final class WorkflowRunner {
         for (Step step : getPhsyicalDependencyGraph().vertexSet()) {
           Action stepAction = step.getAction();
           if (stepAction != null) { // TODO: check if this check is necessary, it shouldn't be
-            checkStepsSandboxViolation(stepAction.getDatastores(DSAction.CREATES), sandboxDir);
-            checkStepsSandboxViolation(stepAction.getDatastores(DSAction.CREATES_TEMPORARY), sandboxDir);
+            Multimap<DSAction, DataStoreInfo> dsInfo = stepAction.getAllDataStoreInfo();
+
+            checkStepsSandboxViolation(dsInfo.get(DSAction.CREATES), sandboxDir);
+            checkStepsSandboxViolation(dsInfo.get(DSAction.CREATES_TEMPORARY), sandboxDir);
           }
         }
       } catch (Exception e) {

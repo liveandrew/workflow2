@@ -16,7 +16,6 @@ import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.java_support.event_timer.MultiTimedEvent;
-import com.liveramp.workflow_state.DSAction;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 
@@ -167,18 +166,6 @@ public class MultiStepAction extends Action {
       throw new RuntimeException(
           "Steps in a multi-step action must be set before thay can be used!");
     }
-  }
-
-  @Override
-  public Set<DataStore> getDatastores(DSAction... actions) {
-
-    Set<DataStore> combined = Sets.newHashSet();
-
-    for (Step step : getSubSteps()) {
-      combined.addAll(step.getAction().getDatastores(actions));
-    }
-
-    return combined;
   }
 
   @Override

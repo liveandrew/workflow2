@@ -5,11 +5,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
@@ -17,7 +15,6 @@ import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.IStep;
-import com.rapleaf.cascading_ext.datastore.DataStore;
 
 public final class Step implements IStep {
 
@@ -62,15 +59,7 @@ public final class Step implements IStep {
 
   @Override
   public Multimap<DSAction, DataStoreInfo> getDataStores() {
-    Multimap<DSAction, DataStoreInfo> stores = HashMultimap.create();
-    for (Map.Entry<DSAction, DataStore> entry : getAction().getAllDatastores().entries()) {
-      stores.put(entry.getKey(), new DataStoreInfo(
-          entry.getValue().getName(),
-          entry.getClass().getName(),
-          entry.getValue().getPath()
-      ));
-    }
-    return stores;
+    return action.getAllDataStoreInfo();
   }
 
   public String getCheckpointToken() {

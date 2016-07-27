@@ -40,6 +40,7 @@ import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.DataStoreInfo;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
@@ -226,11 +227,11 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
   @Override
-  protected final void postExecute(){
+  protected final void postExecute() {
     lockManager.release();
   }
 
-  public Set<DataStore> getDatastores(DSAction... actions) {
+  private Set<DataStore> getDatastores(DSAction... actions) {
     Set<DataStore> stores = Sets.newHashSet();
 
     for (DSAction dsAction : actions) {
@@ -240,9 +241,20 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     return stores;
   }
 
-  public Multimap<DSAction, DataStore> getAllDatastores() {
-    return datastores;
+  public Multimap<DSAction, DataStoreInfo> getAllDataStoreInfo() {
+
+    Multimap<DSAction, DataStoreInfo> stores = HashMultimap.create();
+
+    for (Map.Entry<DSAction, DataStore> entry : datastores.entries()) {
+      stores.put(entry.getKey(), new DataStoreInfo(
+          entry.getValue().getName(),
+          entry.getClass().getName(),
+          entry.getValue().getPath()
+      ));
+    }
+    return stores;
   }
+
 
   @SuppressWarnings("PMD.BlacklistedMethods") //  temporary hopefully, until we get more cluster space
   private void prepDirs() throws Exception {
@@ -341,7 +353,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
 
-  protected JobPersister getPersister(){
+  protected JobPersister getPersister() {
     return new WorkflowJobPersister(
         getPersistence(),
         getActionId().resolve(),
@@ -350,7 +362,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     );
   }
 
-  protected void completeWithProgress(TrackedOperation tracked){
+  protected void completeWithProgress(TrackedOperation tracked) {
     JobPersister persister = getPersister();
     tracked.complete(
         persister,
