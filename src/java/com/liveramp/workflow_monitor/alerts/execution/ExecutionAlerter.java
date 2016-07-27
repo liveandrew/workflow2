@@ -25,7 +25,7 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
-import com.liveramp.workflow_state.WorkflowConstants;
+import com.liveramp.workflow_core.WorkflowConstants;
 import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.IDatabases;
