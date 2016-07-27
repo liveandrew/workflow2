@@ -6,7 +6,6 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 
-import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
@@ -24,9 +23,6 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions> {
   private Integer stepPollInterval;
   private String sandboxDir;
   private String description;
-
-  private ResourceDeclarer resourceDeclarer;
-
 
   public String getDescription() {
     return description;
