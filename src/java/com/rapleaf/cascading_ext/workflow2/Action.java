@@ -31,22 +31,28 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.ReadResourceContainer;
 import com.liveramp.cascading_ext.resource.Resource;
+import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
+import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
+import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
-import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.StepState;
+import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.liveramp.workflow_core.runner.BaseAction;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.counter.verifier.TemplateTapFiles;
 import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 
-public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
+public abstract class Action extends BaseAction {
   private static final Logger LOG = LoggerFactory.getLogger(Action.class);
 
   private final String tmpRoot;
@@ -57,6 +63,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   private final ResourceFactory resourceFactory;
   private final DataStoreBuilder builder;
 
+  private ResourceManager resourceManager;
 
   //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
   //  which actually make sense...
@@ -67,10 +74,14 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
   private final Multimap<ResourceAction, OldResource> resources = HashMultimap.create();
 
+  private StoreReaderLocker lockProvider;
   private StoreReaderLocker.LockManager lockManager;
 
   private FileSystem fs;
 
+  private transient ContextStorage storage;
+  private transient WorkflowStatePersistence persistence;
+  private transient CounterFilter counterFilter;
 
   private boolean failOnCounterFetch = true;
 
@@ -185,15 +196,15 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
       throw new RuntimeException("Cannot use resource without declaring it with uses()");
     }
 
-    return getConfig().getStorage().get(resource);
+    return storage.get(resource);
   }
 
   protected <T> T get(ReadResource<T> resource) {
-    return (T)getConfig().getResourceManager().read(resource);
+    return (T)resourceManager.read(resource);
   }
 
   protected <T, R extends WriteResource<T>> void set(R resource, T value) {
-    getConfig().getResourceManager().write(resource, value);
+    resourceManager.write(resource, value);
   }
 
   @Deprecated
@@ -202,7 +213,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
       throw new RuntimeException("Cannot set resource without declaring it with creates()");
     }
 
-    getConfig().getStorage().set(resource, value);
+    storage.set(resource, value);
   }
 
   @Override
@@ -215,18 +226,18 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
     LOG.info("Setting read resources");
     for (Resource resource : readResources.keySet()) {
-      readResources.get(resource).setResource(getConfig().getResourceManager().getReadPermission(resource));
+      readResources.get(resource).setResource(resourceManager.getReadPermission(resource));
     }
 
     LOG.info("Setting write resources");
     for (Resource resource : writeResources.keySet()) {
-      writeResources.get(resource).setResource(getConfig().getResourceManager().getWritePermission(resource));
+      writeResources.get(resource).setResource(resourceManager.getWritePermission(resource));
     }
 
   }
 
   @Override
-  protected final void postExecute(){
+  protected final void onFinish(){
     lockManager.release();
   }
 
@@ -273,15 +284,47 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     return tmpRoot;
   }
 
-  @Override
-  protected void initialize(WorkflowRunner.ExecuteConfig context) {
-    this.lockManager = context.getLockProvider()
+  /**
+   * Set an application-specific status message to display. This will be
+   * visible in the logs as well as through the UI. This is a great place to
+   * report progress or choices.
+   *
+   * @param statusMessage
+   */
+  protected void setStatusMessage(String statusMessage) throws IOException {
+    LOG.info("Status Message: " + statusMessage);
+    persistence.markStepStatusMessage(fullId(), statusMessage);
+  }
+
+  /**
+   * Same as {@link #setStatusMessage(String)} but only logs failures
+   * doesn't rethrow.
+   */
+  protected void setStatusMessageSafe(String message) {
+    try {
+      setStatusMessage(message);
+    } catch (Exception e) {
+      LOG.warn("Couldn't set status message.");
+    }
+  }
+
+  protected void setOptionObjects(StoreReaderLocker lockProvider,
+                                  WorkflowStatePersistence persistence,
+                                  ContextStorage storage,
+                                  CounterFilter counterFilter,
+                                  ResourceManager resourceManager) {
+    this.lockProvider = lockProvider;
+    this.persistence = persistence;
+    this.storage = storage;
+    this.counterFilter = counterFilter;
+    this.resourceManager = resourceManager;
+    this.lockManager = lockProvider
         .createManager(getDatastores(DSAction.READS_FROM))
         .lockProcessStart();
   }
 
   protected StoreReaderLocker getLockProvider() {
-    return getConfig().getLockProvider();
+    return lockProvider;
   }
 
   protected FlowBuilder buildFlow(Map<Object, Object> properties) {
@@ -342,12 +385,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
 
   protected JobPersister getPersister(){
-    return new WorkflowJobPersister(
-        getPersistence(),
-        getActionId().resolve(),
-        getConfig().getCounterFilter(),
-        Lists.<WorkflowJobPersister.CounterVerifier>newArrayList(new TemplateTapFiles())
-    );
+    return new WorkflowJobPersister(persistence, getActionId().resolve(), counterFilter, Lists.<WorkflowJobPersister.CounterVerifier>newArrayList(new TemplateTapFiles()));
   }
 
   protected void completeWithProgress(TrackedOperation tracked){
@@ -373,6 +411,49 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     this.failOnCounterFetch = value;
   }
 
+  protected long getCurrentExecutionId() throws IOException {
+    return persistence.getExecutionId();
+  }
+
+  protected TwoNestedMap<String, String, Long> getFlatCounters() throws IOException {
+    return persistence.getFlatCounters();
+  }
+
+  protected ThreeNestedMap<String, String, String, Long> getAllCountersByStep() throws IOException {
+    return persistence.getCountersByStep();
+  }
+
+  protected TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
+    ThreeNestedMap<String, String, String, Long> allCounters = persistence.getCountersByStep();
+    return allCounters.get(getActionId().resolve());
+  }
+
+  DurationInfo getDurationInfo() throws IOException {
+    Map<String, StepState> stepStatuses = persistence.getStepStates();
+    StepState stepState = stepStatuses.get(getActionId().resolve());
+    return new DurationInfo(stepState.getStartTimestamp(), stepState.getEndTimestamp());
+  }
+
+  //  TODO I don't love having a new class here but returning just a StepState doesn't make sense with
+  // calling futures on MSAs and requiring people to specify checkpoint tokens to fetch data breaks modularity
+  //  (shouldn't have to know inner tokens of other actions you're using)
+  public static class DurationInfo {
+    private final long startTime;
+    private final long endTime;
+
+    public DurationInfo(long startTime, long endTime) {
+      this.startTime = startTime;
+      this.endTime = endTime;
+    }
+
+    public long getStartTime() {
+      return startTime;
+    }
+
+    public long getEndTime() {
+      return endTime;
+    }
+  }
 
   //  everything we feel like exposing to pre-execute hooks in CA2.  I don't really love that it's here, but this way
   //  we don't have to make these methods public.  there should be a cleaner way but I can't think of it.
