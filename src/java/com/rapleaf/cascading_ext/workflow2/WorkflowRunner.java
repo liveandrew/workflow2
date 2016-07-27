@@ -27,6 +27,7 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
+import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
@@ -45,7 +46,6 @@ import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
-import com.rapleaf.cascading_ext.workflow2.state.MultiShutdownHook;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.util.TimeFormatting;
 

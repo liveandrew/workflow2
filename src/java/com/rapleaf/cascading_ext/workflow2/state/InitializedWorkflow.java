@@ -4,6 +4,7 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
