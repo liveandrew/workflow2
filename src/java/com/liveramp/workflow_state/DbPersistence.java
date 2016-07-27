@@ -32,6 +32,7 @@ import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_state.json.WorkflowJSON;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.ConfiguredNotification;
