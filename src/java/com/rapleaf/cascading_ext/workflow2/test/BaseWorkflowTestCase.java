@@ -81,7 +81,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
         new DbPersistenceFactory(),
         options
             .setStorage(storage)
-            .setResourceManager(ResourceManagers.inMemoryResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getRlDb())),
+            .setResourceManager(ResourceManagers.inMemoryResourceManager()),
         steps);
     workflowRunner.run();
     return workflowRunner;
