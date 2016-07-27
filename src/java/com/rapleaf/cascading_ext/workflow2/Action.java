@@ -44,6 +44,7 @@ import com.liveramp.workflow_state.DataStoreInfo;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.counter.verifier.TemplateTapFiles;
 import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 
@@ -351,12 +352,21 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
 
   protected JobPersister getPersister() {
-    return new WorkflowJobPersister(
+      return new WorkflowJobPersister(
         getPersistence(),
         getActionId().resolve(),
-        getConfig().getCounterFilter(),
+        getCounterFilter(),
         Lists.<WorkflowJobPersister.CounterVerifier>newArrayList(new TemplateTapFiles())
     );
+  }
+
+  //  TODO sweep after killing thing that run steps stupidly
+  private CounterFilter getCounterFilter(){
+    WorkflowRunner.ExecuteConfig config = getConfig();
+    if(config != null){
+      return config.getCounterFilter();
+    }
+    return null;
   }
 
   protected void completeWithProgress(TrackedOperation tracked) {
