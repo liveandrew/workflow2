@@ -10,7 +10,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-class InMemoryStorage implements Storage {
+public class InMemoryStorage implements Storage {
 
   private Map<String, Object> map = Maps.newHashMap();
 
