@@ -11,6 +11,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions> {
 
@@ -23,6 +24,19 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions> {
   private Integer stepPollInterval;
   private String sandboxDir;
   private String description;
+
+  private TrackerURLBuilder urlBuilder;
+
+
+  public T setUrlBuilder(TrackerURLBuilder urlBuilder) {
+    this.urlBuilder = urlBuilder;
+    return (T) this;
+  }
+
+  public TrackerURLBuilder getUrlBuilder() {
+    return urlBuilder;
+  }
+
 
   public String getDescription() {
     return description;
