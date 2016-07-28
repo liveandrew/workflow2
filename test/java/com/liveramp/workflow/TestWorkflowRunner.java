@@ -37,7 +37,6 @@ import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
@@ -100,6 +99,7 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
+import com.liveramp.commons.util.MultiShutdownHook;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
@@ -164,7 +164,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testRetainPool() throws IOException {
 
     assertEquals("root.dev-tools.some_pool", WorkflowPersistenceFactory
-        .findDefaultValue(new TestWorkflowOptions().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")),
+        .findDefaultValue(new TestWorkflowOptions().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")).getWorkflowJobProperties().getPropertiesMap(),
             "mapreduce.job.queuename",
             "default"
         )
