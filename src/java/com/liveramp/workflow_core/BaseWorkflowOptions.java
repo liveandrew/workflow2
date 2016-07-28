@@ -147,7 +147,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     if (uniqueIdentifier != null && uniqueIdentifier.equals("__NULL")) {
       throw new IllegalArgumentException("This is temporarily a reserved scope, while making scope not null");
     }
-    this.uniqueIdentifier = uniqueIdentifier;
+    this.uniqueIdentifier = uniqueIdentifier; 
     return (T) this;
   }
 
@@ -198,7 +198,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     //  first look at configured properties
     Map<Object, OverridableProperties.Property> map = properties.getMap();
     if (map.containsKey(property)) {
-      return map.get(property);
+      return map.get(property).value;
     }
 
     //  then stuff in the jobconf
