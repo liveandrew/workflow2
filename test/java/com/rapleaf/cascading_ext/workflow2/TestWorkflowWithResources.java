@@ -12,8 +12,6 @@ import org.apache.hadoop.fs.Path;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import com.liveramp.cascading_ext.resource.DbStorage;
-import com.liveramp.cascading_ext.resource.DbStorageRootDeterminer;
 import com.liveramp.cascading_ext.resource.HdfsStorage;
 import com.liveramp.cascading_ext.resource.HdfsStorageRootDeterminer;
 import com.liveramp.cascading_ext.resource.ReadResource;
@@ -25,6 +23,9 @@ import com.liveramp.cascading_ext.resource.ResourceManagerContainer;
 import com.liveramp.cascading_ext.resource.ResourceStorages;
 import com.liveramp.cascading_ext.resource.RootManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
+import com.liveramp.resource_db_manager.DbResourceManager;
+import com.liveramp.resource_db_manager.DbStorage;
+import com.liveramp.resource_db_manager.DbStorageRootDeterminer;
 import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
@@ -68,7 +69,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
 
   @NotNull
   private DbStorage.Factory getStorage(IRlDb rldb) {
-    return ResourceStorages.dbStorage(rldb, Maps.<Class, JsonReader.ClassFactory>newHashMap());
+    return DbResourceManager.dbStorage(rldb, Maps.<Class, JsonReader.ClassFactory>newHashMap());
   }
 
   private HdfsStorage.Factory getHdfsStorage() {
