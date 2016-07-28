@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.hadoop.mapred.JobConf;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
@@ -17,11 +16,11 @@ import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 
 import static com.rapleaf.cascading_ext.workflow2.WorkflowRunner.JOB_POOL_PARAM;
@@ -49,8 +48,8 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
         options.getAppType(),
         options.getHostnameProvider().getHostname(),
         System.getProperty("user.name"),
-        findDefaultValue(resolvedProps, JOB_POOL_PARAM, "default"),
-        findDefaultValue(resolvedProps, JOB_PRIORITY_PARAM, "NORMAL"),
+        findDefaultValue(options, JOB_POOL_PARAM, "default"),
+        findDefaultValue(options, JOB_PRIORITY_PARAM, "NORMAL"),
         System.getProperty("user.dir"),
         HadoopJarUtil.getLaunchJarName(),
         options.getEnabledNotifications(),
@@ -80,19 +79,13 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
   }
 
 
-  public static String findDefaultValue(Map<Object, Object> properties, String property, String defaultValue) {
+  public static String findDefaultValue(BaseWorkflowOptions options, String property, String defaultValue) {
 
-    //  fall back to static jobconf props if not set elsewhere
-    JobConf jobconf = CascadingHelper.get().getJobConf();
+    Object value = options.getConfiguredProperty(property);
 
-    if (properties.containsKey(property)) {
-      return (String)properties.get(property);
-    }
-
-    String value = jobconf.get(property);
 
     if (value != null) {
-      return value;
+      return value.toString();
     }
 
     //  only really expect in tests
@@ -115,7 +108,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
                                                  String remote,
                                                  String implementationBuild) throws IOException;
 
-  private void verifyName(String name, WorkflowOptions options) {
+  private void verifyName(String name, BaseWorkflowOptions options) {
     AppType appType = options.getAppType();
     if (appType != null) {
       if (!appType.name().equals(name)) {
@@ -130,7 +123,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
     }
   }
 
-  private static String getName(WorkflowOptions options) {
+  private static String getName(BaseWorkflowOptions options) {
     AppType appType = options.getAppType();
     if (appType == null) {
       throw new RuntimeException("AppType must be set in WorkflowOptions!");
