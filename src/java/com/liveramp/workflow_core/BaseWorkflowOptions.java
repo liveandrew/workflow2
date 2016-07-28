@@ -6,6 +6,7 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 
+import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
@@ -27,7 +28,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private String description;
 
   private TrackerURLBuilder urlBuilder;
-
+  private ResourceDeclarer resourceDeclarer;
   private HostnameProvider hostnameProvider;
 
 
@@ -153,5 +154,16 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     this.sandboxDir = sandboxDir;
     return (T) this;
   }
+
+  public T setResourceManager(ResourceDeclarer resourceManager) {
+    this.resourceDeclarer = resourceManager;
+    return (T) this;
+  }
+
+  public ResourceDeclarer getResourceManager() {
+    return this.resourceDeclarer;
+  }
+
+
 
 }
