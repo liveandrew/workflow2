@@ -40,8 +40,12 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   private OverridableProperties properties = new NestedProperties(Maps.newHashMap(), false);
 
+  protected BaseWorkflowOptions(OverridableProperties defaultProperties){
+    this(defaultProperties, Maps.newHashMap());
+  }
+
   protected BaseWorkflowOptions(OverridableProperties defaultProperties,
-                                Map<Object, Object> systemProperties){
+                                Map<Object, Object> systemProperties) {
     this.defaultProperties = defaultProperties;
     this.systemProperties = systemProperties;
   }
@@ -52,12 +56,12 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T setHostnameProvider(HostnameProvider hostnameProvider) {
     this.hostnameProvider = hostnameProvider;
-    return (T) this;
+    return (T)this;
   }
 
   public T setUrlBuilder(TrackerURLBuilder urlBuilder) {
     this.urlBuilder = urlBuilder;
-    return (T) this;
+    return (T)this;
   }
 
   public TrackerURLBuilder getUrlBuilder() {
@@ -71,7 +75,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T setDescription(String description) {
     this.description = description;
-    return (T) this;
+    return (T)this;
   }
 
   public int getMaxConcurrentSteps() {
@@ -80,12 +84,12 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T setMaxConcurrentSteps(int maxConcurrentSteps) {
     this.maxConcurrentSteps = maxConcurrentSteps;
-    return (T) this;
+    return (T)this;
   }
 
   public T setStepPollInterval(int ms) {
     this.stepPollInterval = ms;
-    return (T) this;
+    return (T)this;
   }
 
   public Integer getStepPollInterval() {
@@ -110,29 +114,29 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T setAlertsHandler(AlertsHandler alertsHandler) {
     this.alertsHandler = alertsHandler;
-    return (T) this;
+    return (T)this;
   }
 
   public T setEnabledNotifications(WorkflowRunnerNotification enabledNotification,
-                                                 WorkflowRunnerNotification... enabledNotifications) {
+                                   WorkflowRunnerNotification... enabledNotifications) {
     this.enabledNotifications = EnumSet.of(enabledNotification, enabledNotifications);
-    return (T) this;
+    return (T)this;
   }
 
   public T setEnabledNotifications(Set<WorkflowRunnerNotification> enabledNotifications) {
     this.enabledNotifications = EnumSet.copyOf(enabledNotifications);
-    return (T) this;
+    return (T)this;
   }
 
   public T setDisabledNotifications(WorkflowRunnerNotification disabledNotification,
-                                                  WorkflowRunnerNotification... disabledNotifications) {
+                                    WorkflowRunnerNotification... disabledNotifications) {
     this.disabledNotifications = EnumSet.of(disabledNotification, disabledNotifications);
-    return (T) this;
+    return (T)this;
   }
 
   public T setNotificationLevel(Set<WorkflowRunnerNotification> notifications) {
     enabledNotifications = EnumSet.copyOf(notifications);
-    return (T) this;
+    return (T)this;
   }
 
   public Set<WorkflowRunnerNotification> getEnabledNotifications() {
@@ -147,8 +151,8 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     if (uniqueIdentifier != null && uniqueIdentifier.equals("__NULL")) {
       throw new IllegalArgumentException("This is temporarily a reserved scope, while making scope not null");
     }
-    this.uniqueIdentifier = uniqueIdentifier; 
-    return (T) this;
+    this.uniqueIdentifier = uniqueIdentifier;
+    return (T)this;
   }
 
   public AppType getAppType() {
@@ -157,7 +161,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T setAppType(AppType appType) {
     this.appType = appType;
-    return (T) this;
+    return (T)this;
   }
 
   public String getSandboxDir() {
@@ -166,12 +170,12 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T setSandboxDir(String sandboxDir) {
     this.sandboxDir = sandboxDir;
-    return (T) this;
+    return (T)this;
   }
 
   public T setResourceManager(ResourceDeclarer resourceManager) {
     this.resourceDeclarer = resourceManager;
-    return (T) this;
+    return (T)this;
   }
 
   public ResourceDeclarer getResourceManager() {
@@ -185,7 +189,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T addWorkflowHadoopProperties(OverridableProperties newProperties) {
     this.properties = newProperties.override(this.properties);
-    return (T) this;
+    return (T)this;
   }
 
   public OverridableProperties getWorkflowJobProperties() {
@@ -193,7 +197,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   }
 
 
-  public Object getConfiguredProperty(String property){
+  public Object getConfiguredProperty(String property) {
 
     //  first look at configured properties
     Map<Object, OverridableProperties.Property> map = properties.getMap();
