@@ -5,7 +5,6 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
-import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
@@ -20,7 +19,6 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   private StoreReaderLockProvider lockProvider;
   private ContextStorage storage;
   private CounterFilter counterFilter;
-  private ResourceDeclarer resourceDeclarer;
 
   private OverridableProperties properties = new NestedProperties(Maps.newHashMap(), false);
 
@@ -53,16 +51,6 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   public WorkflowOptions setCounterFilter(CounterFilter filter) {
     this.counterFilter = filter;
     return this;
-  }
-
-
-  public WorkflowOptions setResourceManager(ResourceDeclarer resourceManager) {
-    this.resourceDeclarer = resourceManager;
-    return this;
-  }
-
-  public ResourceDeclarer getResourceManager() {
-    return this.resourceDeclarer;
   }
 
 
