@@ -1,12 +1,16 @@
 package com.liveramp.workflow_core;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
+import com.liveramp.commons.collections.properties.NestedProperties;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
@@ -16,6 +20,9 @@ import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.options.HostnameProvider;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
+
+  private final OverridableProperties defaultProperties;
+  private final Map<Object, Object> systemProperties; //  not for putting in conf, but for visibility into config
 
   private int maxConcurrentSteps;
   private AlertsHandler alertsHandler;
@@ -31,6 +38,13 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private ResourceDeclarer resourceDeclarer;
   private HostnameProvider hostnameProvider;
 
+  private OverridableProperties properties = new NestedProperties(Maps.newHashMap(), false);
+
+  protected BaseWorkflowOptions(OverridableProperties defaultProperties,
+                                Map<Object, Object> systemProperties){
+    this.defaultProperties = defaultProperties;
+    this.systemProperties = systemProperties;
+  }
 
   public HostnameProvider getHostnameProvider() {
     return hostnameProvider;
@@ -165,5 +179,35 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   }
 
 
+  public T addWorkflowProperties(Map<Object, Object> propertiesMap) {
+    return addWorkflowHadoopProperties(new NestedProperties(propertiesMap, false));
+  }
+
+  public T addWorkflowHadoopProperties(OverridableProperties newProperties) {
+    this.properties = newProperties.override(this.properties);
+    return (T) this;
+  }
+
+  public OverridableProperties getWorkflowJobProperties() {
+    return properties.override(defaultProperties);
+  }
+
+
+  public Object getConfiguredProperty(String property){
+
+    //  first look at configured properties
+    Map<Object, OverridableProperties.Property> map = properties.getMap();
+    if (map.containsKey(property)) {
+      return map.get(property);
+    }
+
+    //  then stuff in the jobconf
+    Object value = systemProperties.get(property);
+    if (value != null) {
+      return value;
+    }
+
+    return null;
+  }
 
 }
