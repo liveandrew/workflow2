@@ -3,6 +3,8 @@ package com.liveramp.workflow_core.runner;
 import java.io.IOException;
 import java.util.Map;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,10 @@ public abstract class BaseAction<Config> {
 
   private transient WorkflowStatePersistence persistence;
   private Config config;
+
+  public BaseAction(String checkpointToken) {
+    this(checkpointToken, Maps.newHashMap());
+  }
 
   public BaseAction(String checkpointToken, Map<Object, Object> properties){
     this.actionId = new ActionId(checkpointToken);
@@ -69,19 +75,27 @@ public abstract class BaseAction<Config> {
   }
 
   //  before workflow runs
-  protected abstract void initialize(Config context);
+  protected void initialize(Config context) {
+    //  default no op
+  }
 
   //  when step runs, before Action execute
-  protected abstract void preExecute() throws Exception;
+  protected void preExecute() throws Exception {
+    //  default no op
+  }
 
   //  action work, implemented by end-user
   protected abstract void execute() throws Exception;
 
   //  after execute, either fail or succeed
-  protected abstract void postExecute();
+  protected void postExecute() {
+    //  default no op
+  }
 
   //  inputs and outputs of the action
-  public abstract Multimap<DSAction, DataStoreInfo> getAllDataStoreInfo();
+  public Multimap<DSAction, DataStoreInfo> getAllDataStoreInfo(){
+    return HashMultimap.create(); // TODO make Action stop storing DataStore and store DataStoreInfo in this class
+  }
 
     //  not really public : / make package private after cleanup
   public final void setOptionObjects(WorkflowStatePersistence persistence,
@@ -106,9 +120,7 @@ public abstract class BaseAction<Config> {
       LOG.error("Action " + fullId() + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
     } finally {
-
       postExecute();
-
     }
   }
 
