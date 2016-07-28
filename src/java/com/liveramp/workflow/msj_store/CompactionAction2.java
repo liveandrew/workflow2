@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.workflow_core.runner.BaseAction;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.SeekingBucketDataStore;
@@ -20,9 +21,9 @@ import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 public class CompactionAction2<T extends Comparable, K extends Comparable> extends MultiStepAction {
   private static final Logger LOG = LoggerFactory.getLogger(CompactionAction2.class);
 
-  public static <T extends Comparable, K extends Comparable> Action build(String checkpointToken, String tmpRoot,
-                                                                          Class<T> type,
-                                                                          MSJDataStore<K> store) throws IOException {
+  public static <T extends Comparable, K extends Comparable> BaseAction build(String checkpointToken, String tmpRoot,
+                                                                              Class<T> type,
+                                                                              MSJDataStore<K> store) throws IOException {
 
     try {
 

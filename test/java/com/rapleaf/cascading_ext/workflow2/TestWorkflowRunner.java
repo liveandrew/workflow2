@@ -55,6 +55,7 @@ import com.liveramp.workflow.test.MonitoredPersistenceFactory;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.MapReduceJob;
@@ -389,7 +390,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
-  private void runFlow(Set<WorkflowRunnerNotification> level, Action toRun, List<String> expectedAlerts) throws IOException {
+  private void runFlow(Set<WorkflowRunnerNotification> level, BaseAction toRun, List<String> expectedAlerts) throws IOException {
 
     SubjectAlertHandler handler = new SubjectAlertHandler();
 

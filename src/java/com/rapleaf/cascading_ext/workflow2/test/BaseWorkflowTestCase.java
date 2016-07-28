@@ -8,6 +8,7 @@ import org.apache.log4j.Level;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
+import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.rapleaf.cascading_ext.workflow2.Action;
@@ -48,11 +49,11 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(Sets.newHashSet(step), resourceManager);
   }
 
-  public WorkflowRunner execute(Action action) throws IOException {
+  public WorkflowRunner execute(BaseAction action) throws IOException {
     return execute(Sets.newHashSet(new Step(action)));
   }
 
-  public WorkflowRunner execute(Action action, ResourceDeclarer resourceManager) throws IOException {
+  public WorkflowRunner execute(BaseAction action, ResourceDeclarer resourceManager) throws IOException {
     return execute(Sets.newHashSet(new Step(action)), resourceManager);
   }
 
