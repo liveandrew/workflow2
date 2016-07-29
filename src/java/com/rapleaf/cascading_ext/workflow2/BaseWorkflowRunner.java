@@ -96,10 +96,25 @@ public class BaseWorkflowRunner<Config> {
 
   public interface OnShutdown<Context> {
     public void shutdown(Context context);
+
+    static class NoOp implements OnShutdown {
+      @Override
+      public void shutdown(Object o) {
+        // no op
+      }
+    }
   }
 
   public interface OnStepRunnerStart {
     public void onStart();
+
+    static class NoOp implements OnStepRunnerStart {
+
+      @Override
+      public void onStart() {
+        // no op
+      }
+    }
   }
 
   private OnShutdown<Config> onShutdown;
@@ -107,6 +122,12 @@ public class BaseWorkflowRunner<Config> {
 
   private boolean alreadyRun;
   private final TrackerURLBuilder trackerURLBuilder;
+
+  public BaseWorkflowRunner(InitializedWorkflow initializedData,
+                            Set<? extends BaseStep<Config>> tailSteps,
+                            Config config) throws IOException {
+    this(initializedData, tailSteps, config, new OnShutdown.NoOp(), new OnStepRunnerStart.NoOp());
+  }
 
   public BaseWorkflowRunner(InitializedWorkflow initializedData,
                             Set<? extends BaseStep<Config>> tailSteps,

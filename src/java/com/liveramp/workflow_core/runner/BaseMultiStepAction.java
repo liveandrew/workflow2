@@ -22,6 +22,11 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
 
   private Collection<? extends BaseStep<Config>> steps;
 
+
+  public BaseMultiStepAction(String checkpointToken) {
+    this(checkpointToken, null);
+  }
+
   public BaseMultiStepAction(String checkpointToken, Collection<? extends BaseStep<Config>> steps) {
     super(checkpointToken);
     setSubSteps(steps);
@@ -51,9 +56,9 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
 
     //  all hell will break loose if there are no steps in the MSA, once it gets decomposed into steps (it will get spliced from the dep graph)
     //  give a placeholder so we propagate dependencies forward
-    if(steps.isEmpty()){
+    if (steps.isEmpty()) {
       this.steps = Sets.newHashSet(new BaseStep<Config>(new NoOp("empty-msa-placeholder")));
-    }else{
+    } else {
       this.steps = steps;
     }
 
