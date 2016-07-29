@@ -23,29 +23,29 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowRunner.class);
 
 
-  public  <K extends InitializedPersistence> WorkflowRunner(Class klass, Step tail) throws IOException {
+  public  WorkflowRunner(Class klass, Step tail) throws IOException {
     this(klass, new DbPersistenceFactory(), tail);
   }
 
-  public  <K extends InitializedPersistence> WorkflowRunner(Class klass, WorkflowOptions options, Step tail) throws IOException {
+  public  WorkflowRunner(Class klass, WorkflowOptions options, Step tail) throws IOException {
     this(klass, new DbPersistenceFactory(), options, tail);
   }
 
-  public  <K extends InitializedPersistence> WorkflowRunner(Class klass, Set<Step> tailSteps) throws IOException {
+  public  WorkflowRunner(Class klass, Set<Step> tailSteps) throws IOException {
     this(klass, new DbPersistenceFactory(), tailSteps);
   }
 
-  public  <K extends InitializedPersistence> WorkflowRunner(Class klass, WorkflowOptions options, Set<? extends BaseStep<ExecuteConfig>> tailSteps) throws IOException {
+  public WorkflowRunner(Class klass, WorkflowOptions options, Set<? extends BaseStep<ExecuteConfig>> tailSteps) throws IOException {
     this(klass, new DbPersistenceFactory(), options, tailSteps);
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
-  public  <K extends InitializedPersistence> WorkflowRunner(WorkflowOptions options, Step tail) throws IOException {
+  public  WorkflowRunner(WorkflowOptions options, Step tail) throws IOException {
     this(new DbPersistenceFactory(), options, tail);
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
-  public  <K extends InitializedPersistence> WorkflowRunner(WorkflowOptions options, Set<Step> tailSteps) throws IOException {
+  public  WorkflowRunner(WorkflowOptions options, Set<Step> tailSteps) throws IOException {
     this(new DbPersistenceFactory(), options, tailSteps);
   }
 
@@ -63,7 +63,7 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
   }
 
   private static HashSet<Step> combine(final Step first, Step... rest) {
-    HashSet<Step> s = new HashSet<Step>(Arrays.asList(rest));
+    HashSet<Step> s = new HashSet<>(Arrays.asList(rest));
     s.add(first);
     return s;
   }
@@ -98,7 +98,7 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     this(persistenceFactory.initialize(workflowName, options), tailSteps);
   }
 
-  public  <K extends InitializedPersistence> WorkflowRunner(InitializedWorkflow initializedData, Step tail) throws IOException {
+  public  WorkflowRunner(InitializedWorkflow initializedData, Step tail) throws IOException {
     this(initializedData, Sets.newHashSet(tail));
   }
 
