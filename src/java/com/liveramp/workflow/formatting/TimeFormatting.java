@@ -13,18 +13,18 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
+import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.workflow2.Step;
 
 public class TimeFormatting {
 
   private static class Node {
 
     private Map<String, Node> children = Maps.newLinkedHashMap();
-    private Step terminal;
+    private BaseStep terminal;
 
-    public void insert(LinkedList<String> tokens, Step step) {
+    public void insert(LinkedList<String> tokens, BaseStep step) {
       if (tokens.isEmpty()) {
         terminal = step;
       } else {
@@ -52,15 +52,15 @@ public class TimeFormatting {
 
   }
 
-  public static String getFormattedTimes(DirectedGraph<Step, DefaultEdge> g, WorkflowStatePersistence persistence) throws IOException {
+  public static <T> String getFormattedTimes(DirectedGraph<BaseStep<T>, DefaultEdge> g, WorkflowStatePersistence persistence) throws IOException {
 
-    TopologicalOrderIterator<Step, DefaultEdge> orderIterator =
-        new TopologicalOrderIterator<Step, DefaultEdge>(new EdgeReversedGraph<Step, DefaultEdge>(g));
+    TopologicalOrderIterator<BaseStep<T>, DefaultEdge> orderIterator =
+        new TopologicalOrderIterator<>(new EdgeReversedGraph<>(g));
 
     Node root = new Node();
 
     while (orderIterator.hasNext()) {
-      Step next = orderIterator.next();
+      BaseStep next = orderIterator.next();
       LinkedList<String> strings = Lists.newLinkedList(Arrays.asList(next.getCheckpointToken().split("__")));
       root.insert(strings, next);
     }

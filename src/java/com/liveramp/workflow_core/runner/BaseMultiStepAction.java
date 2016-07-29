@@ -17,13 +17,12 @@ import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.step.NoOp;
-import com.rapleaf.cascading_ext.workflow2.Step;
 
 public class BaseMultiStepAction<Config> extends BaseAction<Config> {
 
-  private Collection<Step> steps;
+  private Collection<? extends BaseStep<Config>> steps;
 
-  public BaseMultiStepAction(String checkpointToken, Collection<Step> steps) {
+  public BaseMultiStepAction(String checkpointToken, Collection<? extends BaseStep<Config>> steps) {
     super(checkpointToken);
     setSubSteps(steps);
   }
@@ -37,12 +36,12 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     throw new IllegalStateException("planner error: method should never be called!");
   }
 
-  public final void setSubSteps(Collection<Step> steps) {
-    Set<String> tokens = new HashSet<String>();
+  public final void setSubSteps(Collection<? extends BaseStep<Config>> steps) {
+    Set<String> tokens = new HashSet<>();
     if (steps == null) {
       return;
     }
-    for (Step s : steps) {
+    for (BaseStep<Config> s : steps) {
       if (tokens.contains(s.getSimpleCheckpointToken())) {
         throw new IllegalArgumentException("Substep checkpoint token " + s.getSimpleCheckpointToken()
             + " is used more than once in " + this);
@@ -53,29 +52,29 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     //  all hell will break loose if there are no steps in the MSA, once it gets decomposed into steps (it will get spliced from the dep graph)
     //  give a placeholder so we propagate dependencies forward
     if(steps.isEmpty()){
-      this.steps = Sets.newHashSet(new Step(new NoOp("empty-msa-placeholder")));
+      this.steps = Sets.newHashSet(new BaseStep<Config>(new NoOp("empty-msa-placeholder")));
     }else{
       this.steps = steps;
     }
 
   }
 
-  protected final void setSubStepsFromTail(Step tail) {
+  protected final void setSubStepsFromTail(BaseStep<Config> tail) {
     setSubStepsFromTails(Collections.singleton(tail));
   }
 
-  protected final void setSubStepsFromTails(Step... tails) {
+  protected final void setSubStepsFromTails(BaseStep<Config>... tails) {
     setSubStepsFromTails(Arrays.asList(tails));
   }
 
-  protected final void setSubStepsFromTails(Collection<Step> tails) {
-    Set<Step> steps = new HashSet<Step>(tails);
-    List<Step> queue = new ArrayList<Step>(tails);
+  protected final void setSubStepsFromTails(Collection<? extends BaseStep<Config>> tails) {
+    Set<BaseStep<Config>> steps = new HashSet<>(tails);
+    List<BaseStep<Config>> queue = new ArrayList<>(tails);
     int index = 0;
     while (index < queue.size()) {
-      Step curStep = queue.get(index);
-      Set<Step> deps = curStep.getDependencies();
-      for (Step curDep : deps) {
+      BaseStep<Config> curStep = queue.get(index);
+      Set<BaseStep<Config>> deps = curStep.getDependencies();
+      for (BaseStep<Config> curDep : deps) {
         if (!steps.contains(curDep)) {
           steps.add(curDep);
           queue.add(curDep);
@@ -86,15 +85,15 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     setSubSteps(steps);
   }
 
-  public Set<Step> getSubSteps() {
+  public Set<BaseStep<Config>> getSubSteps() {
     verifyStepsAreSet();
-    return new HashSet<Step>(steps);
+    return new HashSet<>(steps);
   }
 
-  public Set<Step> getHeadSteps() {
+  public Set<BaseStep<Config>> getHeadSteps() {
     verifyStepsAreSet();
-    Set<Step> heads = new HashSet<Step>();
-    for (Step s : steps) {
+    Set<BaseStep<Config>> heads = new HashSet<>();
+    for (BaseStep<Config> s : steps) {
       if (s.getDependencies().isEmpty()) {
         heads.add(s);
       }
@@ -102,10 +101,10 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     return heads;
   }
 
-  public Set<Step> getTailSteps() {
+  public Set<BaseStep<Config>> getTailSteps() {
     verifyStepsAreSet();
-    Set<Step> possibleTails = new HashSet<Step>(steps);
-    for (Step s : steps) {
+    Set<BaseStep<Config>> possibleTails = new HashSet<>(steps);
+    for (BaseStep<Config> s : steps) {
       possibleTails.removeAll(s.getDependencies());
     }
     return possibleTails;
@@ -120,7 +119,7 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
 
   @Override
   public void setFailOnCounterFetch(boolean value) {
-    for (Step step : getSubSteps()) {
+    for (BaseStep<Config> step : getSubSteps()) {
       step.getAction().setFailOnCounterFetch(value);
     }
   }
@@ -128,7 +127,7 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
   @Override
   public TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
     TwoNestedCountingMap<String, String> map = new TwoNestedCountingMap<>(0L);
-    for (Step step : steps) {
+    for (BaseStep<Config> step : steps) {
       map.incrementAll(step.getAction().getStepCounters());
     }
     return map;
@@ -140,7 +139,7 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     long minStart = Long.MAX_VALUE;
     long maxEnd = Long.MIN_VALUE;
 
-    for (Step step : steps) {
+    for (BaseStep<Config> step : steps) {
       BaseAction.DurationInfo durationInfo = step.getAction().getDurationInfo();
       minStart = Math.min(minStart, durationInfo.getStartTime());
       maxEnd = Math.max(maxEnd, durationInfo.getEndTime());

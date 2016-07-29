@@ -1,4 +1,4 @@
-package com.rapleaf.cascading_ext.workflow2;
+package com.liveramp.workflow_core.runner;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -12,45 +12,44 @@ import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.collections.properties.OverridableProperties;
-import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.IStep;
 
-public final class Step implements IStep {
+public class BaseStep<Config> implements IStep {
 
-  private final BaseAction action;
-  private final Set<Step> dependencies;
-  private Set<Step> children;
+  private final BaseAction<Config> action;
+  private final Set<BaseStep<Config>> dependencies;
+  private Set<BaseStep<Config>> children;
 
-  public Step(BaseAction action, Step... dependencies) {
+  public BaseStep(BaseAction<Config> action, BaseStep<Config>... dependencies) {
     this(action, Arrays.asList(dependencies));
   }
 
-  public Step(BaseAction action, Collection<Step> dependencies) {
+  public BaseStep(BaseAction<Config> action, Collection<? extends BaseStep<Config>> dependencies) {
     this.action = action;
-    children = new HashSet<Step>();
-    this.dependencies = new HashSet<Step>(dependencies);
+    children = new HashSet<BaseStep<Config>>();
+    this.dependencies = new HashSet<>(dependencies);
     if (this.dependencies.contains(null)) {
       throw new NullPointerException("null cannot be a dependency for a step!");
     }
-    for (Step dependency : this.dependencies) {
+    for (BaseStep dependency : this.dependencies) {
       dependency.addChild(this);
     }
   }
 
-  private void addChild(Step child) {
+  private void addChild(BaseStep child) {
     if (!child.getDependencies().contains(this)) {
       throw new RuntimeException("child (" + child + ") does not depend on this (" + this + ")");
     }
     children.add(child);
   }
 
-  public Set<Step> getChildren() {
+  public Set<BaseStep<Config>> getChildren() {
     return Collections.unmodifiableSet(children);
   }
 
-  public Set<Step> getDependencies() {
+  public Set<BaseStep<Config>> getDependencies() {
     return Collections.unmodifiableSet(dependencies);
   }
 
@@ -102,4 +101,5 @@ public final class Step implements IStep {
   public void run(OverridableProperties properties) {
     action.internalExecute(properties);
   }
+
 }
