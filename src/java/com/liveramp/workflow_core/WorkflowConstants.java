@@ -6,4 +6,8 @@ public class WorkflowConstants {
    */
   public static final String WORKFLOW_EMAIL_SUBJECT_TAG = "WORKFLOW";
   public static final String ERROR_EMAIL_SUBJECT_TAG = "ERROR";
+
+  public static final String JOB_PRIORITY_PARAM = "mapred.job.priority";
+  public static final String JOB_POOL_PARAM = "mapreduce.job.queuename";
+
 }
