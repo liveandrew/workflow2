@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
-import com.liveramp.cascading_ext.util.HadoopJarUtil;
+import com.liveramp.workflow_core.RunJarUtil;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
@@ -36,7 +36,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
   public InitializedWorkflow<INITIALIZED> initialize(String workflowName, WorkflowOptions options) throws IOException {
     verifyName(workflowName, options);
 
-    HadoopJarUtil.ScmInfo scmInfo = HadoopJarUtil.getRemoteAndCommit();
+    RunJarUtil.ScmInfo scmInfo = RunJarUtil.getRemoteAndCommit();
 
     OverridableProperties properties = options.getWorkflowJobProperties();
     Map<Object, Object> resolvedProps = properties.getPropertiesMap();
@@ -51,7 +51,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
         findDefaultValue(options, JOB_POOL_PARAM, "default"),
         findDefaultValue(options, JOB_PRIORITY_PARAM, "NORMAL"),
         System.getProperty("user.dir"),
-        HadoopJarUtil.getLaunchJarName(),
+        RunJarUtil.getLaunchJarName(),
         options.getEnabledNotifications(),
         options.getAlertsHandler(),
         scmInfo.getGitRemote(),
