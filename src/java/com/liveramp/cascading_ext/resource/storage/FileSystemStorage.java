@@ -20,16 +20,16 @@ public class FileSystemStorage implements Storage {
 
   private final SerializationHandler handler;
   private final InMemoryStorage cache;
-  private String resourceRoot;
+  private File resourceRoot;
 
   public FileSystemStorage(String resourceRoot) {
     this.handler = new JavaObjectSerializationHandler();
     this.cache = new InMemoryStorage();
-    this.resourceRoot = resourceRoot;
+    this.resourceRoot = new File(resourceRoot);
   }
 
-  private String getPath(String name) {
-    return resourceRoot + name;
+  private File getFile(String name) {
+    return new File(resourceRoot, name);
   }
 
   @Override
@@ -37,9 +37,9 @@ public class FileSystemStorage implements Storage {
     cache.store(name, object);
     try {
 
-      String path = getPath(name);
-      if (FileUtils.fileExists(path)) {
-        FileUtils.forceDelete(path);
+      File file = getFile(name);
+      if (file.exists()) {
+        FileUtils.forceDelete(file);
       }
 
       byte[] serialized;
@@ -50,14 +50,13 @@ public class FileSystemStorage implements Storage {
         throw new RuntimeException("Could not serialize resource '" + name + "' with value " + object);
       }
 
-      File file = new File(path);
       FileUtils.forceMkdir(file.getParentFile());
 
       FileOutputStream output = new FileOutputStream(file);
       output.write(serialized);
       output.close();
 
-      LOG.info("Stored resource '" + name + "' to " + path.toString());
+      LOG.info("Stored resource '" + name + "' to " + file.toString());
 
     } catch (Throwable t) {
       throw new RuntimeException("Unable to store resource '" + name + "' and value " + object, t);
@@ -74,18 +73,18 @@ public class FileSystemStorage implements Storage {
 
     try {
 
-      String path = getPath(name);
-      if (FileUtils.fileExists(path)) {
+      File file = getFile(name);
+      if (file.exists()) {
 
-        byte[] data = Files.readAllBytes(new File(path).toPath());
+        byte[] data = Files.readAllBytes(file.toPath());
 
-        LOG.info("Retrieved resource '" + name + "' from path " + path.toString());
+        LOG.info("Retrieved resource '" + name + "' from path " + file.getAbsolutePath().toString());
 
         return (T)handler.deserialize(data);
 
       } else {
 
-        LOG.info("Failed to find Resource'" + name + "' at path " + path.toString());
+        LOG.info("Failed to find Resource'" + name + "' at path " + file.getAbsoluteFile().toString());
 
         return null;
 
@@ -105,7 +104,7 @@ public class FileSystemStorage implements Storage {
     }
 
     try {
-      return FileUtils.fileExists(getPath(name));
+      return getFile(name).exists();
     } catch (Throwable t) {
       throw new RuntimeException("Unable to determine whether resource with name'" + name + "' is stored or not", t);
     }
