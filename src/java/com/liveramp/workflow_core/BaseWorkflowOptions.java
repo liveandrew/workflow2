@@ -22,6 +22,7 @@ import com.rapleaf.cascading_ext.workflow2.DbTrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
 import com.rapleaf.cascading_ext.workflow2.options.DefaultHostnameProvider;
+import com.rapleaf.cascading_ext.workflow2.options.FixedHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.HostnameProvider;
 import com.rapleaf.support.Rap;
 
@@ -232,9 +233,18 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     return null;
   }
 
+
+  //  static helpers
+
   public static BaseWorkflowOptions production() {
+    BaseWorkflowOptions opts = new BaseWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
+    configureProduction(opts);
+    return opts;
+  }
+
+  protected static void configureProduction(BaseWorkflowOptions opts) {
     Rap.assertProduction();
-    return new BaseWorkflowOptions<>(new NestedProperties(Maps.newHashMap(), false))
+    opts
         .setMaxConcurrentSteps(Integer.MAX_VALUE)
         .setAlertsHandler(new LoggingAlertsHandler())
         .setNotificationLevel(WorkflowNotificationLevel.DEBUG)
@@ -243,6 +253,26 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
         .setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL))
         .setHostnameProvider(new DefaultHostnameProvider())
         .setResourceManager(new ResourceManager.NotImplemented());
+  }
+
+  public static BaseWorkflowOptions test() {
+    Rap.assertTest();
+
+    BaseWorkflowOptions opts = new BaseWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
+    configureTest(opts);
+    return opts;
+  }
+
+
+  protected static void configureTest(BaseWorkflowOptions opts) {
+    opts.setMaxConcurrentSteps(1)
+        .setAlertsHandler(new LoggingAlertsHandler())
+        .setNotificationLevel(WorkflowNotificationLevel.DEBUG)
+        .setStorage(new ContextStorage.None())
+        .setStepPollInterval(100)
+        .setUrlBuilder(new TrackerURLBuilder.None())
+        .setHostnameProvider(new FixedHostnameProvider())
+        .setResourceManager(new ResourceDeclarer.NotImplemented());
   }
 
 }
