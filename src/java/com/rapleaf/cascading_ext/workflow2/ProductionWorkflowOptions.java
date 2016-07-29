@@ -15,8 +15,6 @@ import com.rapleaf.support.Rap;
 public class ProductionWorkflowOptions extends WorkflowOptions {
   private static final Logger LOG = LoggerFactory.getLogger(ProductionWorkflowOptions.class);
 
-  private static final String WORKFLOW_UI_URL = "http://workflows.liveramp.net";
-
   public ProductionWorkflowOptions() {
 
     Rap.assertProduction();
