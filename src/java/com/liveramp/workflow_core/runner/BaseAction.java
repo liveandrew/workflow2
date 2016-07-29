@@ -9,11 +9,20 @@ import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.cascading_ext.resource.ReadResource;
+import com.liveramp.cascading_ext.resource.ReadResourceContainer;
+import com.liveramp.cascading_ext.resource.Resource;
+import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.cascading_ext.resource.WriteResource;
+import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.workflow.ActionId;
+import com.liveramp.workflow_core.ContextStorage;
+import com.liveramp.workflow_core.OldResource;
+import com.liveramp.workflow_core.ResourceFactory;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.StepState;
@@ -27,6 +36,15 @@ public abstract class BaseAction<Config> {
   private OverridableProperties stepProperties;
   private OverridableProperties combinedProperties;
 
+  private final Map<Resource, ReadResourceContainer> readResources = Maps.newHashMap();
+  private final Map<Resource, WriteResourceContainer> writeResources = Maps.newHashMap();
+  private final ResourceFactory resourceFactory;
+
+  private final Multimap<ResourceAction, OldResource> resources = HashMultimap.create();
+
+  private ContextStorage storage;
+  private ResourceManager resourceManager;
+
   //  TODO this doesn't really belong here
   private boolean failOnCounterFetch = true;
 
@@ -37,9 +55,17 @@ public abstract class BaseAction<Config> {
     this(checkpointToken, Maps.newHashMap());
   }
 
-  public BaseAction(String checkpointToken, Map<Object, Object> properties){
+  public BaseAction(String checkpointToken, Map<Object, Object> properties) {
     this.actionId = new ActionId(checkpointToken);
     this.stepProperties = new NestedProperties(properties, false);
+    this.resourceFactory = new ResourceFactory(getActionId());
+  }
+
+  //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
+  //  which actually make sense...
+  public static enum ResourceAction {
+    CREATES,
+    USES
   }
 
   public void setFailOnCounterFetch(boolean value) {
@@ -54,15 +80,15 @@ public abstract class BaseAction<Config> {
     return actionId.resolve();
   }
 
-  protected WorkflowStatePersistence getPersistence(){
+  protected WorkflowStatePersistence getPersistence() {
     return persistence;
   }
 
-  protected OverridableProperties getCombinedProperties(){
+  protected OverridableProperties getCombinedProperties() {
     return combinedProperties;
   }
 
-  protected OverridableProperties getStepProperties(){
+  protected OverridableProperties getStepProperties() {
     return stepProperties;
   }
 
@@ -93,17 +119,90 @@ public abstract class BaseAction<Config> {
   }
 
   //  inputs and outputs of the action
-  public Multimap<DSAction, DataStoreInfo> getAllDataStoreInfo(){
+  public Multimap<DSAction, DataStoreInfo> getAllDataStoreInfo() {
     return HashMultimap.create(); // TODO make Action stop storing DataStore and store DataStoreInfo in this class
   }
 
-    //  not really public : / make package private after cleanup
+  //  not really public : / make package private after cleanup
   public final void setOptionObjects(WorkflowStatePersistence persistence,
-                                     Config context){
+                                     ResourceManager resourceManager,
+                                     ContextStorage storage,
+                                     Config context) {
     this.persistence = persistence;
     this.config = context;
+
+    this.resourceManager = resourceManager;
+    this.storage = storage;
+
     initialize(context);
   }
+
+
+  //  resource actions
+
+  @Deprecated
+  protected void creates(OldResource resource) {
+    mark(ResourceAction.CREATES, resource);
+  }
+
+  @Deprecated
+  protected void uses(OldResource resource) {
+    mark(ResourceAction.USES, resource);
+  }
+
+  @Deprecated
+  private void mark(ResourceAction action, OldResource resource) {
+    resources.put(action, resource);
+  }
+
+  protected <T> ReadResource<T> readsFrom(Resource<T> resource) {
+    ReadResourceContainer<T> container = new ReadResourceContainer<T>();
+    readResources.put(resource, container);
+    return container;
+  }
+
+  protected <T> WriteResource<T> creates(Resource<T> resource) {
+    WriteResourceContainer<T> container = new WriteResourceContainer<T>();
+    writeResources.put(resource, container);
+    return container;
+  }
+
+
+  @Deprecated
+  protected <T> T get(OldResource<T> resource) throws IOException {
+    if (!resources.get(ResourceAction.USES).contains(resource)) {
+      throw new RuntimeException("Cannot use resource without declaring it with uses()");
+    }
+
+    return storage.get(resource);
+  }
+
+  protected <T> T get(ReadResource<T> resource) {
+    return (T)resourceManager.read(resource);
+  }
+
+  protected <T, R extends WriteResource<T>> void set(R resource, T value) {
+    resourceManager.write(resource, value);
+  }
+
+  @Deprecated
+  protected <T> void set(OldResource<T> resource, T value) throws IOException {
+    if (!resources.get(ResourceAction.CREATES).contains(resource)) {
+      throw new RuntimeException("Cannot set resource without declaring it with creates()");
+    }
+
+    storage.set(resource, value);
+  }
+
+
+  protected <T> OldResource<T> resource(String name) {
+    return resourceFactory().makeResource(name);
+  }
+
+  public ResourceFactory resourceFactory() {
+    return resourceFactory;
+  }
+
 
   //  not really public : /
   public final void internalExecute(OverridableProperties parentProperties) {
@@ -113,6 +212,16 @@ public abstract class BaseAction<Config> {
       combinedProperties = stepProperties.override(parentProperties);
 
       preExecute();
+
+      LOG.info("Setting read resources");
+      for (Resource resource : readResources.keySet()) {
+        readResources.get(resource).setResource(resourceManager.getReadPermission(resource));
+      }
+
+      LOG.info("Setting write resources");
+      for (Resource resource : writeResources.keySet()) {
+        writeResources.get(resource).setResource(resourceManager.getWritePermission(resource));
+      }
 
       execute();
 

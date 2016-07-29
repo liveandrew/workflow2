@@ -33,6 +33,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private Integer stepPollInterval;
   private String sandboxDir;
   private String description;
+  private ContextStorage storage;
 
   private TrackerURLBuilder urlBuilder;
   private ResourceDeclarer resourceDeclarer;
@@ -90,6 +91,16 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   public T setStepPollInterval(int ms) {
     this.stepPollInterval = ms;
     return (T)this;
+  }
+
+
+  public ContextStorage getStorage() {
+    return storage;
+  }
+
+  public T setStorage(ContextStorage storage) {
+    this.storage = storage;
+    return (T) this;
   }
 
   public Integer getStepPollInterval() {
