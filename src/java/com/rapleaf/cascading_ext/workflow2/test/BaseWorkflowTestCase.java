@@ -8,11 +8,12 @@ import org.apache.log4j.Level;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
-import com.liveramp.workflow_core.runner.BaseAction;
-import com.liveramp.workflow_state.InitializedDbPersistence;
-import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.InMemoryContext;
+import com.liveramp.workflow_core.runner.BaseAction;
+import com.liveramp.workflow_core.runner.BaseStep;
+import com.liveramp.workflow_state.InitializedDbPersistence;
+import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
@@ -56,11 +57,11 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(Sets.newHashSet(new Step(action)), resourceManager);
   }
 
-  public WorkflowRunner execute(Set<Step> steps) throws IOException {
+  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps) throws IOException {
     return execute(steps, context);
   }
 
-  public WorkflowRunner execute(Set<Step> steps, WorkflowOptions options) throws IOException {
+  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, WorkflowOptions options) throws IOException {
     return execute(steps, options, context);
   }
 
@@ -72,11 +73,11 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(Sets.newHashSet(step), options, context);
   }
 
-  public WorkflowRunner execute(Set<Step> steps, ContextStorage storage) throws IOException {
+  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, ContextStorage storage) throws IOException {
     return execute(steps, new TestWorkflowOptions(), storage);
   }
 
-  public WorkflowRunner execute(Set<Step> steps, WorkflowOptions options, ContextStorage storage) throws IOException {
+  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, WorkflowOptions options, ContextStorage storage) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
         new DbPersistenceFactory(),
         options

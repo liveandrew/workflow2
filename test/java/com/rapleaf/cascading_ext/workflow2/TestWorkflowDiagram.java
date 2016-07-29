@@ -14,6 +14,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.junit.Test;
 
+import com.liveramp.workflow_core.runner.BaseStep;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
@@ -52,8 +53,8 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     }
   }
 
-  private Map<String, Step> idToVertex;
-  DirectedGraph<Step, DefaultEdge> graph;
+  private Map<String, BaseStep<WorkflowRunner.ExecuteConfig>> idToVertex = new HashMap<String, BaseStep<WorkflowRunner.ExecuteConfig>>();
+  DirectedGraph<BaseStep<WorkflowRunner.ExecuteConfig>, DefaultEdge> graph;
 
   @Test
   public void testVerifyNoOrphanedTailStep() throws Exception {
@@ -63,7 +64,7 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
     Step s3 = new Step(new FakeAction("s3", new DataStore[]{ds}, new DataStore[]{ds}), s2);
 
-    Set<Step> tails = Collections.singleton(s3);
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> tails = Collections.<BaseStep<WorkflowRunner.ExecuteConfig>>singleton(s3);
     WorkflowUtil.setCheckpointPrefixes(tails);
     assertTrue(WorkflowDiagram.getOrphanedTailSteps(tails).isEmpty());
   }
@@ -76,9 +77,9 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
     Step s3 = new Step(new FakeMultistepAction("s3", getTestRoot(), new Step[]{}), s2);
     Step s4 = new Step(new FakeAction("s4", new DataStore[]{ds}, new DataStore[]{ds}), s3);
-    Set<Step> tails = Collections.singleton(s4);
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> tails = Collections.<BaseStep<WorkflowRunner.ExecuteConfig>>singleton(s4);
     WorkflowUtil.setCheckpointPrefixes(tails);
-    Set<Step> orphans = WorkflowDiagram.getOrphanedTailSteps(tails);
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> orphans = WorkflowDiagram.getOrphanedTailSteps(tails);
     assertTrue(orphans.isEmpty());
   }
 
@@ -91,7 +92,7 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     Step s3 = new Step(new FakeMultistepAction("s3", getTestRoot(), new Step[]{}), s2);
     Set<Step> tails = Collections.singleton(s3);
     WorkflowUtil.setCheckpointPrefixes(tails);
-    Set<Step> orphans = WorkflowDiagram.getOrphanedTailSteps(tails);
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> orphans = WorkflowDiagram.getOrphanedTailSteps(tails);
     assertTrue(orphans.isEmpty());
   }
 
@@ -138,8 +139,8 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
   @Test
   public void testNoOrphanedTails() throws Exception {
     Step realTail = getComplexNestedWorkflowTail();
-    Set<Step> allSteps = WorkflowDiagram.reachableSteps(Collections.singleton(realTail));
-    for (Step badTail : allSteps) {
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> allSteps = WorkflowDiagram.reachableSteps(Collections.singleton(realTail));
+    for (BaseStep<WorkflowRunner.ExecuteConfig> badTail : allSteps) {
       if (badTail != realTail) {
         try {
           WorkflowDiagram.verifyNoOrphanedTailSteps(Collections.singleton(badTail));
@@ -194,7 +195,7 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
   private void setupWorkflowGraph(Step tailStep) throws IOException {
     HashSet<Step> tail = Sets.newHashSet(tailStep);
     WorkflowUtil.setCheckpointPrefixes(tail);
-    graph = new EdgeReversedGraph<Step, DefaultEdge>(WorkflowDiagram.dependencyGraphFromTailSteps(tail));
+    graph = new EdgeReversedGraph<>(WorkflowDiagram.dependencyGraphFromTailSteps(tail));
 
     populateNameToVertex(graph);
   }
@@ -203,9 +204,8 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     return new BytesDataStore(null, name, "/tmp/", name);
   }
 
-  private void populateNameToVertex(DirectedGraph<Step, DefaultEdge> graph) {
-    idToVertex = new HashMap<String, Step>();
-    for (Step v : graph.vertexSet()) {
+  private void populateNameToVertex(DirectedGraph<BaseStep<WorkflowRunner.ExecuteConfig>, DefaultEdge> graph) {
+    for (BaseStep<WorkflowRunner.ExecuteConfig> v : graph.vertexSet()) {
       idToVertex.put(v.getCheckpointToken(), v);
     }
   }

@@ -6,6 +6,7 @@ import java.util.Collection;
 import org.apache.hadoop.fs.FileSystem;
 
 import com.liveramp.workflow_core.runner.BaseMultiStepAction;
+import com.liveramp.workflow_core.runner.BaseStep;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 
 public class MultiStepAction extends BaseMultiStepAction<WorkflowRunner.ExecuteConfig> {
@@ -16,7 +17,7 @@ public class MultiStepAction extends BaseMultiStepAction<WorkflowRunner.ExecuteC
     this(checkpointToken, tmpRoot, null);
   }
 
-  public MultiStepAction(String checkpointToken, String tmpRoot, Collection<Step> steps) {
+  public MultiStepAction(String checkpointToken, String tmpRoot, Collection<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps) {
     super(checkpointToken, steps);
     this.context = new HdfsActionContext(tmpRoot, checkpointToken);
   }

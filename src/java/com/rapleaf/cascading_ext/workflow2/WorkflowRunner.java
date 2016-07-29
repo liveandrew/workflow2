@@ -38,6 +38,7 @@ import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.WorkflowConstants;
 import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_core.runner.BaseAction;
+import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.StepState;
@@ -76,7 +77,7 @@ public final class WorkflowRunner {
    */
   private final int maxConcurrentSteps;
 
-  private final DirectedGraph<Step, DefaultEdge> dependencyGraph;
+  private final DirectedGraph<BaseStep<ExecuteConfig>, DefaultEdge> dependencyGraph;
 
   /**
    * semaphore used to control the max number of running components
@@ -114,7 +115,7 @@ public final class WorkflowRunner {
     this(klass, new DbPersistenceFactory(), tailSteps);
   }
 
-  public WorkflowRunner(Class klass, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
+  public WorkflowRunner(Class klass, WorkflowOptions options, Set<? extends BaseStep<ExecuteConfig>> tailSteps) throws IOException {
     this(klass, new DbPersistenceFactory(), options, tailSteps);
   }
 
@@ -141,7 +142,7 @@ public final class WorkflowRunner {
     this(klass.getName(), persistence, options, combine(first, rest));
   }
 
-  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
+  public WorkflowRunner(Class klass, WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<? extends BaseStep<ExecuteConfig>> tailSteps) throws IOException {
     this(klass.getName(), persistence, options, tailSteps);
   }
 
@@ -150,7 +151,7 @@ public final class WorkflowRunner {
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
-  public WorkflowRunner(WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
+  public WorkflowRunner(WorkflowPersistenceFactory persistence, WorkflowOptions options, Set<? extends BaseStep<ExecuteConfig>> tailSteps) throws IOException {
     this(persistence.initialize(options), tailSteps);
   }
 
@@ -163,11 +164,11 @@ public final class WorkflowRunner {
     this(workflowName, persistence, Sets.newHashSet(tail));
   }
 
-  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Set<Step> tail) throws IOException {
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistence, Set<? extends BaseStep<ExecuteConfig>> tail) throws IOException {
     this(workflowName, persistence, new ProductionWorkflowOptions(), Sets.newHashSet(tail));
   }
 
-  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistenceFactory, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
+  public WorkflowRunner(String workflowName, WorkflowPersistenceFactory persistenceFactory, WorkflowOptions options, Set<? extends BaseStep<ExecuteConfig>> tailSteps) throws IOException {
     this(persistenceFactory.initialize(workflowName, options), tailSteps);
   }
 
@@ -175,7 +176,7 @@ public final class WorkflowRunner {
     this(initializedData, Sets.newHashSet(tail));
   }
 
-  public WorkflowRunner(InitializedWorkflow initializedData, Set<Step> tailSteps) throws IOException {
+  public WorkflowRunner(InitializedWorkflow initializedData, Set<? extends BaseStep<ExecuteConfig>> tailSteps) throws IOException {
 
     WorkflowOptions options = initializedData.getOptions();
 
@@ -193,7 +194,7 @@ public final class WorkflowRunner {
     );
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
-    this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(tailSteps);
+    this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(Sets.<BaseStep<ExecuteConfig>>newHashSet(tailSteps));
 
     assertSandbox(options.getSandboxDir());
 
@@ -206,7 +207,7 @@ public final class WorkflowRunner {
     // TODO: verify datasources satisfied
 
     // prep runners
-    for (Step step : dependencyGraph.vertexSet()) {
+    for (BaseStep<ExecuteConfig> step : dependencyGraph.vertexSet()) {
       StepRunner runner = new StepRunner(step, this.persistence);
       pendingSteps.add(runner);
     }
@@ -227,8 +228,8 @@ public final class WorkflowRunner {
 
   }
 
-  private void setStepContextObjects(DirectedGraph<Step, DefaultEdge> dependencyGraph) {
-    for (Step step : dependencyGraph.vertexSet()) {
+  private void setStepContextObjects(DirectedGraph<BaseStep<ExecuteConfig>, DefaultEdge> dependencyGraph) {
+    for (BaseStep<ExecuteConfig> step : dependencyGraph.vertexSet()) {
       step.getAction().setOptionObjects(
           this.persistence,
           this.resourceManager,
@@ -263,17 +264,17 @@ public final class WorkflowRunner {
     return s;
   }
 
-  private void removeRedundantEdges(DirectedGraph<Step, DefaultEdge> graph) {
-    for (Step step : graph.vertexSet()) {
-      Set<Step> firstDegDeps = new HashSet<Step>();
-      Set<Step> secondPlusDegDeps = new HashSet<Step>();
+  private void removeRedundantEdges(DirectedGraph<BaseStep<ExecuteConfig>, DefaultEdge> graph) {
+    for (BaseStep<ExecuteConfig> step : graph.vertexSet()) {
+      Set<BaseStep<ExecuteConfig>> firstDegDeps = new HashSet<BaseStep<ExecuteConfig>>();
+      Set<BaseStep<ExecuteConfig>> secondPlusDegDeps = new HashSet<BaseStep<ExecuteConfig>>();
       for (DefaultEdge edge : graph.outgoingEdgesOf(step)) {
-        Step depStep = graph.getEdgeTarget(edge);
+        BaseStep<ExecuteConfig> depStep = graph.getEdgeTarget(edge);
         firstDegDeps.add(depStep);
         getDepsRecursive(depStep, secondPlusDegDeps, graph);
       }
 
-      for (Step firstDegDep : firstDegDeps) {
+      for (BaseStep<ExecuteConfig> firstDegDep : firstDegDeps) {
         if (secondPlusDegDeps.contains(firstDegDep)) {
           LOG.debug("Found a redundant edge from " + step.getCheckpointToken()
               + " to " + firstDegDep.getCheckpointToken());
@@ -283,9 +284,9 @@ public final class WorkflowRunner {
     }
   }
 
-  private void getDepsRecursive(Step step, Set<Step> deps, DirectedGraph<Step, DefaultEdge> graph) {
+  private void getDepsRecursive(BaseStep<ExecuteConfig> step, Set<BaseStep<ExecuteConfig>> deps, DirectedGraph<BaseStep<ExecuteConfig>, DefaultEdge> graph) {
     for (DefaultEdge edge : graph.outgoingEdgesOf(step)) {
-      Step s = graph.getEdgeTarget(edge);
+      BaseStep<ExecuteConfig> s = graph.getEdgeTarget(edge);
       boolean isNew = deps.add(s);
       if (isNew) {
         getDepsRecursive(s, deps, graph);
@@ -320,7 +321,7 @@ public final class WorkflowRunner {
     if (sandboxDir != null) {
       LOG.info("Checking that no action writes outside sandboxDir \"" + sandboxDir + "\"");
       try {
-        for (Step step : getPhsyicalDependencyGraph().vertexSet()) {
+        for (BaseStep<ExecuteConfig> step : getPhsyicalDependencyGraph().vertexSet()) {
           BaseAction stepAction = step.getAction();
           if (stepAction != null) { // TODO: check if this check is necessary, it shouldn't be
             Multimap<DSAction, DataStoreInfo> dsInfo = stepAction.getAllDataStoreInfo();
@@ -633,13 +634,13 @@ public final class WorkflowRunner {
 
   private boolean existUnblockedSteps() throws IOException {
 
-    Queue<Step> explore = Lists.newLinkedList();
+    Queue<BaseStep<ExecuteConfig>> explore = Lists.newLinkedList();
     Set<String> blockedSteps = Sets.newHashSet();
 
     Map<String, StepStatus> allStatuses = persistence.getStepStatuses();
 
     //  get failed steps
-    for (Step step : dependencyGraph.vertexSet()) {
+    for (BaseStep<ExecuteConfig> step : dependencyGraph.vertexSet()) {
       if (allStatuses.get(step.getCheckpointToken()) == StepStatus.FAILED) {
         explore.add(step);
       }
@@ -647,7 +648,7 @@ public final class WorkflowRunner {
 
     //  get any part of the graph depending on failed steps
     while (!explore.isEmpty()) {
-      Step step = explore.poll();
+      BaseStep<ExecuteConfig> step = explore.poll();
       if (!blockedSteps.contains(step.getCheckpointToken())) {
         blockedSteps.add(step.getCheckpointToken());
         for (DefaultEdge edge : dependencyGraph.incomingEdgesOf(step)) {
@@ -684,7 +685,7 @@ public final class WorkflowRunner {
     return persistence.getShutdownRequest() == null && internalErrors.isEmpty();
   }
 
-  public DirectedGraph<Step, DefaultEdge> getPhsyicalDependencyGraph() {
+  public DirectedGraph<BaseStep<ExecuteConfig>, DefaultEdge> getPhsyicalDependencyGraph() {
     return dependencyGraph;
   }
 
@@ -694,11 +695,11 @@ public final class WorkflowRunner {
    * a Thread.
    */
   private final class StepRunner {
-    public final Step step;
+    public final BaseStep<ExecuteConfig> step;
     private final WorkflowStatePersistence state;
     public Thread thread;
 
-    public StepRunner(Step c, WorkflowStatePersistence state) {
+    public StepRunner(BaseStep<ExecuteConfig> c, WorkflowStatePersistence state) {
       this.step = c;
       this.state = state;
     }
@@ -770,7 +771,7 @@ public final class WorkflowRunner {
 
     public boolean allDependenciesCompleted(Map<String, StepStatus> statuses) throws IOException {
       for (DefaultEdge edge : dependencyGraph.outgoingEdgesOf(step)) {
-        Step dep = dependencyGraph.getEdgeTarget(edge);
+        BaseStep<ExecuteConfig> dep = dependencyGraph.getEdgeTarget(edge);
         if (!WorkflowEnums.NON_BLOCKING_STEP_STATUSES.contains(statuses.get(dep.getCheckpointToken()))) {
           return false;
         }

@@ -4,17 +4,20 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+import com.liveramp.workflow_core.runner.BaseMultiStepAction;
+import com.liveramp.workflow_core.runner.BaseStep;
+
 public class WorkflowUtil {
 
-  public static void setCheckpointPrefixes(Set<Step> tailSteps) {
+  public static void setCheckpointPrefixes(Set<? extends BaseStep> tailSteps) {
 
     Set<String> explored = Sets.newHashSet();
-    for (Step tailStep : tailSteps) {
+    for (BaseStep tailStep : tailSteps) {
       setCheckpointPrefixes(tailStep, "", explored);
     }
   }
 
-  private static void setCheckpointPrefixes(Step step, String prefix, Set<String> explored) {
+  private static <T> void setCheckpointPrefixes(BaseStep<T> step, String prefix, Set<String> explored) {
 
     step.getAction().getActionId().setParentPrefix(prefix);
     String resolved = step.getCheckpointToken();
@@ -23,16 +26,16 @@ public class WorkflowUtil {
       return;
     }
 
-    if(step.getAction() instanceof MultiStepAction){
-      MultiStepAction msa = (MultiStepAction) step.getAction();
+    if(step.getAction() instanceof BaseMultiStepAction){
+      BaseMultiStepAction<T> msa = (BaseMultiStepAction) step.getAction();
 
-      for (Step tail : msa.getTailSteps()) {
+      for (BaseStep<T> tail : msa.getTailSteps()) {
         setCheckpointPrefixes(tail, resolved + "__", explored);
       }
 
     }
 
-    for (Step dep: step.getDependencies()) {
+    for (BaseStep dep: step.getDependencies()) {
       setCheckpointPrefixes(dep, prefix, explored);
     }
 

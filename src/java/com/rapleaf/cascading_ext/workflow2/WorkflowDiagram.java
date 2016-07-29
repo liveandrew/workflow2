@@ -10,31 +10,34 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
+import com.liveramp.workflow_core.runner.BaseMultiStepAction;
+import com.liveramp.workflow_core.runner.BaseStep;
+
 
 public class WorkflowDiagram {
 
-  public static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailSteps(Set<Step> tailSteps) {
+  public static <T> DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraphFromTailSteps(Set<? extends BaseStep<T>> tailSteps) {
     verifyNoOrphanedTailSteps(tailSteps);
     return dependencyGraphFromTailStepsNoVerification(tailSteps);
   }
 
-  private static DirectedGraph<Step, DefaultEdge> dependencyGraphFromTailStepsNoVerification(Set<Step> tailSteps) {
+  private static <T> DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraphFromTailStepsNoVerification(Set<? extends BaseStep<T>> tailSteps) {
 
-    Set<Step> tailsAndDependencies = addDependencies(tailSteps);
-    Queue<Step> multiSteps = new LinkedList<Step>(filterMultiStep(tailsAndDependencies));
+    Set<BaseStep<T>> tailsAndDependencies = addDependencies(tailSteps);
+    Queue<BaseStep<T>> multiSteps = new LinkedList<BaseStep<T>>(filterMultiStep(tailsAndDependencies));
     verifyUniqueCheckpointTokens(tailsAndDependencies);
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = createGraph(tailsAndDependencies);
+    DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraph = createGraph(tailsAndDependencies);
 
     // now, proceed through each MultiStepAction node in the dependency graph,
     // recursively flattening it out and merging it into the current dependency
     // graph.
 
     while (!multiSteps.isEmpty()) {
-      Step s = multiSteps.poll();
+      BaseStep<T> s = multiSteps.poll();
       // If the dependency graph doesn't contain the vertex, then we've already
       // processed it
       if (dependencyGraph.containsVertex(s)) {
-        MultiStepAction msa = (MultiStepAction)s.getAction();
+        BaseMultiStepAction<T> msa = (BaseMultiStepAction<T>)s.getAction();
 
         pullUpSubstepsAndAdjustCheckpointTokens(dependencyGraph, multiSteps, s, msa);
 
@@ -54,27 +57,27 @@ public class WorkflowDiagram {
     return dependencyGraph;
   }
 
-  private static DirectedGraph<Step, DefaultEdge> createGraph(Set<Step> tailsAndDependencies) {
-    DirectedGraph<Step, DefaultEdge> dependencyGraph = new SimpleDirectedGraph<Step, DefaultEdge>(DefaultEdge.class);
-    for (Step step : tailsAndDependencies) {
+  private static <T> DirectedGraph<BaseStep<T>, DefaultEdge> createGraph(Set<BaseStep<T>> tailsAndDependencies) {
+    DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraph = new SimpleDirectedGraph<>(DefaultEdge.class);
+    for (BaseStep<T> step : tailsAndDependencies) {
       addStepAndDependencies(dependencyGraph, step);
     }
     return dependencyGraph;
   }
 
-  public static void verifyNoOrphanedTailSteps(Set<Step> tailSteps) {
-    Set<Step> orphans = getOrphanedTailSteps(tailSteps);
+  public static <T> void verifyNoOrphanedTailSteps(Set<? extends BaseStep<T>> tailSteps) {
+    Set<BaseStep<T>> orphans = getOrphanedTailSteps(tailSteps);
     if (orphans.size() != 0) {
       throw new RuntimeException("Orphaned tail steps!");
     }
   }
 
-  public static Set<Step> reachableSteps(Set<Step> steps) {
-    Set<Step> reachableSteps = new HashSet<Step>();
-    Stack<Step> toProcess = new Stack<Step>();
+  public static <T> Set<BaseStep<T>> reachableSteps(Set<? extends BaseStep<T>> steps) {
+    Set<BaseStep<T>> reachableSteps = new HashSet<BaseStep<T>>();
+    Stack<BaseStep<T>> toProcess = new Stack<BaseStep<T>>();
     toProcess.addAll(steps);
     while (!toProcess.isEmpty()) {
-      Step step = toProcess.pop();
+      BaseStep<T> step = toProcess.pop();
       if (!reachableSteps.contains(step)) {
         reachableSteps.add(step);
         toProcess.addAll(step.getChildren());
@@ -84,18 +87,18 @@ public class WorkflowDiagram {
     return reachableSteps;
   }
 
-  static Set<Step> getOrphanedTailSteps(Set<Step> tailSteps) {
+  static <T> Set<BaseStep<T>> getOrphanedTailSteps(Set<? extends BaseStep<T>> tailSteps) {
     return getOrphanedTailSteps(
         dependencyGraphFromTailStepsNoVerification(tailSteps),
         reachableSteps(tailSteps)
     );
   }
 
-  private static Set<Step> getOrphanedTailSteps(DirectedGraph<Step, DefaultEdge> dependencyGraph, Set<Step> allSteps) {
-    Set<Step> tailSteps = new HashSet<Step>();
-    for (Step step : allSteps) {
+  private static <T> Set<BaseStep<T>> getOrphanedTailSteps(DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraph, Set<BaseStep<T>> allSteps) {
+    Set<BaseStep<T>> tailSteps = new HashSet<BaseStep<T>>();
+    for (BaseStep<T> step : allSteps) {
       if (!(step.getAction() instanceof MultiStepAction)) {
-        for (Step child : step.getChildren()) {
+        for (BaseStep<T> child : step.getChildren()) {
           if (!dependencyGraph.containsVertex(child) && !(child.getAction() instanceof MultiStepAction)) {
             tailSteps.add(child);
           }
@@ -105,9 +108,9 @@ public class WorkflowDiagram {
     return tailSteps;
   }
 
-  private static void verifyUniqueCheckpointTokens(Iterable<Step> steps) {
+  private static <T> void verifyUniqueCheckpointTokens(Iterable<BaseStep<T>> steps) {
     Set<String> tokens = new HashSet<String>();
-    for (Step step : steps) {
+    for (BaseStep<T> step : steps) {
       String token = step.getCheckpointToken();
       if (tokens.contains(token)) {
         throw new IllegalArgumentException(step.toString() + " has a non-unique checkpoint token!");
@@ -116,14 +119,14 @@ public class WorkflowDiagram {
     }
   }
 
-  private static Set<Step> addDependencies(Set<Step> steps) {
-    Queue<Step> toProcess = new LinkedList<Step>(steps);
-    Set<Step> visited = new HashSet<Step>();
+  private static <T> Set<BaseStep<T>> addDependencies(Set<? extends BaseStep<T>> steps) {
+    Queue<BaseStep<T>> toProcess = new LinkedList<>(steps);
+    Set<BaseStep<T>> visited = new HashSet<>();
     while (!toProcess.isEmpty()) {
-      Step step = toProcess.poll();
+      BaseStep<T> step = toProcess.poll();
       if (!visited.contains(step)) {
         visited.add(step);
-        for (Step dependency : step.getDependencies()) {
+        for (BaseStep<T> dependency : step.getDependencies()) {
           toProcess.add(dependency);
         }
       }
@@ -131,9 +134,9 @@ public class WorkflowDiagram {
     return visited;
   }
 
-  private static Set<Step> filterMultiStep(Iterable<Step> steps) {
-    Set<Step> multiSteps = new HashSet<Step>();
-    for (Step step : steps) {
+  private static <T> Set<BaseStep<T>> filterMultiStep(Iterable<BaseStep<T>> steps) {
+    Set<BaseStep<T>> multiSteps = new HashSet<>();
+    for (BaseStep<T> step : steps) {
       if (step.getAction() instanceof MultiStepAction) {
         multiSteps.add(step);
       }
@@ -141,12 +144,12 @@ public class WorkflowDiagram {
     return multiSteps;
   }
 
-  private static void copyOutgoingEdges(DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s, MultiStepAction msa) {
+  private static <T> void copyOutgoingEdges(DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraph, BaseStep<T> s, BaseMultiStepAction<T> msa) {
     // next, the head steps of this multistep, which are naturally dependent
     // upon nothing, should depend on all the dependencies of the multistep
     for (DefaultEdge dependedUponEdge : dependencyGraph.outgoingEdgesOf(s)) {
-      Step dependedUpon = dependencyGraph.getEdgeTarget(dependedUponEdge);
-      for (Step headStep : msa.getHeadSteps()) {
+      BaseStep<T> dependedUpon = dependencyGraph.getEdgeTarget(dependedUponEdge);
+      for (BaseStep<T> headStep : msa.getHeadSteps()) {
         dependencyGraph.addVertex(headStep);
         dependencyGraph.addVertex(dependedUpon);
         dependencyGraph.addEdge(headStep, dependedUpon);
@@ -154,27 +157,27 @@ public class WorkflowDiagram {
     }
   }
 
-  private static void copyIncomingEdges(DirectedGraph<Step, DefaultEdge> dependencyGraph, Step s, MultiStepAction msa) {
+  private static <T> void copyIncomingEdges(DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraph, BaseStep<T> s, BaseMultiStepAction<T> msa) {
     // anyone who was dependent on this multistep should instead be
     // dependent on the tail steps of the multistep
     for (DefaultEdge dependsOnThis : dependencyGraph.incomingEdgesOf(s)) {
-      Step edgeSource = dependencyGraph.getEdgeSource(dependsOnThis);
-      for (Step tailStep : msa.getTailSteps()) {
+      BaseStep<T> edgeSource = dependencyGraph.getEdgeSource(dependsOnThis);
+      for (BaseStep<T> tailStep : msa.getTailSteps()) {
         dependencyGraph.addVertex(tailStep);
         dependencyGraph.addEdge(edgeSource, tailStep);
       }
     }
   }
 
-  private static void pullUpSubstepsAndAdjustCheckpointTokens(
-      DirectedGraph<Step, DefaultEdge> dependencyGraph, Queue<Step> multiSteps,
-      Step s, MultiStepAction msa) {
+  private static <T> void pullUpSubstepsAndAdjustCheckpointTokens(
+      DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraph, Queue<BaseStep<T>> multiSteps,
+      BaseStep<T> s, BaseMultiStepAction<T> msa) {
     // take all the substeps out of the multistep and put them into the top
     // level dependency graph, making sure to add their dependencies.
     // this is certain to visit some vertices repeatedly, and could probably
     // be done more elegantly with a tail-first traversal.
     // TODO, perhaps?
-    for (Step substep : msa.getSubSteps()) {
+    for (BaseStep substep : msa.getSubSteps()) {
       // if we encounter another multistep, put it on the queue to be expanded
       if (substep.getAction() instanceof MultiStepAction) {
         multiSteps.add(substep);
@@ -184,9 +187,9 @@ public class WorkflowDiagram {
     }
   }
 
-  private static void addStepAndDependencies(DirectedGraph<Step, DefaultEdge> dependencyGraph, Step step) {
+  private static <T> void addStepAndDependencies(DirectedGraph<BaseStep<T>, DefaultEdge> dependencyGraph, BaseStep<T> step) {
     dependencyGraph.addVertex(step);
-    for (Step dep : step.getDependencies()) {
+    for (BaseStep dep : step.getDependencies()) {
       dependencyGraph.addVertex(dep);
       dependencyGraph.addEdge(step, dep);
     }
