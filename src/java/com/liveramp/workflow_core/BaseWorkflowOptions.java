@@ -9,17 +9,24 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
+import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
+import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.rapleaf.cascading_ext.workflow2.DbTrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
+import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
+import com.rapleaf.cascading_ext.workflow2.options.DefaultHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.HostnameProvider;
+import com.rapleaf.support.Rap;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
+  public static final String WORKFLOW_UI_URL = "http://workflows.liveramp.net";
 
   private final OverridableProperties defaultProperties;
   private final Map<Object, Object> systemProperties; //  not for putting in conf, but for visibility into config
@@ -41,7 +48,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   private OverridableProperties properties = new NestedProperties(Maps.newHashMap(), false);
 
-  protected BaseWorkflowOptions(OverridableProperties defaultProperties){
+  protected BaseWorkflowOptions(OverridableProperties defaultProperties) {
     this(defaultProperties, Maps.newHashMap());
   }
 
@@ -100,7 +107,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T setStorage(ContextStorage storage) {
     this.storage = storage;
-    return (T) this;
+    return (T)this;
   }
 
   public Integer getStepPollInterval() {
@@ -223,6 +230,19 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     }
 
     return null;
+  }
+
+  public static BaseWorkflowOptions production() {
+    Rap.assertProduction();
+    return new BaseWorkflowOptions<>(new NestedProperties(Maps.newHashMap(), false))
+        .setMaxConcurrentSteps(Integer.MAX_VALUE)
+        .setAlertsHandler(new LoggingAlertsHandler())
+        .setNotificationLevel(WorkflowNotificationLevel.DEBUG)
+        .setStorage(new ContextStorage.None())
+        .setStepPollInterval(6000)  // be nice to production DB
+        .setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL))
+        .setHostnameProvider(new DefaultHostnameProvider())
+        .setResourceManager(new ResourceManager.NotImplemented());
   }
 
 }
