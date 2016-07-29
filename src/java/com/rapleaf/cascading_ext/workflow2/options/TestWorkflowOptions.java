@@ -13,6 +13,7 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.support.Rap;
 
+@Deprecated // use WorkflowOptions.test()
 public class TestWorkflowOptions extends WorkflowOptions {
 
   public TestWorkflowOptions() {

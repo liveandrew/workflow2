@@ -1,17 +1,21 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
+import java.util.Collections;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 
+import com.liveramp.cascading_ext.megadesk.MockStoreReaderLockProvider;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
-import com.liveramp.workflow_core.ContextStorage;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
+import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
+import com.rapleaf.support.Rap;
 
 public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
@@ -19,10 +23,10 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   private CounterFilter counterFilter;
 
   protected WorkflowOptions() {
-    super(CascadingHelper.get().getDefaultHadoopProperties(),  toProperties(CascadingHelper.get().getJobConf()));
+    super(CascadingHelper.get().getDefaultHadoopProperties(), toProperties(CascadingHelper.get().getJobConf()));
   }
 
-  private static Map<Object, Object> toProperties(JobConf conf){
+  private static Map<Object, Object> toProperties(JobConf conf) {
     Map<Object, Object> props = Maps.newHashMap();
     for (Map.Entry<String, String> entry : conf) {
       props.put(entry.getKey(), entry.getValue());
@@ -55,5 +59,44 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
     this.lockProvider = lockProvider;
     return this;
   }
+
+
+  //  static helpers
+
+  public static WorkflowOptions production() {
+    WorkflowOptions opts = new WorkflowOptions();
+    configureProduction(opts);
+    return opts;
+  }
+
+  public static WorkflowOptions test() {
+    WorkflowOptions opts = new WorkflowOptions();
+    configureTest(opts);
+    return opts;
+  }
+
+  protected static void configureProduction(WorkflowOptions options) {
+    Rap.assertProduction();
+
+    BaseWorkflowOptions.configureProduction(options);
+
+    options
+        .setCounterFilter(CounterFilters.all())
+        .setLockProvider(new MockStoreReaderLockProvider());
+  }
+
+
+  protected static void configureTest(WorkflowOptions options) {
+    Rap.assertTest();
+
+    BaseWorkflowOptions.configureTest(options);
+
+    options
+        .setLockProvider(new MockStoreReaderLockProvider())
+        .setCounterFilter(CounterFilters.all())
+        .addWorkflowProperties(Collections.<Object, Object>singletonMap(MRJobConfig.QUEUE_NAME, "test"));
+
+  }
+
 
 }

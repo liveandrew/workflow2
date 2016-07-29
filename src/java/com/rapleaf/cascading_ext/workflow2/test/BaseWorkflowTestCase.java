@@ -17,7 +17,6 @@ import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
-import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
@@ -74,7 +73,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, ContextStorage storage) throws IOException {
-    return execute(steps, new TestWorkflowOptions(), storage);
+    return execute(steps, WorkflowOptions.test(), storage);
   }
 
   public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, WorkflowOptions options, ContextStorage storage) throws IOException {
@@ -108,7 +107,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   public WorkflowRunner execute(Set<Step> steps, ResourceDeclarer resourceManager) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
         new DbPersistenceFactory(),
-        new TestWorkflowOptions()
+        WorkflowOptions.test()
             .setResourceManager(resourceManager),
         steps);
     workflowRunner.run();
@@ -123,7 +122,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
                                                                                            ResourceDeclarer declarer) throws IOException {
     return new DbPersistenceFactory().initialize(
         workflowName,
-        new TestWorkflowOptions()
+        WorkflowOptions.test()
             .setResourceManager(declarer));
 
   }

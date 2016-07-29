@@ -12,6 +12,7 @@ import com.rapleaf.cascading_ext.workflow2.options.DefaultHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.support.Rap;
 
+@Deprecated // use WorkflowOptions.production()
 public class ProductionWorkflowOptions extends WorkflowOptions {
   private static final Logger LOG = LoggerFactory.getLogger(ProductionWorkflowOptions.class);
 

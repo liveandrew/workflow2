@@ -16,16 +16,16 @@ import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotificati
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow.types.StepStatus;
+import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
-import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
-import com.liveramp.workflow.types.WorkflowAttemptStatus;
-import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -71,7 +71,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowRunner workflowRunner = new WorkflowRunner("Workflow",
         new WorkflowDbPersistenceFactory(),
-        new TestWorkflowOptions(),
+        WorkflowOptions.test(),
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
     workflowRunner.run();
 
@@ -93,7 +93,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowRunner workflowRunner = new WorkflowRunner("Workflow",
         new WorkflowDbPersistenceFactory(),
-        new TestWorkflowOptions(),
+        WorkflowOptions.test(),
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
     workflowRunner.run();
 
@@ -101,7 +101,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowRunner workflowRunner2 = new WorkflowRunner("Workflow",
         new WorkflowDbPersistenceFactory(),
-        new TestWorkflowOptions(),
+        WorkflowOptions.test(),
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
     workflowRunner2.run();
 
@@ -148,7 +148,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
       public void run() throws Exception {
         new WorkflowRunner("Workflow",
             new WorkflowDbPersistenceFactory(),
-            new TestWorkflowOptions(),
+            WorkflowOptions.test(),
             Sets.newHashSet(new Step(new NoOpAction("step1"))));
       }
     });
@@ -183,7 +183,7 @@ public class TestDbPersistenceFactory extends WorkflowTestCase {
 
     new WorkflowRunner("Workflow",
         new WorkflowDbPersistenceFactory(),
-        new TestWorkflowOptions(),
+        WorkflowOptions.test(),
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
 
   }
