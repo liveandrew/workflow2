@@ -242,12 +242,12 @@ public class TestCascadingAction2 extends WorkflowTestCase {
       Pipe pipe = bindSource("input", input1, new ActionCallback.Default() {
 
         @Override
-        public void construct(ConstructContext context) {
+        public void construct(Action.ConstructContext context) {
           context.creates(sideOutput);
         }
 
         @Override
-        public void prepare(PreExecuteContext context) throws IOException {
+        public void prepare(Action.PreExecuteContext context) throws IOException {
           sideOutput.getBucket();
           myFunc.allowPass();
         }

@@ -21,6 +21,7 @@ import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
+import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.ActionCallback;
 import com.rapleaf.cascading_ext.workflow2.action.ExtractorsList;
 import com.rapleaf.cascading_ext.workflow2.action.MSJTapAction;
@@ -101,7 +102,7 @@ public class CompactMSJStore<T extends Comparable, K extends Comparable> extends
         PartitionStructure.UNENFORCED,
         new ActionCallback.Default() {
           @Override
-          public void prepare(PreExecuteContext context) throws IOException {
+          public void prepare(Action.PreExecuteContext context) throws IOException {
             store.getStore().acquireBaseCreationAttempt();
           }
         }
