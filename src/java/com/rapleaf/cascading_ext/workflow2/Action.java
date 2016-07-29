@@ -29,15 +29,13 @@ import com.liveramp.cascading_ext.flow.JobPersister;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ReadResource;
-import com.liveramp.cascading_ext.resource.ReadResourceContainer;
 import com.liveramp.cascading_ext.resource.Resource;
-import com.liveramp.cascading_ext.resource.WriteResource;
-import com.liveramp.cascading_ext.resource.WriteResourceContainer;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
+import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
@@ -51,27 +49,12 @@ import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   private static final Logger LOG = LoggerFactory.getLogger(Action.class);
 
-  private final String tmpRoot;
-
-  private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
-  private final Map<Resource, ReadResourceContainer> readResources = Maps.newHashMap();
-  private final Map<Resource, WriteResourceContainer> writeResources = Maps.newHashMap();
-  private final ResourceFactory resourceFactory;
-  private final DataStoreBuilder builder;
-
-
-  //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
-  //  which actually make sense...
-  public static enum ResourceAction {
-    CREATES,
-    USES
-  }
-
-  private final Multimap<ResourceAction, OldResource> resources = HashMultimap.create();
+  private final HdfsActionContext context;
 
   private StoreReaderLocker.LockManager lockManager;
 
-  private FileSystem fs;
+  private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
+
 
   public Action(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
@@ -87,44 +70,16 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
   public Action(String checkpointToken, String tmpRoot, Map<Object, Object> properties) {
     super(checkpointToken, properties);
-
-    this.resourceFactory = new ResourceFactory(getActionId());
-
-    if (tmpRoot != null) {
-      this.tmpRoot = tmpRoot + "/" + checkpointToken + "-tmp-stores";
-      this.builder = new DataStoreBuilder(getTmpRoot());
-    } else {
-      this.tmpRoot = null;
-      this.builder = null;
-    }
-
+    this.context = new HdfsActionContext(tmpRoot, checkpointToken);
   }
 
   protected FileSystem getFS() throws IOException {
-    if (fs == null) {
-      fs = FileSystemHelper.getFS();
-    }
-
-    return fs;
+    return context.getFS();
   }
 
-  //  resource actions
-
-  @Deprecated
-  protected void creates(OldResource resource) {
-    mark(ResourceAction.CREATES, resource);
+  public final String getTmpRoot() {
+    return context.getTmpRoot();
   }
-
-  @Deprecated
-  protected void uses(OldResource resource) {
-    mark(ResourceAction.USES, resource);
-  }
-
-  @Deprecated
-  private void mark(ResourceAction action, OldResource resource) {
-    resources.put(action, resource);
-  }
-
 
   //  datastore actions
 
@@ -148,60 +103,13 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     mark(DSAction.CONSUMES, store);
   }
 
-  protected <T> ReadResource<T> readsFrom(Resource<T> resource) {
-    ReadResourceContainer<T> container = new ReadResourceContainer<T>();
-    readResources.put(resource, container);
-    return container;
-  }
-
-  protected <T> WriteResource<T> creates(Resource<T> resource) {
-    WriteResourceContainer<T> container = new WriteResourceContainer<T>();
-    writeResources.put(resource, container);
-    return container;
-  }
-
   private void mark(DSAction action, DataStore store) {
     Preconditions.checkNotNull(store, "Cannot mark a null datastore as used!");
     datastores.put(action, store);
   }
 
   public DataStoreBuilder builder() {
-    return builder;
-  }
-
-  protected <T> OldResource<T> resource(String name) {
-    return resourceFactory().makeResource(name);
-  }
-
-  public ResourceFactory resourceFactory() {
-    return resourceFactory;
-  }
-
-
-  @Deprecated
-  protected <T> T get(OldResource<T> resource) throws IOException {
-    if (!resources.get(ResourceAction.USES).contains(resource)) {
-      throw new RuntimeException("Cannot use resource without declaring it with uses()");
-    }
-
-    return getConfig().getStorage().get(resource);
-  }
-
-  protected <T> T get(ReadResource<T> resource) {
-    return (T)getConfig().getResourceManager().read(resource);
-  }
-
-  protected <T, R extends WriteResource<T>> void set(R resource, T value) {
-    getConfig().getResourceManager().write(resource, value);
-  }
-
-  @Deprecated
-  protected <T> void set(OldResource<T> resource, T value) throws IOException {
-    if (!resources.get(ResourceAction.CREATES).contains(resource)) {
-      throw new RuntimeException("Cannot set resource without declaring it with creates()");
-    }
-
-    getConfig().getStorage().set(resource, value);
+    return context.getBuilder();
   }
 
   @Override
@@ -211,16 +119,6 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     prepDirs();
 
     lockManager.lockConsumeStart();
-
-    LOG.info("Setting read resources");
-    for (Resource resource : readResources.keySet()) {
-      readResources.get(resource).setResource(getConfig().getResourceManager().getReadPermission(resource));
-    }
-
-    LOG.info("Setting write resources");
-    for (Resource resource : writeResources.keySet()) {
-      writeResources.get(resource).setResource(getConfig().getResourceManager().getWritePermission(resource));
-    }
 
   }
 
@@ -277,12 +175,6 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     }
   }
 
-  public final String getTmpRoot() {
-    if (tmpRoot == null) {
-      throw new RuntimeException("Temp root not set for action " + this.toString());
-    }
-    return tmpRoot;
-  }
 
   @Override
   protected void initialize(WorkflowRunner.ExecuteConfig context) {
@@ -353,7 +245,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
 
   protected JobPersister getPersister() {
-      return new WorkflowJobPersister(
+    return new WorkflowJobPersister(
         getPersistence(),
         getActionId().resolve(),
         getCounterFilter(),
@@ -362,9 +254,9 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
   //  TODO sweep after killing thing that run steps stupidly
-  private CounterFilter getCounterFilter(){
+  private CounterFilter getCounterFilter() {
     WorkflowRunner.ExecuteConfig config = getConfig();
-    if(config != null){
+    if (config != null) {
       return config.getCounterFilter();
     }
     return null;

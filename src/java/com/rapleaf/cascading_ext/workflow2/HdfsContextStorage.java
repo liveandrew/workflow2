@@ -18,6 +18,8 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.commons.util.serialization.JavaObjectSerializationHandler;
 import com.liveramp.commons.util.serialization.SerializationHandler;
+import com.liveramp.workflow_core.ContextStorage;
+import com.liveramp.workflow_core.OldResource;
 import com.rapleaf.cascading_ext.CascadingHelper;
 
 //  TODO very proof-of-concept, should really have an in-memory cache.  could also stream directly to file

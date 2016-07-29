@@ -1,7 +1,7 @@
 package com.rapleaf.cascading_ext.test;
 
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.cascading_ext.workflow2.OldResource;
+import com.liveramp.workflow_core.OldResource;
 
 public class CreateResourceAction<T> extends Action {
   private final OldResource<T> resource;

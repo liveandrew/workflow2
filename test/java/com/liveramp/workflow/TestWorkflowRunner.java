@@ -88,7 +88,7 @@ import com.rapleaf.cascading_ext.workflow2.HdfsContextStorage;
 import com.rapleaf.cascading_ext.workflow2.IncrementAction2;
 import com.rapleaf.cascading_ext.workflow2.LockedAction;
 import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
-import com.rapleaf.cascading_ext.workflow2.OldResource;
+import com.liveramp.workflow_core.OldResource;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.UnlockWaitAction;
 import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;

@@ -34,6 +34,7 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow.formatting.TimeFormatting;
 import com.liveramp.workflow.types.StepStatus;
+import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.WorkflowConstants;
 import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_core.runner.BaseAction;
@@ -58,6 +59,10 @@ public final class WorkflowRunner {
   private final WorkflowStatePersistence persistence;
 
   private final ExecuteConfig context;
+
+  private final ResourceManager resourceManager;
+
+  private final ContextStorage storage;
 
   private final int stepPollInterval;
 
@@ -179,11 +184,12 @@ public final class WorkflowRunner {
     this.workflowJobProperties = options.getWorkflowJobProperties();
     this.stepPollInterval = options.getStepPollInterval();
     this.trackerURLBuilder = options.getUrlBuilder();
+    this.storage = options.getStorage();
+    this.resourceManager = initializedData.getManager();
+
     this.context = new ExecuteConfig(
         options.getLockProvider().create(),
-        options.getStorage(),
-        options.getCounterFilter(),
-        initializedData.getManager()
+        options.getCounterFilter()
     );
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
@@ -225,6 +231,8 @@ public final class WorkflowRunner {
     for (Step step : dependencyGraph.vertexSet()) {
       step.getAction().setOptionObjects(
           this.persistence,
+          this.resourceManager,
+          this.storage,
           this.context
       );
     }
@@ -232,32 +240,21 @@ public final class WorkflowRunner {
 
   public static class ExecuteConfig {
     private StoreReaderLocker lockProvider;
-    private transient ContextStorage storage;
     private transient CounterFilter counterFilter;
-    private ResourceManager resourceManager;
 
-    public ExecuteConfig(StoreReaderLocker lockProvider, ContextStorage storage, CounterFilter counterFilter, ResourceManager resourceManager) {
+    public ExecuteConfig(StoreReaderLocker lockProvider, CounterFilter counterFilter) {
       this.lockProvider = lockProvider;
-      this.storage = storage;
       this.counterFilter = counterFilter;
-      this.resourceManager = resourceManager;
     }
 
     public StoreReaderLocker getLockProvider() {
       return lockProvider;
     }
 
-    public ContextStorage getStorage() {
-      return storage;
-    }
-
     public CounterFilter getCounterFilter() {
       return counterFilter;
     }
 
-    public ResourceManager getResourceManager() {
-      return resourceManager;
-    }
   }
 
   private static HashSet<Step> combine(final Step first, Step... rest) {

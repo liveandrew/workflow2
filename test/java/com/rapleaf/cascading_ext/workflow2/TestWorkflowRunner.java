@@ -55,6 +55,7 @@ import com.liveramp.workflow.test.MonitoredPersistenceFactory;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.InitializedDbPersistence;

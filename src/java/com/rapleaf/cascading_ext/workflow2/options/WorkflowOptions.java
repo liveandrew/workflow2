@@ -9,14 +9,13 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
+import com.liveramp.workflow_core.ContextStorage;
 import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.workflow2.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 
 public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
   private StoreReaderLockProvider lockProvider;
-  private ContextStorage storage;
   private CounterFilter counterFilter;
 
   protected WorkflowOptions() {
@@ -45,15 +44,6 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   //  all counters are tracked by default now, so this will actually disable tracking most counters.  if you really want this, let me know  -- ben
   public WorkflowOptions setCounterFilter(CounterFilter filter) {
     this.counterFilter = filter;
-    return this;
-  }
-
-  public ContextStorage getStorage() {
-    return storage;
-  }
-
-  public WorkflowOptions setStorage(ContextStorage storage) {
-    this.storage = storage;
     return this;
   }
 
