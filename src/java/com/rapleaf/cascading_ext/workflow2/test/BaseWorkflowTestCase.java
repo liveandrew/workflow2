@@ -115,12 +115,12 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return workflowRunner;
   }
 
-  public InitializedWorkflow<InitializedDbPersistence> initializeWorkflow() throws IOException {
+  public InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> initializeWorkflow() throws IOException {
     return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getRlDb()));
   }
 
-  public InitializedWorkflow<InitializedDbPersistence> initializeWorkflow(String workflowName,
-                                                                          ResourceDeclarer declarer) throws IOException {
+  public InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> initializeWorkflow(String workflowName,
+                                                                                           ResourceDeclarer declarer) throws IOException {
     return new DbPersistenceFactory().initialize(
         workflowName,
         new TestWorkflowOptions()

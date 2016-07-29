@@ -1458,7 +1458,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testStepCreationFailure() throws IOException, InterruptedException {
 
     //  initialize the workflow with a name and scope to get an execution ID
-    InitializedWorkflow<InitializedDbPersistence> workflow = new DbPersistenceFactory().initialize(
+    InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> workflow = new DbPersistenceFactory().initialize(
         "Test Workflow",
         new TestWorkflowOptions()
             .setUniqueIdentifier("1")

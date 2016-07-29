@@ -13,7 +13,6 @@ import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.cascading_ext.resource.WriteResource;
-import com.liveramp.workflow_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
@@ -61,7 +60,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
 
   private <T> void testStorage(RMFactory manager) throws IOException {
 
-    InitializedWorkflow<InitializedDbPersistence> workflow = new DbPersistenceFactory().initialize(name,
+    InitializedWorkflow workflow = new DbPersistenceFactory().initialize(name,
         new TestWorkflowOptions().setResourceManager(manager.make())
     );
     execute(workflow, getSteps(workflow.getManager(), previousNumbers));
@@ -90,7 +89,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
 
   }
 
-  private Set<Step> getSteps(ResourceManager<String, ?> manager, Set<Long> numbersToWrite) throws IOException {
+  private Set<Step> getSteps(ResourceManager manager, Set<Long> numbersToWrite) throws IOException {
     return Sets.newHashSet(new Step(new ResourceTest(manager, getTestRoot(), numbersToWrite)));
   }
 

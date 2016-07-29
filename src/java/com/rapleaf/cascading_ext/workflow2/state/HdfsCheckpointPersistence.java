@@ -1,12 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.codec.binary.Hex;
@@ -22,15 +20,15 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.resource.CheckpointUtil;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.workflow_state.DataStoreInfo;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.StepState;
-import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.support.Rap;
 
-public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsInitializedPersistence> {
+public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsInitializedPersistence, WorkflowOptions> {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
   private final String checkpointDir;

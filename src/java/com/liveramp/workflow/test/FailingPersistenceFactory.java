@@ -15,11 +15,12 @@ import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class FailingPersistenceFactory<INITIALIZED extends InitializedPersistence> extends WorkflowPersistenceFactory<INITIALIZED> {
+public class FailingPersistenceFactory<INITIALIZED extends InitializedPersistence> extends WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions> {
 
-  protected final WorkflowPersistenceFactory<INITIALIZED> delegate;
+  protected final WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions> delegate;
   private final Set<String> stepsToFailFullNames;
 
   public FailingPersistenceFactory(WorkflowPersistenceFactory delegate, StepNameBuilder stepNameBuilder) {

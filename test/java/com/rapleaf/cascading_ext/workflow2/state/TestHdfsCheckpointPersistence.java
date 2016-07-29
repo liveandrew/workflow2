@@ -77,7 +77,7 @@ public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
     first = new Step(new IncrementAction2("first", counter));
     second = new Step(new IncrementAction2("second", counter), first);
 
-    InitializedWorkflow<HdfsInitializedPersistence> initialized = persistenceFactory.initialize(
+    InitializedWorkflow initialized = persistenceFactory.initialize(
         "test",
         new TestWorkflowOptions()
     );

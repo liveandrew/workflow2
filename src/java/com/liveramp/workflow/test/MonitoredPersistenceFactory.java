@@ -15,13 +15,14 @@ import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class MonitoredPersistenceFactory<INITIALIZED extends InitializedPersistence> extends WorkflowPersistenceFactory<INITIALIZED> {
+public class MonitoredPersistenceFactory<INITIALIZED extends InitializedPersistence> extends WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions> {
 
-  private final WorkflowPersistenceFactory<INITIALIZED> delegate;
+  private final WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions> delegate;
 
-  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<INITIALIZED> delegate) {
+  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions> delegate) {
     this.delegate = delegate;
   }
 

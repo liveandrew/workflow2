@@ -14,6 +14,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.junit.Test;
 
+import com.liveramp.workflow_core.WorkflowUtil;
 import com.liveramp.workflow_core.runner.BaseStep;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;

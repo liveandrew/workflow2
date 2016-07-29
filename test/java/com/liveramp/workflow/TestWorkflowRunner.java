@@ -63,6 +63,7 @@ import com.liveramp.workflow.test.MonitoredPersistenceFactory;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_db_state.DbPersistence;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
@@ -88,7 +89,6 @@ import com.rapleaf.cascading_ext.workflow2.HdfsContextStorage;
 import com.rapleaf.cascading_ext.workflow2.IncrementAction2;
 import com.rapleaf.cascading_ext.workflow2.LockedAction;
 import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
-import com.liveramp.workflow_core.OldResource;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.UnlockWaitAction;
 import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
@@ -1507,7 +1507,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testStepCreationFailure() throws IOException, InterruptedException {
 
     //  initialize the workflow with a name and scope to get an execution ID
-    InitializedWorkflow<InitializedDbPersistence> workflow = new WorkflowDbPersistenceFactory().initialize(
+    InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> workflow = new WorkflowDbPersistenceFactory().initialize(
         "Test Workflow",
         new TestWorkflowOptions()
             .setUniqueIdentifier("1")
