@@ -27,6 +27,18 @@ public class BaseStep<Config> implements IStep {
     this(action, Lists.<BaseStep<Config>>newArrayList());
   }
 
+  public BaseStep(BaseAction<Config> action, BaseStep<Config> dependency) {
+    this(action, Lists.newArrayList(dependency));
+  }
+
+  public BaseStep(BaseAction<Config> action, BaseStep<Config> dependency1, BaseStep<Config> dependency2) {
+    this(action, Lists.newArrayList(dependency1, dependency2));
+  }
+
+  public BaseStep(BaseAction<Config> action, BaseStep<Config> dependency1, BaseStep<Config> dependency2, BaseStep<Config> dependency3) {
+    this(action, Lists.newArrayList(dependency1, dependency2, dependency3));
+  }
+
   public BaseStep(BaseAction<Config> action, BaseStep<Config>... dependencies) {
     this(action, Arrays.asList(dependencies));
   }

@@ -68,6 +68,14 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     setSubStepsFromTails(Collections.singleton(tail));
   }
 
+  protected final void setSubStepsFromTails(BaseStep<Config> tail1) {
+    setSubStepsFromTails(Arrays.asList(tail1));
+  }
+
+  protected final void setSubStepsFromTails(BaseStep<Config> tail1, BaseStep<Config> tail2) {
+    setSubStepsFromTails(Arrays.asList(tail1, tail2));
+  }
+
   protected final void setSubStepsFromTails(BaseStep<Config>... tails) {
     setSubStepsFromTails(Arrays.asList(tails));
   }
