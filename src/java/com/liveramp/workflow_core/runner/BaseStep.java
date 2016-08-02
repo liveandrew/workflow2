@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
@@ -21,6 +22,10 @@ public class BaseStep<Config> implements IStep {
   private final BaseAction<Config> action;
   private final Set<BaseStep<Config>> dependencies;
   private Set<BaseStep<Config>> children;
+
+  public BaseStep(BaseAction<Config> action) {
+    this(action, Lists.<BaseStep<Config>>newArrayList());
+  }
 
   public BaseStep(BaseAction<Config> action, BaseStep<Config>... dependencies) {
     this(action, Arrays.asList(dependencies));
@@ -89,7 +94,7 @@ public class BaseStep<Config> implements IStep {
     };
   }
 
-  public Callable<BaseAction.DurationInfo> getDurationFuture(){
+  public Callable<BaseAction.DurationInfo> getDurationFuture() {
     return new Callable<BaseAction.DurationInfo>() {
       @Override
       public BaseAction.DurationInfo call() throws Exception {
