@@ -33,7 +33,6 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
-import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
@@ -196,19 +195,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
   protected Map<Object, Object> getInheritedProperties(Map<Object, Object> childProperties) {
-
-    NestedProperties childProps = new NestedProperties(childProperties, false);
-
-    OverridableProperties combinedProperties = getCombinedProperties();
-
-    if (combinedProperties != null) {
-      return childProps.override(combinedProperties).getPropertiesMap();
-    }
-    //TODO Sweep direct calls to execute() so we don't have to do this!
-    else {
-      return childProps.override(getStepProperties().override(CascadingHelper.get().getDefaultHadoopProperties()))
-          .getPropertiesMap();
-    }
+    return new NestedProperties(childProperties, false).override(getCombinedProperties()).getPropertiesMap();
   }
 
   protected FlowBuilder buildFlow() {
