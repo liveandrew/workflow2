@@ -1,4 +1,4 @@
-package com.liveramp.kpi_utils;
+package com.liveramp.workflow_db_state.kpi_utils;
 
 import com.liveramp.commons.collections.list.ListBuilder;
 

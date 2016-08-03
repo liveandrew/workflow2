@@ -1,15 +1,15 @@
-package com.liveramp.kpi_utils;
+package com.liveramp.workflow_state.kpi_utils;
 
-import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
 import com.rapleaf.db_schemas.rldb.models.MapreduceJobTaskException;
+import com.rapleaf.jack.IDb;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.liveramp.kpi_utils.ErrorMessagePatterns.*;
+import static com.liveramp.workflow_state.kpi_utils.ErrorMessagePatterns.*;
 
 /**
  * Created by lerickson on 7/27/16.
@@ -70,7 +70,7 @@ public class ErrorMessageClassifier {
    * @param db link to the db
    * @return true if an exception is determined to be infrastructural
    */
-  public static boolean classifyFailedStepAttempt (String failure_cause, Long step_attempt_id, IRlDb db) throws IOException {
+  public static boolean classifyFailedStepAttempt (String failure_cause, Long step_attempt_id, IDb db) throws IOException {
     if (failure_cause == null) { return (classifyTaskFailure(step_attempt_id, db)); }
     return applyRegexes(failure_cause, CAUSE_PATTERNS)
         || applySubstrings(failure_cause, FAILURE_CAUSE_STRING_INCLUSIONS)
@@ -113,7 +113,7 @@ public class ErrorMessageClassifier {
    * @param step_attempt_id the step_attempt_id of a failed step
    * @return true if any recorded task exceptions for the failed step are determined to be infrastructural
    */
-  public static boolean classifyTaskFailure(Long step_attempt_id, IRlDb db) throws IOException {
+  public static boolean classifyTaskFailure(Long step_attempt_id, IDb db) throws IOException {
     if (step_attempt_id == null) { return false; }
     List<Long> mr_ids = db.createQuery()
         .from(MapreduceJob.TBL)
