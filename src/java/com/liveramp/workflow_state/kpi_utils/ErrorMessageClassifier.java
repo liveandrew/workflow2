@@ -71,14 +71,14 @@ public class ErrorMessageClassifier {
    * @return true if an exception is determined to be infrastructural
    */
   public static boolean classifyFailedStepAttempt (String failure_cause, Long step_attempt_id, IDb db) throws IOException {
-    if (failure_cause == null) { return (classifyTaskFailure(step_attempt_id, db)); }
+    if (failure_cause == null) { return (classifyAppByTaskFailures(step_attempt_id, db)); }
     return applyRegexes(failure_cause, CAUSE_PATTERNS)
         || applySubstrings(failure_cause, FAILURE_CAUSE_STRING_INCLUSIONS)
         || applyEqualities(failure_cause, FAILURE_CAUSE_STRINGS)
         || ((applyRegexes(failure_cause, USE_TASKS_PATTERNS)
             || applySubstrings(failure_cause, USE_TASKS_STRING_INCLUSIONS)
             || applyEqualities(failure_cause, USE_TASKS_STRINGS)) &&
-        classifyTaskFailure(step_attempt_id, db));
+        classifyAppByTaskFailures(step_attempt_id, db));
   }
 
   /**
@@ -113,7 +113,7 @@ public class ErrorMessageClassifier {
    * @param step_attempt_id the step_attempt_id of a failed step
    * @return true if any recorded task exceptions for the failed step are determined to be infrastructural
    */
-  public static boolean classifyTaskFailure(Long step_attempt_id, IDb db) throws IOException {
+  public static boolean classifyAppByTaskFailures(Long step_attempt_id, IDb db) throws IOException {
     if (step_attempt_id == null) { return false; }
     List<Long> mr_ids = db.createQuery()
         .from(MapreduceJob.TBL)
@@ -123,7 +123,7 @@ public class ErrorMessageClassifier {
         .fetch()
         .gets(MapreduceJob.ID);
     List<Integer> mr_ints = new ArrayList<>();
-    for(Long l : mr_ids) mr_ids.add(l);
+    for(Long l : mr_ids) mr_ints.add(l.intValue());
     List<String> exceptions = new ArrayList<>();
     if (mr_ids.size() > 0) {
       exceptions = db.createQuery()

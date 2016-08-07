@@ -14,6 +14,7 @@ public class ErrorMessagePatterns {
       .add("Not able to initialize .+ directories in any of the configured local directories for")
       .add("mkdir of .+ failed")
       .add("Error: java.io.IOException: All datanodes [.0-9:]+ are bad")
+      .add("java.net.SocketTimeoutException: .+ millis timeout while waiting for channel to be ready for read.")
       .get();
 
   //substrings that classify an exception string as infrastructure-related
