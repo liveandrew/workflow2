@@ -10,7 +10,7 @@ import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
-public class InitializedWorkflow<INITIALIZED extends InitializedPersistence, OPTS extends BaseWorkflowOptions> {
+public class InitializedWorkflow<INITIALIZED extends InitializedPersistence, OPTS extends BaseWorkflowOptions<OPTS>> {
 
 
   private final String workflowName;

@@ -21,7 +21,7 @@ import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
-public abstract class WorkflowPersistenceFactory<INITIALIZED extends InitializedPersistence, OPTS extends BaseWorkflowOptions> {
+public abstract class WorkflowPersistenceFactory<INITIALIZED extends InitializedPersistence, OPTS extends BaseWorkflowOptions<OPTS>> {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowPersistenceFactory.class);
 
   public synchronized InitializedWorkflow<INITIALIZED, OPTS> initialize(OPTS options) throws IOException {
