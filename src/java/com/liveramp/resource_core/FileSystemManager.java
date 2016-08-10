@@ -10,7 +10,7 @@ import com.liveramp.cascading_ext.resource.storage.FileSystemStorage;
 
 public class FileSystemManager {
 
-  public static ResourceDeclarer<String, String> fileSystemResourceManager(String workflowRoot) throws IOException {
+  public static ResourceDeclarer fileSystemResourceManager(String workflowRoot) throws IOException {
     return new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
         new RootManager<>(

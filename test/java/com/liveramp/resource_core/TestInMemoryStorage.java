@@ -15,7 +15,7 @@ public class TestInMemoryStorage extends ResourceCoreTestCase {
 
   @Test
   public void testInMemoryStorage() throws IOException {
-    ResourceManager<String, Void> resourceManager = InMemoryResourceManager.create()
+    ResourceManager resourceManager = InMemoryResourceManager.create()
         .create(0L, "Test");
     Resource<Integer> res = resourceManager.emptyResource("a");
     resourceManager.write(resourceManager.getWritePermission(res), 1);

@@ -11,7 +11,7 @@ import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
 
-public class ResourceDeclarerContainer<ID, RESOURCE_ROOT> implements ResourceDeclarer<String, RESOURCE_ROOT> {
+public class ResourceDeclarerContainer<ID, RESOURCE_ROOT> implements ResourceDeclarer {
 
   private final Tagger tagger;
   private final RootManager<RESOURCE_ROOT> rootManager;
@@ -26,7 +26,7 @@ public class ResourceDeclarerContainer<ID, RESOURCE_ROOT> implements ResourceDec
   }
 
   @Override
-  public ResourceManager<String, RESOURCE_ROOT> create(long version, String versionType) throws IOException {
+  public ResourceManager create(long version, String versionType) throws IOException {
 
     Storage storage = rootManager.getStorage(version, versionType);
 

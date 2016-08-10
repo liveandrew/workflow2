@@ -4,9 +4,9 @@ import java.io.IOException;
 
 import org.apache.commons.lang.NotImplementedException;
 
-public interface ResourceDeclarer<ID, RESOURCE_ROOT> {
+public interface ResourceDeclarer {
 
-  ResourceManager<ID, RESOURCE_ROOT> create(long version, String versionType) throws IOException;
+  ResourceManager create(long version, String versionType) throws IOException;
 
   <T> T manage(T context);
 
@@ -17,11 +17,11 @@ public interface ResourceDeclarer<ID, RESOURCE_ROOT> {
   <T> WriteResource<T> getWritePermission(Resource<T> resource);
 
 
-  public static class NotImplemented implements ResourceDeclarer<Void, Void> {
+  public static class NotImplemented implements ResourceDeclarer {
 
 
     @Override
-    public ResourceManager<Void, Void> create(long version, String versionType) {
+    public ResourceManager create(long version, String versionType) {
       return new ResourceManager.NotImplemented();
     }
 

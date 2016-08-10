@@ -2,7 +2,7 @@ package com.liveramp.cascading_ext.resource;
 
 import org.apache.commons.lang.NotImplementedException;
 
-public interface ResourceManager<ID, RESOURCE_ROOT> extends ResourceDeclarer<ID, RESOURCE_ROOT> {
+public interface ResourceManager extends ResourceDeclarer {
 
   <T> Resource<T> resource(T object);
 
@@ -13,7 +13,7 @@ public interface ResourceManager<ID, RESOURCE_ROOT> extends ResourceDeclarer<ID,
   <T> T read(ReadResource<T> resource);
 
 
-  public class NotImplemented extends ResourceDeclarer.NotImplemented implements ResourceManager<Void, Void> {
+  public class NotImplemented extends ResourceDeclarer.NotImplemented implements ResourceManager {
 
     @Override
     public <T> T manage(T context) {

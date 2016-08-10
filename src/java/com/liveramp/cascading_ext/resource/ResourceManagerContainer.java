@@ -2,15 +2,15 @@ package com.liveramp.cascading_ext.resource;
 
 import java.io.IOException;
 
-public class ResourceManagerContainer<RESOURCE_ROOT> implements ResourceManager<String, RESOURCE_ROOT> {
+public class ResourceManagerContainer<RESOURCE_ROOT> implements ResourceManager {
 
-  private final ResourceDeclarer<String, RESOURCE_ROOT> declarer;
+  private final ResourceDeclarer declarer;
   private final Tagger tagger;
 
   private final Storage storage;
 
   public ResourceManagerContainer(
-      ResourceDeclarer<String, RESOURCE_ROOT> declarer,
+      ResourceDeclarer declarer,
       Tagger tagger,
       Storage storage) {
     this.declarer = declarer;
@@ -59,7 +59,7 @@ public class ResourceManagerContainer<RESOURCE_ROOT> implements ResourceManager<
 
 
   @Override
-  public ResourceManager<String, RESOURCE_ROOT> create(long version, String versionType) throws IOException {
+  public ResourceManager create(long version, String versionType) throws IOException {
     return declarer.create(version, versionType);
   }
 

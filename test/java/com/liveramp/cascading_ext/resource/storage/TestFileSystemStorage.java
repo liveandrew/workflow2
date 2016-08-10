@@ -87,7 +87,7 @@ public class TestFileSystemStorage extends ResourceCoreTestCase{
 
   @Test
   public void testSwitchingBetweenJavaAndJsonSerialization() throws IOException {
-    ResourceManager<String, String> resourceManager = FileSystemManager.fileSystemResourceManager(TEST_ROOT)
+    ResourceManager resourceManager = FileSystemManager.fileSystemResourceManager(TEST_ROOT)
         .create(0L, "Test");
 
     Resource<PIN> resource1 = resourceManager.resource(email1, "email1");
@@ -110,7 +110,7 @@ public class TestFileSystemStorage extends ResourceCoreTestCase{
 
   @Test
   public void testJsonForListsOfNumbers() throws IOException {
-    ResourceManager<String, String> resourceManager = FileSystemManager.fileSystemResourceManager(TEST_ROOT)
+    ResourceManager resourceManager = FileSystemManager.fileSystemResourceManager(TEST_ROOT)
         .create(0L, "Test");
 
     Resource<List<Integer>> listOfIntegersResource = resourceManager.resource(listOfIntegers, "list-of-integers");
