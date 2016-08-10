@@ -41,7 +41,7 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 
-public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions> extends WorkflowPersistenceFactory<InitializedDbPersistence, OPTS> {
+public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<OPTS>> extends WorkflowPersistenceFactory<InitializedDbPersistence, OPTS> {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
 
   @Override

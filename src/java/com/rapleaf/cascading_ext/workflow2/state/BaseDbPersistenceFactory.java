@@ -43,7 +43,7 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptConfiguredNotification;
 import com.rapleaf.db_schemas.rldb.models.WorkflowAttemptDatastore;
 import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 
-public class BaseDbPersistenceFactory<OPTS extends BaseWorkflowOptions> extends WorkflowPersistenceFactory<InitializedDbPersistence, OPTS> {
+public class BaseDbPersistenceFactory<OPTS extends BaseWorkflowOptions<OPTS>> extends WorkflowPersistenceFactory<InitializedDbPersistence, OPTS> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BaseDbPersistenceFactory.class);
 
