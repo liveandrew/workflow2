@@ -18,7 +18,6 @@ import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
-import com.rapleaf.db_schemas.rldb.models.ResourceRoot;
 
 import static org.junit.Assert.fail;
 
@@ -42,7 +41,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
   public void testHdfsStorage() throws IOException {
     testStorage(new RMFactory() {
       @Override
-      public ResourceDeclarer<String, String> make() throws IOException {
+      public ResourceDeclarer make() throws IOException {
         return ResourceManagers.hdfsResourceManager(getTestRoot() + "/" + name, name, null, rlDb);
       }
     });
@@ -52,7 +51,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
   public void testDbStorage() throws IOException {
     testStorage(new RMFactory() {
       @Override
-      public ResourceDeclarer<String, ResourceRoot> make() throws IOException {
+      public ResourceDeclarer make() throws IOException {
         return ResourceManagers.dbResourceManager(name, null, rlDb);
       }
     });
@@ -96,7 +95,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
   private static class ResourceTest extends MultiStepAction {
     private MyContext context;
 
-    public ResourceTest(ResourceManager<String, ?> manager, String tmpRoot, Set<Long> numbersToWrite) {
+    public ResourceTest(ResourceManager manager, String tmpRoot, Set<Long> numbersToWrite) {
       super("checkpoints", tmpRoot);
       context = manager.manage(new MyContext());
 

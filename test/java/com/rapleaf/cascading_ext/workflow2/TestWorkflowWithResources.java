@@ -56,7 +56,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   }
 
 
-  private ResourceDeclarer<String, ResourceRoot> getDeclarer(IRlDb rldb, DbStorage.Factory storage) throws IOException {
+  private ResourceDeclarer getDeclarer(IRlDb rldb, DbStorage.Factory storage) throws IOException {
 
     ResourceDeclarerContainer<String, ResourceRoot> declarer = new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
@@ -77,7 +77,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     return ResourceStorages.hdfsStorage();
   }
 
-  private ResourceDeclarer<String, String> getDeclarer(IRlDb rldb, HdfsStorage.Factory storage, String workflowRoot) throws IOException {
+  private ResourceDeclarer getDeclarer(IRlDb rldb, HdfsStorage.Factory storage, String workflowRoot) throws IOException {
 
     ResourceDeclarerContainer<String, String> declarer = new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
@@ -98,7 +98,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     IRlDb rldb = new DatabasesImpl().getRlDb();
     HdfsStorage.Factory factory = getHdfsStorage();
 
-    ResourceDeclarer<String, String> declarer = getDeclarer(rldb, factory, tmpRoot);
+    ResourceDeclarer declarer = getDeclarer(rldb, factory, tmpRoot);
     Resource<Integer> resource = declarer.<Integer>emptyResource("resource");
     Step step = new Step(new SetResource("step-1", resource));
     Step step2 = new Step(new FailingAction("step-2"), step);
@@ -276,7 +276,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   public void testContextTool() throws IOException {
 
     InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> workflow = initializeWorkflow();
-    ResourceManager<String, ResourceRoot> resourceManager = workflow.getManager();
+    ResourceManager resourceManager = workflow.getManager();
 
     SimpleContext context = new SimpleContext();
 
