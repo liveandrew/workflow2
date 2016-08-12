@@ -49,7 +49,6 @@ public class InfrastructureFailureRates {
         .fetch();
 
     for (Record task: task_exceptions) {
-      System.out.println("task.toString() = " + task.get(MapreduceJobTaskException.EXCEPTION));
       if (ErrorMessageClassifier.classifyTaskFailure(task.get(MapreduceJobTaskException.EXCEPTION))) {
         infra++;
       }

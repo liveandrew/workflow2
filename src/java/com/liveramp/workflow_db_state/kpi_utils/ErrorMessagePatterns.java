@@ -11,10 +11,10 @@ public class ErrorMessagePatterns {
 
   //regex patterns that classify an exception string as infrastructure-related
   static final List<String> TASK_PATTERN_STRS = new ListBuilder<String>()
-      .add("Not able to initialize .+ directories in any of the configured local directories for")
-      .add("mkdir of .+ failed")
-      .add("Error: java.io.IOException: All datanodes [.0-9:]+ are bad")
-      .add("java.net.SocketTimeoutException: .+ millis timeout while waiting for channel to be ready for read.")
+      .add(".*Not able to initialize .+ directories in any of the configured local directories for.*")
+      .add(".*mkdir of .+ failed.*")
+      .add(".*Error: java.io.IOException: All datanodes [.0-9:]+ are bad.*")
+      .add(".*java.net.SocketTimeoutException: .+ millis timeout while waiting for channel to be ready for read.*")
       .get();
 
   //substrings that classify an exception string as infrastructure-related
@@ -45,18 +45,18 @@ public class ErrorMessagePatterns {
 
   //regex patterns that classify an exception string as infrastructure-related
   static final List<String> FAILURE_CAUSE_PATTERNS_STRS = new ListBuilder<String>()
-      .add("could not build flow from assembly:.*exception closing:|exception closing:.*could not build flow from assembly:")
-      .add("Failed to determine whether resource .+ is stored")
-      .add("^Couldn't persist data for request")
-      .add("All datanodes .+ are bad. Aborting...")
-      .add("MSJ Store .+ creation locked for > 24 hours")
-      .add("Communications link failure\n*The last packet successfully received from the server was .+ milliseconds ago.")
-      .add("java.net.SocketTimeoutException: .+ millis timeout while waiting for channel to be ready for read.")
-      .add("could not build flow from assembly:.*Trying to read meta file from an empty stream|Trying to read meta file from an empty stream.*could not build flow from assembly:")
-      .add("java.io.FileNotFoundException: .+ \\(Too many open files\\)")
-      .add("Operation category .+ is not supported in state standby")
-      .add("Exception connecting to .*Failed to connect to |Failed to connect to .*Exception connecting to ")
-      .add("Unable to store resource .+ and value")
+      .add(".*could not build flow from assembly:.*exception closing:|exception closing:.*could not build flow from assembly:.*")
+      .add(".*Failed to determine whether resource .+ is stored.*")
+      .add("^Couldn't persist data for request.*")
+      .add(".*All datanodes .+ are bad. Aborting....*")
+      .add(".*MSJ Store .+ creation locked for > 24 hours.*")
+      .add(".*Communications link failure\n*The last packet successfully received from the server was .+ milliseconds ago.*")
+      .add(".*java.net.SocketTimeoutException: .+ millis timeout while waiting for channel to be ready for read..*")
+      .add(".*could not build flow from assembly:.*Trying to read meta file from an empty stream|Trying to read meta file from an empty stream.*could not build flow from assembly:.*")
+      .add(".*java.io.FileNotFoundException: .+ \\(Too many open files\\).*")
+      .add(".*Operation category .+ is not supported in state standby.*")
+      .add(".*Exception connecting to .*Failed to connect to |Failed to connect to .*Exception connecting to .*")
+      .add(".*Unable to store resource .+ and value.*")
       .get();
 
   //substrings that classify an exception string as infrastructure-related

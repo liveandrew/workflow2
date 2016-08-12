@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.liveramp.workflow_state.kpi_utils.ErrorMessagePatterns.*;
+import static java.util.regex.Pattern.DOTALL;
 
 /**
  * Created by lerickson on 7/27/16.
@@ -26,7 +27,7 @@ public class ErrorMessageClassifier {
     List<Pattern> patterns = new ArrayList<>();
     for (String s :
         pattern_strings) {
-      patterns.add(Pattern.compile(s));
+      patterns.add(Pattern.compile(s,DOTALL));
     }
     return patterns;
   }
