@@ -38,8 +38,12 @@ public class InfrastructureFailureRates {
       if (job == null) {
         continue;
       }
+      Integer sampled = job.get(MapreduceJob.TASKS_SAMPLED);
+      if ( sampled==null ) {
+        continue;
+      }
       jobIds.add(job.get(MapreduceJob.ID).intValue());
-      sampledTasks+=job.get(MapreduceJob.TASKS_SAMPLED);
+      sampledTasks += sampled;
     }
 
 
