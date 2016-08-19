@@ -129,48 +129,6 @@ public class WorkflowQueries {
     return Optional.of(Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases()));
   }
 
-  //  TODO temporary for some scripts while stuff is getting migrated
-  public static boolean hasExecution(IWorkflowDb db, AppType type, String scopeIdentifier) throws IOException {
-    return !db.createQuery()
-        .from(Application.TBL)
-        .innerJoin(WorkflowExecution.TBL)
-        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
-        .where(Application.APP_TYPE.equalTo(type.getValue()))
-        .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeIdentifier))
-        .orderBy(WorkflowExecution.ID, QueryOrder.DESC)
-        .limit(1)
-        .fetch().isEmpty();
-  }
-
-  //  TODO temporary for some scripts while stuff is getting migrated
-  public static boolean hasExecution(IWorkflowDb db, String name, String scopeIdentifier) throws IOException {
-    return !db.createQuery()
-        .from(Application.TBL)
-        .innerJoin(WorkflowExecution.TBL)
-        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
-        .where(Application.NAME.equalTo(name))
-        .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeIdentifier))
-        .orderBy(WorkflowExecution.ID, QueryOrder.DESC)
-        .limit(1)
-        .fetch().isEmpty();
-  }
-
-  public static WorkflowExecutionStatus getLatestExecutionStatus(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
-    Optional<WorkflowExecution> execution = getLatestExecution(db, appType, scopeIdentifier);
-    if (execution.isPresent()) {
-      return WorkflowExecutionStatus.findByValue(execution.get().getStatus());
-    } else {
-      throw new IllegalStateException("No executions present for the supplied app and scope id");
-    }
-  }
-
-  public static WorkflowExecutionStatus getLatestExecutionStatus(IWorkflowDb db, String name, String scopeIdentifier) throws IOException {
-    WorkflowExecution execution = getLatestExecution(db, name, scopeIdentifier);
-    if (execution == null) {
-      return null;
-    }
-    return WorkflowExecutionStatus.findByValue(execution.getStatus());
-  }
 
   public static boolean isStepComplete(String step, WorkflowExecution execution) throws IOException {
     return getCompletedStep(step, execution) != null;
@@ -207,10 +165,6 @@ public class WorkflowQueries {
       asMap.put(counter.getGroup(), counter.getName(), counter.getValue());
     }
     return asMap;
-  }
-
-  public static Optional<WorkflowAttempt> getLatestAttemptOptional(WorkflowExecution execution) throws IOException {
-    return getLatestAttemptOptional(execution.getWorkflowAttempt());
   }
 
   public static Optional<WorkflowAttempt> getLatestAttemptOptional(Collection<WorkflowAttempt> attempts) throws IOException {
@@ -271,30 +225,6 @@ public class WorkflowQueries {
 
     return ProcessStatus.ALIVE;
 
-  }
-
-  public static List<WorkflowExecution> getDiedUncleanExecutions(IDatabases databases, AppType app, long windowDays, int missedHeartbeatsThreshold) throws IOException {
-
-    List<WorkflowExecution> executions = queryWorkflowExecutions(databases, null, null, null, null,
-        System.currentTimeMillis() - windowDays * 24 * 60 * 60 * 1000, null, WorkflowExecutionStatus.INCOMPLETE, null
-    );
-
-    List<WorkflowExecution> dead = Lists.newArrayList();
-
-    for (WorkflowExecution execution : executions) {
-      Optional<WorkflowAttempt> attemptOptional = getLatestAttemptOptional(execution);
-
-      if (attemptOptional.isPresent()) {
-        if (getProcessStatus(attemptOptional.get(), execution, missedHeartbeatsThreshold) == ProcessStatus.TIMED_OUT) {
-          if (app == null || execution.getApplication().getAppType().equals(app.getValue())) {
-            dead.add(execution);
-          }
-        }
-      }
-
-    }
-
-    return dead;
   }
 
   public static boolean workflowComplete(WorkflowExecution workflowExecution) throws IOException {
@@ -632,32 +562,6 @@ public class WorkflowQueries {
     return notifications;
   }
 
-
-  public static List<WorkflowAttempt> getWorkflowAttempts(IDatabases databases,
-                                                          Long endedAfter,
-                                                          Long endedBefore) throws IOException {
-
-    List<WorkflowAttempt> workflowAttempts = Lists.newArrayList();
-    for (Record record : databases.getWorkflowDb().createQuery().from(WorkflowAttempt.TBL)
-        .where(WorkflowAttempt.END_TIME.between(endedAfter, endedBefore))
-        .fetch()) {
-      workflowAttempts.add(record.getModel(WorkflowAttempt.TBL, databases));
-    }
-    return workflowAttempts;
-
-  }
-
-  //  public static Map<Long, Multimap<DSAction, WorkflowAttemptDatastore>> getApplicationDSActions(IDatabases db, Long startedAfter, Long startedBefore) throws IOException {
-  //
-  //    GenericQuery genericQuery = workflowExecutionQuery(db.getWorkflowDb(), null, null, startedAfter, startedBefore);
-  //
-  //    workflowAttemptquer
-  //
-  //
-  //  }
-  //
-  //  private GenericQuery attemptDataStore
-
   public static List<WorkflowAttempt> getWorkflowAttempts(IDatabases databases,
                                                           Set<Long> workflowExecutionIds) throws IOException {
 
@@ -865,14 +769,6 @@ public class WorkflowQueries {
   }
 
   //  join queries
-
-  public static GenericQuery getStepAttempts(IWorkflowDb db, Long execution, Set<String> latestTokens, EnumSet<StepStatus> statuses) {
-    return filterStepAttempts(joinStepAttempts(db.createQuery().from(WorkflowExecution.TBL)
-            .where(WorkflowExecution.ID.equalTo(execution))),
-        latestTokens,
-        statuses
-    );
-  }
 
   public static GenericQuery getCompleteStepCounters(IWorkflowDb db, Long executionId) throws IOException {
 
