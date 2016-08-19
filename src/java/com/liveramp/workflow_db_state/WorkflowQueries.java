@@ -916,12 +916,6 @@ public class WorkflowQueries {
         .find();
   }
 
-  public static GenericQuery getMapreduceCounters(IWorkflowDb db, Set<String> stepToken, String name, Integer appType, Long endedAfter, Long endedBefore,
-                                                  Set<String> specificGroups,
-                                                  Set<String> specificNames) throws IOException {
-    return getMapreduceCounters(getStepAttempts(db, stepToken, name, appType, endedAfter, endedBefore), specificGroups, specificNames);
-  }
-
   public static GenericQuery getMapreduceCounters(IWorkflowDb db, Set<String> stepToken, Set<Long> workflowExecutionIds,
                                                   Set<String> specificGroups,
                                                   Set<String> specificNames) throws IOException {
@@ -947,15 +941,6 @@ public class WorkflowQueries {
     return query;
   }
 
-  public static GenericQuery getStepAttempts(IWorkflowDb db, Set<String> stepTokens, String name, Integer appType, Long endedAfter, Long endedBefore) throws IOException {
-    return filterStepAttempts(
-        joinStepAttempts(workflowExecutionQuery(db, name, appType, null, null)),
-        stepTokens,
-        null,
-        endedAfter,
-        endedBefore
-    );
-  }
   public static GenericQuery getStepAttempts(IWorkflowDb db, Set<String> stepTokens, Set<Long> workflowExecutionIds) throws IOException {
 
     GenericQuery attempts = db.createQuery().from(WorkflowAttempt.TBL)
