@@ -1,18 +1,25 @@
 package com.liveramp.workflow_state.controller;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.importer.generated.AppType;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.ProcessStatus;
+import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.db_schemas.IDatabases;
@@ -26,15 +33,27 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 //  TODO not liking all the staticness of this.  figure out later
 public class ApplicationController {
 
-  public static Optional<Long> getLatestAttemptId(IRlDb rldb, AppType app, String scopeIdentifier) throws IOException {
-    Optional<WorkflowExecution> execution = WorkflowQueries.getLatestExecution(rldb, app, scopeIdentifier);
-    if (execution.isPresent()) {
-      WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(execution.get());
-      if (attempt != null) {
-        return Optional.of(attempt.getId());
+  public static Map<String, StepState> getLatestStepStates(IRlDb rldb, AppType app, String scopeIdentifier) throws IOException {
+
+    Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(rldb, app, scopeIdentifier);
+    Map<String, StepState> latestStatus = Maps.newHashMap();
+
+    if(latestExecution.isPresent()){
+
+      List<WorkflowAttempt> attempts = Lists.newArrayList(latestExecution.get().getWorkflowAttempt());
+      Collections.sort(attempts);
+
+      for (WorkflowAttempt attempt : attempts) {
+        for (Map.Entry<String, StepState> entry : DbPersistence.queryPersistence(attempt.getId(), rldb).getStepStates().entrySet()) {
+          StepState value = entry.getValue();
+          if(!value.getStatus().equals(StepStatus.SKIPPED)){
+            latestStatus.put(entry.getKey(), value);
+          }
+        }
       }
     }
-    return Optional.absent();
+
+    return latestStatus;
   }
 
   public static void cancelLatestExecution(IRlDb rldb, String workflowName, String scopeIdentifier) throws IOException {
