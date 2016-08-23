@@ -26,6 +26,17 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 //  TODO not liking all the staticness of this.  figure out later
 public class ApplicationController {
 
+  public static Optional<Long> getLatestAttemptId(IWorkflowDb rldb, AppType app, String scopeIdentifier) throws IOException {
+    Optional<WorkflowExecution> execution = WorkflowQueries.getLatestExecution(rldb, app, scopeIdentifier);
+    if (execution.isPresent()) {
+      WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(execution.get());
+      if (attempt != null) {
+        return Optional.of(attempt.getId());
+      }
+    }
+    return Optional.absent();
+  }
+
   public static void cancelLatestExecution(IWorkflowDb db, String workflowName, String scopeIdentifier) throws IOException {
     ExecutionController.cancelExecution(db, WorkflowQueries.getLatestExecution(db, workflowName, scopeIdentifier));
   }

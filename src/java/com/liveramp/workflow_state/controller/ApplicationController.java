@@ -26,6 +26,17 @@ import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 //  TODO not liking all the staticness of this.  figure out later
 public class ApplicationController {
 
+  public static Optional<Long> getLatestAttemptId(IRlDb rldb, AppType app, String scopeIdentifier) throws IOException {
+    Optional<WorkflowExecution> execution = WorkflowQueries.getLatestExecution(rldb, app, scopeIdentifier);
+    if (execution.isPresent()) {
+      WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(execution.get());
+      if (attempt != null) {
+        return Optional.of(attempt.getId());
+      }
+    }
+    return Optional.absent();
+  }
+
   public static void cancelLatestExecution(IRlDb rldb, String workflowName, String scopeIdentifier) throws IOException {
     ExecutionController.cancelExecution(rldb, WorkflowQueries.getLatestExecution(rldb, workflowName, scopeIdentifier));
   }
@@ -57,7 +68,7 @@ public class ApplicationController {
     return isIncomplete(WorkflowQueries.getLatestExecution(rlDb, appType, scopeIdentifier));
   }
 
-  public static int numRunningInstances(IDatabases db, AppType appType) throws  IOException {
+  public static int numRunningInstances(IDatabases db, AppType appType) throws IOException {
     Multimap<WorkflowExecution, WorkflowAttempt> incomplete = WorkflowQueries.getExecutionsToAttempts(db, appType, WorkflowExecutionStatus.INCOMPLETE);
 
     int runningInstances = 0;
@@ -113,7 +124,7 @@ public class ApplicationController {
   }
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  private static boolean isIncomplete(Optional<WorkflowExecution> execution){
+  private static boolean isIncomplete(Optional<WorkflowExecution> execution) {
     return execution.isPresent() && execution.get().getStatus() == WorkflowExecutionStatus.INCOMPLETE.ordinal();
   }
 
