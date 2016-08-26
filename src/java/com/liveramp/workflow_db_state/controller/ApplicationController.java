@@ -33,6 +33,21 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 //  TODO not liking all the staticness of this.  figure out later
 public class ApplicationController {
 
+  public static void revertStep(IWorkflowDb rldb, AppType app, String scopeIdentifier, String stepToken) throws IOException {
+
+    Optional<WorkflowExecution> execution = WorkflowQueries.getLatestExecution(rldb, app, scopeIdentifier);
+
+    if(execution.isPresent()){
+
+      WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(execution.get());
+
+      DbPersistence attemptController = DbPersistence.queryPersistence(attempt.getId(), rldb);
+      attemptController.markStepReverted(stepToken);
+
+    }
+
+  }
+
   public static Map<String, StepState> getLatestStepStates(IWorkflowDb rldb, AppType app, String scopeIdentifier) throws IOException {
 
     Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(rldb, app, scopeIdentifier);
