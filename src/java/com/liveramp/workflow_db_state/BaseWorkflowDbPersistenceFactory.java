@@ -288,6 +288,18 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
       WorkflowRunnerNotification.INTERNAL_ERROR
   );
 
+  private String truncateDescription(String str){
+    if(str == null){
+      return null;
+    }
+
+    if(str.length() > 255){
+      return str.substring(0, 255);
+    }
+
+    return str;
+  }
+
   private WorkflowAttempt createAttempt(IDatabases databases, String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution.Attributes execution, String remote, String implementationBuild) throws IOException {
     IWorkflowDb rldb = databases.getWorkflowDb();
 
@@ -298,7 +310,7 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
 
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setStatus(WorkflowAttemptStatus.INITIALIZING.ordinal())
-        .setDescription(description)
+        .setDescription(truncateDescription(description))
         .setLaunchDir(launchDir)
         .setLaunchJar(launchJar)
         .setErrorEmail(recipients.get(AlertSeverity.ERROR))     //  TODO remove these on attempt once notifications redone
