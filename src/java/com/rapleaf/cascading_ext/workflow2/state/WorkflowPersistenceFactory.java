@@ -14,7 +14,7 @@ import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
-import com.liveramp.workflow_core.RunJarUtil;
+import com.liveramp.java_support.RunJarUtil;
 import com.liveramp.workflow_core.WorkflowConstants;
 import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
