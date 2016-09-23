@@ -67,7 +67,7 @@ public class ErrorMessagePatterns {
       .add("unable to read from input identifier")
       .add("org.apache.hadoop.hdfs.server.namenode.LeaseExpiredException")
       .add("Exception trying to reload contents of /hank/domains")
-      .add("org.apache.hadoop.fs.FSError")
+      .add("FSError")
       .add("java.io.IOException: java.sql.SQLException: Lock wait timeout exceeded")
       .add("org.apache.thrift.transport.TTransportException")
       .add("Failed on local exception: java.net.SocketException: Too many open files")
