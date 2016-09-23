@@ -54,7 +54,7 @@ import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwners;
 import com.rapleaf.types.new_person_data.StringList;
 
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;

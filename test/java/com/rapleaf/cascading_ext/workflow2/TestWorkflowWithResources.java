@@ -7,7 +7,7 @@ import java.util.Set;
 import com.cedarsoftware.util.io.JsonReader;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.hadoop.fs.Path;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;

@@ -19,8 +19,8 @@ import com.liveramp.workflow_core.runner.BaseStep;
 import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
 public class TestWorkflowDiagram extends WorkflowTestCase {

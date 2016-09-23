@@ -2,7 +2,7 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.fail;
+import static org.junit.Assert.fail;
 
 public class TestStep extends WorkflowTestCase {
 

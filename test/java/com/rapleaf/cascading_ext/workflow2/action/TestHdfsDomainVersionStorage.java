@@ -2,7 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.liveramp.cascading_ext.FileSystemHelper;

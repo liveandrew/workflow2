@@ -55,7 +55,7 @@ import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwners;
 import com.rapleaf.types.person_data.GenderType;
 
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class TestCascadingWorkflowBuilder extends WorkflowTestCase {

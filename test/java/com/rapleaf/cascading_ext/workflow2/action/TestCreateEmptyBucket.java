@@ -14,7 +14,7 @@ import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.types.new_person_data.PIN;
 
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class TestCreateEmptyBucket extends WorkflowTestCase {

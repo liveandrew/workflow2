@@ -15,7 +15,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.junit.Before;
 import org.junit.Test;
@@ -106,10 +106,10 @@ import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
 public class TestWorkflowRunner extends WorkflowTestCase {

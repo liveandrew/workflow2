@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;

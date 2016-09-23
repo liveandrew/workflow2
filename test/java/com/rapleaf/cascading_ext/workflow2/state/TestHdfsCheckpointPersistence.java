@@ -15,8 +15,8 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
 public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
