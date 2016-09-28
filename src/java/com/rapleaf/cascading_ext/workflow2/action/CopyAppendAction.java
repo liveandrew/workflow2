@@ -9,8 +9,8 @@ public class CopyAppendAction extends Action {
   private final BucketDataStore input;
   private final BucketDataStore target;
 
-  public CopyAppendAction(String checkpointToken, BucketDataStore input, BucketDataStore target) {
-    super(checkpointToken);
+  public CopyAppendAction(String checkpointToken, BucketDataStore input, BucketDataStore target, String tmpRoot) {
+    super(checkpointToken, tmpRoot);
 
     this.input = input;
     this.target = target;
@@ -26,6 +26,6 @@ public class CopyAppendAction extends Action {
   @Override
   protected void execute() throws Exception {
     this.setStatusMessage("Copy-appending " + input.getPath() + " to " + target.getPath());
-    target.getBucket().copyAppend(input.getBucket(), getInheritedProperties());
+    target.getBucket().copyAppend(input.getBucket(), true, getInheritedProperties(), getTmpRoot());
   }
 }

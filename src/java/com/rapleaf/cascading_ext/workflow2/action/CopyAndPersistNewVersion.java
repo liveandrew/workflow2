@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -36,7 +37,7 @@ public class CopyAndPersistNewVersion<T> extends Action {
   @Override
   protected void execute() throws Exception {
 
-    tmpCopy.getBucket().copyAppend(versionToPersist.getBucket());
+    tmpCopy.getBucket().copyAppend(versionToPersist.getBucket(), true, new HashMap<>(), getTmpRoot());
 
     Bucket newVersion = store.getBucketVersionedStore().openNewVersion();
     newVersion.absorbIntoEmpty(tmpCopy.getBucket());
