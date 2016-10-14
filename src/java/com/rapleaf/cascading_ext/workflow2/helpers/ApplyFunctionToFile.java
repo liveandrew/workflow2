@@ -18,6 +18,7 @@ import com.liveramp.cascading_ext.function.DirectFn;
 import com.liveramp.cascading_ext.operation.FilterStats;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.rapleaf.cascading_ext.filter.SelectAllNotNull;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.FlowBuilder;
@@ -25,7 +26,6 @@ import com.rapleaf.cascading_ext.workflow2.ProductionWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 
 public class ApplyFunctionToFile {
 
@@ -48,7 +48,7 @@ public class ApplyFunctionToFile {
 
     WorkflowOptions options = new ProductionWorkflowOptions().setAlertsHandler(alertsHandler).configureTeam(teamForPool, "default");
 
-    WorkflowRunner runner = new WorkflowRunner(workflowName, new DbPersistenceFactory(), options, copyToNFS);
+    WorkflowRunner runner = new WorkflowRunner(workflowName, new WorkflowDbPersistenceFactory(), options, copyToNFS);
     runner.run();
 
   }

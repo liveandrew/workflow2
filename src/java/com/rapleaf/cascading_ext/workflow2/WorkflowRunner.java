@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,6 @@ import com.liveramp.workflow_state.InitializedPersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
@@ -24,29 +24,29 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
 
 
   public  WorkflowRunner(Class klass, Step tail) throws IOException {
-    this(klass, new DbPersistenceFactory(), tail);
+    this(klass, new WorkflowDbPersistenceFactory(), tail);
   }
 
   public  WorkflowRunner(Class klass, WorkflowOptions options, Step tail) throws IOException {
-    this(klass, new DbPersistenceFactory(), options, tail);
+    this(klass, new WorkflowDbPersistenceFactory(), options, tail);
   }
 
   public  WorkflowRunner(Class klass, Set<Step> tailSteps) throws IOException {
-    this(klass, new DbPersistenceFactory(), tailSteps);
+    this(klass, new WorkflowDbPersistenceFactory(), tailSteps);
   }
 
   public WorkflowRunner(Class klass, WorkflowOptions options, Set<? extends BaseStep<ExecuteConfig>> tailSteps) throws IOException {
-    this(klass, new DbPersistenceFactory(), options, tailSteps);
+    this(klass, new WorkflowDbPersistenceFactory(), options, tailSteps);
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
   public  WorkflowRunner(WorkflowOptions options, Step tail) throws IOException {
-    this(new DbPersistenceFactory(), options, tail);
+    this(new WorkflowDbPersistenceFactory(), options, tail);
   }
 
   // This constructor requires that the given options contain an AppType for generating the workflow name
   public  WorkflowRunner(WorkflowOptions options, Set<Step> tailSteps) throws IOException {
-    this(new DbPersistenceFactory(), options, tailSteps);
+    this(new WorkflowDbPersistenceFactory(), options, tailSteps);
   }
 
 
