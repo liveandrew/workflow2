@@ -257,7 +257,7 @@ public abstract class BaseAction<Config> {
     try {
       setStatusMessage(message);
     } catch (Exception e) {
-      LOG.warn("Couldn't set status message.");
+      LOG.warn("Couldn't set status message.", e);
     }
   }
 
