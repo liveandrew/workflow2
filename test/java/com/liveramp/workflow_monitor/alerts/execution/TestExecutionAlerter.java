@@ -9,19 +9,19 @@ import org.junit.Test;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.databases.workflow_db.DatabasesImpl;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
+import com.liveramp.databases.workflow_db.models.Application;
+import com.liveramp.databases.workflow_db.models.MapreduceJob;
+import com.liveramp.databases.workflow_db.models.StepAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.java_support.alerts_handler.InMemoryAlertsHandler;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGenerator;
-import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
-import com.rapleaf.db_schemas.DatabasesImpl;
-import com.rapleaf.db_schemas.rldb.IRlDb;
-import com.rapleaf.db_schemas.rldb.models.Application;
-import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
-import com.rapleaf.db_schemas.rldb.models.StepAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,8 +30,8 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
   @Test
   public void testQueries() throws Exception {
     DatabasesImpl databases = new DatabasesImpl();
-    IRlDb rldb = databases.getRlDb();
-    databases.getRlDb().disableCaching();
+    IWorkflowDb rldb = databases.getWorkflowDb();
+    databases.getWorkflowDb().disableCaching();
 
     long currentTime = System.currentTimeMillis();
 

@@ -18,22 +18,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.databases.workflow_db.IDatabases;
+import com.liveramp.databases.workflow_db.models.MapreduceCounter;
+import com.liveramp.databases.workflow_db.models.MapreduceJob;
+import com.liveramp.databases.workflow_db.models.StepAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.workflow_core.WorkflowConstants;
+import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
-import com.liveramp.workflow_core.WorkflowConstants;
-import com.liveramp.workflow_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
-import com.rapleaf.db_schemas.IDatabases;
-import com.rapleaf.db_schemas.rldb.models.MapreduceCounter;
-import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
-import com.rapleaf.db_schemas.rldb.models.StepAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowAttempt;
-import com.rapleaf.db_schemas.rldb.models.WorkflowExecution;
 
 public class ExecutionAlerter {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionAlerter.class);
@@ -92,7 +92,7 @@ public class ExecutionAlerter {
     );
 
     Map<Long, Long> stepAttemptToExecution = WorkflowQueries.getStepAttemptIdtoWorkflowExecutionId(db, stepAttemptIds);
-    Map<Long, StepAttempt> stepsById = BaseJackUtil.byId(db.getRlDb().stepAttempts().query().idIn(stepAttemptIds).find());
+    Map<Long, StepAttempt> stepsById = BaseJackUtil.byId(db.getWorkflowDb().stepAttempts().query().idIn(stepAttemptIds).find());
 
     Map<Long, WorkflowExecution> relevantExecutions = BaseJackUtil.byId(WorkflowQueries.getExecutionsForStepAttempts(db, stepAttemptIds));
 

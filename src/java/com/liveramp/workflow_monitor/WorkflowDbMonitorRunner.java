@@ -2,6 +2,8 @@ package com.liveramp.workflow_monitor;
 
 import com.google.common.collect.Lists;
 
+import com.liveramp.databases.workflow_db.DatabasesImpl;
+import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
@@ -13,16 +15,14 @@ import com.liveramp.workflow_monitor.alerts.execution.alerts.KilledTasks;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.NearMemoryLimit;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.OutputPerMapTask;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.FromPersistenceGenerator;
-import com.rapleaf.db_schemas.DatabasesImpl;
-import com.rapleaf.db_schemas.IDatabases;
 
-public class MonitorRunner {
+public class WorkflowDbMonitorRunner {
 
   public static void main(String[] args) throws InterruptedException {
-    LoggingHelper.setLoggingProperties(MonitorRunner.class.getSimpleName());
+    LoggingHelper.setLoggingProperties(WorkflowDbMonitorRunner.class.getSimpleName());
 
     IDatabases db = new DatabasesImpl();
-    db.getRlDb().disableCaching();
+    db.getWorkflowDb().disableCaching();
 
     ExecutionAlerter production = new ExecutionAlerter(
         new FromPersistenceGenerator(db),

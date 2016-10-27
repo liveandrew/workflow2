@@ -6,9 +6,9 @@ import java.util.Map;
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.databases.workflow_db.models.MapreduceJob;
+import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
-import com.rapleaf.db_schemas.rldb.models.MapreduceJob;
-import com.rapleaf.db_schemas.rldb.models.StepAttempt;
 
 public abstract class MapreduceJobAlertGenerator {
 
