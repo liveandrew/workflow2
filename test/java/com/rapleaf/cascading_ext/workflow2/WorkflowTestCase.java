@@ -21,7 +21,8 @@ public class WorkflowTestCase extends BaseWorkflowTestCase {
 
   @Before
   public void deleteFixtures() throws Exception {
-    new DatabasesImpl().getRlDb().deleteAll();
+    new DatabasesImpl().getRlDb().deleteAllLazy();
+    new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb().deleteAllLazy();
   }
 
 
