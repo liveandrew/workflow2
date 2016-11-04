@@ -53,7 +53,7 @@ import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_state.json.WorkflowJSON;
 
 public class DbPersistence implements WorkflowStatePersistence {
-  private static final Logger LOG = LoggerFactory.getLogger(com.liveramp.workflow_state.DbPersistence.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
 
   public static final long HEARTBEAT_INTERVAL = 15 * 1000; //  15s
   public static final int NUM_HEARTBEAT_TIMEOUTS = 4;  //  if an attempt misses 4 heartbeats, assume it is dead
