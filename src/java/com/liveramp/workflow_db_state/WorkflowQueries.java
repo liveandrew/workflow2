@@ -44,7 +44,6 @@ import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNoti
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.DSAction;
-import com.liveramp.workflow_state.DbPersistence;
 import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.WorkflowEnums;
