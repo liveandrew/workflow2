@@ -80,8 +80,8 @@ public class ErrorMessageClassifier {
         || applySubstrings(failure_cause, FAILURE_CAUSE_STRING_INCLUSIONS)
         || applyEqualities(failure_cause, FAILURE_CAUSE_STRINGS)
         || ((applyRegexes(failure_cause, USE_TASKS_PATTERNS)
-        || applySubstrings(failure_cause, USE_TASKS_STRING_INCLUSIONS)
-        || applyEqualities(failure_cause, USE_TASKS_STRINGS)) &&
+            || applySubstrings(failure_cause, USE_TASKS_STRING_INCLUSIONS)
+            || applyEqualities(failure_cause, USE_TASKS_STRINGS)) &&
         classifyAppByTaskFailures(step_attempt_id, db));
   }
 
