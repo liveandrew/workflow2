@@ -26,7 +26,7 @@ import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_db_state.DbPersistence;
 import com.liveramp.workflow_db_state.WorkflowQueries;
-import com.liveramp.workflow_state.ProcessStatus;
+import com.liveramp.workflow_db_state.ProcessStatus;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 

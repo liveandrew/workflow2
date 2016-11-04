@@ -1,4 +1,4 @@
-package com.liveramp.workflow_state;
+package com.liveramp.workflow_db_state;
 
 public enum ProcessStatus {
   ALIVE,
