@@ -23,6 +23,7 @@ public class InfrastructureFailureRates {
   public static InfrastructureFailureInfo getTaskFailureInfo(long startWindowMillis, long endWindowMillis, IDatabases dbs) throws IOException {
 
     long sampledTasks = 0L;
+    long exception_count = 0L;
     long infra = 0L;
 
 
@@ -53,13 +54,13 @@ public class InfrastructureFailureRates {
         .fetch();
 
     for (Record task: task_exceptions) {
-      System.out.println("task.toString() = " + task.get(MapreduceJobTaskException.EXCEPTION));
       if (ErrorMessageClassifier.classifyTaskFailure(task.get(MapreduceJobTaskException.EXCEPTION))) {
         infra++;
       }
+      exception_count++;
     }
 
-    return new InfrastructureFailureInfo(infra,sampledTasks);
+    return new InfrastructureFailureInfo(infra,exception_count,sampledTasks);
   }
 
   public static InfrastructureFailureInfo getAppFailureInfo(long startWindowMillis, IDatabases dbs) throws IOException {
@@ -69,6 +70,7 @@ public class InfrastructureFailureRates {
   public static InfrastructureFailureInfo getAppFailureInfo(long startWindowMillis, long endWindowMillis, IDatabases dbs) throws IOException {
     long total = 0L;
     long infra = 0L;
+    long failure_count = 0L;
 
     Records stepattempts = dbs.getWorkflowDb().createQuery()
         .from(StepAttempt.TBL)
@@ -86,21 +88,26 @@ public class InfrastructureFailureRates {
       }
       else if (status == 3) {
         total++;
+        failure_count++;
         if (ErrorMessageClassifier.classifyFailedStepAttempt(attempt.get(StepAttempt.FAILURE_CAUSE),attempt.get(StepAttempt.ID),dbs.getWorkflowDb())) {
           infra++;
         }
       }
     }
 
-    return new InfrastructureFailureInfo(infra,total);
+    return new InfrastructureFailureInfo(infra,failure_count,total);
   }
 
   public static class InfrastructureFailureInfo {
     private final long numInfrastructureFailures;
     private final long sampleSize;
+    private final long numTotalFailures;
+
     public InfrastructureFailureInfo(long numInfrastructureFailures,
+                                     long numTotalFailures,
                                      long sampleSize) {
       this.numInfrastructureFailures = numInfrastructureFailures;
+      this.numTotalFailures = numTotalFailures;
       this.sampleSize = sampleSize;
     }
 
@@ -110,6 +117,10 @@ public class InfrastructureFailureRates {
 
     public long getSampleSize() {
       return sampleSize;
+    }
+
+    public long getNumTotalFailures() {
+      return numTotalFailures;
     }
   }
 
