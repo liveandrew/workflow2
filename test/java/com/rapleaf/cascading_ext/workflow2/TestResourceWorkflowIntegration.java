@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,7 +15,6 @@ import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -59,7 +59,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
 
   private <T> void testStorage(RMFactory manager) throws IOException {
 
-    InitializedWorkflow workflow = new DbPersistenceFactory().initialize(name,
+    InitializedWorkflow workflow = new WorkflowDbPersistenceFactory().initialize(name,
         new TestWorkflowOptions().setResourceManager(manager.make())
     );
     execute(workflow, getSteps(workflow.getManager(), previousNumbers));
@@ -67,7 +67,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
     // should fail the first time
     shouldFail = true;
 
-    workflow = new DbPersistenceFactory().initialize(name,
+    workflow = new WorkflowDbPersistenceFactory().initialize(name,
         new TestWorkflowOptions().setResourceManager(manager.make())
     );
 
@@ -80,7 +80,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
 
     shouldFail = false;
 
-    workflow = new DbPersistenceFactory().initialize(name,
+    workflow = new WorkflowDbPersistenceFactory().initialize(name,
         new TestWorkflowOptions().setResourceManager(manager.make())
     );
 

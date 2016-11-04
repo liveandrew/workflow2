@@ -97,7 +97,6 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.action.PersistNewVersion;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
@@ -297,7 +296,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     final List<String> messages = Lists.newArrayList();
 
-    WorkflowRunner runner = new WorkflowRunner("Test Workflow", new DbPersistenceFactory(), WorkflowOptions.test()
+    WorkflowRunner runner = new WorkflowRunner("Test Workflow", new WorkflowDbPersistenceFactory(), WorkflowOptions.test()
         .setNotificationLevel(WorkflowNotificationLevel.ERROR)
         .setMaxConcurrentSteps(2)
         .setAlertsHandler(new AlertsHandler() {
@@ -472,7 +471,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     final List<String> messages = Lists.newArrayList();
 
-    WorkflowRunner runner = new WorkflowRunner("Test Workflow", new DbPersistenceFactory(), WorkflowOptions.test()
+    WorkflowRunner runner = new WorkflowRunner("Test Workflow", new WorkflowDbPersistenceFactory(), WorkflowOptions.test()
         .setNotificationLevel(WorkflowNotificationLevel.ERROR)
         .setAlertsHandler(new AlertsHandler() {
 
@@ -1320,7 +1319,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step step2 = new Step(new IncrementCounter2("step2", getTestRoot(), input, output), step);
 
     WorkflowRunner runner = new WorkflowRunner("Test Workflow",
-        new DbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(),
         WorkflowOptions.test(),
         newHashSet(step, step2)
     );
@@ -1358,7 +1357,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step step2 = new Step(new FailingAction("step2"), step);
 
     WorkflowRunner runner = new WorkflowRunner("Test Workflow",
-        new DbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(),
         WorkflowOptions.test(),
         newHashSet(step2)
     );
@@ -1373,7 +1372,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     step2 = new Step(new IncrementCounter2("step2", getTestRoot(), input, output), step);
 
     runner = new WorkflowRunner("Test Workflow",
-        new DbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(),
         WorkflowOptions.test(),
         newHashSet(step2)
     );
@@ -1409,11 +1408,11 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     Step step1 = new Step(new CopyStore("step1", store1, store2));
     Step step2 = new Step(new PersistNewVersion<>("step2", store2, store1P), step1);
-    new WorkflowRunner("workflow1", new DbPersistenceFactory(), WorkflowOptions.test()
+    new WorkflowRunner("workflow1", new WorkflowDbPersistenceFactory(), WorkflowOptions.test()
         .addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DISTRIBUTION, "default")), step2).run();
 
     Step step3 = new Step(new CopyStore("step2", store1P.getLatestVersion(), store3));
-    new WorkflowRunner("workflow2", new DbPersistenceFactory(), WorkflowOptions.test()
+    new WorkflowRunner("workflow2", new WorkflowDbPersistenceFactory(), WorkflowOptions.test()
         .addWorkflowProperties(PropertiesUtil.teamPool(TeamList.APEX, "default")), step3).run();
 
   }
@@ -1454,7 +1453,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     WorkflowRunner runner = new WorkflowRunner(
         getClass().getName(),
-        new MonitoredPersistenceFactory(new DbPersistenceFactory()),
+        new MonitoredPersistenceFactory(new WorkflowDbPersistenceFactory()),
         WorkflowOptions.test()
             .setStepPollInterval(2000)
             //  concurrency 200

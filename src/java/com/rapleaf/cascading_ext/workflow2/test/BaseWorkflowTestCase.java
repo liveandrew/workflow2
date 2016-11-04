@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import org.apache.log4j.Level;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
@@ -12,13 +13,12 @@ import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.InMemoryContext;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_core.runner.BaseStep;
-import com.liveramp.workflow_state.InitializedDbPersistence;
+import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
 
@@ -78,7 +78,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
 
   public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, WorkflowOptions options, ContextStorage storage) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
-        new DbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(),
         options
             .setStorage(storage)
             .setResourceManager(ResourceManagers.inMemoryResourceManager()),
@@ -106,7 +106,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
 
   public WorkflowRunner execute(Set<Step> steps, ResourceDeclarer resourceManager) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
-        new DbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(),
         WorkflowOptions.test()
             .setResourceManager(resourceManager),
         steps);
@@ -119,8 +119,8 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> initializeWorkflow(String workflowName,
-                                                                                           ResourceDeclarer declarer) throws IOException {
-    return new DbPersistenceFactory().initialize(
+                                                                                                                          ResourceDeclarer declarer) throws IOException {
+    return new WorkflowDbPersistenceFactory().initialize(
         workflowName,
         WorkflowOptions.test()
             .setResourceManager(declarer));

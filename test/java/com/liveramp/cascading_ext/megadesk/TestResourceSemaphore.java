@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.Lists;
+import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -27,7 +28,6 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.CleanUpOlderVersions;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.DbPersistenceFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -107,7 +107,7 @@ public class TestResourceSemaphore extends WorkflowTestCase {
 
 
     final WorkflowRunner runner = new WorkflowRunner(TestResourceSemaphore.class,
-        new DbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(),
         options, action);
     Thread thread = new Thread(new Runnable() {
       @Override
@@ -148,7 +148,7 @@ public class TestResourceSemaphore extends WorkflowTestCase {
 
   private void attemptToClean(VersionedBucketDataStore<StringOrNone> versionedStore, WorkflowOptions options) throws IOException {
     new WorkflowRunner("Test Workflow",
-        new DbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(),
         options,
         new Step(new CleanUpOlderVersions("clean", getTestRoot(), 1, versionedStore))).run();
   }

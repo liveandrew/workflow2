@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import org.junit.Test;
 
 import com.liveramp.java_support.functional.Fn;
@@ -38,7 +39,7 @@ public class TestFailingPersistence extends WorkflowTestCase {
     try {
       new WorkflowRunner(
           TestWorkflow.class,
-          new FailingPersistenceFactory(new DbPersistenceFactory(), new StepNameBuilder(WORKFLOW_CHKPT_TOKEN, SHOULD_FAIL_CHKPT_TOKEN)),
+          new FailingPersistenceFactory(new WorkflowDbPersistenceFactory(), new StepNameBuilder(WORKFLOW_CHKPT_TOKEN, SHOULD_FAIL_CHKPT_TOKEN)),
           new TestWorkflowOptions(),
           new Step(new TestWorkflow(
               WORKFLOW_CHKPT_TOKEN,

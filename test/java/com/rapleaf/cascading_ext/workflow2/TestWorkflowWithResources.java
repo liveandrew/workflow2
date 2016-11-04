@@ -26,7 +26,7 @@ import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.resource_db_manager.DbResourceManager;
 import com.liveramp.resource_db_manager.DbStorage;
 import com.liveramp.resource_db_manager.DbStorageRootDeterminer;
-import com.liveramp.workflow_state.InitializedDbPersistence;
+import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
