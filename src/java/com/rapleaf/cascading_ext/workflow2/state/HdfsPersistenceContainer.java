@@ -30,7 +30,7 @@ import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.liveramp.workflow_state.json.WorkflowJSON;
+import com.liveramp.workflow_db_state.json.WorkflowJSON;
 
 public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
