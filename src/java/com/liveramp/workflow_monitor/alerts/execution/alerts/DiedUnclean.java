@@ -7,11 +7,11 @@ import com.google.common.base.Optional;
 
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
+import com.liveramp.workflow_db_state.DbPersistence;
+import com.liveramp.workflow_db_state.ProcessStatus;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
-import com.liveramp.workflow_db_state.DbPersistence;
-import com.liveramp.workflow_state.ProcessStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class DiedUnclean implements ExecutionAlertGenerator {
