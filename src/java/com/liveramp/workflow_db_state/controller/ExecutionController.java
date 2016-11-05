@@ -22,7 +22,7 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class ExecutionController {
 
-  private static final Logger LOG = LoggerFactory.getLogger(com.liveramp.workflow_state.controller.ExecutionController.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ExecutionController.class);
 
   public static void cancelExecution(IWorkflowDb db, WorkflowExecution execution) throws IOException {
     if (isCancelled(execution)) {
