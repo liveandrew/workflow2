@@ -65,9 +65,6 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
     IWorkflowDb workflowDb = databases.getWorkflowDb();
     workflowDb.disableCaching();
 
-    //  first, make sure there is no incomplete execution in the old DB
-    assertMigrationSafety(name, scopeId);
-
     Application application = getApplication(workflowDb, name, appType);
     LOG.info("Using application: " + application);
 
@@ -178,28 +175,6 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
       throw new RuntimeException(e);
     }finally {
       rldb.setAutoCommit(true);
-    }
-
-  }
-
-  private void assertMigrationSafety(String name, String scopeId) throws IOException {
-
-    IRlDb rlDb = new com.rapleaf.db_schemas.DatabasesImpl().getRlDb();
-
-    Optional<com.rapleaf.db_schemas.rldb.models.Application> app = com.liveramp.workflow_state.WorkflowQueries.getApplication(rlDb, name);
-
-    //  new app -- totally fine to run in new DB
-    if(!app.isPresent()){
-      return;
-    }
-
-    Set<com.rapleaf.db_schemas.rldb.models.WorkflowExecution.Attributes> incomplete = com.liveramp.workflow_state.WorkflowQueries.getIncompleteExecutions(rlDb,
-        name,
-        scopeId
-    );
-
-    if(!incomplete.isEmpty()){
-      throw new RuntimeException("Will not launch workflow using workflow_db because executions are incomplete in rldb: "+incomplete);
     }
 
   }
