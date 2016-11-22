@@ -1197,7 +1197,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       }
     });
 
-    assertTrue(cancelNonLatest.getMessage().startsWith("Cannot revert steps or cancel execution"));
+    assertTrue(cancelNonLatest.getMessage().startsWith("Cannot manually modify execution"));
 
   }
 
@@ -1272,7 +1272,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       firstRun.getPersistence().markStepReverted("step1");
       fail();
     } catch (Exception e) {
-      assertTrue(e.getMessage().startsWith("Cannot revert steps or cancel execution"));
+      System.out.println(e.getMessage());
+      assertTrue(e.getMessage().startsWith("Cannot manually modify execution"));
     }
 
   }
