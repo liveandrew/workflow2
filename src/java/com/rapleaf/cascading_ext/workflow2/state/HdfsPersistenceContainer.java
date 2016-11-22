@@ -229,6 +229,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
+  public void markStepManuallyCompleted(String stepToken) throws IOException {
+    throw new NotImplementedException();
+  }
+
+  @Override
   public void markStepStatusMessage(String stepToken, String newMessage) {
     getState(stepToken)
         .setStatusMessage(newMessage);

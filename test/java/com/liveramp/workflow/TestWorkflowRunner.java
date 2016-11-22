@@ -9,6 +9,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -65,6 +66,7 @@ import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
+import com.liveramp.workflow_core.step.NoOp;
 import com.liveramp.workflow_db_state.DbPersistence;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow_db_state.WorkflowQueries;
@@ -942,8 +944,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   }
 
   public static class CreateStores extends Action {
-    
-    public CreateStores(String checkpoint, DataStore creates, DataStore createsTemporary){
+
+    public CreateStores(String checkpoint, DataStore creates, DataStore createsTemporary) {
       super(checkpoint);
       creates(creates);
       createsTemporary(createsTemporary);
@@ -1544,6 +1546,78 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
+  @Test
+  public void testMarkStepComplete() throws IOException, InterruptedException {
+
+    //  1) standard -- step fails, mark it as complete, resume
+
+    Semaphore failLock = new Semaphore(0);
+
+    Step step = new Step(new DelayedFailingAction("fail", failLock));
+
+    WorkflowRunner execute = new WorkflowRunner(TestWorkflowRunner.class, WorkflowOptions.test(), step);
+
+    Wrapper<Exception> exception = new Wrapper<Exception>();
+    Thread t = run(execute, exception);
+    t.start();
+
+    IWorkflowDb db = new DatabasesImpl().getWorkflowDb();
+
+    try{
+
+      ApplicationController.manuallyCompleteStep(db,
+          TestWorkflowRunner.class.getName(),
+          null, "fail"
+      );
+
+      fail();
+
+    }catch(Exception e){
+      System.out.println(e.getCause());
+      System.out.println(e);
+      failLock.release();
+
+    }
+
+    t.join();
+
+    WorkflowStatePersistence persistence = execute.getPersistence();
+    persistence.markStepManuallyCompleted("fail");
+
+    assertEquals(StepStatus.MANUALLY_COMPLETED, persistence.getStatus("fail"));
+
+    step = new Step(new NoOp("fail"));
+
+    MailBuffer providedBuffer = new MailBuffer.ListBuffer();
+
+    WorkflowRunner newRunner = new WorkflowRunner(TestWorkflowRunner.class,
+        WorkflowOptions.test()
+            .setAlertsHandler(AlertsHandlers.builder(TeamList.DEV_TOOLS)
+                .setTestMailBuffer(providedBuffer).build()),
+        step
+    );
+
+    newRunner.run();
+
+    WorkflowStatePersistence newPersistence = newRunner.getPersistence();
+
+    assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(),
+        db.workflowExecutions().find(newPersistence.getExecutionId()).getStatus());
+
+    assertEquals(WorkflowAttemptStatus.FINISHED,
+        newPersistence.getStatus());
+
+    assertEquals(StepStatus.SKIPPED, newPersistence.getStatus("fail"));
+
+    assertTrue(providedBuffer.get().stream().map(MailOptions::getSubject).collect(Collectors.toSet()).contains(
+        "[WORKFLOW] Succeeded: com.liveramp.workflow.TestWorkflowRunner"
+    ));
+
+  }
+
+
+
+  //  3) try complete while execution is running.  fail.
 
   private static class SetStep extends Action {
 

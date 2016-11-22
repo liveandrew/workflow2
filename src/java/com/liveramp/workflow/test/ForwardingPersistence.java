@@ -14,6 +14,8 @@ import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
+import static org.apache.zookeeper.ZooDefs.OpCode.delete;
+
 public class ForwardingPersistence implements WorkflowStatePersistence {
 
   protected final WorkflowStatePersistence delegatePersistence;
@@ -35,6 +37,11 @@ public class ForwardingPersistence implements WorkflowStatePersistence {
   @Override
   public void markStepReverted(String stepToken) throws IOException {
     delegatePersistence.markStepReverted(stepToken);
+  }
+
+  @Override
+  public void markStepManuallyCompleted(String stepToken) throws IOException {
+    delegatePersistence.markStepManuallyCompleted(stepToken);
   }
 
   @Override
