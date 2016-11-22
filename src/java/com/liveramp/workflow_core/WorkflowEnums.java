@@ -21,19 +21,24 @@ public class WorkflowEnums {
   );
 
   public static final Set<Integer> LIVE_ATTEMPT_STATUSES = Sets.newHashSet();
-  static{
+
+  static {
     for (WorkflowAttemptStatus status : LIVE_ATTEMPT_STATUS) {
       LIVE_ATTEMPT_STATUSES.add(status.ordinal());
     }
 
   }
 
+  public static final Set<StepStatus> COMPLETED_STATUSES = EnumSet.of(
+      StepStatus.COMPLETED, StepStatus.MANUALLY_COMPLETED
+  );
 
   public static final Set<StepStatus> NON_BLOCKING_STEP_STATUSES = EnumSet.of(
-      StepStatus.COMPLETED, StepStatus.SKIPPED
+      StepStatus.COMPLETED, StepStatus.SKIPPED, StepStatus.MANUALLY_COMPLETED
   );
 
   public static final Set<Integer> NON_BLOCKING_STEP_STATUS_IDS = Sets.newHashSet();
+
   static {
     for (StepStatus stepStatus : NON_BLOCKING_STEP_STATUSES) {
       NON_BLOCKING_STEP_STATUS_IDS.add(stepStatus.ordinal());
@@ -42,18 +47,26 @@ public class WorkflowEnums {
 
   public final static Multimap<StepStatus, StepStatus> VALID_STEP_STATUS_TRANSITIONS = HashMultimap.create();
 
-  static{
+  static {
 
     VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.WAITING,
-        Lists.newArrayList(StepStatus.RUNNING));
+        Lists.newArrayList(StepStatus.RUNNING, StepStatus.MANUALLY_COMPLETED));
 
     VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.RUNNING,
-        Lists.newArrayList(StepStatus.COMPLETED, StepStatus.FAILED));
+        Lists.newArrayList(StepStatus.COMPLETED, StepStatus.FAILED, StepStatus.MANUALLY_COMPLETED));
 
     //  failed b/c of shutdown hook ordering
     VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.COMPLETED,
         Lists.newArrayList(StepStatus.REVERTED, StepStatus.FAILED));
 
+    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.REVERTED,
+        Lists.newArrayList(StepStatus.MANUALLY_COMPLETED));
+
+    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.FAILED,
+        Lists.newArrayList(StepStatus.MANUALLY_COMPLETED));
+
+    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.MANUALLY_COMPLETED,
+        Lists.newArrayList(StepStatus.REVERTED));
   }
 
 }

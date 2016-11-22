@@ -30,6 +30,7 @@ public interface WorkflowStatePersistence extends InitializedPersistence{
 
   //  UI / manually controlled
   public void markStepReverted(String stepToken) throws IOException;
+  public void markStepManuallyCompleted(String stepToken) throws IOException;
   public void markPool(String pool) throws IOException;
   public void markPriority(String priority) throws IOException;
   public void markShutdownRequested(String reason) throws IOException;
