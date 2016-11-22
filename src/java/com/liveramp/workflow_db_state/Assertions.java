@@ -10,9 +10,9 @@ import com.liveramp.workflow.types.StepStatus;
 
 public class Assertions {
 
-  public static void assertCanRevert(IWorkflowDb rldb, WorkflowExecution execution) throws IOException {
-    if(!WorkflowQueries.canRevert(rldb, execution)){
-      throw new RuntimeException("Cannot revert steps or cancel execution "+execution.getId()+".  Check status and other executions");
+  public static void assertCanManuallyModify(IWorkflowDb rldb, WorkflowExecution execution) throws IOException {
+    if(!WorkflowQueries.canManuallyModify(rldb, execution)){
+      throw new RuntimeException("Cannot manually modify execution "+execution.getId()+".  Check status and other executions");
     }
   }
 

@@ -172,7 +172,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       //  verify this is the latest execution
       //  verify workflow attempt not running
       //  can't cancel attempt already cancelled or finished
-      Assertions.assertCanRevert(init.getDb(), execution);
+      Assertions.assertCanManuallyModify(init.getDb(), execution);
 
       update(getStep(stepToken), stepFields()
           .put(StepAttempt._Fields.step_status, StepStatus.REVERTED.ordinal())
@@ -180,6 +180,23 @@ public class DbPersistence implements WorkflowStatePersistence {
 
       //  set execution to not complete
       init.save(execution.setStatus(WorkflowExecutionStatus.INCOMPLETE.ordinal()));
+
+    }
+  }
+
+  @Override
+  public void markStepManuallyCompleted(String stepToken) throws IOException {
+    synchronized (lock) {
+
+      LOG.info("Marking step " + stepToken + " as manually completed");
+
+      WorkflowExecution execution = init.getExecution();
+
+      Assertions.assertCanManuallyModify(init.getDb(), execution);
+
+      update(getStep(stepToken), stepFields()
+          .put(StepAttempt._Fields.step_status, StepStatus.MANUALLY_COMPLETED.ordinal())
+      );
 
     }
   }
@@ -250,14 +267,10 @@ public class DbPersistence implements WorkflowStatePersistence {
 
         conn.commit();
 
-      }
-
-      catch (Exception e) {
+      } catch (Exception e) {
         conn.rollback();
         throw e;
-      }
-
-      finally {
+      } finally {
         conn.setAutoCommit(true);
       }
 
@@ -303,14 +316,10 @@ public class DbPersistence implements WorkflowStatePersistence {
 
         conn.commit();
 
-      }
-
-      catch (Exception e) {
+      } catch (Exception e) {
         conn.rollback();
         throw new RuntimeException("Error recording job task info for jobID " + jobId, e);
-      }
-
-      finally {
+      } finally {
         conn.setAutoCommit(true);
       }
     }

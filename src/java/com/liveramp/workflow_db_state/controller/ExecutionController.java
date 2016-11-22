@@ -29,7 +29,7 @@ public class ExecutionController {
       return;
     }
 
-    Assertions.assertCanRevert(db, execution);
+    Assertions.assertCanManuallyModify(db, execution);
 
     //  revert all steps which were defined by latest attempt and are complete
     for (StepAttempt step : WorkflowQueries.getLatestAttempt(execution).getStepAttempt()) {

@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.hp.gagawa.java.elements.S;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.databases.workflow_db.IDatabases;
@@ -43,6 +44,21 @@ public class ApplicationController {
 
       DbPersistence attemptController = DbPersistence.queryPersistence(attempt.getId(), db);
       attemptController.markStepReverted(stepToken);
+
+    }
+
+  }
+
+  public static void manuallyCompleteStep(IWorkflowDb db, String app, String scopeIdentifier, String stepToken) throws IOException {
+
+    WorkflowExecution execution = WorkflowQueries.getLatestExecution(db, app, scopeIdentifier);
+
+    if(execution != null){
+
+      WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(execution);
+
+      DbPersistence attemptController = DbPersistence.queryPersistence(attempt.getId(), db);
+      attemptController.markStepManuallyCompleted(stepToken);
 
     }
 

@@ -130,7 +130,6 @@ public class WorkflowQueries {
 
   public static boolean isStepComplete(String step, WorkflowExecution execution) throws IOException {
     return getCompletedStep(step, execution) != null;
-
   }
 
   public static StepAttempt getCompletedStep(String step, WorkflowExecution execution) throws IOException {
@@ -139,7 +138,8 @@ public class WorkflowQueries {
 
     for (WorkflowAttempt attempts : execution.getWorkflowAttempt()) {
       for (StepAttempt stepAttempt : attempts.getStepAttempt()) {
-        if (stepAttempt.getStepToken().equals(step) && stepAttempt.getStepStatus() == StepStatus.COMPLETED.ordinal()) {
+        if (stepAttempt.getStepToken().equals(step) &&
+            WorkflowEnums.COMPLETED_STATUSES.contains(StepStatus.findByValue(stepAttempt.getStepStatus()))) {
           matches.add(stepAttempt);
         }
       }
@@ -251,7 +251,7 @@ public class WorkflowQueries {
   }
 
   //  either steps or cancel
-  public static boolean canRevert(IWorkflowDb db, WorkflowExecution execution) throws IOException {
+  public static boolean canManuallyModify(IWorkflowDb db, WorkflowExecution execution) throws IOException {
 
     if (!isLatestExecution(db, execution)) {
       LOG.info("Execution is not latest");

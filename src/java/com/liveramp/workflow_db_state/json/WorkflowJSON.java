@@ -263,7 +263,7 @@ public class WorkflowJSON {
             notifications.put(toJSON(attributes));
           }
 
-          data.put("can_cancel", WorkflowQueries.canRevert(rldb, execution))
+          data.put("can_cancel", WorkflowQueries.canManuallyModify(rldb, execution))
               .put("configured_notifications", notifications);
 
         }
