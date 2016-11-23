@@ -49,6 +49,8 @@ import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.jack.queries.Column;
 import com.rapleaf.jack.queries.GenericQuery;
+import com.rapleaf.jack.queries.Index;
+import com.rapleaf.jack.queries.IndexHints;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
@@ -304,7 +306,7 @@ public class WorkflowQueries {
                                                        Long endedAfter,
                                                        Long endedBefore) {
 
-    GenericQuery stepAttempts = databases.getWorkflowDb().createQuery().from(StepAttempt.TBL)
+    GenericQuery stepAttempts = databases.getWorkflowDb().createQuery().from(StepAttempt.TBL.with(IndexHints.force(Index.of("index_step_attempts_on_end_time"))))
         .where(StepAttempt.END_TIME.isNotNull())
         .where(StepAttempt.STEP_STATUS.equalTo(StepStatus.COMPLETED.ordinal()));
 
