@@ -3,7 +3,7 @@ package com.liveramp.workflow_monitor.alerts.execution;
 import org.apache.log4j.Level;
 import org.junit.Before;
 
-import com.rapleaf.db_schemas.DatabasesImpl;
+import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.rapleaf.java_support.CommonJUnit4TestCase;
 
 public abstract class WorkflowMonitorTestCase extends CommonJUnit4TestCase {
@@ -14,7 +14,7 @@ public abstract class WorkflowMonitorTestCase extends CommonJUnit4TestCase {
 
   @Before
   public void deleteFixtures() throws Exception {
-    new DatabasesImpl().getRlDb().deleteAll();
+    new DatabasesImpl().getWorkflowDb().deleteAll();
   }
 
 }
