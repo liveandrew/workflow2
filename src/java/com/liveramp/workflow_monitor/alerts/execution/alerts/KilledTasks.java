@@ -30,7 +30,7 @@ public class KilledTasks extends JobThresholdAlert {
 
 
   @Override
-  protected Double calculateStatistic(TwoNestedMap<String, String, Long> counters) {
+  protected Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters) {
 
     long killed = get(GROUP, KILLED_MAPS, counters) + get(GROUP, KILLED_REDUCES, counters);
     long launched = get(GROUP, LAUNCHED_MAPS, counters) + get(GROUP, LAUNCHED_REDUCES, counters);

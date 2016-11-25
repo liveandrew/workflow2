@@ -33,7 +33,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
   @Override
   public AlertMessage generateAlert(StepAttempt stepAttempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
-    Double value = calculateStatistic(counters);
+    Double value = calculateStatistic(job.getJobIdentifier(), counters);
 
     if (value != null && value > threshold) {
 
@@ -51,7 +51,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
     return null;
   }
 
-  protected abstract Double calculateStatistic(TwoNestedMap<String, String, Long> counters);
+  protected abstract Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters);
 
   protected abstract String getMessage(double value);
 

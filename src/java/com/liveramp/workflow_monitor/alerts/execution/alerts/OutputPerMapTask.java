@@ -25,7 +25,7 @@ public class OutputPerMapTask extends JobThresholdAlert {
   }
 
   @Override
-  protected Double calculateStatistic(TwoNestedMap<String, String, Long> counters) {
+  protected Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters) {
 
     Long materializedBytes = counters.get(TASK_COUNTER_GROUP, MAP_OUTPUT_MATERIALIZED_BYTES);
     Long launchedMaps = counters.get(JOB_COUNTER_GROUP, LAUNCHED_MAPS);

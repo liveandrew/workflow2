@@ -26,7 +26,7 @@ public class NearMemoryLimit extends JobThresholdAlert {
   }
 
   @Override
-  protected Double calculateStatistic(TwoNestedMap<String, String, Long> counters) {
+  protected Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters) {
 
     Long allTime = get(JOB_COUNTER_GROUP, MILLIS_MAPS, counters) + get(JOB_COUNTER_GROUP, MILLIS_REDUCES, counters);
     Long totalTasks = get(JOB_COUNTER_GROUP, LAUNCHED_MAPS, counters) + get(JOB_COUNTER_GROUP, LAUNCHED_REDUCES, counters);

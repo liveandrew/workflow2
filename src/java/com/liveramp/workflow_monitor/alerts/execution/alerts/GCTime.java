@@ -21,7 +21,7 @@ public class GCTime extends JobThresholdAlert {
   }
 
   @Override
-  protected Double calculateStatistic(TwoNestedMap<String, String, Long> counters) {
+  protected Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters) {
 
     Long gcTime = counters.get(TASK_COUNTER_GROUP, GC_TIME_MILLIS);
 
