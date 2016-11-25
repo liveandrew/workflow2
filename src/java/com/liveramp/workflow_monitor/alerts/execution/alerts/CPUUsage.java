@@ -11,6 +11,8 @@ public class CPUUsage extends JobThresholdAlert {
 
   private static final double CPU_USED_RATIO = 2.0;
 
+  private static final long MIN_TIME_ALERT_THRESHOLD = 3 * 60 * 1000;
+
   private static final Multimap<String, String> COUNTERS = new MultimapBuilder<String, String>()
       .put(JOB_COUNTER_GROUP, VCORES_MAPS)
       .put(JOB_COUNTER_GROUP, VCORES_REDUCES)
@@ -30,6 +32,11 @@ public class CPUUsage extends JobThresholdAlert {
     long allMillis = mapAllocatedCore + reduceAllocatedCore;
 
     if (allMillis == 0 || cpuMillis == null) {
+      return null;
+    }
+
+    //  ignore small startup time CPU factors so we don't alert on tiny jobs
+    if(cpuMillis < MIN_TIME_ALERT_THRESHOLD) {
       return null;
     }
 
