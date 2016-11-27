@@ -52,6 +52,7 @@ public class CPUUsage extends JobThresholdAlert {
 
     if (cpuMillis < (launchedMaps + launchedReduces) * TASK_FORGIVENESS) {
       LOG.info("Skipping because job "+jobIdentifier+" was under min task time threshold");
+      return null;
     }
 
     return cpuMillis.doubleValue() / ((double)allMillis);
