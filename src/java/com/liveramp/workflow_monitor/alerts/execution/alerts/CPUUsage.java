@@ -34,8 +34,8 @@ public class CPUUsage extends JobThresholdAlert {
     Long mapAllocatedCore = get(JOB_COUNTER_GROUP, VCORES_MAPS, counters);
     Long reduceAllocatedCore = get(JOB_COUNTER_GROUP, VCORES_REDUCES, counters);
 
-    Long launchedMaps = counters.get(JOB_COUNTER_GROUP, LAUNCHED_MAPS);
-    Long launchedReduces = counters.get(JOB_COUNTER_GROUP, LAUNCHED_REDUCES);
+    Long launchedMaps = get(JOB_COUNTER_GROUP, LAUNCHED_MAPS, counters);
+    Long launchedReduces = get(JOB_COUNTER_GROUP, LAUNCHED_REDUCES, counters);
 
     Long cpuMillis = counters.get(TASK_COUNTER_GROUP, CPU_MILLISECONDS);
     long allMillis = mapAllocatedCore + reduceAllocatedCore;
