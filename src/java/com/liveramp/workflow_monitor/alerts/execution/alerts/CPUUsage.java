@@ -38,24 +38,21 @@ public class CPUUsage extends JobThresholdAlert {
     Long launchedReduces = get(JOB_COUNTER_GROUP, LAUNCHED_REDUCES, counters);
 
     Long cpuMillis = counters.get(TASK_COUNTER_GROUP, CPU_MILLISECONDS);
-    long allMillis = mapAllocatedCore + reduceAllocatedCore;
+    long allocatedMillis = mapAllocatedCore + reduceAllocatedCore;
 
-    if (allMillis == 0 || cpuMillis == null) {
+    if (allocatedMillis == 0 || cpuMillis == null) {
       return null;
     }
-
 
     //  ignore small startup time CPU factors so we don't alert on tiny jobs
     if (cpuMillis < MIN_TIME_ALERT_THRESHOLD) {
+      LOG.info("Skipping alert for < "+MIN_TIME_ALERT_THRESHOLD +" ms: "+jobIdentifier);
       return null;
     }
 
-    if (cpuMillis < (launchedMaps + launchedReduces) * TASK_FORGIVENESS) {
-      LOG.info("Skipping because job "+jobIdentifier+" was under min task time threshold");
-      return null;
-    }
+    Long forgivenCPU = (launchedMaps+launchedReduces)*TASK_FORGIVENESS;
 
-    return cpuMillis.doubleValue() / ((double)allMillis);
+    return (cpuMillis.doubleValue() - forgivenCPU) / ((double)allocatedMillis);
 
   }
 
