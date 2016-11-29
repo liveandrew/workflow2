@@ -9,8 +9,8 @@ public class TemplateTapFiles implements WorkflowJobPersister.CounterVerifier {
   @Override
   public void verify(TwoNestedMap<String, String, Long> toRecord) {
 
-    Long opened = toRecord.get(BaseTemplateTap.Counters.class.getName(), BaseTemplateTap.Counters.Paths_Opened.name());
-    Long closed = toRecord.get(BaseTemplateTap.Counters.class.getName(), BaseTemplateTap.Counters.Paths_Closed.name());
+    Long opened = toRecord.get("cascading.tap.BaseTemplateTap$Counters", "Paths_Opened");
+    Long closed = toRecord.get("cascading.tap.BaseTemplateTap$Counters", "Paths_Closed");
 
     if(opened != null && closed != null){
       if(opened.longValue() != closed.longValue()){
