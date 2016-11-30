@@ -16,7 +16,7 @@ public class CPUUsage extends JobThresholdAlert {
 
   private static final long MIN_TIME_ALERT_THRESHOLD = 3 * 60 * 1000;
 
-  private static final long TASK_FORGIVENESS = 15 * 1000;
+  private static final long TASK_FORGIVENESS = 5 * 1000;
 
 
   private static final Multimap<String, String> COUNTERS = new MultimapBuilder<String, String>()

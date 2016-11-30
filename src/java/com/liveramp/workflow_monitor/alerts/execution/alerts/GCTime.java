@@ -11,6 +11,9 @@ public class GCTime extends JobThresholdAlert {
 
   public static final double GC_FRACTION_THRESHOLD = .2;
 
+  //  unclear why, but there seems to be some fixed startup GC time we probably want to ignore in tiny jobs
+  private static final long GC_STARTUP_TIME = 2000;
+
   private static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
       .put(TASK_COUNTER_GROUP, GC_TIME_MILLIS)
       .put(JOB_COUNTER_GROUP, MILLIS_MAPS)
@@ -25,13 +28,18 @@ public class GCTime extends JobThresholdAlert {
 
     Long gcTime = counters.get(TASK_COUNTER_GROUP, GC_TIME_MILLIS);
 
+    Long launchedMaps = get(JOB_COUNTER_GROUP, LAUNCHED_MAPS, counters);
+    Long launchedReduces = get(JOB_COUNTER_GROUP, LAUNCHED_REDUCES, counters);
+
+    Long totalForgivenGC = (launchedMaps+launchedReduces) * GC_STARTUP_TIME;
+
     if (gcTime == null) {
       return null;
     }
 
     Long allTime = get(JOB_COUNTER_GROUP, MILLIS_MAPS, counters) + get(JOB_COUNTER_GROUP, MILLIS_REDUCES, counters);
 
-    return gcTime.doubleValue() / allTime.doubleValue();
+    return (gcTime.doubleValue() - totalForgivenGC)/ allTime.doubleValue();
   }
 
   @Override
