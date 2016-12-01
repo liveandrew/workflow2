@@ -10,6 +10,8 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import com.liveramp.cascading_ext.megadesk.MockStoreReaderLockProvider;
 import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
+import com.liveramp.commons.collections.properties.NestedProperties;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.rapleaf.cascading_ext.CascadingHelper;
@@ -24,6 +26,11 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
   protected WorkflowOptions() {
     super(CascadingHelper.get().getDefaultHadoopProperties(), toProperties(CascadingHelper.get().getJobConf()));
+  }
+
+  protected WorkflowOptions(OverridableProperties defaultProperties,
+                            Map<Object, Object> systemProperties) {
+    super(defaultProperties, systemProperties);
   }
 
   private static Map<Object, Object> toProperties(JobConf conf) {
@@ -72,6 +79,15 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   public static WorkflowOptions test() {
     WorkflowOptions opts = new WorkflowOptions();
     configureTest(opts);
+    return opts;
+  }
+
+  public static WorkflowOptions emrProduction(){
+    WorkflowOptions opts = new WorkflowOptions(
+        new NestedProperties(CascadingHelper.getGlobalDefaultProperties().get(), false),
+        toProperties(CascadingHelper.get().getJobConf())
+    );
+    configureProduction(opts);
     return opts;
   }
 
