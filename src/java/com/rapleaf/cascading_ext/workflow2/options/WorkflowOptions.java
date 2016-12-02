@@ -83,10 +83,15 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   }
 
   public static WorkflowOptions emrProduction(){
+
+    Map<Object, Object> defaultProperties = CascadingHelper.get().getDefaultProperties();
+    defaultProperties.remove(MRJobConfig.MR_AM_COMMAND_OPTS); //  TODO hacky
+
     WorkflowOptions opts = new WorkflowOptions(
-        new NestedProperties(CascadingHelper.getGlobalDefaultProperties().get(), false),
+        new NestedProperties(defaultProperties, false),
         toProperties(CascadingHelper.get().getJobConf())
     );
+    
     configureProduction(opts);
     return opts;
   }
