@@ -21,6 +21,7 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
+import org.junit.Before;
 
 public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   private static final String TEST_WORKFLOW_NAME = "Test workflow";
@@ -35,6 +36,11 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     super(level, projectName);
 
     this.context = new InMemoryContext();
+  }
+
+  @Before
+  public void deleteWorkflowDbFixtures() throws IOException {
+    new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb().deleteAll();
   }
 
   /*
