@@ -12,7 +12,6 @@ import com.liveramp.workflow_monitor.alerts.execution.alerts.CPUUsage;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.DiedUnclean;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.GCTime;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.KilledTasks;
-import com.liveramp.workflow_monitor.alerts.execution.alerts.NearMemoryLimit;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.OutputPerMapTask;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.FromPersistenceGenerator;
 
@@ -32,7 +31,7 @@ public class WorkflowDbMonitorRunner {
         Lists.<MapreduceJobAlertGenerator>newArrayList(
             new KilledTasks(),
             new GCTime(),
-            new NearMemoryLimit(),
+//            new NearMemoryLimit(),
             new CPUUsage(),
             new OutputPerMapTask()
         ),
