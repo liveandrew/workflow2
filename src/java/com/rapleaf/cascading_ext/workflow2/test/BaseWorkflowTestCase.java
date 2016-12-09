@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import org.apache.log4j.Level;
+import org.junit.Before;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
+import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.InMemoryContext;
 import com.liveramp.workflow_core.runner.BaseAction;
@@ -21,7 +22,7 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
-import org.junit.Before;
+import com.rapleaf.db_schemas.rldb.IRlDb;
 
 public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   private static final String TEST_WORKFLOW_NAME = "Test workflow";
@@ -41,6 +42,10 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   @Before
   public void deleteWorkflowDbFixtures() throws IOException {
     new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb().deleteAll();
+
+    IRlDb rldb = new DatabasesImpl().getRlDb();
+    rldb.resourceRecords().deleteAll();
+    rldb.resourceRoots().deleteAll();
   }
 
   /*
