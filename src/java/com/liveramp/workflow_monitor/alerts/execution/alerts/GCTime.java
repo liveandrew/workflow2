@@ -9,10 +9,10 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class GCTime extends JobThresholdAlert {
 
-  public static final double GC_FRACTION_THRESHOLD = .2;
+  public static final double GC_FRACTION_THRESHOLD = .25;
 
   //  unclear why, but there seems to be some fixed startup GC time we probably want to ignore in tiny jobs
-  private static final long GC_STARTUP_TIME = 2000;
+  private static final long GC_STARTUP_TIME = 3000;
 
   private static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
       .put(TASK_COUNTER_GROUP, GC_TIME_MILLIS)
