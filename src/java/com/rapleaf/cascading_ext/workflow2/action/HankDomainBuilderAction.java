@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileSystem;
@@ -16,6 +17,7 @@ import cascading.tap.Tap;
 
 import com.liveramp.cascading_ext.flow.JobRecordListener;
 import com.liveramp.hank.cascading.CascadingDomainBuilder;
+import com.liveramp.hank.cascading.HadoopFlowConnectorFactory;
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.coordinator.Coordinator;
 import com.liveramp.hank.coordinator.Domain;
@@ -24,7 +26,6 @@ import com.liveramp.hank.coordinator.RunWithCoordinator;
 import com.liveramp.hank.coordinator.RunnableWithCoordinator;
 import com.liveramp.hank.hadoop.DomainBuilderProperties;
 import com.liveramp.hank.storage.incremental.IncrementalDomainVersionProperties;
-import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
@@ -174,7 +175,12 @@ public abstract class HankDomainBuilderAction extends Action {
       builder.setPartitionToBuild(partitionToBuild);
     }
 
-    Flow flow = builder.build(new JobRecordListener(getPersister(), true), CascadingHelper.get().getFlowConnectorFactory(getInheritedProperties()), getSources());
+    Properties props = new Properties();
+    for (Map.Entry<Object, Object> entry : getInheritedProperties().entrySet()) {
+      props.put(entry.getKey(), entry.getValue());
+    }
+
+    Flow flow = builder.build(new JobRecordListener(getPersister(), true), new HadoopFlowConnectorFactory(props), getSources());
     domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {
