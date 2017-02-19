@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
@@ -40,6 +41,8 @@ import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.liveramp.java_support.functional.Either;
+import com.liveramp.java_support.web.LRHttpUtils;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
@@ -263,6 +266,15 @@ public class DbPersistence implements WorkflowStatePersistence {
               value.getK2(),
               value.getValue()
           );
+        }
+
+        String trackingUrl = job.getTrackingUrl();
+        try {
+          String historyUrl = LRHttpUtils.getRedirectUrlFromUrl(trackingUrl);
+          job.setTrackingUrl(historyUrl);
+          job.save();
+        } catch (LRHttpUtils.IllegalUrlException e) {
+          LOG.info("Error getting history url: " + e.getMessage());
         }
 
         conn.commit();
