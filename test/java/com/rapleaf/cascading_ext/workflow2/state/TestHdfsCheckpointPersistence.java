@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
+import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Sets;
@@ -15,9 +16,9 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assert.assertEquals;
 
 public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
 
@@ -46,6 +47,31 @@ public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
     assertEquals(1, IncrementAction.counter);
     assertTrue(getFS().exists(new Path(checkpointDir + "/first")));
   }
+
+  @Test
+  public void testWritesLocalCheckpoints() throws Exception {
+    Step first = new Step(new IncrementAction("first"));
+    Step second = new Step(new FailingAction("second"), first);
+
+    String localCheckpointDir = "file://" + this.checkpointDir;
+
+    try {
+      new WorkflowRunner("test",
+          new HdfsCheckpointPersistence(localCheckpointDir),
+          new TestWorkflowOptions(),
+          second).run();
+      fail("should have failed!");
+    } catch (Exception e) {
+      // expected
+    }
+
+    assertEquals(1, IncrementAction.counter);
+
+    //  assert this exists on the local filesystem
+    assertTrue(new File(this.checkpointDir).exists());
+
+  }
+
 
   @Test
   public void testResume() throws Exception {
