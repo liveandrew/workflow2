@@ -59,7 +59,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
                                                        String remote,
                                                        String implementationBuild) throws IOException {
 
-    FileSystem fs = FileSystemHelper.getFS();
+    FileSystem fs = FileSystemHelper.getFileSystemForPath(checkpointDir);
 
     Path checkpointDirPath = new Path(checkpointDir);
     LOG.info("Creating checkpoint dir " + checkpointDir);
