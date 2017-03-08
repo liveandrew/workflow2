@@ -11,6 +11,16 @@ import com.google.common.collect.Sets;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 
+import static com.liveramp.workflow.types.StepStatus.COMPLETED;
+import static com.liveramp.workflow.types.StepStatus.FAILED;
+import static com.liveramp.workflow.types.StepStatus.MANUALLY_COMPLETED;
+import static com.liveramp.workflow.types.StepStatus.REVERTED;
+import static com.liveramp.workflow.types.StepStatus.ROLLBACK_FAILED;
+import static com.liveramp.workflow.types.StepStatus.ROLLED_BACK;
+import static com.liveramp.workflow.types.StepStatus.RUNNING;
+import static com.liveramp.workflow.types.StepStatus.SKIPPED;
+import static com.liveramp.workflow.types.StepStatus.WAITING;
+
 public class WorkflowEnums {
 
   private static final Set<WorkflowAttemptStatus> LIVE_ATTEMPT_STATUS = Sets.newHashSet(
@@ -29,13 +39,38 @@ public class WorkflowEnums {
 
   }
 
+  //  for forward execution
+
   public static final Set<StepStatus> COMPLETED_STATUSES = EnumSet.of(
-      StepStatus.COMPLETED, StepStatus.MANUALLY_COMPLETED
+      COMPLETED, MANUALLY_COMPLETED
   );
 
   public static final Set<StepStatus> NON_BLOCKING_STEP_STATUSES = EnumSet.of(
-      StepStatus.COMPLETED, StepStatus.SKIPPED, StepStatus.MANUALLY_COMPLETED
+      COMPLETED, SKIPPED, MANUALLY_COMPLETED
   );
+
+  public static final Set<StepStatus> FAILURE_STATUSES = EnumSet.of(
+    FAILED
+  );
+
+  //  for rollback execution
+
+  public static final Set<StepStatus> NON_BLOCKING_ROLLBACK_STATUSES = EnumSet.of(
+      WAITING,
+      ROLLED_BACK,
+      REVERTED
+  );
+
+  public static final Set<StepStatus> FAILURE_ROLLBACK_STATUSES = EnumSet.of(
+    ROLLBACK_FAILED
+  );
+
+  public static final Set<StepStatus> COMPLETE_ROLLBACK_STATUSES = EnumSet.of(
+      ROLLED_BACK,
+      REVERTED
+  );
+
+  //  etc
 
   public static final Set<Integer> NON_BLOCKING_STEP_STATUS_IDS = Sets.newHashSet();
 
@@ -49,24 +84,28 @@ public class WorkflowEnums {
 
   static {
 
-    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.WAITING,
-        Lists.newArrayList(StepStatus.RUNNING, StepStatus.MANUALLY_COMPLETED));
+    VALID_STEP_STATUS_TRANSITIONS.putAll(WAITING,
+        Lists.newArrayList(RUNNING, MANUALLY_COMPLETED));
 
-    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.RUNNING,
-        Lists.newArrayList(StepStatus.COMPLETED, StepStatus.FAILED, StepStatus.MANUALLY_COMPLETED));
+    VALID_STEP_STATUS_TRANSITIONS.putAll(RUNNING,
+        Lists.newArrayList(COMPLETED, FAILED, MANUALLY_COMPLETED));
 
     //  failed b/c of shutdown hook ordering
-    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.COMPLETED,
-        Lists.newArrayList(StepStatus.REVERTED, StepStatus.FAILED));
+    VALID_STEP_STATUS_TRANSITIONS.putAll(COMPLETED,
+        Lists.newArrayList(REVERTED, FAILED, ROLLED_BACK, ROLLBACK_FAILED));
 
-    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.REVERTED,
-        Lists.newArrayList(StepStatus.MANUALLY_COMPLETED));
+    VALID_STEP_STATUS_TRANSITIONS.putAll(REVERTED,
+        Lists.newArrayList(MANUALLY_COMPLETED));
 
-    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.FAILED,
-        Lists.newArrayList(StepStatus.MANUALLY_COMPLETED));
+    VALID_STEP_STATUS_TRANSITIONS.putAll(FAILED,
+        Lists.newArrayList(MANUALLY_COMPLETED));
 
-    VALID_STEP_STATUS_TRANSITIONS.putAll(StepStatus.MANUALLY_COMPLETED,
-        Lists.newArrayList(StepStatus.REVERTED));
+    VALID_STEP_STATUS_TRANSITIONS.putAll(MANUALLY_COMPLETED,
+        Lists.newArrayList(REVERTED));
+
+    VALID_STEP_STATUS_TRANSITIONS.putAll(FAILED,
+        Lists.newArrayList(ROLLED_BACK, ROLLBACK_FAILED));
+
   }
 
 }

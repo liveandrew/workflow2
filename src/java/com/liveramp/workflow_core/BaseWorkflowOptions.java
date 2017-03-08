@@ -42,6 +42,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private String sandboxDir;
   private String description;
   private ContextStorage storage;
+  private boolean rollBackOnFailure = false;
 
   private TrackerURLBuilder urlBuilder;
   private ResourceDeclarer resourceDeclarer;
@@ -57,6 +58,15 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
                                 Map<Object, Object> systemProperties) {
     this.defaultProperties = defaultProperties;
     this.systemProperties = systemProperties;
+  }
+
+  public boolean isRollBackOnFailure() {
+    return rollBackOnFailure;
+  }
+
+  public T setRollBackOnFailure(boolean rollBackOnFailure) {
+    this.rollBackOnFailure = rollBackOnFailure;
+    return (T)this;
   }
 
   public HostnameProvider getHostnameProvider() {

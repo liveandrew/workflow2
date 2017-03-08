@@ -119,4 +119,8 @@ public class BaseStep<Config> implements IStep {
     action.internalExecute(properties);
   }
 
+  public void rollback(OverridableProperties properties){
+    action.internalRollback(properties);
+  }
+
 }

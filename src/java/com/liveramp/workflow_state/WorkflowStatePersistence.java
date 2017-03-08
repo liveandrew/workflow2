@@ -25,8 +25,14 @@ public interface WorkflowStatePersistence extends InitializedPersistence{
   public void markStepFailed(String stepToken, Throwable t) throws IOException;
   public void markStepCompleted(String stepToken) throws IOException;
 
-  //  WorkflowRunner
   public void markWorkflowStarted() throws IOException;
+
+  //  StepRunner
+  public void markStepRollingBack(String stepToken) throws IOException;
+  public void markStepRollbackFailure(String stepToken, Throwable t) throws IOException;
+  public void markStepRolledBack(String stepToken) throws IOException;
+
+  public void markRollbackStarted() throws IOException;
 
   //  UI / manually controlled
   public void markStepReverted(String stepToken) throws IOException;

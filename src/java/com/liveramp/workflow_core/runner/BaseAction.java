@@ -113,6 +113,10 @@ public abstract class BaseAction<Config> {
   //  action work, implemented by end-user
   protected abstract void execute() throws Exception;
 
+  protected void rollback() throws Exception {
+
+  }
+
   //  after execute, either fail or succeed
   protected void postExecute() {
     //  default no op
@@ -230,6 +234,20 @@ public abstract class BaseAction<Config> {
       throw wrapRuntimeException(t);
     } finally {
       postExecute();
+    }
+  }
+
+  protected final void internalRollback(OverridableProperties properties){
+
+    try {
+
+      combinedProperties = stepProperties.override(properties);
+
+      rollback();
+
+    } catch (Throwable t) {
+      LOG.error("Rollback of action " + fullId() + " failed due to Throwable", t);
+      throw wrapRuntimeException(t);
     }
   }
 
