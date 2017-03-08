@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -14,13 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cascading.flow.Flow;
+import cascading.flow.FlowConnector;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 
+import com.liveramp.cascading_ext.flow.JobPersister;
 import com.liveramp.cascading_ext.flow.JobRecordListener;
+import com.liveramp.cascading_ext.flow.LoggingFlowConnector;
+import com.liveramp.cascading_ext.flow_step_strategy.MultiFlowStepStrategy;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.hank.cascading.CascadingDomainBuilder;
-import com.liveramp.hank.cascading.HadoopFlowConnectorFactory;
+import com.liveramp.hank.cascading.FlowConnectorFactory;
 import com.liveramp.hank.config.CoordinatorConfigurator;
 import com.liveramp.hank.coordinator.Coordinator;
 import com.liveramp.hank.coordinator.Domain;
@@ -196,7 +201,8 @@ public abstract class HankDomainBuilderAction extends Action {
       props.put(entry.getKey(), entry.getValue());
     }
 
-    Flow flow = builder.build(new JobRecordListener(getPersister(), true), new HadoopFlowConnectorFactory(props), getSources());
+    JobPersister persister = getPersister();
+    Flow flow = builder.build(new JobRecordListener(persister, true), new LoggingFlowConnectorFactory(persister), getSources());
     domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {
@@ -206,6 +212,19 @@ public abstract class HankDomainBuilderAction extends Action {
       if (domainVersionStorage != null) {
         domainVersionStorage.store(getDomainName(), getDomainVersionNumber());
       }
+    }
+  }
+
+  private class LoggingFlowConnectorFactory implements FlowConnectorFactory {
+
+    private final JobPersister persister;
+    public LoggingFlowConnectorFactory(JobPersister persister){
+      this.persister = persister;
+    }
+
+    @Override
+    public FlowConnector create(Properties props) {
+      return new LoggingFlowConnector(props, new MultiFlowStepStrategy(Lists.newArrayList()), persister);
     }
   }
 
