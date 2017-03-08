@@ -202,7 +202,7 @@ public abstract class HankDomainBuilderAction extends Action {
     }
 
     JobPersister persister = getPersister();
-    Flow flow = builder.build(new JobRecordListener(persister, true), new LoggingFlowConnectorFactory(persister), getSources());
+    Flow flow = builder.build(new JobRecordListener(persister, true), new LoggingFlowConnectorFactory(persister, props), getSources());
     domainVersionNumber = builder.getDomainVersionNumber();
 
     if (flow != null) {
