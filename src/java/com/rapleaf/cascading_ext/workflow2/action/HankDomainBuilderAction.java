@@ -218,13 +218,17 @@ public abstract class HankDomainBuilderAction extends Action {
   private class LoggingFlowConnectorFactory implements FlowConnectorFactory {
 
     private final JobPersister persister;
-    public LoggingFlowConnectorFactory(JobPersister persister){
+    private final Properties properties;
+    public LoggingFlowConnectorFactory(JobPersister persister, Properties props){
+      this.properties= props;
       this.persister = persister;
     }
 
     @Override
-    public FlowConnector create(Properties props) {
-      return new LoggingFlowConnector(props, new MultiFlowStepStrategy(Lists.newArrayList()), persister);
+    public FlowConnector create(Properties additionalProps) {
+      Properties properties = new Properties(this.properties);
+      properties.putAll(additionalProps);
+      return new LoggingFlowConnector(properties, new MultiFlowStepStrategy(Lists.newArrayList()), persister);
     }
   }
 
