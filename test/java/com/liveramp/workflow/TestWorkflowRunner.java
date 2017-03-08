@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -16,8 +17,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import org.junit.Assert;
 import org.apache.hadoop.mapreduce.TaskCounter;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,6 +51,7 @@ import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessage;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
+import com.liveramp.java_support.alerts_handler.InMemoryAlertsHandler;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.java_support.alerts_handler.MailOptions;
 import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfig;
@@ -107,11 +109,11 @@ import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assert.assertEquals;
 
 public class TestWorkflowRunner extends WorkflowTestCase {
 
@@ -1156,7 +1158,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     WorkflowExecution ex = Accessors.first(rldb.workflowExecutions().findAll());
 
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
-    assertEquals(StepStatus.REVERTED.ordinal(), persistence.getStatus("step1").ordinal());
+    assertEquals(StepStatus.COMPLETED.ordinal(), persistence.getStatus("step1").ordinal());
     assertEquals(StepStatus.FAILED.ordinal(), persistence.getStatus("step2").ordinal());
 
     //  restart workflow
@@ -1171,7 +1173,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     List<WorkflowExecution> executions = rldb.workflowExecutions().query().order(QueryOrder.ASC).find();
     ex = Accessors.first(executions);
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
-    assertEquals(StepStatus.REVERTED.ordinal(), persistence.getStatus("step1").ordinal());
+    assertEquals(StepStatus.COMPLETED.ordinal(), persistence.getStatus("step1").ordinal());
     assertEquals(StepStatus.FAILED.ordinal(), persistence.getStatus("step2").ordinal());
 
     //  second one is complete
@@ -1564,7 +1566,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     IWorkflowDb db = new DatabasesImpl().getWorkflowDb();
 
-    try{
+    try {
 
       ApplicationController.manuallyCompleteStep(db,
           TestWorkflowRunner.class.getName(),
@@ -1573,11 +1575,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
       fail();
 
-    }catch(Exception e){
-      System.out.println(e.getCause());
-      System.out.println(e);
+    } catch (Exception e) {
       failLock.release();
-
     }
 
     t.join();
@@ -1616,6 +1615,239 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
+
+  @Test
+  public void testSimpleRollback() throws IOException {
+
+    List<String> revertList = Lists.newArrayList();
+
+    Step step1 = new Step(new ActionWithRollback(
+        "step1",
+        revertList)
+    );
+
+    Step step2 = new Step(new ActionWithRollback(
+        "step2",
+        revertList),
+        step1
+    );
+
+    Step step3 = new Step(new FailingAction("step3"),
+        step2
+    );
+
+    InMemoryAlertsHandler alerts = new InMemoryAlertsHandler(TeamList.DEV_TOOLS);
+
+    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+        WorkflowOptions.test()
+            .setAlertsHandler(alerts)
+            .setRollBackOnFailure(true),
+        step3
+    );
+
+    try {
+      runner.run();
+      fail();
+    } catch (Exception e) {
+      //  expected
+      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.TestWorkflowRunner"));
+    }
+
+    //  both step rollbacks happened, and in reverse order
+    assertEquals(Lists.newArrayList("step2", "step1"), revertList);
+
+    WorkflowStatePersistence persistence = runner.getPersistence();
+
+    //  all steps are rolled back
+    Map<String, StepStatus> statuses = persistence.getStepStatuses();
+    assertEquals(StepStatus.ROLLED_BACK, statuses.get("step1"));
+    assertEquals(StepStatus.ROLLED_BACK, statuses.get("step2"));
+    assertEquals(StepStatus.ROLLED_BACK, statuses.get("step3"));
+
+    //  execution itself is cancelled
+    IWorkflowDb workflowDB = new DatabasesImpl().getWorkflowDb();
+    WorkflowExecution execution = workflowDB.workflowExecutions().find(persistence.getExecutionId());
+    assertEquals(WorkflowExecutionStatus.CANCELLED.getValue(), execution.getStatus());
+
+    Set<String> messages = Sets.newHashSet(alerts.getSubjects());
+    for (String message : messages) {
+      System.out.println(message);
+    }
+
+    assertCollectionContains(messages, "[WORKFLOW] Started: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
+    assertCollectionContains(messages, "[WORKFLOW] Succeeded: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
+
+  }
+
+  @Test
+  public void testSimpleHDFSRollback() throws IOException {
+
+    List<String> revertList = Lists.newArrayList();
+
+    Step step1 = new Step(new ActionWithRollback(
+        "step1",
+        revertList)
+    );
+
+    Step step2 = new Step(new ActionWithRollback(
+        "step2",
+        revertList),
+        step1
+    );
+
+    Step step3 = new Step(new FailingAction("step3"),
+        step2
+    );
+
+    InMemoryAlertsHandler alerts = new InMemoryAlertsHandler(TeamList.DEV_TOOLS);
+
+    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+        new HdfsCheckpointPersistence(getTestRoot()+"/checkpoints"),
+        WorkflowOptions.test()
+            .setAlertsHandler(alerts)
+            .setRollBackOnFailure(true),
+        step3
+    );
+
+    try {
+      runner.run();
+      fail();
+    } catch (Exception e) {
+      //  expected
+      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.TestWorkflowRunner"));
+    }
+
+    //  both step rollbacks happened, and in reverse order
+    assertEquals(Lists.newArrayList("step2", "step1"), revertList);
+
+    step1 = new Step(new NoOp("step1"));
+
+    step2 = new Step(new NoOp("step2"), step1);
+
+    runner = new WorkflowRunner(TestWorkflowRunner.class,
+        new HdfsCheckpointPersistence(getTestRoot()+"/checkpoints"),
+        WorkflowOptions.test()
+            .setRollBackOnFailure(true),
+        step2
+    );
+
+    runner.run();
+
+    WorkflowStatePersistence persistence = runner.getPersistence();
+    Map<String, StepStatus> statuses = persistence.getStepStatuses();
+    assertEquals(StepStatus.COMPLETED, statuses.get("step1"));
+    assertEquals(StepStatus.COMPLETED, statuses.get("step2"));
+
+  }
+
+  @Test
+  public void testFailedRollback() throws IOException {
+
+    Step step1 = new Step(new FailOnRollback(
+        "step1")
+    );
+
+    Step step2 = new Step(new FailingAction("step2"),
+        step1
+    );
+
+    InMemoryAlertsHandler alertsHandler = new InMemoryAlertsHandler(TeamList.DEV_TOOLS);
+
+
+    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+        WorkflowOptions.test()
+            .setAlertsHandler(alertsHandler)
+            .setRollBackOnFailure(true),
+        step2
+    );
+
+    try {
+      runner.run();
+      fail();
+    } catch (Exception e) {
+      //  expected
+      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.TestWorkflowRunner"));
+    }
+
+    WorkflowStatePersistence persistence = runner.getPersistence();
+
+    //  all steps are rolled back
+    Map<String, StepStatus> statuses = persistence.getStepStatuses();
+    assertEquals(StepStatus.ROLLBACK_FAILED, statuses.get("step1"));
+    assertEquals(StepStatus.ROLLED_BACK, statuses.get("step2"));
+
+    //  execution itself is cancelled
+    IWorkflowDb workflowDB = new DatabasesImpl().getWorkflowDb();
+    WorkflowExecution execution = workflowDB.workflowExecutions().find(persistence.getExecutionId());
+    assertEquals(WorkflowExecutionStatus.CANCELLED.getValue(), execution.getStatus());
+
+    //  make sure we get notified about rollbacks
+    List<String> subjects = alertsHandler.getSubjects();
+    assertCollectionContains(subjects, "[WORKFLOW] Started: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
+    assertCollectionContains(subjects, "[ERROR] [WORKFLOW] Failed: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
+
+
+    //  even though the rollback failed, the next attempt will start from scratch and work
+
+    step1 = new Step(new NoOp("step1"));
+
+    step2 = new Step(new NoOp("step2"), step1);
+
+
+    runner = new WorkflowRunner(TestWorkflowRunner.class,
+        WorkflowOptions.test()
+            .setRollBackOnFailure(true),
+        step2
+    );
+
+    runner.run();
+
+    persistence = runner.getPersistence();
+    statuses = persistence.getStepStatuses();
+    assertEquals(StepStatus.COMPLETED, statuses.get("step1"));
+    assertEquals(StepStatus.COMPLETED, statuses.get("step2"));
+
+  }
+
+
+  private static class ActionWithRollback extends Action {
+
+    private final List<String> revertList;
+
+    public ActionWithRollback(String checkpointToken,
+                              List<String> revertList) {
+      super(checkpointToken);
+      this.revertList = revertList;
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      //  no op
+    }
+
+    @Override
+    protected void rollback() throws Exception {
+      revertList.add(getActionId().resolve());
+    }
+
+  }
+
+  private static class FailOnRollback extends Action {
+
+    public FailOnRollback(String checkpointToken) {
+      super(checkpointToken);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      //  no op
+    }
+
+    @Override
+    protected void rollback() throws Exception {
+      throw new RuntimeException("Failing on purpose!");
+    }
+  }
 
 
   //  3) try complete while execution is running.  fail.

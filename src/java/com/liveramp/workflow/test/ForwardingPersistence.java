@@ -8,13 +8,11 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow_state.StepState;
-import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-
-import static org.apache.zookeeper.ZooDefs.OpCode.delete;
 
 public class ForwardingPersistence implements WorkflowStatePersistence {
 
@@ -27,6 +25,26 @@ public class ForwardingPersistence implements WorkflowStatePersistence {
   @Override
   public void markWorkflowStarted() throws IOException {
     delegatePersistence.markWorkflowStarted();
+  }
+
+  @Override
+  public void markStepRollingBack(String stepToken) throws IOException {
+    delegatePersistence.markStepRollingBack(stepToken);
+  }
+
+  @Override
+  public void markStepRollbackFailure(String stepToken, Throwable t) throws IOException {
+    delegatePersistence.markStepRollbackFailure(stepToken, t);
+  }
+
+  @Override
+  public void markStepRolledBack(String stepToken) throws IOException {
+    delegatePersistence.markStepRolledBack(stepToken);
+  }
+
+  @Override
+  public void markRollbackStarted() throws IOException {
+    delegatePersistence.markRollbackStarted();
   }
 
   @Override

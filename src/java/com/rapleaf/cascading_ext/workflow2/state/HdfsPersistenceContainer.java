@@ -74,14 +74,18 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     if (allStepsSucceeded() && shutdownReason == null) {
       try {
         if (deleteCheckpointsOnSuccess) {
-          LOG.debug("Deleting checkpoints in checkpoint dir " + checkpointDir);
-          CheckpointUtil.clearCheckpoints(fs, new Path(checkpointDir));
+          clearCheckpoints();
         }
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
 
+  }
+
+  private void clearCheckpoints() throws IOException {
+    LOG.debug("Deleting checkpoints in checkpoint dir " + checkpointDir);
+    CheckpointUtil.clearCheckpoints(fs, new Path(checkpointDir));
   }
 
   private boolean allStepsSucceeded() {
@@ -267,7 +271,31 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public void markWorkflowStarted() throws IOException {
+  }
 
+  @Override
+  public void markStepRollingBack(String stepToken) throws IOException {
+    getState(stepToken)
+        .setStatus(StepStatus.ROLLING_BACK);
+  }
+
+  @Override
+  public void markStepRollbackFailure(String stepToken, Throwable t) throws IOException {
+    getState(stepToken)
+        .setStatus(StepStatus.ROLLBACK_FAILED);
+  }
+
+  @Override
+  public void markStepRolledBack(String stepToken) throws IOException {
+    getState(stepToken)
+        .setStatus(StepStatus.ROLLED_BACK);
+
+  }
+
+  @Override
+  public void markRollbackStarted() throws IOException {
+    LOG.info("Rolling back workflow, clearing checkpoints");
+    clearCheckpoints();
   }
 
   @Override
