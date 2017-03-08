@@ -10,12 +10,15 @@ import java.util.Properties;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cascading.flow.Flow;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 
 import com.liveramp.cascading_ext.flow.JobRecordListener;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.hank.cascading.CascadingDomainBuilder;
 import com.liveramp.hank.cascading.HadoopFlowConnectorFactory;
 import com.liveramp.hank.config.CoordinatorConfigurator;
@@ -30,6 +33,7 @@ import com.rapleaf.cascading_ext.datastore.HankDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 
 public abstract class HankDomainBuilderAction extends Action {
+  private static final Logger LOG = LoggerFactory.getLogger(HankDomainBuilderAction.class);
 
   private final HankDataStore output;
   private final boolean allowSimultaneousDeltas;
@@ -175,8 +179,20 @@ public abstract class HankDomainBuilderAction extends Action {
       builder.setPartitionToBuild(partitionToBuild);
     }
 
+    LOG.info("Passed step properties:");
+    for (Map.Entry<Object, OverridableProperties.Property> entry : getStepProperties().getMap().entrySet()) {
+      LOG.info("\t" + entry.getKey() + " = " + entry.getValue());
+    }
+
+    LOG.info("Resolved combined properties:");
+    for (Map.Entry<Object, OverridableProperties.Property> entry : getCombinedProperties().getMap().entrySet()) {
+      LOG.info("\t" + entry.getKey() + " = " + entry.getValue());
+    }
+
+    LOG.info("Using inherited property:");
     Properties props = new Properties();
     for (Map.Entry<Object, Object> entry : getInheritedProperties().entrySet()) {
+      LOG.info("\t" + entry.getKey() + " = " + entry.getValue());
       props.put(entry.getKey(), entry.getValue());
     }
 
