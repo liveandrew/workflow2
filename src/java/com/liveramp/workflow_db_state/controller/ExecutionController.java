@@ -10,14 +10,12 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
-import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNotification;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_db_state.Assertions;
-import com.liveramp.workflow_db_state.DbPersistence;
-import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_db_state.ProcessStatus;
+import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class ExecutionController {
@@ -30,21 +28,6 @@ public class ExecutionController {
     }
 
     Assertions.assertCanManuallyModify(db, execution);
-
-    //  revert all steps which were defined by latest attempt and are complete
-    for (StepAttempt step : WorkflowQueries.getLatestAttempt(execution).getStepAttempt()) {
-
-      StepAttempt completed = WorkflowQueries.getCompletedStep(
-          step.getStepToken(),
-          execution
-      );
-
-      if (completed != null) {
-        DbPersistence attemptController = DbPersistence.queryPersistence(completed.getWorkflowAttemptId(), db);
-        attemptController.markStepReverted(completed.getStepToken());
-      }
-
-    }
 
     //  cancel execution
     execution

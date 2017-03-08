@@ -108,7 +108,7 @@ public class DbPersistence implements WorkflowStatePersistence {
   }
 
   private MapBuilder<StepAttempt._Fields, Object> stepFields() {
-    return new MapBuilder<StepAttempt._Fields, Object>();
+    return new MapBuilder<>();
   }
 
   @Override
@@ -344,6 +344,63 @@ public class DbPersistence implements WorkflowStatePersistence {
       );
 
     }
+  }
+
+  @Override
+  public void markStepRollingBack(String stepToken) throws IOException {
+    synchronized (lock) {
+
+      LOG.info("Marking step " + stepToken + " as rolling back");
+      update(getStep(stepToken), stepFields()
+          .put(StepAttempt._Fields.step_status, StepStatus.ROLLING_BACK.ordinal())
+      );
+
+    }
+  }
+
+  @Override
+  public void markStepRollbackFailure(String stepToken, Throwable t) throws IOException {
+    synchronized (lock) {
+
+      //  TODO for now we are not storing rollback failures in the DB.  It's in emails and logs.  Will need a separate
+      //  column on StepAttempt for it, not going to bother for now unless someone asks.
+
+      LOG.info("Marking step " + stepToken + " as failed while rolling back");
+      update(getStep(stepToken), stepFields()
+          .put(StepAttempt._Fields.step_status, StepStatus.ROLLBACK_FAILED.ordinal())
+      );
+
+    }
+  }
+
+  @Override
+  public void markStepRolledBack(String stepToken) throws IOException {
+    synchronized (lock) {
+
+      LOG.info("Marking step " + stepToken + " as rolled back");
+      update(getStep(stepToken), stepFields()
+          .put(StepAttempt._Fields.step_status, StepStatus.ROLLED_BACK.ordinal())
+      );
+
+    }
+  }
+
+  @Override
+  public void markRollbackStarted() throws IOException {
+    synchronized (lock) {
+
+      LOG.info("Starting rollback on attempt: " + init.getAttempt());
+
+      init.save(
+          init.getExecution().setStatus(WorkflowExecutionStatus.CANCELLED.ordinal())
+      );
+
+      init.save(init.getAttempt()
+          .setStatus(WorkflowAttemptStatus.RUNNING.ordinal())
+      );
+
+    }
+
   }
 
   @Override
