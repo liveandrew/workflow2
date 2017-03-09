@@ -228,6 +228,12 @@ public abstract class HankDomainBuilderAction extends Action {
     public FlowConnector create(Properties additionalProps) {
       Properties properties = new Properties(this.properties);
       properties.putAll(additionalProps);
+
+      LOG.info("Creating flow connector factory with properties:");
+      for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+        LOG.info(entry.getKey()+"\t"+entry.getValue());
+      }
+
       return new LoggingFlowConnector(properties, new MultiFlowStepStrategy(Lists.newArrayList()), persister);
     }
   }
