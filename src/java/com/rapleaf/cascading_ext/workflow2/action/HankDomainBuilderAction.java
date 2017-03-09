@@ -226,7 +226,8 @@ public abstract class HankDomainBuilderAction extends Action {
 
     @Override
     public FlowConnector create(Properties additionalProps) {
-      Properties properties = new Properties(this.properties);
+      Properties properties = new Properties();
+      properties.putAll(this.properties);
       properties.putAll(additionalProps);
 
       LOG.info("Creating flow connector factory with properties:");
