@@ -5,17 +5,20 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 import org.apache.log4j.Level;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
+import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.InMemoryContext;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
+import com.rapleaf.cascading_ext.workflow2.FailingAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
@@ -23,6 +26,8 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
+
+import static org.junit.Assert.fail;
 
 public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   private static final String TEST_WORKFLOW_NAME = "Test workflow";
@@ -72,27 +77,30 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, WorkflowOptions options) throws IOException {
-    return execute(steps, options, context);
+    return execute(steps, options, context, ResourceManagers.inMemoryResourceManager());
   }
 
   public WorkflowRunner execute(BaseAction action, WorkflowOptions options) throws IOException {
-    return execute(Sets.newHashSet(new Step(action)), options, context);
+    return execute(Sets.newHashSet(new Step(action)), options, context, ResourceManagers.inMemoryResourceManager());
   }
 
   public WorkflowRunner execute(Step step, WorkflowOptions options) throws IOException {
-    return execute(Sets.newHashSet(step), options, context);
+    return execute(Sets.newHashSet(step), options, context, ResourceManagers.inMemoryResourceManager());
   }
 
   public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, ContextStorage storage) throws IOException {
-    return execute(steps, WorkflowOptions.test(), storage);
+    return execute(steps, WorkflowOptions.test(), storage, ResourceManagers.inMemoryResourceManager());
   }
 
-  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, WorkflowOptions options, ContextStorage storage) throws IOException {
+  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps,
+                                WorkflowOptions options,
+                                ContextStorage storage,
+                                ResourceDeclarer manager) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
         new WorkflowDbPersistenceFactory(),
         options
             .setStorage(storage)
-            .setResourceManager(ResourceManagers.inMemoryResourceManager()),
+            .setResourceManager(manager),
         steps);
     workflowRunner.run();
     return workflowRunner;
@@ -115,14 +123,45 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return workflowRunner;
   }
 
+  public WorkflowRunner executeAndRollback(Set<Step> steps) throws IOException {
+    return executeAndRollback(steps, ResourceManagers.inMemoryResourceManager());
+  }
+
+  public WorkflowRunner executeAndRollback(Set<Step> steps, ResourceDeclarer declarer) throws IOException {
+
+    Step terminalFail = new Step(new FailingAction("terminal-fail"), steps);
+
+    WorkflowRunner runner = buildWorkflowRunner(Sets.newHashSet(terminalFail),
+        WorkflowOptions.test().setRollBackOnFailure(true),
+        declarer
+    );
+
+    try {
+      runner.run();
+      fail();
+    } catch (Exception e) {
+      //  expected
+    }
+
+    return runner;
+  }
+
   public WorkflowRunner execute(Set<Step> steps, ResourceDeclarer resourceManager) throws IOException {
-    WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
-        new WorkflowDbPersistenceFactory(),
-        WorkflowOptions.test()
-            .setResourceManager(resourceManager),
-        steps);
+    WorkflowRunner workflowRunner = buildWorkflowRunner(steps, WorkflowOptions.test(), resourceManager);
     workflowRunner.run();
     return workflowRunner;
+  }
+
+  @NotNull
+  private WorkflowRunner buildWorkflowRunner(Set<Step> steps,
+                                             WorkflowOptions options,
+                                             ResourceDeclarer resourceManager) throws IOException {
+    return new WorkflowRunner(TEST_WORKFLOW_NAME,
+        new WorkflowDbPersistenceFactory(),
+        options
+            .setResourceManager(resourceManager),
+        steps
+    );
   }
 
   public InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> initializeWorkflow() throws IOException {
@@ -130,7 +169,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> initializeWorkflow(String workflowName,
-                                                                                                                          ResourceDeclarer declarer) throws IOException {
+                                                                                           ResourceDeclarer declarer) throws IOException {
     return new WorkflowDbPersistenceFactory().initialize(
         workflowName,
         WorkflowOptions.test()

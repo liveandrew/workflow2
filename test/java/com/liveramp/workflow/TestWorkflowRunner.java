@@ -105,8 +105,10 @@ import com.rapleaf.cascading_ext.workflow2.rollback.UnlessStepsRun;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
+import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
+import com.rapleaf.types.importer.CDSImportStatus;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static com.google.common.collect.Sets.newHashSet;
@@ -1703,7 +1705,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     InMemoryAlertsHandler alerts = new InMemoryAlertsHandler(TeamList.DEV_TOOLS);
 
     WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
-        new HdfsCheckpointPersistence(getTestRoot()+"/checkpoints"),
+        new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints"),
         WorkflowOptions.test()
             .setAlertsHandler(alerts)
             .setRollBackOnFailure(true),
@@ -1726,7 +1728,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     step2 = new Step(new NoOp("step2"), step1);
 
     runner = new WorkflowRunner(TestWorkflowRunner.class,
-        new HdfsCheckpointPersistence(getTestRoot()+"/checkpoints"),
+        new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints"),
         WorkflowOptions.test()
             .setRollBackOnFailure(true),
         step2
@@ -1859,6 +1861,21 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     assertEquals(StepStatus.ROLLED_BACK, runner.getPersistence().getStatus("step1"));
     assertEquals(StepStatus.ROLLED_BACK, runner.getPersistence().getStatus("step2"));
+
+  }
+
+
+  @Test
+  public void testTestRollback() throws IOException {
+
+    List<String> rollbackList = Lists.newArrayList();
+
+    Step step1 = new Step(new ActionWithRollback("step1", rollbackList));
+    Step step2 = new Step(new ActionWithRollback("step2", rollbackList), step1);
+
+    executeAndRollback(Sets.newHashSet(step2));
+
+    assertCollectionEquivalent(Lists.newArrayList("step1", "step2"), rollbackList);
 
   }
 
