@@ -24,6 +24,7 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
 import com.rapleaf.cascading_ext.workflow2.options.DefaultHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.FixedHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.HostnameProvider;
+import com.rapleaf.cascading_ext.workflow2.rollback.RollbackBehavior;
 import com.rapleaf.support.Rap;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
@@ -42,7 +43,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private String sandboxDir;
   private String description;
   private ContextStorage storage;
-  private boolean rollBackOnFailure = false;
+  private RollbackBehavior rollBackOnFailure = new RollbackBehavior.Unconditional(false);
 
   private TrackerURLBuilder urlBuilder;
   private ResourceDeclarer resourceDeclarer;
@@ -60,12 +61,17 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     this.systemProperties = systemProperties;
   }
 
-  public boolean isRollBackOnFailure() {
+  public RollbackBehavior getRollBackBehavior(){
     return rollBackOnFailure;
   }
 
   public T setRollBackOnFailure(boolean rollBackOnFailure) {
-    this.rollBackOnFailure = rollBackOnFailure;
+    this.rollBackOnFailure = new RollbackBehavior.Unconditional(rollBackOnFailure);
+    return (T)this;
+  }
+
+  public T setRollBackBehavior(RollbackBehavior behavior) {
+    this.rollBackOnFailure = behavior;
     return (T)this;
   }
 

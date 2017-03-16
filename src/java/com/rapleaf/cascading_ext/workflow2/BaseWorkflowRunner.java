@@ -24,6 +24,7 @@ import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.rollback.RollbackBehavior;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.strategy.ExecuteStrategy;
 import com.rapleaf.cascading_ext.workflow2.strategy.RollbackStrategy;
@@ -49,7 +50,7 @@ public class BaseWorkflowRunner<Config> {
 
   private final MultiShutdownHook shutdownHook;
 
-  private final boolean rollbackOnFailure;
+  private final RollbackBehavior rollbackBehavior;
 
   public interface OnShutdown<Context> {
     public void shutdown(Context context);
@@ -96,7 +97,7 @@ public class BaseWorkflowRunner<Config> {
     this.onShutdown = shutdownHook;
     this.storage = options.getStorage();
     this.resourceManager = initializedData.getManager();
-    this.rollbackOnFailure = options.isRollBackOnFailure();
+    this.rollbackBehavior = options.getRollBackBehavior();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
     this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(Sets.newHashSet(tailSteps));
@@ -244,7 +245,7 @@ public class BaseWorkflowRunner<Config> {
     } catch (Exception e) {
 
       //  Rollback, if configured
-      if (rollbackOnFailure) {
+      if (rollbackBehavior.rollbackOnException(persistence)) {
         rollbackExecutor.doRun();
       }
 
