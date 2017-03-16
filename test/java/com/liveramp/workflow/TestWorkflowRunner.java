@@ -101,6 +101,7 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.action.PersistNewVersion;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.rollback.UnlessStepsRun;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
@@ -1806,6 +1807,58 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     statuses = persistence.getStepStatuses();
     assertEquals(StepStatus.COMPLETED, statuses.get("step1"));
     assertEquals(StepStatus.COMPLETED, statuses.get("step2"));
+
+  }
+
+  //  expect rollback to be blocked
+  @Test
+  public void testConditionalRollback1() throws IOException {
+
+    Step step1 = new Step(new NoOp("step1"));
+    Step step2 = new Step(new FailingAction("step2"), step1);
+    Step step3 = new Step(new NoOp("step3"), step2);
+
+    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+        WorkflowOptions.test()
+            .setRollBackBehavior(new UnlessStepsRun("step2")),
+        step3
+    );
+
+    try {
+      runner.run();
+      fail();
+    }catch(Exception e){
+      //  expected
+    }
+
+    assertEquals(StepStatus.COMPLETED, runner.getPersistence().getStatus("step1"));
+    assertEquals(StepStatus.FAILED, runner.getPersistence().getStatus("step2"));
+
+  }
+
+  //  expect rollback to be happen
+  @Test
+  public void testConditionalRollback2() throws IOException {
+
+    Step step1 = new Step(new NoOp("step1"));
+    Step step2 = new Step(new FailingAction("step2"), step1);
+    Step step3 = new Step(new NoOp("step3"), step2);
+
+    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+        WorkflowOptions.test()
+            .setRollBackBehavior(new UnlessStepsRun("step3")),
+        step3
+    );
+
+    try {
+      runner.run();
+      fail();
+    }catch(Exception e){
+      //  expected
+    }
+
+    assertEquals(StepStatus.ROLLED_BACK, runner.getPersistence().getStatus("step1"));
+    assertEquals(StepStatus.ROLLED_BACK, runner.getPersistence().getStatus("step2"));
 
   }
 
