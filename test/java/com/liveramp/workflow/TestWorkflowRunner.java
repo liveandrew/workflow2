@@ -169,7 +169,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testRetainPool() throws IOException {
 
-    assertEquals("root.dev-tools.some_pool", WorkflowPersistenceFactory
+    assertEquals("root.infrastructure.some_pool", WorkflowPersistenceFactory
         .findDefaultValue(WorkflowOptions.test().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")),
             "mapreduce.job.queuename",
             "default"
