@@ -101,7 +101,7 @@ public class BaseStep<Config> implements IStep {
     return new Callable<TwoNestedMap<String, String, Long>>() {
       @Override
       public TwoNestedMap<String, String, Long> call() throws Exception {
-        return action.getStepCounters();
+        return action.getCurrentStepCounters();
       }
     };
   }

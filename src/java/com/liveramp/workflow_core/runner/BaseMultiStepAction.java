@@ -138,10 +138,10 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
   }
 
   @Override
-  public TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
+  public TwoNestedMap<String, String, Long> getCurrentStepCounters() throws IOException {
     TwoNestedCountingMap<String, String> map = new TwoNestedCountingMap<>(0L);
     for (BaseStep<Config> step : steps) {
-      map.incrementAll(step.getAction().getStepCounters());
+      map.incrementAll(step.getAction().getCurrentStepCounters());
     }
     return map;
   }

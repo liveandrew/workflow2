@@ -292,7 +292,7 @@ public abstract class BaseAction<Config> {
   }
 
   //  TODO package-private after class cleanup
-  public TwoNestedMap<String, String, Long> getStepCounters() throws IOException {
+  public TwoNestedMap<String, String, Long> getCurrentStepCounters() throws IOException {
     ThreeNestedMap<String, String, String, Long> allCounters = persistence.getCountersByStep();
     return allCounters.get(getActionId().resolve());
   }
