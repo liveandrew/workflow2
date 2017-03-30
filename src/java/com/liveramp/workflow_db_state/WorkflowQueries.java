@@ -42,10 +42,10 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNotification;
 import com.liveramp.importer.generated.AppType;
-import com.liveramp.workflow.types.WorkflowExecutionStatus;
-import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow.types.StepStatus;
+import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.WorkflowEnums;
+import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.jack.queries.Column;
 import com.rapleaf.jack.queries.GenericQuery;
@@ -84,7 +84,7 @@ public class WorkflowQueries {
     }
 
     if (incompleteExecutions.size() > 1) {
-      throw new RuntimeException("Found multiple incomplete workflow executions for name: "+name+" scope: "+scopeId);
+      throw new RuntimeException("Found multiple incomplete workflow executions for name: " + name + " scope: " + scopeId);
     }
 
     return incompleteExecutions;
@@ -276,7 +276,30 @@ public class WorkflowQueries {
   public static ThreeNestedMap<String, String, String, Long> getCountersByStep(IWorkflowDb db, Long workflowExecution) throws IOException {
     ThreeNestedMap<String, String, String, Long> counters = new ThreeNestedMap<>();
 
-    for (Record record : getCompleteStepCounters(db, workflowExecution).select(StepAttempt.STEP_TOKEN, MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
+    WorkflowAttempt latestAttempt = getLatestAttempt(db.workflowExecutions().find(workflowExecution));
+
+    counters.putAll(asStepCounterMap(getCompleteStepCounters(db, workflowExecution, latestAttempt)));
+    counters.putAll(asStepCounterMap(getRunningStepCounters(db, latestAttempt)));
+
+    return counters;
+  }
+
+  public static TwoNestedMap<String, String, Long> getFlatCounters(IWorkflowDb db, Long workflowExecution) throws IOException {
+    TwoNestedCountingMap<String, String> counters = new TwoNestedCountingMap<>(0l);
+
+    WorkflowAttempt latestAttempt = getLatestAttempt(db.workflowExecutions().find(workflowExecution));
+
+    counters.incrementAll(asFlatCounterMap(getCompleteStepCounters(db, workflowExecution, latestAttempt)));
+    counters.incrementAll(asFlatCounterMap(getRunningStepCounters(db, latestAttempt)));
+
+    return counters;
+  }
+
+  private static ThreeNestedMap<String, String, String, Long> asStepCounterMap(GenericQuery query) throws IOException {
+
+    ThreeNestedMap<String, String, String, Long> counters = new ThreeNestedMap<>();
+    for (Record record : query
+        .select(StepAttempt.STEP_TOKEN, MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
         .fetch()) {
       counters.put(record.getString(StepAttempt.STEP_TOKEN),
           record.getString(MapreduceCounter.GROUP),
@@ -288,10 +311,11 @@ public class WorkflowQueries {
     return counters;
   }
 
-  public static TwoNestedMap<String, String, Long> getFlatCounters(IWorkflowDb db, Long workflowExecution) throws IOException {
-    TwoNestedCountingMap<String, String> counters = new TwoNestedCountingMap<>(0l);
+  private static TwoNestedMap<String, String, Long> asFlatCounterMap(GenericQuery query) throws IOException {
 
-    for (Record record : getCompleteStepCounters(db, workflowExecution).select(MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
+    TwoNestedCountingMap<String, String> counters = new TwoNestedCountingMap<>(0l);
+    for (Record record : query
+        .select(MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
         .fetch()) {
       counters.incrementAndGet(record.getString(MapreduceCounter.GROUP),
           record.getString(MapreduceCounter.NAME),
@@ -302,7 +326,21 @@ public class WorkflowQueries {
     return counters;
   }
 
-  public static GenericQuery completeMapreduceJobQuery(IDatabases databases,
+  //  get counters only from running steps in the latest attempt (for any jobs they have already completed)
+  private static GenericQuery getRunningStepCounters(IWorkflowDb db, WorkflowAttempt latestAttempt) throws IOException {
+    return db.createQuery()
+        .from(StepAttempt.TBL)
+        .where(StepAttempt.STEP_STATUS.equalTo(StepStatus.RUNNING.ordinal()))
+        .innerJoin(WorkflowAttempt.TBL)
+        .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID.as(Integer.class)))
+        .where(WorkflowAttempt.ID.equalTo(latestAttempt.getId()))
+        .innerJoin(MapreduceJob.TBL)
+        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)))
+        .innerJoin(MapreduceCounter.TBL)
+        .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID.as(Integer.class)));
+  }
+
+  private static GenericQuery completeMapreduceJobQuery(IDatabases databases,
                                                        Long endedAfter,
                                                        Long endedBefore) {
 
@@ -770,12 +808,9 @@ public class WorkflowQueries {
 
   //  join queries
 
-  public static GenericQuery getCompleteStepCounters(IWorkflowDb db, Long executionId) throws IOException {
+  private static GenericQuery getCompleteStepCounters(IWorkflowDb db, long workflowExecutionId, WorkflowAttempt latestAttempt) throws IOException {
 
     //  TODO can use one query for this whole thing probably
-    WorkflowExecution execution = db.workflowExecutions().find(executionId);
-
-    WorkflowAttempt latestAttempt = getLatestAttempt(execution);
     List<StepAttempt> steps = latestAttempt.getStepAttempt();
 
     Set<String> latestTokens = Sets.newHashSet();
@@ -789,7 +824,7 @@ public class WorkflowQueries {
         .where(StepAttempt.STEP_STATUS.equalTo(StepStatus.COMPLETED.ordinal()))
         .innerJoin(WorkflowAttempt.TBL)
         .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID.as(Integer.class)))
-        .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).equalTo(executionId))
+        .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).equalTo(workflowExecutionId))
         .innerJoin(MapreduceJob.TBL)
         .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)))
         .innerJoin(MapreduceCounter.TBL)
@@ -806,7 +841,7 @@ public class WorkflowQueries {
 
   public static List<ApplicationCounterSummary> getSummaries(IWorkflowDb db, Multimap<String, String> countersToQuery, LocalDate startDate, LocalDate endDate) throws IOException {
     return db.applicationCounterSummaries().query()
-        .whereDate(new Between<>(startDate.toDateTimeAtStartOfDay().getMillis(), endDate.toDateTimeAtStartOfDay().getMillis()-1))  // stupid mysql
+        .whereDate(new Between<>(startDate.toDateTimeAtStartOfDay().getMillis(), endDate.toDateTimeAtStartOfDay().getMillis() - 1))  // stupid mysql
         .whereGroup(new In<>(countersToQuery.keySet()))
         .whereName(new In<>(countersToQuery.values()))
         .find();
@@ -880,11 +915,11 @@ public class WorkflowQueries {
       stepQuery = stepQuery.where(StepAttempt.STEP_STATUS.in(inStatusInts));
     }
 
-    if(endedAfter != null){
+    if (endedAfter != null) {
       stepQuery = stepQuery.where(StepAttempt.END_TIME.greaterThan(endedAfter));
     }
 
-    if(endedBefore != null){
+    if (endedBefore != null) {
       stepQuery = stepQuery.where(StepAttempt.END_TIME.lessThan(endedBefore));
     }
 
