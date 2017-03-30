@@ -105,10 +105,8 @@ import com.rapleaf.cascading_ext.workflow2.rollback.UnlessStepsRun;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
-import com.rapleaf.db_schemas.IDatabases;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
-import com.rapleaf.types.importer.CDSImportStatus;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static com.google.common.collect.Sets.newHashSet;
@@ -1403,7 +1401,43 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     ThreeNestedMap<String, String, String, Long> countersByStep = runner.getPersistence().getCountersByStep();
     assertEquals(1L, countersByStep.get("step1__step", mapIn.getClass().getName(), mapIn.name()).longValue());
 
+  }
 
+  @Test
+  public void testCurrentStepCounters() throws IOException {
+
+    TupleDataStore input = builder().getTupleDataStore("input",
+        new Fields("string")
+    );
+
+    TupleDataStoreHelper.writeToStore(input,
+        new Tuple("1")
+    );
+
+    Step step1 = new Step(new JobAndCheckCounter("step1", input));
+    Step step2 = new Step(new JobAndCheckCounter("step2", input), step1);
+
+    execute(step2);
+
+  }
+
+  private static class JobAndCheckCounter extends Action {
+
+    private final DataStore store;
+
+    public JobAndCheckCounter(String checkpointToken,
+                              DataStore input) {
+      super(checkpointToken);
+      this.store = input;
+      readsFrom(store);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      Pipe pipe = new Pipe("pipe");
+      completeWithProgress(buildFlow().connect(store.getTap(), new NullTap(), pipe));
+      assertEquals(Long.valueOf(1), getCurrentStepCounters().get("org.apache.hadoop.mapreduce.TaskCounter", "MAP_INPUT_RECORDS"));
+    }
   }
 
   @Test
