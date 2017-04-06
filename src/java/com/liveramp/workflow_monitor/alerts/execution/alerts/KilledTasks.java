@@ -2,7 +2,9 @@ package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
+import com.liveramp.workflow_monitor.alerts.execution.thresholds.GreaterThan;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class KilledTasks extends JobThresholdAlert {
@@ -25,17 +27,18 @@ public class KilledTasks extends JobThresholdAlert {
             .put(GROUP, KILLED_REDUCES)
             .put(GROUP, LAUNCHED_MAPS)
             .put(GROUP, LAUNCHED_REDUCES)
-            .get());
+            .get(),
+        new GreaterThan());
   }
 
 
   @Override
-  protected Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters) {
+  protected Double calculateStatistic(MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
 
     long killed = get(GROUP, KILLED_MAPS, counters) + get(GROUP, KILLED_REDUCES, counters);
     long launched = get(GROUP, LAUNCHED_MAPS, counters) + get(GROUP, LAUNCHED_REDUCES, counters);
 
-    if(launched < MIN_TASKS){
+    if (launched < MIN_TASKS) {
       return null;
     }
 

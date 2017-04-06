@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
+import com.liveramp.workflow_monitor.alerts.execution.thresholds.GreaterThan;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class CPUUsage extends JobThresholdAlert {
@@ -26,11 +28,11 @@ public class CPUUsage extends JobThresholdAlert {
       .get();
 
   public CPUUsage() {
-    super(CPU_USED_RATIO, WorkflowRunnerNotification.PERFORMANCE, COUNTERS);
+    super(CPU_USED_RATIO, WorkflowRunnerNotification.PERFORMANCE, COUNTERS, new GreaterThan());
   }
 
   @Override
-  protected Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters) {
+  protected Double calculateStatistic(MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
     Long mapAllocatedCore = get(JOB_COUNTER_GROUP, VCORES_MAPS, counters);
     Long reduceAllocatedCore = get(JOB_COUNTER_GROUP, VCORES_REDUCES, counters);
 
@@ -46,11 +48,11 @@ public class CPUUsage extends JobThresholdAlert {
 
     //  ignore small startup time CPU factors so we don't alert on tiny jobs
     if (cpuMillis < MIN_TIME_ALERT_THRESHOLD) {
-      LOG.info("Skipping alert for < "+MIN_TIME_ALERT_THRESHOLD +" ms: "+jobIdentifier);
+      LOG.info("Skipping alert for < " + MIN_TIME_ALERT_THRESHOLD + " ms: " + job.getJobIdentifier());
       return null;
     }
 
-    Long forgivenCPU = (launchedMaps+launchedReduces)*TASK_FORGIVENESS;
+    Long forgivenCPU = (launchedMaps + launchedReduces) * TASK_FORGIVENESS;
 
     return (cpuMillis.doubleValue() - forgivenCPU) / ((double)allocatedMillis);
 

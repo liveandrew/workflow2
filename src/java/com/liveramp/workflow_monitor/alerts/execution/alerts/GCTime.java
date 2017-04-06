@@ -4,7 +4,9 @@ import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
+import com.liveramp.workflow_monitor.alerts.execution.thresholds.GreaterThan;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class GCTime extends JobThresholdAlert {
@@ -20,18 +22,18 @@ public class GCTime extends JobThresholdAlert {
       .put(JOB_COUNTER_GROUP, MILLIS_REDUCES).get();
 
   public GCTime() {
-    super(GC_FRACTION_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS);
+    super(GC_FRACTION_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new GreaterThan());
   }
 
   @Override
-  protected Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters) {
+  protected Double calculateStatistic(MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
 
     Long gcTime = counters.get(TASK_COUNTER_GROUP, GC_TIME_MILLIS);
 
     Long launchedMaps = get(JOB_COUNTER_GROUP, LAUNCHED_MAPS, counters);
     Long launchedReduces = get(JOB_COUNTER_GROUP, LAUNCHED_REDUCES, counters);
 
-    Long totalForgivenGC = (launchedMaps+launchedReduces) * GC_STARTUP_TIME;
+    Long totalForgivenGC = (launchedMaps + launchedReduces) * GC_STARTUP_TIME;
 
     if (gcTime == null) {
       return null;
@@ -39,7 +41,7 @@ public class GCTime extends JobThresholdAlert {
 
     Long allTime = get(JOB_COUNTER_GROUP, MILLIS_MAPS, counters) + get(JOB_COUNTER_GROUP, MILLIS_REDUCES, counters);
 
-    return (gcTime.doubleValue() - totalForgivenGC)/ allTime.doubleValue();
+    return (gcTime.doubleValue() - totalForgivenGC) / allTime.doubleValue();
   }
 
   @Override

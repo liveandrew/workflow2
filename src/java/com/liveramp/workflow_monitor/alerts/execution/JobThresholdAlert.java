@@ -9,21 +9,25 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
+import com.liveramp.workflow_monitor.alerts.execution.thresholds.ThresholdChecker;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
 
   private final WorkflowRunnerNotification notification;
   private final double threshold;
+  private ThresholdChecker thresholdCheck;
 
   private static final DecimalFormat df = new DecimalFormat("#.##");
 
   protected JobThresholdAlert(double threshold,
                               WorkflowRunnerNotification notification,
-                              Multimap<String, String> countersToFetch) {
+                              Multimap<String, String> countersToFetch,
+                              ThresholdChecker thresholdCheck) {
     super(countersToFetch);
     this.notification = notification;
     this.threshold = threshold;
+    this.thresholdCheck = thresholdCheck;
   }
 
   protected String asPercent(double fraction) {
@@ -33,9 +37,8 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
   @Override
   public AlertMessage generateAlert(StepAttempt stepAttempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
-    Double value = calculateStatistic(job.getJobIdentifier(), counters);
-
-    if (value != null && value > threshold) {
+    Double value = calculateStatistic(job, counters);
+    if (value != null && thresholdCheck.isAlert(threshold, value)) {
 
       String message = "Step: " +
           stepAttempt.getStepToken() + "\n" +
@@ -51,7 +54,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
     return null;
   }
 
-  protected abstract Double calculateStatistic(String jobIdentifier, TwoNestedMap<String, String, Long> counters);
+  protected abstract Double calculateStatistic(MapreduceJob job, TwoNestedMap<String, String, Long> counters);
 
   protected abstract String getMessage(double value);
 
