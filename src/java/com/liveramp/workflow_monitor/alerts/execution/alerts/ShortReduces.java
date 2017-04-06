@@ -32,6 +32,6 @@ public class ShortReduces extends JobThresholdAlert {
 
   @Override
   protected String getMessage(double value) {
-    return "Reduces in this job take " + value / 1000 + "seconds on average, which is wastefully short. Consider batching more aggressively.";
+    return "Reduces in this job take " + value / 1000 + " seconds on average, which is wastefully short. Consider batching more aggressively.";
   }
 }
