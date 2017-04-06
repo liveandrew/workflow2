@@ -26,7 +26,7 @@ public class ShortMaps extends JobThresholdAlert {
 
   @Override
   protected Double calculateStatistic(MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
-    Double avgDuration = job.getAvgMapDuration().doubleValue();
+    Double avgDuration = job.getAvgMapDuration() == null ? null : job.getAvgMapDuration().doubleValue();
     Long launchedMaps = counters.get(JOB_COUNTER_GROUP, LAUNCHED_MAPS);
     return (launchedMaps != null && launchedMaps > MIN_NUM_THRESHOLD) ? avgDuration : null;
   }
