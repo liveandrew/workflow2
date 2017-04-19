@@ -60,7 +60,7 @@ public class CompactionAction2<T extends Comparable, K extends Comparable> exten
     }
   }
 
-  private CompactionAction2(String checkpointToken, String tmpRoot,
+  public CompactionAction2(String checkpointToken, String tmpRoot,
                             Class<T> type,
                             MSJDataStore<K> store) throws IOException, IllegalAccessException, InstantiationException {
     super(checkpointToken, tmpRoot);
