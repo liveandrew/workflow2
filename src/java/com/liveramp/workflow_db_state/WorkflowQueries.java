@@ -41,6 +41,7 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttemptConfiguredNotifi
 import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNotification;
+import com.liveramp.databases.workflow_db.query.ApplicationCounterSummaryQueryBuilder;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
@@ -341,8 +342,8 @@ public class WorkflowQueries {
   }
 
   private static GenericQuery completeMapreduceJobQuery(IDatabases databases,
-                                                       Long endedAfter,
-                                                       Long endedBefore) {
+                                                        Long endedAfter,
+                                                        Long endedBefore) {
 
     GenericQuery stepAttempts = databases.getWorkflowDb().createQuery().from(StepAttempt.TBL.with(IndexHints.force(Index.of("index_step_attempts_on_end_time"))))
         .where(StepAttempt.END_TIME.isNotNull())
@@ -840,10 +841,21 @@ public class WorkflowQueries {
   }
 
   public static List<ApplicationCounterSummary> getSummaries(IWorkflowDb db, Multimap<String, String> countersToQuery, LocalDate startDate, LocalDate endDate) throws IOException {
-    return db.applicationCounterSummaries().query()
+    return getSummaries(db, null, countersToQuery, startDate, endDate);
+  }
+
+  public static List<ApplicationCounterSummary> getSummaries(IWorkflowDb db, String appName, Multimap<String, String> countersToQuery, LocalDate startDate, LocalDate endDate) throws IOException {
+
+    ApplicationCounterSummaryQueryBuilder queryBuilder = db.applicationCounterSummaries().query()
         .whereDate(new Between<>(startDate.toDateTimeAtStartOfDay().getMillis(), endDate.toDateTimeAtStartOfDay().getMillis() - 1))  // stupid mysql
         .whereGroup(new In<>(countersToQuery.keySet()))
-        .whereName(new In<>(countersToQuery.values()))
+        .whereName(new In<>(countersToQuery.values()));
+
+    if(appName != null){
+      queryBuilder = queryBuilder.whereApplicationId(new In<>(Accessors.only(db.applications().findByName(appName)).getIntId()));
+    }
+
+    return queryBuilder
         .find();
   }
 
