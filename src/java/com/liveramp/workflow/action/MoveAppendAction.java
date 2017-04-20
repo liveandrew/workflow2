@@ -1,9 +1,11 @@
 package com.liveramp.workflow.action;
 
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.thrift.TBase;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
+import com.rapleaf.cascading_ext.datastore.PlaceholderDataStore;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.formats.bucket.Bucket;
 
@@ -23,6 +25,8 @@ public class MoveAppendAction<T extends TBase> extends Action {
     this.productionBucketPath = productionBucketPath;
     this.recordType = recordType;
 
+    consumes(PlaceholderDataStore.wrap(new Path(tempBucketPAth)));
+    writesTo(PlaceholderDataStore.wrap(new Path(productionBucketPath)));
   }
 
   @Override
