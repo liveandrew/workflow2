@@ -1913,6 +1913,30 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
+  @Test
+  public void testStatusCallback() throws IOException {
+
+    WorkflowRunner step = execute(new ActionWithCallback("step"));
+    assertEquals("Status0", step.getPersistence().getStepStates().get("step").getStatusMessage());
+
+  }
+
+  private static class ActionWithCallback extends Action {
+
+    public ActionWithCallback(String checkpointToken) {
+      super(checkpointToken);
+    }
+
+    @Override
+    protected void execute() throws Exception {
+      setStatusCallback(new StatusCallback() {
+        @Override
+        public String updateStatus() {
+          return "Status0";
+        }
+      });
+    }
+  }
 
   private static class ActionWithRollback extends Action {
 
