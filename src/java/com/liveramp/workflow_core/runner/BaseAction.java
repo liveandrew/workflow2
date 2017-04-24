@@ -2,6 +2,9 @@ package com.liveramp.workflow_core.runner;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
@@ -50,6 +53,9 @@ public abstract class BaseAction<Config> {
 
   private transient WorkflowStatePersistence persistence;
   private Config config;
+
+  private ScheduledExecutorService statusCallbackExecutor;
+  private StatusCallback statusCallback;
 
   public BaseAction(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
@@ -207,6 +213,30 @@ public abstract class BaseAction<Config> {
     return resourceFactory;
   }
 
+  protected interface StatusCallback{
+    String updateStatus();
+  }
+
+  protected void setStatusCallback(StatusCallback callback) throws IOException {
+
+    statusCallback = callback;
+
+    //  only create a new thread if we have a callback we want to use
+    if(!hasStatusCallback()){
+      statusCallbackExecutor = Executors.newSingleThreadScheduledExecutor();
+
+      statusCallbackExecutor.scheduleAtFixedRate(() -> {
+        try {
+          setStatusMessage(statusCallback.updateStatus());
+        } catch (IOException e) {
+          LOG.error("Failed to update status: ", e);
+        }
+      }, 0L, 30L, TimeUnit.SECONDS);
+
+    }
+
+  }
+
 
   //  not really public : /
   public final void internalExecute(OverridableProperties parentProperties) {
@@ -229,12 +259,26 @@ public abstract class BaseAction<Config> {
 
       execute();
 
+      //  update status one last time
+      if(hasStatusCallback()) {
+        setStatusMessage(statusCallback.updateStatus());
+      }
+
     } catch (Throwable t) {
       LOG.error("Action " + fullId() + " failed due to Throwable", t);
       throw wrapRuntimeException(t);
     } finally {
+
+      if(hasStatusCallback()) {
+        statusCallbackExecutor.shutdown();
+      }
+
       postExecute();
     }
+  }
+
+  private boolean hasStatusCallback() {
+    return statusCallbackExecutor != null;
   }
 
   protected final void internalRollback(OverridableProperties properties){
