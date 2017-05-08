@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +74,7 @@ public class ExecutionAlerter {
 
     //  finished in last hour
     long endTime = System.currentTimeMillis();
-    long jobWindow = endTime - 60L * 60L * 1000L;
+    long jobWindow = endTime - Duration.ofHours(1).toMillis();
 
     Map<Long, MapreduceJob> jobs = BaseJackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
         jobWindow,
@@ -108,7 +109,7 @@ public class ExecutionAlerter {
         WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get(stepAttemptId));
 
         TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get((int)jobId));
-        AlertMessage alert = jobAlert.generateAlert(stepsById.get(stepAttemptId), mapreduceJob, counterMap);
+        AlertMessage alert = jobAlert.generateAlert(stepsById.get(stepAttemptId), mapreduceJob, counterMap, db);
 
         if (alert != null) {
           if (!sentJobAlerts.containsEntry(jobId, alertClass)) {
@@ -126,7 +127,7 @@ public class ExecutionAlerter {
 
   private void generateExecutionAlerts() throws IOException, URISyntaxException {
     long fetchTime = System.currentTimeMillis();
-    long executionWindow = fetchTime - 7 * 24L * 60L * 60L * 1000L;
+    long executionWindow = fetchTime - Duration.ofDays(7).toMillis();
     LOG.info("Fetching executions to attempts since " + executionWindow);
 
     Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, executionWindow, null, null, null);
@@ -139,7 +140,7 @@ public class ExecutionAlerter {
       for (WorkflowExecution execution : attempts.keySet()) {
         long executionId = execution.getId();
 
-        AlertMessage alert = executionAlert.generateAlert(fetchTime, execution, attempts.get(execution));
+        AlertMessage alert = executionAlert.generateAlert(fetchTime, execution, attempts.get(execution), db);
         if (alert != null) {
           if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
             sentProdAlerts.put(executionId, alertClass);
@@ -168,7 +169,7 @@ public class ExecutionAlerter {
     for (AlertsHandler handler : generator.getRecipients(notification, execution)) {
 
       AlertMessages.Builder builder = AlertMessages.builder(buildSubject(alertClass.getSimpleName(), execution))
-          .setBody(buildMessage(alertMessage.getMesasage(), execution))
+          .setBody(buildMessage(alertMessage.getMessage(), execution))
           .addToDefaultTags(WorkflowConstants.WORKFLOW_EMAIL_SUBJECT_TAG);
 
       if (notification.serverity() == AlertSeverity.ERROR) {

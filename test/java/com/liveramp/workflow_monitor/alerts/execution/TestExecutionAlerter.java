@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.liveramp.commons.collections.map.MultimapBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
+import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
@@ -49,14 +50,14 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     step.save();
     MapreduceJob mapreduceJob = rldb.mapreduceJobs().create("Job1", "JobName", "");
     mapreduceJob.setStepAttemptId(step.getIntId()).save();
-    
+
     rldb.mapreduceCounters().create(mapreduceJob.getIntId(), "Group", "Name", 1);
 
     InMemoryAlertsHandler handler = new InMemoryAlertsHandler();
 
     ExecutionAlerter alerter = new ExecutionAlerter(new TestRecipientGenerator(handler),
-        Lists.<ExecutionAlertGenerator>newArrayList(new TestExecutionGenerator()),
-        Lists.<MapreduceJobAlertGenerator>newArrayList(new TestJobGenerator()),
+        Lists.newArrayList(new TestExecutionGenerator()),
+        Lists.newArrayList(new TestJobGenerator()),
         databases
     );
 
@@ -66,9 +67,20 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
 
     assertEquals(2, alerts.size());
 
-    assertStringsContainSubstring("Alerting about job " + mapreduceJob.getId(), alerts);
-    assertStringsContainSubstring("Alerting about execution " + execution.getId(), alerts);
+    String mrJobAlertMessage = "Alerting about job " + mapreduceJob.getId();
+    String wfExecutionAlertMessage = "Alerting about execution " + execution.getId();
 
+    assertStringsContainSubstring(mrJobAlertMessage, alerts);
+    assertStringsContainSubstring(wfExecutionAlertMessage, alerts);
+
+    assertEquals(
+        mrJobAlertMessage,
+        rldb.workflowAlertMapreduceJobs().find(1).getWorkflowAlert().getMessage()
+    );
+    assertEquals(
+        wfExecutionAlertMessage,
+        rldb.workflowAlertWorkflowExecutions().find(1).getWorkflowAlert().getMessage()
+    );
   }
 
   //  TODO test not-re-alerting behavior + changed status of workflow, alert second run
@@ -79,9 +91,9 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     }
 
     @Override
-    public AlertMessage generateAlert(StepAttempt attempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
+    public AlertMessage generateAlert(StepAttempt attempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters, IDatabases db) throws IOException {
       if (counters.get("Group", "Name") == 1) {
-        return new AlertMessage("Alerting about job " + job.getId(), WorkflowRunnerNotification.PERFORMANCE);
+        return AlertMessage.createAlertMessage(this.getClass().getName(), "Alerting about job " + job.getId(), WorkflowRunnerNotification.PERFORMANCE, job, db);
       }
       return null;
     }
@@ -90,8 +102,8 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
   private static class TestExecutionGenerator implements ExecutionAlertGenerator {
 
     @Override
-    public AlertMessage generateAlert(long time, WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
-      return new AlertMessage("Alerting about execution " + execution.getId(), WorkflowRunnerNotification.PERFORMANCE);
+    public AlertMessage generateAlert(long time, WorkflowExecution execution, Collection<WorkflowAttempt> attempts, IDatabases db) throws IOException {
+      return AlertMessage.createAlertMessage(this.getClass().getName(), "Alerting about execution " + execution.getId(), WorkflowRunnerNotification.PERFORMANCE, execution, db);
     }
   }
 }
