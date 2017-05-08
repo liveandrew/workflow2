@@ -1,6 +1,5 @@
 package com.liveramp.workflow_monitor;
 
-import java.time.Duration;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -14,7 +13,7 @@ import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
 public class WorkflowMonitor {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowMonitor.class);
 
-  public static final long FIVE_MINUTES = Duration.ofMinutes(5).toMillis();
+  public static final int FIVE_MINUTES = 5 * 60 * 1000;
 
   private final List<ExecutionAlerter> executionAlerters;
   private final Thread monitor;
@@ -41,7 +40,7 @@ public class WorkflowMonitor {
 
   }
 
-  private class ShutdownHook implements Runnable {
+  private class ShutdownHook implements Runnable{
 
     @Override
     public void run() {
@@ -50,7 +49,7 @@ public class WorkflowMonitor {
     }
   }
 
-  private class Monitor implements Runnable {
+  private class Monitor implements Runnable{
 
     @Override
     public void run() {
@@ -68,9 +67,10 @@ public class WorkflowMonitor {
           Thread.sleep(FIVE_MINUTES);
         }
 
-      } catch (InterruptedException e) {
+      } catch(InterruptedException e){
         LOG.info("Interrupted, going down without a fight.");
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.info("Failure", e);
         AlertsHandlers.devTools(WorkflowMonitor.class).sendAlert("WorkflowMonitor failed!", e,
             AlertRecipients.engineering(AlertSeverity.ERROR)

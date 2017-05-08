@@ -6,12 +6,12 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.logging.LoggingHelper;
-import com.liveramp.workflow_db_state.ThreadLocalWorkflowDb;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
 import com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator;
@@ -30,21 +30,22 @@ public class WorkflowDbMonitorRunner {
   public static void main(String[] args) throws InterruptedException {
     LoggingHelper.setLoggingProperties(WorkflowDbMonitorRunner.class.getSimpleName());
 
-    ThreadLocal<IDatabases> db = new ThreadLocalWorkflowDb();
+    IDatabases db = new DatabasesImpl();
+    db.getWorkflowDb().disableCaching();
 
     ExecutionAlerter production = new ExecutionAlerter(
-        new FromPersistenceGenerator(db.get()),
-        Lists.newArrayList(
+        new FromPersistenceGenerator(db),
+        Lists.<ExecutionAlertGenerator>newArrayList(
             new DiedUnclean()
         ),
-        Lists.newArrayList(
+        Lists.<MapreduceJobAlertGenerator>newArrayList(
             new KilledTasks(),
             new GCTime(),
             //            new NearMemoryLimit(),
             new CPUUsage(),
             new OutputPerMapTask()
         ),
-        db.get()
+        db
     );
 
     Set<String> testEmailVictims = Sets.newHashSet(Arrays.asList(
@@ -62,7 +63,7 @@ public class WorkflowDbMonitorRunner {
             new ShortMaps(),
             new ShortReduces()
         ),
-        db.get()
+        db
     );
 
 

@@ -1,4 +1,3 @@
-
 package com.liveramp.workflow_monitor.alerts.execution.recipient;
 
 import java.io.IOException;
@@ -14,8 +13,7 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 public class FromPersistenceGenerator implements RecipientGenerator {
 
   private final IDatabases dbs;
-
-  public FromPersistenceGenerator(IDatabases dbs) {
+  public FromPersistenceGenerator(IDatabases dbs){
     this.dbs = dbs;
   }
 

@@ -6,7 +6,6 @@ import java.util.Map;
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
@@ -35,12 +34,11 @@ public abstract class MapreduceJobAlertGenerator {
   protected static final String CPU_MILLISECONDS = "CPU_MILLISECONDS";
 
   private final Multimap<String, String> countersToFetch;
-
-  protected MapreduceJobAlertGenerator(Multimap<String, String> countersToFetch) {
+  protected MapreduceJobAlertGenerator(Multimap<String, String> countersToFetch){
     this.countersToFetch = countersToFetch;
   }
 
-  public abstract AlertMessage generateAlert(StepAttempt step, MapreduceJob job, TwoNestedMap<String, String, Long> counters, IDatabases db) throws IOException;
+  public abstract AlertMessage generateAlert(StepAttempt step, MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException;
 
   public Multimap<String, String> getCountersToFetch() {
     return countersToFetch;
@@ -48,16 +46,16 @@ public abstract class MapreduceJobAlertGenerator {
 
   //  helpers
 
-  protected Long get(String group, String name, TwoNestedMap<String, String, Long> counters) {
-    if (counters.containsKey(group, name)) {
+  protected Long get(String group, String name, TwoNestedMap<String, String, Long> counters){
+    if(counters.containsKey(group, name)){
       return counters.get(group, name);
     }
     return 0L;
   }
 
-  protected boolean containsAll(TwoNestedMap<String, String, Long> available, Multimap<String, String> required) {
+  protected boolean containsAll(TwoNestedMap<String, String, Long> available, Multimap<String, String> required){
     for (Map.Entry<String, String> entry : required.entries()) {
-      if (!available.containsKey(entry.getKey(), entry.getValue())) {
+      if(!available.containsKey(entry.getKey(), entry.getValue())){
         return false;
       }
     }

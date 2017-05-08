@@ -6,7 +6,6 @@ import java.text.DecimalFormat;
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
@@ -36,7 +35,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
   }
 
   @Override
-  public AlertMessage generateAlert(StepAttempt stepAttempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters, IDatabases db) throws IOException {
+  public AlertMessage generateAlert(StepAttempt stepAttempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters) throws IOException {
 
     Double value = calculateStatistic(job, counters);
     if (value != null && thresholdCheck.isAlert(threshold, value)) {
@@ -49,7 +48,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
           job.getTrackingUrl() + "\n\n" +
           getMessage(value);
 
-      return AlertMessage.createAlertMessage(this.getClass().getName(), message, notification, job, db);
+      return new AlertMessage(message, notification);
     }
 
     return null;

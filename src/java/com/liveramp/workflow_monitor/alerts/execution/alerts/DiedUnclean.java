@@ -5,7 +5,6 @@ import java.util.Collection;
 
 import com.google.common.base.Optional;
 
-import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.workflow_db_state.DbPersistence;
@@ -20,19 +19,16 @@ public class DiedUnclean implements ExecutionAlertGenerator {
   private static final int MISSED_HEARTBEATS_THRESHOLD = DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 5; // 5 min, to reduce false alarms
 
   @Override
-  public AlertMessage generateAlert(long fetchTime, WorkflowExecution execution, Collection<WorkflowAttempt> attempts, IDatabases db) throws IOException {
+  public AlertMessage generateAlert(long fetchTime, WorkflowExecution execution, Collection<WorkflowAttempt> attempts) throws IOException {
 
     Optional<WorkflowAttempt> lastAttempt = WorkflowQueries.getLatestAttemptOptional(attempts);
 
     if (lastAttempt.isPresent()) {
       ProcessStatus process = WorkflowQueries.getProcessStatus(fetchTime, lastAttempt.get(), execution, MISSED_HEARTBEATS_THRESHOLD);
       if (process == ProcessStatus.TIMED_OUT) {
-        return AlertMessage.createAlertMessage(
-            this.getClass().getName(),
+        return new AlertMessage(
             "Execution has died without shutting down cleanly.  This often means the process was killed by the system OOM killer.  Please cancel or resume the execution.",
-            WorkflowRunnerNotification.DIED_UNCLEAN,
-            execution,
-            db
+            WorkflowRunnerNotification.DIED_UNCLEAN
         );
       }
     }
