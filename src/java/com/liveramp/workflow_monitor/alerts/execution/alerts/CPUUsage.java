@@ -48,7 +48,7 @@ public class CPUUsage extends JobThresholdAlert {
 
     //  ignore small startup time CPU factors so we don't alert on tiny jobs
     if (cpuMillis < MIN_TIME_ALERT_THRESHOLD) {
-      LOG.info("Skipping alert for < " + MIN_TIME_ALERT_THRESHOLD + " ms: " + job.getJobIdentifier());
+      LOG.debug("Skipping alert for < " + MIN_TIME_ALERT_THRESHOLD + " ms: " + job.getJobIdentifier());
       return null;
     }
 

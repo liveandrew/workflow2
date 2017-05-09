@@ -145,7 +145,7 @@ public class ExecutionAlerter {
             sentProdAlerts.put(executionId, alertClass);
             sendAlert(alertClass, execution, alert);
           } else {
-            LOG.info("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
+            LOG.debug("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
           }
         }
 
