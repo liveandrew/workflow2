@@ -11,7 +11,7 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
 
-public class WorkflowMonitor {
+public class  WorkflowMonitor {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowMonitor.class);
 
   public static final long FIVE_MINUTES = Duration.ofMinutes(5).toMillis();

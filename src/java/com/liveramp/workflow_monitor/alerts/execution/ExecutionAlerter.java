@@ -23,6 +23,9 @@ import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.MapreduceCounter;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowAlert;
+import com.liveramp.databases.workflow_db.models.WorkflowAlertMapreduceJob;
+import com.liveramp.databases.workflow_db.models.WorkflowAlertWorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.db_utils.BaseJackUtil;
@@ -35,12 +38,11 @@ import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.rapleaf.jack.queries.GenericQuery;
+import com.rapleaf.jack.queries.Records;
 
 public class ExecutionAlerter {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionAlerter.class);
-
-  private final Multimap<Long, Class> sentProdAlerts = HashMultimap.create();
-  private final Multimap<Long, Class> sentJobAlerts = HashMultimap.create();
 
   private final List<ExecutionAlertGenerator> executionAlerts;
   private final List<MapreduceJobAlertGenerator> jobAlerts;
@@ -112,18 +114,13 @@ public class ExecutionAlerter {
         AlertMessage alert = jobAlert.generateAlert(stepsById.get(stepAttemptId), mapreduceJob, counterMap, db);
 
         if (alert != null) {
-          if (!sentJobAlerts.containsEntry(jobId, alertClass)) {
-            sentJobAlerts.put(jobId, alertClass);
-            sendAlert(alertClass, execution, alert);
-          } else {
-            LOG.info("Not re-notifying about job " + jobId + " alert gen " + alertClass);
-          }
-
+          sendAlert(alertClass, execution, alert);
         }
 
       }
     }
   }
+
 
   private void generateExecutionAlerts() throws IOException, URISyntaxException {
     long fetchTime = System.currentTimeMillis();
@@ -142,12 +139,7 @@ public class ExecutionAlerter {
 
         AlertMessage alert = executionAlert.generateAlert(fetchTime, execution, attempts.get(execution), db);
         if (alert != null) {
-          if (!sentProdAlerts.containsEntry(executionId, alertClass)) {
-            sentProdAlerts.put(executionId, alertClass);
-            sendAlert(alertClass, execution, alert);
-          } else {
-            LOG.debug("Not re-notifying about execution " + executionId + " alert gen " + alertClass);
-          }
+          sendAlert(alertClass, execution, alert);
         }
 
       }

@@ -79,7 +79,6 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     alerter.generateAlerts();
 
     List<String> alerts = handler.getAlerts();
-
     assertEquals(4, alerts.size());
 
 
@@ -102,9 +101,10 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
       );
     }
 
-  }
+    alerter.generateAlerts();
+    assertEquals(4, alerts.size());
 
-  //  TODO test not-re-alerting behavior + changed status of workflow, alert second run
+  }
 
   private static class TestJobGenerator extends MapreduceJobAlertGenerator {
     protected TestJobGenerator() {
