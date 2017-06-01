@@ -34,39 +34,39 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
   @Test
   public void testQueries() throws Exception {
     DatabasesImpl databases = new DatabasesImpl();
-    IWorkflowDb rldb = databases.getWorkflowDb();
+    IWorkflowDb db = databases.getWorkflowDb();
     databases.getWorkflowDb().disableCaching();
 
     long currentTime = System.currentTimeMillis();
 
-    Application application = rldb.applications().create("Test Workflow");
+    Application application = db.applications().create("Test Workflow");
 
-    WorkflowExecution execution = rldb.workflowExecutions().create("Test Workflow", WorkflowExecutionStatus.COMPLETE.ordinal())
+    WorkflowExecution execution = db.workflowExecutions().create("Test Workflow", WorkflowExecutionStatus.COMPLETE.ordinal())
         .setStartTime(currentTime - 2)
         .setEndTime(currentTime - 1)
         .setApplicationId(application.getIntId());
     execution.save();
-    WorkflowAttempt attempt = rldb.workflowAttempts().create(execution.getIntId(), "", "", "", "");
-    StepAttempt step = rldb.stepAttempts().create(attempt.getIntId(), "step", StepStatus.COMPLETED.ordinal(), "")
+    WorkflowAttempt attempt = db.workflowAttempts().create(execution.getIntId(), "", "", "", "");
+    StepAttempt step = db.stepAttempts().create(attempt.getIntId(), "step", StepStatus.COMPLETED.ordinal(), "")
         .setEndTime(System.currentTimeMillis() - 1);
     step.save();
 
-    WorkflowExecution execution2 = rldb.workflowExecutions().create("Test Workflow 2", WorkflowExecutionStatus.COMPLETE.ordinal())
+    WorkflowExecution execution2 = db.workflowExecutions().create("Test Workflow 2", WorkflowExecutionStatus.COMPLETE.ordinal())
         .setStartTime(currentTime - 3)
         .setEndTime(currentTime - 2)
         .setApplicationId(application.getIntId());
     execution2.save();
-    WorkflowAttempt attempt2 = rldb.workflowAttempts().create(execution2.getIntId(), "", "", "", "");
-    StepAttempt step2 = rldb.stepAttempts().create(attempt2.getIntId(), "step", StepStatus.COMPLETED.ordinal(), "")
+    WorkflowAttempt attempt2 = db.workflowAttempts().create(execution2.getIntId(), "", "", "", "");
+    StepAttempt step2 = db.stepAttempts().create(attempt2.getIntId(), "step", StepStatus.COMPLETED.ordinal(), "")
         .setEndTime(System.currentTimeMillis() - 1);
     step2.save();
 
-    MapreduceJob mapreduceJob = rldb.mapreduceJobs().create("Job1", "JobName", "");
+    MapreduceJob mapreduceJob = db.mapreduceJobs().create("Job1", "JobName", "");
     mapreduceJob.setStepAttemptId(step.getIntId()).save();
-    rldb.mapreduceCounters().create(mapreduceJob.getIntId(), "Group", "Name", 1);
-    MapreduceJob mapreduceJob2 = rldb.mapreduceJobs().create("Job2", "JobName", "");
+    db.mapreduceCounters().create(mapreduceJob.getIntId(), "Group", "Name", 1);
+    MapreduceJob mapreduceJob2 = db.mapreduceJobs().create("Job2", "JobName", "");
     mapreduceJob2.setStepAttemptId(step.getIntId()).save();
-    rldb.mapreduceCounters().create(mapreduceJob2.getIntId(), "Group", "Name", 1);
+    db.mapreduceCounters().create(mapreduceJob2.getIntId(), "Group", "Name", 1);
 
     InMemoryAlertsHandler handler = new InMemoryAlertsHandler();
 
@@ -85,16 +85,16 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     assertStringsContainSubstring(mrJobAlertMessage, alerts);
     assertStringsContainSubstring(wfExecutionAlertMessage, alerts);
 
-    assertEquals(4, rldb.workflowAlerts().findAll().size());
+    assertEquals(4, db.workflowAlerts().findAll().size());
 
-    for (MapreduceJob mrJob : rldb.mapreduceJobs().findByJobName("JobName")) {
+    for (MapreduceJob mrJob : db.mapreduceJobs().findByJobName("JobName")) {
       assertEquals(
           mrJobAlertMessage + mrJob.getId(),
           mrJob.getWorkflowAlertMapreduceJob().get(0).getWorkflowAlert().getMessage()
       );
     }
 
-    for (WorkflowExecution wfExecution : rldb.workflowExecutions().findByAppType(1)) {
+    for (WorkflowExecution wfExecution : db.workflowExecutions().findByAppType(1)) {
       assertEquals(
           wfExecutionAlertMessage + wfExecution.getId(),
           wfExecution.getWorkflowAlertWorkflowExecution().get(0).getWorkflowAlert().getMessage()

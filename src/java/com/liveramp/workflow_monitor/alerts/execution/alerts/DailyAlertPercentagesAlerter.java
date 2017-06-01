@@ -1,0 +1,185 @@
+package com.liveramp.workflow_monitor.alerts.execution.alerts;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.liveramp.commons.collections.nested_map.ThreeKeyTuple;
+import com.liveramp.commons.collections.nested_map.ThreeNestedCountingMap;
+import com.liveramp.commons.collections.nested_map.TwoKeyTuple;
+import com.liveramp.databases.workflow_db.DatabasesImpl;
+import com.liveramp.databases.workflow_db.IDatabases;
+import com.liveramp.databases.workflow_db.models.MapreduceCounter;
+import com.liveramp.databases.workflow_db.models.MapreduceJob;
+import com.liveramp.databases.workflow_db.models.StepAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowAlert;
+import com.liveramp.databases.workflow_db.models.WorkflowAlertMapreduceJob;
+import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowExecution;
+import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.alerts_handler.AlertsHandlers;
+import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
+import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.rapleaf.jack.queries.Index;
+import com.rapleaf.jack.queries.IndexHints;
+import com.rapleaf.jack.queries.QueryOrder;
+import com.rapleaf.jack.queries.Record;
+import com.rapleaf.jack.queries.Records;
+
+import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
+import static com.rapleaf.jack.queries.AggregatedColumn.SUM;
+
+public class DailyAlertPercentagesAlerter {
+
+  private IDatabases db;
+  private Integer hours = 24;
+  private static Double ALERT_PERCENTAGE_THRESHOLD = .4;
+  private static Long MIN_CLUSTER_TIME = Duration.ofMinutes(20).toMillis();
+
+  private DailyAlertPercentagesAlerter(IDatabases db) {
+    this.db = db;
+  }
+
+  private void generateAlerts() {
+    db.getWorkflowDb().disableCaching();
+    long threshold = System.currentTimeMillis() - Duration.ofHours(hours).toMillis();
+
+    AlertsHandler alertsHandler = AlertsHandlers.builder(TeamList.DEV_TOOLS).build();
+
+    try {
+      Records mapreduceCounts = db.getWorkflowDb().createQuery()
+          .from(MapreduceJob.TBL)
+          .leftJoin(WorkflowAlertMapreduceJob.TBL)
+          .on(WorkflowAlertMapreduceJob.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID))
+          .leftJoin(StepAttempt.TBL)
+          .on(StepAttempt.ID.equalTo(MapreduceJob.STEP_ATTEMPT_ID.as(Long.class)))
+          .leftJoin(WorkflowAttempt.TBL)
+          .on(WorkflowAttempt.ID.equalTo(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class)))
+          .leftJoin(WorkflowExecution.TBL)
+          .on(WorkflowExecution.ID.equalTo(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class)))
+          .where(WorkflowExecution.START_TIME.greaterThan(threshold))
+          .select(WorkflowExecution.NAME, COUNT(MapreduceJob.ID))
+          .groupBy(WorkflowExecution.NAME)
+          .fetch();
+
+      Map<String, Integer> totalMapreduceCounts = new HashMap<>();
+      for (Record r : mapreduceCounts) {
+        totalMapreduceCounts.put(r.getString(WorkflowExecution.NAME), r.getInt(COUNT(MapreduceJob.ID)));
+      }
+
+      Records minMapreduceDurationQuery = db.getWorkflowDb().createQuery().from(WorkflowExecution.TBL)
+          .innerJoin(WorkflowAttempt.TBL)
+          .on(WorkflowAttempt.WORKFLOW_EXECUTION_ID.equalTo(WorkflowExecution.ID.as(Integer.class)))
+          .innerJoin(StepAttempt.TBL.with(IndexHints.force(Index.of("index_step_attempts_on_end_time"))))
+          .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID.as(Integer.class)))
+          .innerJoin(MapreduceJob.TBL)
+          .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)))
+          .innerJoin(MapreduceCounter.TBL)
+          .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID.as(Integer.class)))
+
+          .where(StepAttempt.END_TIME.greaterThan(threshold),
+              MapreduceCounter.GROUP.in("YarnStats"),
+              MapreduceCounter.NAME.in("VCORES_SECONDS", "MB_SECONDS"))
+          .groupBy(WorkflowExecution.NAME)
+          .select(WorkflowExecution.NAME, SUM(MapreduceCounter.VALUE))
+          .orderBy(SUM(MapreduceCounter.VALUE), QueryOrder.DESC)
+          .fetch();
+
+      // Eventually get min since query is sorted in descending order
+      Map<String, Long> minMapreduceDurations = new HashMap<>();
+      for (Record r : minMapreduceDurationQuery) {
+        minMapreduceDurations.put(r.get(WorkflowExecution.NAME), r.get(SUM(MapreduceCounter.VALUE)));
+      }
+
+      Records badMapreduceJobs = db.getWorkflowDb().createQuery()
+          .from(MapreduceJob.TBL)
+          .innerJoin(WorkflowAlertMapreduceJob.TBL)
+          .on(WorkflowAlertMapreduceJob.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID))
+          .innerJoin(WorkflowAlert.TBL)
+          .on(WorkflowAlert.ID.equalTo(WorkflowAlertMapreduceJob.WORKFLOW_ALERT_ID))
+          .innerJoin(StepAttempt.TBL)
+          .on(StepAttempt.ID.equalTo(MapreduceJob.STEP_ATTEMPT_ID.as(Long.class)))
+          .innerJoin(WorkflowAttempt.TBL)
+          .on(WorkflowAttempt.ID.equalTo(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class)))
+          .innerJoin(WorkflowExecution.TBL)
+          .on(WorkflowExecution.ID.equalTo(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class)))
+          .where(
+              WorkflowExecution.START_TIME.greaterThan(threshold),
+              WorkflowAlert.ALERT_CLASS.notEqualTo(DiedUnclean.class.getName()))
+          .select(COUNT(WorkflowAlertMapreduceJob.ID), WorkflowExecution.NAME,
+              WorkflowAlert.ALERT_CLASS, StepAttempt.STEP_TOKEN, WorkflowAttempt.ERROR_EMAIL)
+          .groupBy(WorkflowExecution.NAME, WorkflowAlert.ALERT_CLASS, StepAttempt.STEP_TOKEN, WorkflowAttempt.ERROR_EMAIL)
+          .fetch();
+
+      ThreeNestedCountingMap<String, String, String> mapreduceAlertCounts = new ThreeNestedCountingMap(0L);
+
+      Map<ThreeKeyTuple<String, String, String>, String> mapreduceErrorEmails = new HashMap<>();
+      for (Record r : badMapreduceJobs) {
+        String name = r.getString(WorkflowExecution.NAME);
+        String alert = r.getString(WorkflowAlert.ALERT_CLASS);
+        String step = r.getString(StepAttempt.STEP_TOKEN).replaceAll("[0-9]", "");
+        mapreduceAlertCounts.incrementAndGet(name, alert, step, r.get(COUNT(WorkflowAlertMapreduceJob.ID)).longValue());
+        mapreduceErrorEmails.put(new ThreeKeyTuple<>(name, alert, step), r.get(WorkflowAttempt.ERROR_EMAIL));
+      }
+
+      String summary = "appname,classname,stepName,alert count,WF execution count,MR job count,alerts/MR jobs\n";
+
+      List<TwoKeyTuple<ThreeKeyTuple<String, String, String>, String>> emailAlerts = new ArrayList<>();
+      for (ThreeKeyTuple<String, String, String> nameAlertStep : mapreduceAlertCounts.key123Set()) {
+        String appName = nameAlertStep.getK1();
+        String classname = nameAlertStep.getK2().replaceAll(".*\\.", "");
+        String stepName = nameAlertStep.getK3();
+        Integer totalMapreduceCount = totalMapreduceCounts.get(appName);
+        Long minClusterTime = minMapreduceDurations.get(appName);
+        Double alertsPerMRJob = mapreduceAlertCounts.get(nameAlertStep) / totalMapreduceCount.doubleValue();
+        String email = mapreduceErrorEmails.get(nameAlertStep);
+
+        summary += appName + "," + classname + "," + stepName + "," + mapreduceAlertCounts.get(nameAlertStep) + "," +
+            "," + totalMapreduceCount + "," + alertsPerMRJob + "\n";
+
+        if (alertsPerMRJob > ALERT_PERCENTAGE_THRESHOLD && minClusterTime != null && minClusterTime > MIN_CLUSTER_TIME && email != null) {
+          emailAlerts.add(new TwoKeyTuple<>(nameAlertStep, email));
+        }
+      }
+
+      String alertSummary = "recipient, min cluster time, errors/job, name, alert, step\n";
+      ArrayList<ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String>> percentages = new ArrayList<>();
+      for (TwoKeyTuple<ThreeKeyTuple<String, String, String>, String> nameAlertStepEmail : emailAlerts) {
+        String alertMessage = "";
+        ThreeKeyTuple<String, String, String> nameAlertStep = nameAlertStepEmail.getK1();
+        Double percent = totalMapreduceCounts.get(nameAlertStep.getK1()) / mapreduceAlertCounts.get(nameAlertStep).doubleValue();
+        percentages.add(new ThreeKeyTuple<>(nameAlertStep, percent, nameAlertStepEmail.getK2()));
+        alertMessage += nameAlertStep.getK1() + " " + nameAlertStep.getK2() + " " + nameAlertStep.getK3() + " "
+            + percent + '\n';
+        /*
+        alertsHandler.sendAlert("[DT] Workflows have high error rates",
+            "The following workflows have a high MapReduce Job error rate over the past " + hours + " hours:\n\n"
+                + "workflow name, alert class, step name, % alerts" + alertMessage,
+            AlertRecipients.of(email));
+            */
+      }
+      percentages.sort(
+          (ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> o1, ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> o2) ->
+              o1.getK2() < o2.getK2() ? 1 : -1
+      );
+      for (ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> d : percentages) {
+        ThreeKeyTuple<String, String, String> nameAlertStep = d.getK1();
+        alertSummary += d.getK3() + " " + minMapreduceDurations.get(nameAlertStep.getK1()) + " " + d.getK2() + " " + nameAlertStep.getK1() + " " + nameAlertStep.getK2() + " "
+            + nameAlertStep.getK3() + '\n';
+      }
+      alertsHandler.sendAlert("[DT] Workflow alerts summary", alertSummary, AlertRecipients.of("kong@liveramp.com", "bpodgursky@liveramp.com"));
+      System.out.println(summary);
+
+    } catch (IOException e) {
+      alertsHandler.sendAlert("[DT] Daily Workflow alerts summary failed!", e.toString(), AlertRecipients.of("kong@liveramp.com"));
+    }
+    return;
+  }
+
+  public static void main(String[] args) throws Exception {
+    new DailyAlertPercentagesAlerter(new DatabasesImpl()).generateAlerts();
+  }
+}

@@ -12,9 +12,7 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow_db_state.ThreadLocalWorkflowDb;
-import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
-import com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.CPUUsage;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.DiedUnclean;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.GCTime;
@@ -56,15 +54,14 @@ public class WorkflowDbMonitorRunner {
             AlertsHandlers.builder(TeamList.DEV_TOOLS)
                 .setEngineeringRecipient(AlertRecipients.of(testEmailVictims))
                 .build()),
-        Lists.<ExecutionAlertGenerator>newArrayList(
+        Lists.newArrayList(
         ),
-        Lists.<MapreduceJobAlertGenerator>newArrayList(
+        Lists.newArrayList(
             new ShortMaps(),
             new ShortReduces()
         ),
         db.get()
     );
-
 
     WorkflowMonitor monitor = new WorkflowMonitor(
         Lists.newArrayList(

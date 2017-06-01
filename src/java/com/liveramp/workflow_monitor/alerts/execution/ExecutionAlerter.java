@@ -23,9 +23,6 @@ import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.MapreduceCounter;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
-import com.liveramp.databases.workflow_db.models.WorkflowAlert;
-import com.liveramp.databases.workflow_db.models.WorkflowAlertMapreduceJob;
-import com.liveramp.databases.workflow_db.models.WorkflowAlertWorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.db_utils.BaseJackUtil;
@@ -38,8 +35,6 @@ import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
-import com.rapleaf.jack.queries.GenericQuery;
-import com.rapleaf.jack.queries.Records;
 
 public class ExecutionAlerter {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionAlerter.class);
