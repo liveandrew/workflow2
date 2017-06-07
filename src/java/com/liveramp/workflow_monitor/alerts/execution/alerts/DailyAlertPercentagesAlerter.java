@@ -4,12 +4,20 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import com.hp.gagawa.java.elements.A;
+import com.hp.gagawa.java.elements.Body;
+import com.hp.gagawa.java.elements.Span;
+import com.hp.gagawa.java.elements.Table;
+import com.hp.gagawa.java.elements.Td;
+import com.hp.gagawa.java.elements.Th;
+import com.hp.gagawa.java.elements.Tr;
 
 import com.liveramp.commons.collections.nested_map.ThreeKeyTuple;
 import com.liveramp.commons.collections.nested_map.ThreeNestedCountingMap;
-import com.liveramp.commons.collections.nested_map.TwoKeyTuple;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.MapreduceCounter;
@@ -38,6 +46,7 @@ public class DailyAlertPercentagesAlerter {
   private Integer hours = 24;
   private static Double ALERT_PERCENTAGE_THRESHOLD = .4;
   private static Long MIN_CLUSTER_TIME = Duration.ofMinutes(20).toMillis();
+  private static String LINK_START = "http://workflows.liveramp.net/application.html?name=";
 
   private DailyAlertPercentagesAlerter(IDatabases db) {
     this.db = db;
@@ -119,59 +128,102 @@ public class DailyAlertPercentagesAlerter {
       Map<ThreeKeyTuple<String, String, String>, String> mapreduceErrorEmails = new HashMap<>();
       for (Record r : badMapreduceJobs) {
         String name = r.getString(WorkflowExecution.NAME);
-        String alert = r.getString(WorkflowAlert.ALERT_CLASS);
+        String alert = r.getString(WorkflowAlert.ALERT_CLASS).replaceAll(".*\\.", "");
         String step = r.getString(StepAttempt.STEP_TOKEN).replaceAll("[0-9]", "");
         mapreduceAlertCounts.incrementAndGet(name, alert, step, r.get(COUNT(WorkflowAlertMapreduceJob.ID)).longValue());
         mapreduceErrorEmails.put(new ThreeKeyTuple<>(name, alert, step), r.get(WorkflowAttempt.ERROR_EMAIL));
       }
 
-      String summary = "appname,classname,stepName,alert count,WF execution count,MR job count,alerts/MR jobs\n";
-
-      List<TwoKeyTuple<ThreeKeyTuple<String, String, String>, String>> emailAlerts = new ArrayList<>();
+      Map<String, Set<ThreeKeyTuple<String, String, String>>> emailAlerts = new HashMap<>();
       for (ThreeKeyTuple<String, String, String> nameAlertStep : mapreduceAlertCounts.key123Set()) {
         String appName = nameAlertStep.getK1();
-        String classname = nameAlertStep.getK2().replaceAll(".*\\.", "");
-        String stepName = nameAlertStep.getK3();
         Integer totalMapreduceCount = totalMapreduceCounts.get(appName);
         Long minClusterTime = minMapreduceDurations.get(appName);
         Double alertsPerMRJob = mapreduceAlertCounts.get(nameAlertStep) / totalMapreduceCount.doubleValue();
         String email = mapreduceErrorEmails.get(nameAlertStep);
 
-        summary += appName + "," + classname + "," + stepName + "," + mapreduceAlertCounts.get(nameAlertStep) + "," +
-            "," + totalMapreduceCount + "," + alertsPerMRJob + "\n";
-
-        if (alertsPerMRJob > ALERT_PERCENTAGE_THRESHOLD && minClusterTime != null && minClusterTime > MIN_CLUSTER_TIME && email != null) {
-          emailAlerts.add(new TwoKeyTuple<>(nameAlertStep, email));
+        if (alertsPerMRJob > ALERT_PERCENTAGE_THRESHOLD && minClusterTime != null && minClusterTime > MIN_CLUSTER_TIME) {
+          Set s = emailAlerts.getOrDefault(email, new HashSet<>());
+          s.add(nameAlertStep);
+          if (email == null) {
+            email = "dev-null@liveramp.com";
+          }
+          emailAlerts.put(email, s);
         }
       }
 
-      String alertSummary = "recipient, min cluster time, errors/job, name, alert, step\n";
       ArrayList<ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String>> percentages = new ArrayList<>();
-      for (TwoKeyTuple<ThreeKeyTuple<String, String, String>, String> nameAlertStepEmail : emailAlerts) {
-        String alertMessage = "";
-        ThreeKeyTuple<String, String, String> nameAlertStep = nameAlertStepEmail.getK1();
-        Double percent = totalMapreduceCounts.get(nameAlertStep.getK1()) / mapreduceAlertCounts.get(nameAlertStep).doubleValue();
-        percentages.add(new ThreeKeyTuple<>(nameAlertStep, percent, nameAlertStepEmail.getK2()));
-        alertMessage += nameAlertStep.getK1() + " " + nameAlertStep.getK2() + " " + nameAlertStep.getK3() + " "
-            + percent + '\n';
+      for (String email : emailAlerts.keySet()) {
+        Table table = new Table();
+        table.appendChild(new Tr().appendChild(
+            new Th().appendText("Name"),
+            new Th().appendText("Alert"),
+            new Th().appendText("Step"),
+            new Th().appendText("Alerts per MR job")
+        ));
+        for (ThreeKeyTuple<String, String, String> nameAlertStep : emailAlerts.get(email)) {
+          Double percent = totalMapreduceCounts.get(nameAlertStep.getK1()) / mapreduceAlertCounts.get(nameAlertStep).doubleValue();
+          percentages.add(new ThreeKeyTuple<>(nameAlertStep, percent, email));
+
+          table.appendChild(
+              new Tr()
+                  .appendChild(
+                      new Td()
+                          .appendChild(
+                              new A().appendChild(new Span().appendText(nameAlertStep.getK1()))
+                                  .setHref(LINK_START + nameAlertStep.getK1())
+                          ),
+                      new Td().appendText(nameAlertStep.getK2()),
+                      new Td().appendText(nameAlertStep.getK3()),
+                      new Td().appendText(percent.toString())
+                  ));
+        }
+
         /*
         alertsHandler.sendAlert("[DT] Workflows have high error rates",
-            "The following workflows have a high MapReduce Job error rate over the past " + hours + " hours:\n\n"
-                + "workflow name, alert class, step name, % alerts" + alertMessage,
+            "The following workflows have a high MapReduce job error rate over the past " + hours + " hours:\n\n"
+                + new Body().appendChild(table).write(),
             AlertRecipients.of(email));
-            */
+        //AlertRecipients.of("kong@liveramp.com"));
+        */
       }
       percentages.sort(
           (ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> o1, ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> o2) ->
               o1.getK2() < o2.getK2() ? 1 : -1
       );
+
+      final Table table = new Table();
+      table.appendChild(new Tr().appendChild(
+          new Th().appendText("name"),
+          new Th().appendText("alert"),
+          new Th().appendText("step"),
+          new Th().appendText("recipient"),
+          new Th().appendText("min cluster time"),
+          new Th().appendText("errors/job")
+      ));
       for (ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> d : percentages) {
         ThreeKeyTuple<String, String, String> nameAlertStep = d.getK1();
-        alertSummary += d.getK3() + " " + minMapreduceDurations.get(nameAlertStep.getK1()) + " " + d.getK2() + " " + nameAlertStep.getK1() + " " + nameAlertStep.getK2() + " "
-            + nameAlertStep.getK3() + '\n';
+        table.appendChild(
+            new Tr()
+                .appendChild(
+                    new Td()
+                        .appendChild(
+                            new A().appendChild(new Span().appendText(nameAlertStep.getK1()))
+                                .setHref(LINK_START + nameAlertStep.getK1())
+                        ),
+                    new Td().appendText(nameAlertStep.getK2()),
+                    new Td().appendText(nameAlertStep.getK3()),
+                    new Td().appendText(d.getK3()),
+                    new Td().appendText(minMapreduceDurations.get(nameAlertStep.getK1()).toString()),
+                    new Td().appendText(d.getK2().toString())
+                )
+
+        );
       }
-      alertsHandler.sendAlert("[DT] Workflow alerts summary", alertSummary, AlertRecipients.of("kong@liveramp.com", "bpodgursky@liveramp.com"));
-      System.out.println(summary);
+      final Body body = new Body();
+      body.appendChild(table);
+      //alertsHandler.sendAlert("[DT] Workflow alerts summary", body.write(), AlertRecipients.of("kong@liveramp.com", "bpodgursky@liveramp.com"));
+      alertsHandler.sendAlert("[DT] Workflow alerts summary", body.write(), AlertRecipients.of("kong@liveramp.com"));
 
     } catch (IOException e) {
       alertsHandler.sendAlert("[DT] Daily Workflow alerts summary failed!", e.toString(), AlertRecipients.of("kong@liveramp.com"));
