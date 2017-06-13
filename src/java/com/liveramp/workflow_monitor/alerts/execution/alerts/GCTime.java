@@ -16,6 +16,11 @@ public class GCTime extends JobThresholdAlert {
   //  unclear why, but there seems to be some fixed startup GC time we probably want to ignore in tiny jobs
   private static final long GC_STARTUP_TIME = 3000;
 
+  public static final String SHORT_DESCRIPTION = "Over 25% of time spent in GC.";
+  static final String PREAMBLE = " of processing time was spent in Garbage Collection. ";
+  static final String RECOMMENDATION = "This can be triggered by excessive object creation or insufficient heap size. " +
+      "Try to reduce object instantiations or increase task heap sizes.";
+
   private static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
       .put(TASK_COUNTER_GROUP, GC_TIME_MILLIS)
       .put(JOB_COUNTER_GROUP, MILLIS_MAPS)
@@ -46,8 +51,6 @@ public class GCTime extends JobThresholdAlert {
 
   @Override
   protected String getMessage(double value) {
-    return asPercent(value) + " of processing time was spent in Garbage Collection.  " +
-        "This can be triggered by excessive object creation or insufficient heap size.  " +
-        "Try to reduce object instantiations or increase task heap sizes.";
+    return asPercent(value) + PREAMBLE + RECOMMENDATION;
   }
 }

@@ -3,6 +3,7 @@ package com.liveramp.workflow_monitor.alerts.execution.alerts;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -47,6 +48,19 @@ public class DailyAlertPercentagesAlerter {
   private static Double ALERT_PERCENTAGE_THRESHOLD = .4;
   private static Long MIN_CLUSTER_TIME = Duration.ofMinutes(20).toMillis();
   private static String LINK_START = "http://workflows.liveramp.net/application.html?name=";
+  private static String TABLE_STYLE = "min-width: 9em; padding-right: 1em; border-right: 1px dotted black;";
+
+  static final Map ALERT_TO_DESCRIPTION = Collections.unmodifiableMap(new HashMap() {
+    private static final long serialVersionUID = 1L;
+
+    {
+      put("ShortMaps", ShortMaps.SHORT_DESCRIPTION + ShortMaps.RECOMMENDATION);
+      put("ShortReduces", ShortReduces.SHORT_DESCRIPTION + ShortReduces.RECOMMENDATION);
+      put("GCTime", GCTime.SHORT_DESCRIPTION + GCTime.RECOMMENDATION);
+      put("CPUUsage", CPUUsage.SHORT_DESCRIPTION + CPUUsage.RECOMMENDATION);
+      put("OutputPerMapTask", OutputPerMapTask.SHORT_DESCRIPTION + OutputPerMapTask.RECOMMENDATION);
+    }
+  });
 
   private DailyAlertPercentagesAlerter(IDatabases db) {
     this.db = db;
@@ -156,11 +170,13 @@ public class DailyAlertPercentagesAlerter {
       for (String email : emailAlerts.keySet()) {
         Table table = new Table();
         table.appendChild(new Tr().appendChild(
-            new Th().appendText("Name"),
-            new Th().appendText("Alert"),
-            new Th().appendText("Step"),
-            new Th().appendText("Alerts per MR job")
+            new Th().appendText("Name").setStyle(TABLE_STYLE),
+            new Th().appendText("Alert").setStyle(TABLE_STYLE),
+            new Th().appendText("Step").setStyle(TABLE_STYLE),
+            new Th().appendText("Alerts per MR job").setStyle(TABLE_STYLE)
         ));
+
+        Set<String> alertClasses = new HashSet<>();
         for (ThreeKeyTuple<String, String, String> nameAlertStep : emailAlerts.get(email)) {
           Double percent = totalMapreduceCounts.get(nameAlertStep.getK1()) / mapreduceAlertCounts.get(nameAlertStep).doubleValue();
           percentages.add(new ThreeKeyTuple<>(nameAlertStep, percent, email));
@@ -172,20 +188,24 @@ public class DailyAlertPercentagesAlerter {
                           .appendChild(
                               new A().appendChild(new Span().appendText(nameAlertStep.getK1()))
                                   .setHref(LINK_START + nameAlertStep.getK1())
-                          ),
-                      new Td().appendText(nameAlertStep.getK2()),
-                      new Td().appendText(nameAlertStep.getK3()),
-                      new Td().appendText(percent.toString())
+                          ).setStyle(TABLE_STYLE),
+                      new Td().appendText(nameAlertStep.getK2()).setStyle(TABLE_STYLE),
+                      new Td().appendText(nameAlertStep.getK3()).setStyle(TABLE_STYLE),
+                      new Td().appendText(percent.toString()).setStyle(TABLE_STYLE)
                   ));
+          alertClasses.add(nameAlertStep.getK2());
+        }
+        String message = "The following workflows have a high MapReduce job error rate over the past " + hours + " hours:\n\n"
+            + new Body().appendChild(table).write();
+
+        for (String alertClass : alertClasses) {
+          message += "<b>" + alertClass + "</b>: " + ALERT_TO_DESCRIPTION.get(alertClass) + "\n";
         }
 
-        /*
         alertsHandler.sendAlert("[DT] Workflows have high error rates",
-            "The following workflows have a high MapReduce job error rate over the past " + hours + " hours:\n\n"
-                + new Body().appendChild(table).write(),
-            AlertRecipients.of(email));
-        //AlertRecipients.of("kong@liveramp.com"));
-        */
+            message,
+            //    AlertRecipients.of(email));
+            AlertRecipients.of("kong@liveramp.com"));
       }
       percentages.sort(
           (ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> o1, ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> o2) ->
@@ -222,8 +242,7 @@ public class DailyAlertPercentagesAlerter {
       }
       final Body body = new Body();
       body.appendChild(table);
-      //alertsHandler.sendAlert("[DT] Workflow alerts summary", body.write(), AlertRecipients.of("kong@liveramp.com", "bpodgursky@liveramp.com"));
-      alertsHandler.sendAlert("[DT] Workflow alerts summary", body.write(), AlertRecipients.of("kong@liveramp.com"));
+      alertsHandler.sendAlert("[DT] Workflow alerts summary", body.write(), AlertRecipients.of("kong@liveramp.com", "bpodgursky@liveramp.com"));
 
     } catch (IOException e) {
       alertsHandler.sendAlert("[DT] Daily Workflow alerts summary failed!", e.toString(), AlertRecipients.of("kong@liveramp.com"));

@@ -1,5 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
+import java.time.Duration;
+
 import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +18,15 @@ public class CPUUsage extends JobThresholdAlert {
 
   private static final double CPU_USED_RATIO = 2.0;
 
-  private static final long MIN_TIME_ALERT_THRESHOLD = 3 * 60 * 1000;
-
+  private static final long MIN_TIME_ALERT_THRESHOLD = Duration.ofHours(3).toMillis();
   private static final long TASK_FORGIVENESS = 5 * 1000;
 
+  public static final String SHORT_DESCRIPTION = "CPU time over 3 hours. ";
+  static final String PREAMBLE = " of allocated CPU time was used. ";
+  static final String RECOMMENDATION = "This is probably due to high Garbage Collection time, " +
+      "unless the job is doing explicit multi-threading. + " +
+      "If CPU time is due to GC, try to reduce either object creation or increase memory. " +
+      "If you are explicitly multi-threading, please increase set mapreduce.map.cpu.vcores or mapreduce.reduce.cpu.vcores accordingly.";
 
   private static final Multimap<String, String> COUNTERS = new MultimapBuilder<String, String>()
       .put(JOB_COUNTER_GROUP, VCORES_MAPS)
@@ -60,8 +67,6 @@ public class CPUUsage extends JobThresholdAlert {
 
   @Override
   protected String getMessage(double value) {
-    return "This job used " + asPercent(value) + " of its allocated CPU time.  This is probably due to high Garbage Collection time, " +
-        "unless the job is doing explicit multi-threading.  If CPU  time is due to GC, try to reduce either object creation or increase memory.  " +
-        "If you are explicitly multi-threading, please increase set mapreduce.map.cpu.vcores or mapreduce.reduce.cpu.vcores accordingly.";
+    return asPercent(value) + PREAMBLE + RECOMMENDATION;
   }
 }
