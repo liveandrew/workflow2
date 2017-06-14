@@ -1,10 +1,12 @@
 package com.liveramp.workflow_core;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -17,6 +19,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.liveramp.workflow_core.info.WorkflowInfoConsumer;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.DbTrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
@@ -50,6 +53,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private HostnameProvider hostnameProvider;
 
   private OverridableProperties properties = new NestedProperties(Maps.newHashMap(), false);
+  private List<WorkflowInfoConsumer> infoConsumerList = Lists.newArrayList();
 
   protected BaseWorkflowOptions(OverridableProperties defaultProperties) {
     this(defaultProperties, Maps.newHashMap());
@@ -61,7 +65,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     this.systemProperties = systemProperties;
   }
 
-  public RollbackBehavior getRollBackBehavior(){
+  public RollbackBehavior getRollBackBehavior() {
     return rollBackOnFailure;
   }
 
@@ -249,6 +253,14 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     return null;
   }
 
+  public T addWorkflowInfoConsumer(WorkflowInfoConsumer consumer) {
+    this.infoConsumerList.add(consumer);
+    return (T)this;
+  }
+
+  public List<WorkflowInfoConsumer> getWorkflowInfoConsumers() {
+    return this.infoConsumerList;
+  }
 
   //  static helpers
 

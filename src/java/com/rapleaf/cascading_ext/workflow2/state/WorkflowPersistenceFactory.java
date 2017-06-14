@@ -16,6 +16,9 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.java_support.RunJarUtil;
 import com.liveramp.workflow_core.WorkflowConstants;
+import com.liveramp.workflow_core.info.WorkflowInfo;
+import com.liveramp.workflow_core.info.WorkflowInfoConsumer;
+import com.liveramp.workflow_core.info.WorkflowInfoImpl;
 import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
@@ -64,6 +67,11 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
         initialized.getExecutionId(),
         initialized.getClass().getName()
     );
+
+    WorkflowInfo info = new WorkflowInfoImpl(initialized, options);
+    for (WorkflowInfoConsumer workflowInfoConsumer : options.getWorkflowInfoConsumers()) {
+      workflowInfoConsumer.accept(info);
+    }
 
     Runtime.getRuntime().addShutdownHook(hook);
 

@@ -109,7 +109,6 @@ public class BaseWorkflowRunner<Config> {
 
     assertSandbox(options.getSandboxDir());
 
-
     this.notifications = new NotificationManager(null, persistence, options.getUrlBuilder());
 
     this.shutdownHook = initializedData.getShutdownHook();
