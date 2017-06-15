@@ -1,9 +1,9 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.Set;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.fs.FileSystem;
 
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
@@ -21,6 +21,8 @@ public class HdfsInitializedPersistence implements InitializedPersistence {
   private final AlertsHandler handler;
   private final Set<WorkflowRunnerNotification> configuredNotifications;
   private final FileSystem fs;
+
+  private long attempt;
 
   public HdfsInitializedPersistence(Long executionID,
                                     String name,
@@ -40,6 +42,7 @@ public class HdfsInitializedPersistence implements InitializedPersistence {
     this.handler = handler;
     this.configuredNotifications = configuredNotifications;
     this.fs = fs;
+    this.attempt = Math.abs(new Random().nextLong());
   }
 
   @Override
@@ -49,7 +52,7 @@ public class HdfsInitializedPersistence implements InitializedPersistence {
 
   @Override
   public long getAttemptId() throws IOException {
-    throw new NotImplementedException();
+    return attempt;
   }
 
   @Override
