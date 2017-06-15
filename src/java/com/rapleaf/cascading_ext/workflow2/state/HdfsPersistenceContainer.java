@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
@@ -46,6 +47,8 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   private final String id;
 
+  private final long attempt;
+
   public HdfsPersistenceContainer(String checkpointDir,
                                   boolean deleteOnSuccess,
                                   String id,
@@ -60,6 +63,8 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
     this.statuses = statuses;
 
     this.initializedPersistence = initializedPersistence;
+
+    this.attempt = Math.abs(new Random().nextLong());
   }
 
 
@@ -188,7 +193,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public long getAttemptId() throws IOException {
-    throw new NotImplementedException();
+    return attempt;
   }
 
   @Override
