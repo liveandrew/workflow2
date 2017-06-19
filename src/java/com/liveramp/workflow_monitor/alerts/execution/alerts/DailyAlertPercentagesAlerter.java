@@ -1,6 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -191,7 +192,7 @@ public class DailyAlertPercentagesAlerter {
                           ).setStyle(TABLE_STYLE),
                       new Td().appendText(nameAlertStep.getK2()).setStyle(TABLE_STYLE),
                       new Td().appendText(nameAlertStep.getK3()).setStyle(TABLE_STYLE),
-                      new Td().appendText(percent.toString()).setStyle(TABLE_STYLE)
+                      new Td().appendText(new DecimalFormat("#.##").format(percent)).setStyle(TABLE_STYLE)
                   ));
           alertClasses.add(nameAlertStep.getK2());
         }
@@ -221,6 +222,7 @@ public class DailyAlertPercentagesAlerter {
           new Th().appendText("min cluster time"),
           new Th().appendText("errors/job")
       ));
+      //<Name, Alert, Step>, Error %, Email
       for (ThreeKeyTuple<ThreeKeyTuple<String, String, String>, Double, String> d : percentages) {
         ThreeKeyTuple<String, String, String> nameAlertStep = d.getK1();
         table.appendChild(
@@ -234,8 +236,8 @@ public class DailyAlertPercentagesAlerter {
                     new Td().appendText(nameAlertStep.getK2()),
                     new Td().appendText(nameAlertStep.getK3()),
                     new Td().appendText(d.getK3()),
-                    new Td().appendText(minMapreduceDurations.get(nameAlertStep.getK1()).toString()),
-                    new Td().appendText(d.getK2().toString())
+                    new Td().appendText(new DecimalFormat("####E0").format(minMapreduceDurations.get(nameAlertStep.getK1()))),
+                    new Td().appendText(new DecimalFormat("#.##").format(d.getK2()))
                 )
 
         );
