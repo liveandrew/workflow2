@@ -6,6 +6,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
+import com.google.common.base.Joiner;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -68,7 +69,7 @@ public class WorkflowDiagram {
   public static <T> void verifyNoOrphanedTailSteps(Set<? extends BaseStep<T>> tailSteps) {
     Set<BaseStep<T>> orphans = getOrphanedTailSteps(tailSteps);
     if (orphans.size() != 0) {
-      throw new RuntimeException("Orphaned tail steps!");
+      throw new RuntimeException("Orphaned tail steps:\n" + Joiner.on("\n").join(orphans));
     }
   }
 
