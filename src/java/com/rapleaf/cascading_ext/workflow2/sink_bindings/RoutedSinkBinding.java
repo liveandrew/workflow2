@@ -35,6 +35,14 @@ public class RoutedSinkBinding implements SinkBinding {
   private final Map<Object, String> routeToSinkFields;
   private Set<DataStore> dataStores;
 
+  /**
+   * A wrapper around RoutingSinkTap. This directs object from a single
+   * output field to different taps based on the value of the route field.
+   *
+   * @param pipe       The output pipe. The last pipe in an action.
+   * @param routeField The field that controls which tap an object is sent to.
+   * @param valueField The field that holds the output.
+   */
   public RoutedSinkBinding(Pipe pipe, String routeField, String valueField) {
     this.pipe = pipe;
     this.routeField = routeField;
@@ -48,6 +56,13 @@ public class RoutedSinkBinding implements SinkBinding {
     this(pipe, routeField.getName(), valueField.getName());
   }
 
+  /**
+   * @param route
+   * @param sinkField  The name of the field once the objects are rerouted. It
+   *                   must match the sinkField of the tap factory.
+   * @param store      Needed to build the cascading workflow
+   * @param tapFactory Creates the tap for this route
+   */
   public RoutedSinkBinding add(Object route, String sinkField, DataStore store, TapFactory tapFactory) {
     if (routeToTapFactories.containsKey(route)) {
       throw new IllegalArgumentException("Route " + route + " is already mapped to tap " + routeToTapFactories.get(route));
