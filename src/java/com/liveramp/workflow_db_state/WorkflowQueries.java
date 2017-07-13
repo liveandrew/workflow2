@@ -30,12 +30,16 @@ import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.ApplicationCounterSummary;
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
+import com.liveramp.databases.workflow_db.models.Dashboard;
+import com.liveramp.databases.workflow_db.models.DashboardApplication;
 import com.liveramp.databases.workflow_db.models.MapreduceCounter;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.MapreduceJobTaskException;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.StepAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.StepDependency;
+import com.liveramp.databases.workflow_db.models.User;
+import com.liveramp.databases.workflow_db.models.UserDashboard;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttemptConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
@@ -326,6 +330,33 @@ public class WorkflowQueries {
 
     return counters;
   }
+
+  public static GenericQuery getUserDashboardQuery(IWorkflowDb db, User user) {
+    return db.createQuery().from(UserDashboard.TBL)
+        .where(UserDashboard.USER_ID.equalTo((int)user.getId()))
+        .innerJoin(Dashboard.TBL)
+        .on(UserDashboard.DASHBOARD_ID.equalTo(Dashboard.ID.as(Integer.class))
+    );
+  }
+
+  public static GenericQuery  getDashboardQuery(IWorkflowDb db, String dashboardName) {
+
+    GenericQuery query = db.createQuery().from(Dashboard.TBL);
+
+    if (dashboardName != null) {
+      query = query.where(Dashboard.NAME.equalTo(dashboardName));
+    }
+
+    return query;
+  }
+
+  public static GenericQuery joinDashboardsOnApplication(GenericQuery query) {
+    return query.innerJoin(DashboardApplication.TBL)
+        .on(DashboardApplication.DASHBOARD_ID.equalTo(Dashboard.ID.as(Integer.class)))
+        .innerJoin(Application.TBL)
+        .on(DashboardApplication.APPLICATION_ID.equalTo(Application.ID.as(Integer.class)));
+  }
+
 
   //  get counters only from running steps in the latest attempt (for any jobs they have already completed)
   private static GenericQuery getRunningStepCounters(IWorkflowDb db, WorkflowAttempt latestAttempt) throws IOException {
@@ -851,7 +882,7 @@ public class WorkflowQueries {
         .whereGroup(new In<>(countersToQuery.keySet()))
         .whereName(new In<>(countersToQuery.values()));
 
-    if(appName != null){
+    if (appName != null) {
       queryBuilder = queryBuilder.whereApplicationId(new In<>(Accessors.only(db.applications().findByName(appName)).getIntId()));
     }
 
