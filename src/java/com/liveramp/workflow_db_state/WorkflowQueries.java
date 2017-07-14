@@ -336,10 +336,10 @@ public class WorkflowQueries {
         .where(UserDashboard.USER_ID.equalTo((int)user.getId()))
         .innerJoin(Dashboard.TBL)
         .on(UserDashboard.DASHBOARD_ID.equalTo(Dashboard.ID.as(Integer.class))
-    );
+        );
   }
 
-  public static GenericQuery  getDashboardQuery(IWorkflowDb db, String dashboardName) {
+  public static GenericQuery getDashboardQuery(IWorkflowDb db, String dashboardName) {
 
     GenericQuery query = db.createQuery().from(Dashboard.TBL);
 
@@ -543,7 +543,21 @@ public class WorkflowQueries {
                                                                                      WorkflowExecutionStatus status,
                                                                                      Integer limit) throws IOException {
 
-    List<WorkflowExecution> executions = queryWorkflowExecutions(databases, id, name, scope, appType, startedAfter, startedBefore, status, limit);
+    return getExecutionsToAttempts(databases, id, null, name, scope, appType, startedAfter, startedBefore, status, limit);
+  }
+
+  public static Multimap<WorkflowExecution, WorkflowAttempt> getExecutionsToAttempts(IDatabases databases,
+                                                                                     Long id,
+                                                                                     String dashboard,
+                                                                                     String name,
+                                                                                     String scope,
+                                                                                     Integer appType,
+                                                                                     Long startedAfter,
+                                                                                     Long startedBefore,
+                                                                                     WorkflowExecutionStatus status,
+                                                                                     Integer limit) throws IOException {
+
+    List<WorkflowExecution> executions = queryWorkflowExecutions(databases, id, dashboard, name, scope, appType, startedAfter, startedBefore, status, limit);
 
     Map<Long, WorkflowExecution> executionsById = Maps.newHashMap();
     for (WorkflowExecution execution : executions) {
@@ -662,8 +676,21 @@ public class WorkflowQueries {
                                                                 Long startedAfter,
                                                                 Long startedBefore,
                                                                 WorkflowExecutionStatus status,
+                                                                Integer limit) throws IOException{
+    return queryWorkflowExecutions(databases, id, null, name, scope, appType, startedAfter, startedBefore, status, limit);
+  }
+
+  public static List<WorkflowExecution> queryWorkflowExecutions(IDatabases databases,
+                                                                Long id,
+                                                                String dashboard,
+                                                                String name,
+                                                                String scope,
+                                                                Integer appType,
+                                                                Long startedAfter,
+                                                                Long startedBefore,
+                                                                WorkflowExecutionStatus status,
                                                                 Integer limit) throws IOException {
-    Records fetch = workflowExecutionQuery(databases.getWorkflowDb(), id, name, scope, appType, startedAfter, startedBefore, status, limit)
+    Records fetch = workflowExecutionQuery(databases.getWorkflowDb(), id, dashboard, name, scope, appType, startedAfter, startedBefore, status, limit)
         .select(WorkflowExecution.TBL.getAllColumns())
         .fetch();
 
@@ -690,10 +717,40 @@ public class WorkflowQueries {
                                                     WorkflowExecutionStatus status,
                                                     Integer limit) throws IOException {
 
+    return workflowExecutionQuery(db, id, null, name, scope, appType, startedAfter, startedBefore, status, limit);
+  }
+
+  public static GenericQuery workflowExecutionQuery(IWorkflowDb db,
+                                                    Long id,
+                                                    String dashboardName,
+                                                    String name,
+                                                    String scope,
+                                                    Integer appType,
+                                                    Long startedAfter,
+                                                    Long startedBefore,
+                                                    WorkflowExecutionStatus status,
+                                                    Integer limit) throws IOException {
+
     GenericQuery.Builder queryb = db.createQuery();
     GenericQuery query;
 
-    if (name != null || appType != null) {
+
+    if(dashboardName != null) {
+
+      if (name != null || appType != null) {
+        throw new IllegalArgumentException();
+      }
+
+      query = queryb.from(Dashboard.TBL)
+          .where(Dashboard.TBL.NAME.equalTo(dashboardName))
+          .innerJoin(DashboardApplication.TBL)
+          .on(DashboardApplication.DASHBOARD_ID.equalTo(Dashboard.ID.as(Integer.class)))
+          .innerJoin(Application.TBL)
+          .on(DashboardApplication.APPLICATION_ID.equalTo(Application.ID.as(Integer.class)))
+          .innerJoin(WorkflowExecution.TBL)
+          .on(WorkflowExecution.APPLICATION_ID.equalTo(Application.ID.as(Integer.class)));
+
+    } else if (name != null || appType != null) {
 
       query = queryb.from(Application.TBL);
 
@@ -705,7 +762,7 @@ public class WorkflowQueries {
         query.where(Application.APP_TYPE.equalTo(appType));
       }
 
-      query.innerJoin(WorkflowExecution.TBL)
+      query = query.innerJoin(WorkflowExecution.TBL)
           .on(WorkflowExecution.APPLICATION_ID.equalTo(Application.ID.as(Integer.class)));
 
     } else {
