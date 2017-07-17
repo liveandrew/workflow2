@@ -15,6 +15,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.comparators.ReverseComparator;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,8 @@ import com.rapleaf.jack.queries.IndexHints;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
+import com.rapleaf.jack.queries.SingleTableReference;
+import com.rapleaf.jack.queries.TableReference;
 import com.rapleaf.jack.queries.where_operators.Between;
 import com.rapleaf.jack.queries.where_operators.In;
 import com.rapleaf.jack.queries.where_operators.IsNull;
@@ -734,6 +737,13 @@ public class WorkflowQueries {
     GenericQuery.Builder queryb = db.createQuery();
     GenericQuery query;
 
+    //  not exactly a work of art
+    TableReference executions;
+    if (startedAfter != null && startedAfter > DateTime.now().minusDays(7).getMillis()){
+      executions = WorkflowExecution.TBL.with(IndexHints.force(Index.of("start_time_idx")));
+    }else{
+      executions = new SingleTableReference(WorkflowExecution.TBL);
+    }
 
     if(dashboardName != null) {
 
@@ -745,7 +755,7 @@ public class WorkflowQueries {
           .where(Dashboard.TBL.NAME.equalTo(dashboardName))
           .innerJoin(DashboardApplication.TBL)
           .on(DashboardApplication.DASHBOARD_ID.equalTo(Dashboard.ID.as(Integer.class)))
-          .innerJoin(WorkflowExecution.TBL)
+          .innerJoin(executions)
           .on(WorkflowExecution.APPLICATION_ID.equalTo(DashboardApplication.APPLICATION_ID.as(Integer.class)));
 
     } else if (name != null || appType != null) {
@@ -760,11 +770,11 @@ public class WorkflowQueries {
         query.where(Application.APP_TYPE.equalTo(appType));
       }
 
-      query = query.innerJoin(WorkflowExecution.TBL)
+      query = query.innerJoin(executions)
           .on(WorkflowExecution.APPLICATION_ID.equalTo(Application.ID.as(Integer.class)));
 
     } else {
-      query = queryb.from(WorkflowExecution.TBL);
+      query = queryb.from(executions);
     }
 
     if (id != null) {
