@@ -745,10 +745,8 @@ public class WorkflowQueries {
           .where(Dashboard.TBL.NAME.equalTo(dashboardName))
           .innerJoin(DashboardApplication.TBL)
           .on(DashboardApplication.DASHBOARD_ID.equalTo(Dashboard.ID.as(Integer.class)))
-          .innerJoin(Application.TBL)
-          .on(DashboardApplication.APPLICATION_ID.equalTo(Application.ID.as(Integer.class)))
           .innerJoin(WorkflowExecution.TBL)
-          .on(WorkflowExecution.APPLICATION_ID.equalTo(Application.ID.as(Integer.class)));
+          .on(WorkflowExecution.APPLICATION_ID.equalTo(DashboardApplication.APPLICATION_ID.as(Integer.class)));
 
     } else if (name != null || appType != null) {
 
