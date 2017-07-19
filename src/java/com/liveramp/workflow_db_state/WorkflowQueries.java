@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.map.NestedMultimap;
+import com.liveramp.commons.collections.nested_map.ThreeNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
@@ -282,7 +283,7 @@ public class WorkflowQueries {
   }
 
   public static ThreeNestedMap<String, String, String, Long> getCountersByStep(IWorkflowDb db, Long workflowExecution) throws IOException {
-    ThreeNestedMap<String, String, String, Long> counters = new ThreeNestedMap<>();
+    ThreeNestedMap<String, String, String, Long> counters = new ThreeNestedCountingMap<>(0l);
 
     WorkflowAttempt latestAttempt = getLatestAttempt(db.workflowExecutions().find(workflowExecution));
 
