@@ -306,7 +306,7 @@ public class WorkflowQueries {
 
   private static ThreeNestedMap<String, String, String, Long> asStepCounterMap(GenericQuery query) throws IOException {
 
-    ThreeNestedMap<String, String, String, Long> counters = new ThreeNestedMap<>();
+    ThreeNestedMap<String, String, String, Long> counters = new ThreeNestedCountingMap<>(0l);
     for (Record record : query
         .select(StepAttempt.STEP_TOKEN, MapreduceCounter.GROUP, MapreduceCounter.NAME, MapreduceCounter.VALUE)
         .fetch()) {
