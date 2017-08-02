@@ -9,6 +9,8 @@ import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
 import com.liveramp.workflow_monitor.alerts.execution.thresholds.GreaterThan;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
+import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_RECOMMENDATIONS;
+
 public class GCTime extends JobThresholdAlert {
 
   public static final double GC_FRACTION_THRESHOLD = .25;
@@ -16,10 +18,7 @@ public class GCTime extends JobThresholdAlert {
   //  unclear why, but there seems to be some fixed startup GC time we probably want to ignore in tiny jobs
   private static final long GC_STARTUP_TIME = 3000;
 
-  public static final String SHORT_DESCRIPTION = "Over 25% of time spent in GC.";
   static final String PREAMBLE = " of processing time was spent in Garbage Collection. ";
-  static final String RECOMMENDATION = "This can be triggered by excessive object creation or insufficient heap size. " +
-      "Try to reduce object instantiations or increase task heap sizes.";
 
   private static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
       .put(TASK_COUNTER_GROUP, GC_TIME_MILLIS)
@@ -51,6 +50,6 @@ public class GCTime extends JobThresholdAlert {
 
   @Override
   protected String getMessage(double value) {
-    return asPercent(value) + PREAMBLE + RECOMMENDATION;
+    return asPercent(value) + PREAMBLE + WORKFLOW_ALERT_RECOMMENDATIONS.get("GCTime");
   }
 }

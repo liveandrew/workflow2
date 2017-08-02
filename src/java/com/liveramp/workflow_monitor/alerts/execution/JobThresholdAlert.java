@@ -13,6 +13,8 @@ import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.thresholds.ThresholdChecker;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
+import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_SHORT_DESCRIPTIONS;
+
 public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
 
   private final WorkflowRunnerNotification notification;
@@ -47,7 +49,8 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
           job.getJobName() + "\n" +
           "Tracker link: " +
           job.getTrackingUrl() + "\n\n" +
-          getMessage(value);
+          getMessage(value) + "\n" +
+          "Threshold: " + WORKFLOW_ALERT_SHORT_DESCRIPTIONS.get(this.getClass().getName());
 
       return AlertMessage.createAlertMessage(this.getClass().getName(), message, notification, job, db);
     }

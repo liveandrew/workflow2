@@ -12,13 +12,9 @@ import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
 import com.liveramp.workflow_monitor.alerts.execution.thresholds.GreaterThan;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
+import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_RECOMMENDATIONS;
+
 public class OutputPerMapTask extends JobThresholdAlert {
-
-
-  static String SHORT_DESCRIPTION = "Map tasks output over 5GB post-serialization. ";
-  static String RECOMMENDATION = "Reading spills which are this large can cause machine performance problems; please increase the number of " +
-      "map tasks this data is spread over.";
-
 
   protected static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
       .put(TASK_COUNTER_GROUP, MAP_OUTPUT_MATERIALIZED_BYTES)
@@ -51,7 +47,7 @@ public class OutputPerMapTask extends JobThresholdAlert {
   @Override
   protected String getMessage(double value) {
     return "Map tasks in this job are outputting on average " +
-        df.format(value / ((double)ByteUnit.GIGABYTES.toBytes(1))) + "GB post-serialization. " + RECOMMENDATION;
-
+        df.format(value / ((double)ByteUnit.GIGABYTES.toBytes(1))) + "GB post-serialization. " +
+        WORKFLOW_ALERT_RECOMMENDATIONS.get("OutputPerMapTask");
   }
 }

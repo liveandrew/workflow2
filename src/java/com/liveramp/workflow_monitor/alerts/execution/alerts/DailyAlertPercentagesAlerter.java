@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,6 +38,8 @@ import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
 
+import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_RECOMMENDATIONS;
+import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_SHORT_DESCRIPTIONS;
 import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 import static com.rapleaf.jack.queries.AggregatedColumn.SUM;
 
@@ -50,18 +51,6 @@ public class DailyAlertPercentagesAlerter {
   private static Long MIN_CLUSTER_TIME = Duration.ofMinutes(20).toMillis();
   private static String LINK_START = "http://workflows.liveramp.net/application.html?name=";
   private static String TABLE_STYLE = "min-width: 9em; padding-right: 1em; border-right: 1px dotted black;";
-
-  static final Map ALERT_TO_DESCRIPTION = Collections.unmodifiableMap(new HashMap() {
-    private static final long serialVersionUID = 1L;
-
-    {
-      put("ShortMaps", ShortMaps.SHORT_DESCRIPTION + ShortMaps.RECOMMENDATION);
-      put("ShortReduces", ShortReduces.SHORT_DESCRIPTION + ShortReduces.RECOMMENDATION);
-      put("GCTime", GCTime.SHORT_DESCRIPTION + GCTime.RECOMMENDATION);
-      put("CPUUsage", CPUUsage.SHORT_DESCRIPTION + CPUUsage.RECOMMENDATION);
-      put("OutputPerMapTask", OutputPerMapTask.SHORT_DESCRIPTION + OutputPerMapTask.RECOMMENDATION);
-    }
-  });
 
   private DailyAlertPercentagesAlerter(IDatabases db) {
     this.db = db;
@@ -200,7 +189,8 @@ public class DailyAlertPercentagesAlerter {
             + new Body().appendChild(table).write();
 
         for (String alertClass : alertClasses) {
-          message += "<b>" + alertClass + "</b>: " + ALERT_TO_DESCRIPTION.get(alertClass) + "\n";
+          message += "<b>" + alertClass + "</b>: " + WORKFLOW_ALERT_SHORT_DESCRIPTIONS.get(alertClass) +
+              " " + WORKFLOW_ALERT_RECOMMENDATIONS.get(alertClass) + "\n";
         }
 
         alertsHandler.sendAlert("[DT] Workflows have high error rates",

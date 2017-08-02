@@ -11,8 +11,9 @@ import com.liveramp.workflow_monitor.alerts.execution.JobThresholdAlert;
 import com.liveramp.workflow_monitor.alerts.execution.thresholds.LessThan;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
+import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_RECOMMENDATIONS;
+
 public class ShortReduces extends JobThresholdAlert {
-  static String SHORT_DESCRIPTION = "Reduces take <1min on average. ";
   static String RECOMMENDATION = "Consider batching more aggressively.";
 
   protected static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
@@ -35,6 +36,6 @@ public class ShortReduces extends JobThresholdAlert {
 
   @Override
   protected String getMessage(double value) {
-    return "Reduces in this job take " + value / 1000 + " seconds on average, which is wastefully short. " + RECOMMENDATION;
+    return "Reduces in this job take " + value / 1000 + " seconds on average, which is wastefully short. " + WORKFLOW_ALERT_RECOMMENDATIONS.get("ShortReduces");
   }
 }
