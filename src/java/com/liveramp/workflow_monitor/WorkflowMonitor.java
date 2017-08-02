@@ -67,7 +67,7 @@ public class WorkflowMonitor {
 
       } catch (InterruptedException e) {
         LOG.info("Interrupted, going down without a fight.");
-      } catch (Exception e) {
+      } catch (Throwable e) {
         LOG.info("Failure", e);
         AlertsHandlers.devTools(WorkflowMonitor.class).sendAlert("WorkflowMonitor failed!", e,
             AlertRecipients.engineering(AlertSeverity.ERROR)
