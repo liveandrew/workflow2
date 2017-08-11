@@ -42,7 +42,6 @@ import com.rapleaf.cascading_ext.pipe.PipeFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;

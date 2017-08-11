@@ -8,7 +8,6 @@ import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 
 public class WorkflowJobPersister implements JobPersister {
 

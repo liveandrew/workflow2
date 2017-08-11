@@ -41,7 +41,6 @@ import com.liveramp.workflow_state.DataStoreInfo;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.counter.verifier.TemplateTapFiles;
 import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 

@@ -10,7 +10,6 @@ import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.liveramp.workflow_core.ContextStorage;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.support.Rap;
 
 @Deprecated // use WorkflowOptions.test()
@@ -25,7 +24,6 @@ public class TestWorkflowOptions extends WorkflowOptions {
     setLockProvider(new MockStoreReaderLockProvider());
     setStorage(new ContextStorage.None());
     setStepPollInterval(100);
-    setCounterFilter(CounterFilters.all());
     setUrlBuilder(new TrackerURLBuilder.None());
     setHostnameProvider(new FixedHostnameProvider());
     setResourceManager(ResourceManagers.notImplemented());

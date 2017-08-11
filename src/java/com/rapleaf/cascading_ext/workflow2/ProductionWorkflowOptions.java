@@ -7,7 +7,6 @@ import com.liveramp.cascading_ext.megadesk.MockStoreReaderLockProvider;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
 import com.liveramp.workflow_core.ContextStorage;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.cascading_ext.workflow2.options.DefaultHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.support.Rap;
@@ -26,7 +25,6 @@ public class ProductionWorkflowOptions extends WorkflowOptions {
     setLockProvider(new MockStoreReaderLockProvider());
     setStorage(new ContextStorage.None());
     setStepPollInterval(6000);  // be nice to production DB
-    setCounterFilter(CounterFilters.all());
     setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL));
     setHostnameProvider(new DefaultHostnameProvider());
     setResourceManager(ResourceManagers.notImplemented());

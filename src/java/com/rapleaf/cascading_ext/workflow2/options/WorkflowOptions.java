@@ -15,14 +15,11 @@ import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilters;
 import com.rapleaf.support.Rap;
 
 public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
   private StoreReaderLockProvider lockProvider;
-  private CounterFilter counterFilter;
 
   protected WorkflowOptions() {
     super(CascadingHelper.get().getDefaultHadoopProperties(), toProperties(CascadingHelper.get().getJobConf()));
@@ -44,17 +41,6 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
   public WorkflowOptions configureTeam(TeamList team, String subPool) {
     addWorkflowProperties(PropertiesUtil.teamPool(team, subPool));
     setAlertsHandler(team);
-    return this;
-  }
-
-  public CounterFilter getCounterFilter() {
-    return counterFilter;
-  }
-
-  @Deprecated
-  //  all counters are tracked by default now, so this will actually disable tracking most counters.  if you really want this, let me know  -- ben
-  public WorkflowOptions setCounterFilter(CounterFilter filter) {
-    this.counterFilter = filter;
     return this;
   }
 
@@ -102,7 +88,6 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
     BaseWorkflowOptions.configureProduction(options);
 
     options
-        .setCounterFilter(CounterFilters.all())
         .setLockProvider(new MockStoreReaderLockProvider());
   }
 
@@ -114,7 +99,6 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
     options
         .setLockProvider(new MockStoreReaderLockProvider())
-        .setCounterFilter(CounterFilters.all())
         .addWorkflowProperties(Collections.<Object, Object>singletonMap(MRJobConfig.QUEUE_NAME, "test"));
 
   }

@@ -14,7 +14,6 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.rapleaf.cascading_ext.CascadingHelper;
-import com.rapleaf.cascading_ext.workflow2.counter.CounterFilter;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
@@ -106,8 +105,7 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
 
     super(initializedData, tailSteps,
         new ExecuteConfig(
-            initializedData.getOptions().getLockProvider().create(),
-            initializedData.getOptions().getCounterFilter()
+            initializedData.getOptions().getLockProvider().create()
         ),
         new OnShutdown<ExecuteConfig>() {
           @Override
@@ -128,19 +126,13 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
 
   public static class ExecuteConfig {
     private StoreReaderLocker lockProvider;
-    private transient CounterFilter counterFilter;
 
-    public ExecuteConfig(StoreReaderLocker lockProvider, CounterFilter counterFilter) {
+    public ExecuteConfig(StoreReaderLocker lockProvider) {
       this.lockProvider = lockProvider;
-      this.counterFilter = counterFilter;
     }
 
     public StoreReaderLocker getLockProvider() {
       return lockProvider;
-    }
-
-    public CounterFilter getCounterFilter() {
-      return counterFilter;
     }
 
   }
