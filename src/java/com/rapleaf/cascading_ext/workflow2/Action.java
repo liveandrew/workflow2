@@ -235,18 +235,8 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     return new WorkflowJobPersister(
         getPersistence(),
         getActionId().resolve(),
-        getCounterFilter(),
         Lists.<WorkflowJobPersister.CounterVerifier>newArrayList(new TemplateTapFiles())
     );
-  }
-
-  //  TODO sweep after killing thing that run steps stupidly
-  private CounterFilter getCounterFilter() {
-    WorkflowRunner.ExecuteConfig config = getConfig();
-    if (config != null) {
-      return config.getCounterFilter();
-    }
-    return null;
   }
 
   protected void completeWithProgress(TrackedOperation tracked) {

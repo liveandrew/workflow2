@@ -14,7 +14,6 @@ public class WorkflowJobPersister implements JobPersister {
 
   private final WorkflowStatePersistence persistence;
   private final String checkpoint;
-  private final CounterFilter filter;
   private final List<CounterVerifier> verifiers;
 
   public interface CounterVerifier {
@@ -23,11 +22,9 @@ public class WorkflowJobPersister implements JobPersister {
 
   public WorkflowJobPersister(WorkflowStatePersistence persistence,
                               String checkpoint,
-                              CounterFilter filter,
                               List<CounterVerifier> verifiers) {
     this.persistence = persistence;
     this.checkpoint = checkpoint;
-    this.filter = filter;
     this.verifiers = verifiers;
   }
 
@@ -52,9 +49,7 @@ public class WorkflowJobPersister implements JobPersister {
     TwoNestedMap<String, String, Long> toRecord = new TwoNestedMap<>();
     for (String group : counters.key1Set()) {
       for (String name : counters.key2Set(group)) {
-        if (filter.isRecord(group, name)) {
-          toRecord.put(group, name, counters.get(group, name));
-        }
+        toRecord.put(group, name, counters.get(group, name));
       }
     }
 
