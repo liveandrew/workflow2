@@ -57,6 +57,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
     hook.add(new MultiShutdownHook.Hook() {
       @Override
       public void onShutdown() throws Exception {
+        LOG.info("Invoking workflow shutdown hook");
         initialized.markWorkflowStopped();
       }
     });
