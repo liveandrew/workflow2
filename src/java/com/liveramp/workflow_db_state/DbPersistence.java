@@ -45,6 +45,7 @@ import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
+import com.liveramp.workflow_state.ExecutionState;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_core.WorkflowEnums;
@@ -657,6 +658,18 @@ public class DbPersistence implements WorkflowStatePersistence {
   public WorkflowAttemptStatus getStatus() throws IOException {
     synchronized (lock) {
       return WorkflowAttemptStatus.findByValue(init.getAttempt().getStatus());
+    }
+  }
+
+  @Override
+  public ExecutionState getExecutionState() throws IOException {
+    synchronized (lock) {
+      WorkflowExecution execution = init.getExecution();
+      return new ExecutionState(
+          execution.getStartTime(),
+          execution.getEndTime(),
+          execution.getName()
+      );
     }
   }
 
