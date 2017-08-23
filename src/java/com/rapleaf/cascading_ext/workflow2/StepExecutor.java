@@ -24,6 +24,7 @@ import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.rollback.SuccessCallback;
 import com.rapleaf.cascading_ext.workflow2.strategy.WorkflowStrategy;
 
 import static com.liveramp.workflow_core.WorkflowConstants.JOB_POOL_PARAM;
@@ -69,6 +70,8 @@ public class StepExecutor<Config> {
 
   private final NotificationManager notifications;
 
+  private final List<SuccessCallback> successCallbacks;
+
   public StepExecutor(WorkflowStrategy<Config> strategy,
                       WorkflowStatePersistence persistence,
                       int maxConcurrentSteps,
@@ -77,6 +80,7 @@ public class StepExecutor<Config> {
                       OverridableProperties parentProperties,
                       MultiShutdownHook hook,
                       BaseWorkflowRunner.OnStepRunnerStart onStart,
+                      List<SuccessCallback> successCallbacks,
                       NotificationManager notifications) {
 
     this.semaphore = new Semaphore(maxConcurrentSteps);
@@ -89,6 +93,7 @@ public class StepExecutor<Config> {
     this.dependencyGraph = dependencyGraph;
     this.hook = hook;
     this.onStart = onStart;
+    this.successCallbacks = successCallbacks;
     this.notifications = notifications;
 
   }
@@ -309,7 +314,16 @@ public class StepExecutor<Config> {
 
     // Notify success
     notifications.sendSuccessEmail();
+
     LOG.info(notifications.getSuccessSubject());
+
+    for (SuccessCallback successCallback : successCallbacks) {
+      try{
+        successCallback.onSuccess(persistence);
+      }catch(Exception e){
+        LOG.error("Error calling success callback: ", e);
+      }
+    }
 
   }
 

@@ -28,6 +28,7 @@ import com.rapleaf.cascading_ext.workflow2.options.DefaultHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.FixedHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.HostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.rollback.RollbackBehavior;
+import com.rapleaf.cascading_ext.workflow2.rollback.SuccessCallback;
 import com.rapleaf.support.Rap;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
@@ -52,6 +53,8 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private ResourceDeclarer resourceDeclarer;
   private HostnameProvider hostnameProvider;
 
+  private List<SuccessCallback> onSuccess = Lists.newArrayList();
+
   private OverridableProperties properties = new NestedProperties(Maps.newHashMap(), false);
   private List<WorkflowInfoConsumer> infoConsumerList = Lists.newArrayList();
 
@@ -63,6 +66,15 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
                                 Map<Object, Object> systemProperties) {
     this.defaultProperties = defaultProperties;
     this.systemProperties = systemProperties;
+  }
+
+  public T addSuccessCallback(SuccessCallback callback){
+    onSuccess.add(callback);
+    return (T) this;
+  }
+
+  public List<SuccessCallback> getSuccessCallbacks(){
+    return onSuccess;
   }
 
   public RollbackBehavior getRollBackBehavior() {

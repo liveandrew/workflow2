@@ -113,7 +113,7 @@ public class BaseWorkflowRunner<Config> {
 
     this.shutdownHook = initializedData.getShutdownHook();
 
-    this.forwardExecutor = new StepExecutor<>(
+    this.forwardExecutor = new StepExecutor<Config>(
         new ExecuteStrategy<>(),
         persistence,
         options.getMaxConcurrentSteps(),
@@ -122,10 +122,11 @@ public class BaseWorkflowRunner<Config> {
         options.getWorkflowJobProperties(),
         initializedData.getShutdownHook(),
         onStart,
+        options.getSuccessCallbacks(),
         notifications
     );
 
-    this.rollbackExecutor = new StepExecutor<>(
+    this.rollbackExecutor = new StepExecutor<Config>(
         new RollbackStrategy<>(),
         persistence,
         options.getMaxConcurrentSteps(),
@@ -134,6 +135,7 @@ public class BaseWorkflowRunner<Config> {
         options.getWorkflowJobProperties(),
         initializedData.getShutdownHook(),
         onStart,
+        options.getSuccessCallbacks(),
         new NotificationManager("ROLLBACK", persistence, options.getUrlBuilder())
     );
 

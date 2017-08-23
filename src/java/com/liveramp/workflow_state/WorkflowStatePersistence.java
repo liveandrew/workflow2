@@ -52,6 +52,7 @@ public interface WorkflowStatePersistence extends InitializedPersistence{
   public String getScopeIdentifier() throws IOException;
   public String getId() throws IOException;
   public WorkflowAttemptStatus getStatus() throws IOException;
+  public ExecutionState getExecutionState() throws IOException;
   public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException;
 
   //  should these belong somewhere else?  only really implemented in db-backed one
