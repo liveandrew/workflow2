@@ -9,9 +9,9 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.formats.bucket.BucketUtil;
 
 public class AddMissingPartitionsToBucket<T> extends Action {
-  private final int numPartitions;
-  private final BucketDataStore<T> dataStore;
-  private final Class<T> recordClass;
+  protected final int numPartitions;
+  protected final BucketDataStore<T> dataStore;
+  protected final Class<T> recordClass;
 
   public AddMissingPartitionsToBucket(String checkpointToken, int numPartitions, BucketDataStore<T> dataStore, Class<T> recordClass) {
     super(checkpointToken);
