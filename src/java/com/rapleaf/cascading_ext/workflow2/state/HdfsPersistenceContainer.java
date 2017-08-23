@@ -26,6 +26,7 @@ import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow_state.ExecutionState;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_core.WorkflowEnums;
@@ -165,6 +166,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public WorkflowAttemptStatus getStatus() throws IOException {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public ExecutionState getExecutionState() throws IOException {
     throw new NotImplementedException();
   }
 

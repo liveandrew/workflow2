@@ -10,6 +10,7 @@ import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow_state.ExecutionState;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
@@ -125,6 +126,11 @@ public class ForwardingPersistence implements WorkflowStatePersistence {
   @Override
   public WorkflowAttemptStatus getStatus() throws IOException {
     return delegatePersistence.getStatus();
+  }
+
+  @Override
+  public ExecutionState getExecutionState() throws IOException {
+    return delegatePersistence.getExecutionState();
   }
 
   @Override
