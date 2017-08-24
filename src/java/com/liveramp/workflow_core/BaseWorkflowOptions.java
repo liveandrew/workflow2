@@ -68,12 +68,12 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     this.systemProperties = systemProperties;
   }
 
-  public T addSuccessCallback(SuccessCallback callback){
+  public T addSuccessCallback(SuccessCallback callback) {
     onSuccess.add(callback);
-    return (T) this;
+    return (T)this;
   }
 
-  public List<SuccessCallback> getSuccessCallbacks(){
+  public List<SuccessCallback> getSuccessCallbacks() {
     return onSuccess;
   }
 
@@ -292,7 +292,8 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
         .setStepPollInterval(6000)  // be nice to production DB
         .setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL))
         .setHostnameProvider(new DefaultHostnameProvider())
-        .setResourceManager(new ResourceManager.NotImplemented());
+        .setResourceManager(new ResourceManager.NotImplemented())
+        .addSuccessCallback(DataDogDurationPusher.production());
   }
 
   public static BaseWorkflowOptions test() {
