@@ -269,15 +269,6 @@ public class DbPersistence implements WorkflowStatePersistence {
           );
         }
 
-        try {
-          String trackingUrl = job.getTrackingUrl();
-          String historyUrl = LRHttpUtils.getRedirectUrlFromUrl(trackingUrl);
-          job.setTrackingUrl(historyUrl);
-          job.save();
-        } catch (Exception e) {
-          LOG.info("Error getting history url: " + e.getMessage());
-        }
-
         conn.commit();
 
       } catch (Exception e) {
@@ -287,6 +278,17 @@ public class DbPersistence implements WorkflowStatePersistence {
         conn.setAutoCommit(true);
       }
 
+    }
+  }
+
+  private void registerHistoryUrl(MapreduceJob job) {
+    try {
+      String trackingUrl = job.getTrackingUrl();
+      String historyUrl = LRHttpUtils.getRedirectUrlFromUrl(trackingUrl);
+      job.setTrackingUrl(historyUrl);
+      job.save();
+    } catch (Exception e) {
+      LOG.info("Error getting history url: " + e.getMessage());
     }
   }
 
@@ -326,6 +328,8 @@ public class DbPersistence implements WorkflowStatePersistence {
               taskFailure.getHosturl()
           );
         }
+
+        registerHistoryUrl(job);
 
         conn.commit();
 
