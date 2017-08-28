@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ public abstract class HankDomainBuilderAction extends Action {
   private final boolean allowSimultaneousDeltas;
   protected HankVersionType versionType;
   private boolean shouldPartitionAndSortInput = true;
+  private boolean shouldCloseVersion;
   private final CoordinatorConfigurator configurator;
   private Integer partitionToBuild = null;
   private Integer domainVersionNumber = null;
@@ -111,10 +113,24 @@ public abstract class HankDomainBuilderAction extends Action {
                                  CoordinatorConfigurator configurator,
                                  HankDataStore output,
                                  Map<Object, Object> properties) {
+    this(checkpointToken, tmpRoot, versionType, shouldPartitionAndSortInput, true, allowSimultaneousDeltas, configurator,
+        output, properties);
+  }
+
+  public HankDomainBuilderAction(String checkpointToken,
+                                 String tmpRoot,
+                                 HankVersionType versionType,
+                                 boolean shouldPartitionAndSortInput,
+                                 boolean shouldCloseVersion,
+                                 boolean allowSimultaneousDeltas,
+                                 CoordinatorConfigurator configurator,
+                                 HankDataStore output,
+                                 Map<Object, Object> properties) {
     super(checkpointToken, tmpRoot, properties);
     this.versionType = versionType;
     this.shouldPartitionAndSortInput = shouldPartitionAndSortInput;
     this.allowSimultaneousDeltas = allowSimultaneousDeltas;
+    this.shouldCloseVersion = shouldCloseVersion;
     this.configurator = configurator;
     this.output = output;
   }
@@ -155,11 +171,10 @@ public abstract class HankDomainBuilderAction extends Action {
     }
 
     final DomainBuilderProperties domainBuilderProperties =
-        new DomainBuilderProperties(
-            output.getDomainName(),
-            configurator)
+        buildProperties(output, configurator)
             .setOutputPath(output.getPath())
-            .setShouldPartitionAndSortInput(shouldPartitionAndSortInput);
+            .setShouldPartitionAndSortInput(shouldPartitionAndSortInput)
+            .setShouldCloseVersion(shouldCloseVersion);
 
     final IncrementalDomainVersionProperties domainVersionProperties;
     switch (versionType) {
@@ -215,12 +230,19 @@ public abstract class HankDomainBuilderAction extends Action {
     }
   }
 
+  public static DomainBuilderProperties buildProperties(HankDataStore output, CoordinatorConfigurator configurator) {
+    return new DomainBuilderProperties(
+        output.getDomainName(),
+        configurator);
+  }
+
   private class LoggingFlowConnectorFactory implements FlowConnectorFactory {
 
     private final JobPersister persister;
     private final Properties properties;
-    public LoggingFlowConnectorFactory(JobPersister persister, Properties props){
-      this.properties= props;
+
+    public LoggingFlowConnectorFactory(JobPersister persister, Properties props) {
+      this.properties = props;
       this.persister = persister;
     }
 
@@ -232,7 +254,7 @@ public abstract class HankDomainBuilderAction extends Action {
 
       LOG.info("Creating flow connector factory with properties:");
       for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-        LOG.info(entry.getKey()+"\t"+entry.getValue());
+        LOG.info(entry.getKey() + "\t" + entry.getValue());
       }
 
       return new LoggingFlowConnector(properties, new MultiFlowStepStrategy(Lists.newArrayList()), persister);
