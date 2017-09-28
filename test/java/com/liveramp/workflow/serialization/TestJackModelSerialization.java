@@ -3,6 +3,7 @@ package com.liveramp.workflow.serialization;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.mapred.JobConf;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,7 @@ import com.rapleaf.db_schemas.rldb.models.CookieMonsterReaderDaysum;
 import com.rapleaf.db_schemas.rldb.models.ElmoDaysum;
 import com.rapleaf.db_schemas.rldb.models.ElmoPublisherVolume;
 import com.rapleaf.db_schemas.rldb.models.SpruceQaDaysum;
+import com.rapleaf.types.new_person_data.IntList;
 
 import static org.junit.Assert.assertEquals;
 
@@ -34,40 +36,27 @@ public class TestJackModelSerialization extends WorkflowTestCase {
 
   private final String input = getTestRoot() + "/input";
 
-  @Before
-  public void setUp() throws Exception {
-    CascadingHelper.get().addSerializationToken(204, SpruceQaDaysum.class);
-    CascadingHelper.get().addSerializationToken(205, ElmoPublisherVolume.class);
-    CascadingHelper.get().addSerializationToken(207, ElmoDaysum.class);
-    CascadingHelper.get().addSerializationToken(214, CookieMonsterReaderDaysum.class);
-  }
-
   @Test
   public void testSerialization() throws Exception {
-    //TODO: i'm sick right now and don't want to rewrite this. jack model serialization will be fine without tests for a day or so
-    /**
-    PersonalizationApiRequestDaysum obj1 = new PersonalizationApiRequestDaysum(1, 1, 1, "", 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
-    PersonalizationApiRequestDaysum obj2 = new PersonalizationApiRequestDaysum(2, 2, 2, "", 2, 2,
-      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2);
-    PersonalizationApiRequestDaysum obj3 = new PersonalizationApiRequestDaysum(3, 3, 3, "", 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3);
 
-    List<PersonalizationApiRequestDaysum> daysums1 = runFlowAndGetOutput(getTestRoot()+"/output1", obj1, obj2, obj1, obj3);
-    List<PersonalizationApiRequestDaysum> daysums2 = runFlowAndGetOutput(getTestRoot()+"/output2", obj1, obj3, obj2, obj1);
+    IntList list1 = new IntList().set_ints(Lists.newArrayList(1, 1, 1));
+    IntList list2 = new IntList().set_ints(Lists.newArrayList(2, 2, 2));
+    IntList list3 = new IntList().set_ints(Lists.newArrayList(3, 3, 3));
+
+    List<IntList> daysums1 = runFlowAndGetOutput(getTestRoot()+"/output1", list1, list2, list1, list3);
+    List<IntList> daysums2 = runFlowAndGetOutput(getTestRoot()+"/output2", list1, list3, list2, list1);
 
     // Check that the output is sorted consistently
-    assertEquals(daysums1, daysums2);**/
-    assertEquals(3,2+1);
+    assertEquals(daysums1, daysums2);
   }
-/**
-  private List<PersonalizationApiRequestDaysum> runFlowAndGetOutput(String output, PersonalizationApiRequestDaysum... objs) throws Exception {
+
+  private List<IntList> runFlowAndGetOutput(String output, IntList... objs) throws Exception {
     FlowProcess<JobConf> fp = CascadingHelper.get().getFlowProcess();
 
     Hfs source = new Hfs(new SequenceFile(new Fields("jack_obj")), input);
     TupleEntryCollector tec = source.openForWrite(fp);
 
-    for (PersonalizationApiRequestDaysum obj : objs) {
+    for (IntList obj : objs) {
       tec.add(new Tuple(obj));
     }
     tec.close();
@@ -82,13 +71,13 @@ public class TestJackModelSerialization extends WorkflowTestCase {
 
     TupleEntryIterator it = sink.openForRead(fp);
 
-    List<PersonalizationApiRequestDaysum> daysums = new ArrayList<PersonalizationApiRequestDaysum>();
+    List<IntList> daysums = new ArrayList<IntList>();
     while (it.hasNext()) {
       TupleEntry te = it.next();
-      PersonalizationApiRequestDaysum desObj = (PersonalizationApiRequestDaysum) te.getObject(0);
+      IntList desObj = (IntList) te.getObject(0);
       daysums.add(desObj);
     }
     return daysums;
   }
- **/
+
 }
