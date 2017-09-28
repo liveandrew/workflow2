@@ -18,8 +18,8 @@ public class ShortMaps extends JobThresholdAlert {
       .put(JOB_COUNTER_GROUP, LAUNCHED_MAPS)
       .get();
 
-  protected static final double TASK_TIME_THRESHOLD = Duration.ofMinutes(1).toMillis();
-  protected static final double MIN_NUM_THRESHOLD = 5;
+  protected static final double TASK_TIME_THRESHOLD = Duration.ofSeconds(20).toMillis();
+  protected static final double MIN_NUM_THRESHOLD = 20;
 
   public ShortMaps() {
     super(TASK_TIME_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new LessThan());
