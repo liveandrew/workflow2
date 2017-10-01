@@ -49,7 +49,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
           job.getJobName() + "\n" +
           "Tracker link: " +
           job.getTrackingUrl() + "\n\n" +
-          getMessage(value) + "\n" +
+          getMessage(value, job, counters) + "\n" +
           "Threshold: " + WORKFLOW_ALERT_SHORT_DESCRIPTIONS.get(this.getClass().getName());
 
       return AlertMessage.createAlertMessage(this.getClass().getName(), message, notification, job, db);
@@ -60,6 +60,6 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
 
   protected abstract Double calculateStatistic(MapreduceJob job, TwoNestedMap<String, String, Long> counters);
 
-  protected abstract String getMessage(double value);
+  protected abstract String getMessage(double value, MapreduceJob job, TwoNestedMap<String, String, Long> counters);
 
 }

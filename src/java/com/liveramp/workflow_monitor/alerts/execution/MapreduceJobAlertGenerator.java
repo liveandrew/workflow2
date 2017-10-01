@@ -13,26 +13,26 @@ import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 
 public abstract class MapreduceJobAlertGenerator {
 
-  protected static final String TASK_COUNTER_GROUP = "org.apache.hadoop.mapreduce.TaskCounter";
-  protected static final String JOB_COUNTER_GROUP = "org.apache.hadoop.mapreduce.JobCounter";
+  public static final String TASK_COUNTER_GROUP = "org.apache.hadoop.mapreduce.TaskCounter";
+  public static final String JOB_COUNTER_GROUP = "org.apache.hadoop.mapreduce.JobCounter";
 
-  protected static final String GC_TIME_MILLIS = "GC_TIME_MILLIS";
-  protected static final String MILLIS_MAPS = "MILLIS_MAPS";
-  protected static final String MILLIS_REDUCES = "MILLIS_REDUCES";
+  public static final String GC_TIME_MILLIS = "GC_TIME_MILLIS";
+  public static final String MILLIS_MAPS = "MILLIS_MAPS";
+  public static final String MILLIS_REDUCES = "MILLIS_REDUCES";
 
-  protected static final String VCORES_MAPS = "VCORES_MILLIS_MAPS";
-  protected static final String VCORES_REDUCES = "VCORES_MILLIS_REDUCES";
+  public static final String VCORES_MAPS = "VCORES_MILLIS_MAPS";
+  public static final String VCORES_REDUCES = "VCORES_MILLIS_REDUCES";
 
-  protected static final String MEM_BYTES = "PHYSICAL_MEMORY_BYTES";
-  protected static final String LAUNCHED_MAPS = "TOTAL_LAUNCHED_MAPS";
-  protected static final String LAUNCHED_REDUCES = "TOTAL_LAUNCHED_REDUCES";
+  public static final String MEM_BYTES = "PHYSICAL_MEMORY_BYTES";
+  public static final String LAUNCHED_MAPS = "TOTAL_LAUNCHED_MAPS";
+  public static final String LAUNCHED_REDUCES = "TOTAL_LAUNCHED_REDUCES";
 
-  protected static final String MB_MAPS = "MB_MILLIS_MAPS";
-  protected static final String MB_REDUCES = "MB_MILLIS_REDUCES";
+  public static final String MB_MAPS = "MB_MILLIS_MAPS";
+  public static final String MB_REDUCES = "MB_MILLIS_REDUCES";
 
-  protected static final String MAP_OUTPUT_MATERIALIZED_BYTES = "MAP_OUTPUT_MATERIALIZED_BYTES";
+  public static final String MAP_OUTPUT_MATERIALIZED_BYTES = "MAP_OUTPUT_MATERIALIZED_BYTES";
 
-  protected static final String CPU_MILLISECONDS = "CPU_MILLISECONDS";
+  public static final String CPU_MILLISECONDS = "CPU_MILLISECONDS";
 
   private final Multimap<String, String> countersToFetch;
 

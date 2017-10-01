@@ -63,7 +63,7 @@ public class CPUUsage extends JobThresholdAlert {
   }
 
   @Override
-  protected String getMessage(double value) {
+  protected String getMessage(double value, MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
     return asPercent(value) + PREAMBLE + WORKFLOW_ALERT_RECOMMENDATIONS.get("CPUUsage");
   }
 }

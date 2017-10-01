@@ -47,7 +47,7 @@ public class KilledTasks extends JobThresholdAlert {
   }
 
   @Override
-  protected String getMessage(double value) {
+  protected String getMessage(double value, MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
     return asPercent(value) + " of launched tasks were killed.  This may indicate heavy contention and under-allocated pools.";
   }
 }

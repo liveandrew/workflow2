@@ -33,7 +33,8 @@ public class ShortMaps extends JobThresholdAlert {
   }
 
   @Override
-  protected String getMessage(double value) {
-    return "Maps in this job take " + value / 1000 + " seconds on average, which is wastefully short. " + WORKFLOW_ALERT_RECOMMENDATIONS.get("ShortMaps");
+  protected String getMessage(double value, MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
+    return "Maps in this job take " + value / 1000 + " seconds on average, which is wastefully short (total " +
+        counters.get(JOB_COUNTER_GROUP, LAUNCHED_MAPS) + " maps) " + WORKFLOW_ALERT_RECOMMENDATIONS.get("ShortMaps");
   }
 }

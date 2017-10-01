@@ -45,7 +45,7 @@ public class OutputPerMapTask extends JobThresholdAlert {
   private static final DecimalFormat df = new DecimalFormat("##.##");
 
   @Override
-  protected String getMessage(double value) {
+  protected String getMessage(double value, MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
     return "Map tasks in this job are outputting on average " +
         df.format(value / ((double)ByteUnit.GIGABYTES.toBytes(1))) + "GB post-serialization. " +
         WORKFLOW_ALERT_RECOMMENDATIONS.get("OutputPerMapTask");

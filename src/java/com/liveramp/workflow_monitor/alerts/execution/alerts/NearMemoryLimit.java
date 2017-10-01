@@ -47,7 +47,7 @@ public class NearMemoryLimit extends JobThresholdAlert {
   }
 
   @Override
-  protected String getMessage(double value) {
+  protected String getMessage(double value, MapreduceJob job, TwoNestedMap<String, String, Long> counters) {
     return asPercent(value) + " of total allocated memory is in use.  This is likely to cause heavy Garbage Collection, and " +
         "potentially cause OutOfMemoryErrors.  Either increase heap size or decrease heap usage to bring this below " + asPercent(MEMORY_WARN_THRESHOLD);
   }
