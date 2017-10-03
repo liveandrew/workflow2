@@ -3,7 +3,6 @@ package com.liveramp.workflow_monitor.alerts.execution.scripts;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +23,8 @@ import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.db_utils.BaseJackUtil;
+import com.liveramp.java_support.logging.LoggingHelper;
+import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 
 import static com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator.JOB_COUNTER_GROUP;
@@ -43,9 +44,11 @@ public class AppsByShortTasks {
 
   @SuppressWarnings("Duplicates")
   public static void main(String[] args) throws IOException {
+    LoggingHelper.configureConsoleLogger();
+
     //  finished in last hour
     long endTime = System.currentTimeMillis();
-    long jobWindow = endTime - Duration.ofHours(6).toMillis();
+    long jobWindow = endTime - Duration.ofHours(12).toMillis();
 
     DatabasesImpl db = new DatabasesImpl();
 
@@ -90,42 +93,54 @@ public class AppsByShortTasks {
       MapreduceCounter mapsCount = get(counters, JOB_COUNTER_GROUP, LAUNCHED_MAPS);
       MapreduceCounter reducesCount = get(counters, JOB_COUNTER_GROUP, LAUNCHED_REDUCES);
 
-      StepAttempt step = stepsById.get(job.getStepAttemptId());
+      StepAttempt step = stepsById.get(job.getStepAttemptId().longValue());
       Long execution = stepAttemptToExecution.get(step.getId());
 
       String appName = relevantExecutions.get(execution).getName();
 
-      if (mapsCount != null) {
-        long maps = mapsCount.getValue();
-        globalTasks += maps;
+      if (step.getStepStatus() == StepStatus.COMPLETED.getValue()) {
 
-        totalTasksByApp.increment(appName, maps);
-        if (mapDuration < MAP_MS_CUTOFF) {
-          globalShortTasks += maps;
+        if (mapsCount != null) {
+          long maps = mapsCount.getValue();
+          globalTasks += maps;
 
-          shortTasksByApp.increment(appName, maps);
+          totalTasksByApp.increment(appName, maps);
+
+          if (mapDuration != null) {
+            if (mapDuration < MAP_MS_CUTOFF) {
+              globalShortTasks += maps;
+
+              shortTasksByApp.increment(appName, maps);
+            }
+          } else {
+            LOG.warn("No known avg duration for job: " + job);
+          }
         }
-      }
 
-      if (reducesCount != null) {
-        long reduces = reducesCount.getValue();
-        globalTasks += reduces;
+        if (reducesCount != null) {
+          long reduces = reducesCount.getValue();
+          globalTasks += reduces;
 
-        totalTasksByApp.increment(appName, reduces);
-        if (reduceDuration < REDUCE_MS_CUTOFF) {
-          globalShortTasks += reduces;
+          totalTasksByApp.increment(appName, reduces);
 
-          shortTasksByApp.increment(appName, reduces);
+          if (reduceDuration != null) {
+            if (reduceDuration < REDUCE_MS_CUTOFF) {
+              globalShortTasks += reduces;
+
+              shortTasksByApp.increment(appName, reduces);
+            }
+          }
         }
       }
 
     }
 
     Map<String, Long> shortTasks = shortTasksByApp.get();
+    Map<String, Long> totalTasks = totalTasksByApp.get();
 
     List<AppEntry> entries = Lists.newArrayList();
-    for (Map.Entry<String, Long> entry : shortTasksByApp.get().entrySet()) {
-      Long totalCount = entry.getValue();
+    for (Map.Entry<String, Long> entry : shortTasks.entrySet()) {
+      Long totalCount = totalTasks.get(entry.getKey());
       Long shortCount = shortTasks.get(entry.getKey());
       entries.add(new AppEntry(
           entry.getKey(),
@@ -139,7 +154,7 @@ public class AppsByShortTasks {
 
     }
 
-    Collections.sort(entries, (o1, o2) -> new CompareToBuilder()
+    entries.sort((o1, o2) -> new CompareToBuilder()
         .append(o1.globalShortTasks, o2.globalShortTasks)
         .append(o1.name, o2.name)
         .toComparison());
@@ -173,7 +188,7 @@ public class AppsByShortTasks {
     }
 
 
-    public String toString(){
+    public String toString() {
       return StringUtils.join(Lists.newArrayList(
           name,
           totalTasks,
