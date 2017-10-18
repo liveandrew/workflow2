@@ -171,7 +171,14 @@ public class ExecutionAlerter {
   }
 
   private String buildSubject(String alertMessage, WorkflowExecution execution) {
-    String[] split = execution.getName().split("\\.");
+
+    String name = execution.getName();
+
+    if (execution.getName() == null) {
+      LOG.error("Bad execution: "+execution);
+    }
+
+    String[] split = name.split("\\.");
 
     String message = alertMessage + ": " + split[split.length - 1];
 
