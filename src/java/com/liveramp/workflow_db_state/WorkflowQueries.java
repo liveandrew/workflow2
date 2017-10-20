@@ -371,7 +371,7 @@ public class WorkflowQueries {
         .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID.as(Integer.class)))
         .where(WorkflowAttempt.ID.equalTo(latestAttempt.getId()))
         .innerJoin(MapreduceJob.TBL)
-        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)))
+        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID))
         .innerJoin(MapreduceCounter.TBL)
         .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID.as(Integer.class)));
   }
@@ -392,7 +392,7 @@ public class WorkflowQueries {
     }
 
     return stepAttempts.innerJoin(MapreduceJob.TBL)
-        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)));
+        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID));
 
   }
 
@@ -924,7 +924,7 @@ public class WorkflowQueries {
         .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID.as(Integer.class)))
         .where(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class).equalTo(workflowExecutionId))
         .innerJoin(MapreduceJob.TBL)
-        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)))
+        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID))
         .innerJoin(MapreduceCounter.TBL)
         .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID.as(Integer.class)));
 

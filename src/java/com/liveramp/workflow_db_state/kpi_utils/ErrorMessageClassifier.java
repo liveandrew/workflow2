@@ -121,7 +121,7 @@ public class ErrorMessageClassifier {
     if (step_attempt_id == null) { return false; }
     List<Long> mr_ids = db.createQuery()
         .from(MapreduceJob.TBL)
-        .where(MapreduceJob.STEP_ATTEMPT_ID.equalTo(step_attempt_id.intValue()))
+        .where(MapreduceJob.STEP_ATTEMPT_ID.equalTo(step_attempt_id))
         .where(MapreduceJob.TASKS_FAILED_IN_SAMPLE.greaterThan(0))
         .select(MapreduceJob.ID)
         .fetch()

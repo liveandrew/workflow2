@@ -226,7 +226,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       IWorkflowDb conn = init.getDb();
 
       List<MapreduceJob> saved = conn.mapreduceJobs().query()
-          .stepAttemptId((int)step.getId())
+          .stepAttemptId(step.getId())
           .jobIdentifier(jobId)
           .find();
 
@@ -237,7 +237,7 @@ public class DbPersistence implements WorkflowStatePersistence {
             jobName,
             trackingURL
         );
-        job.setStepAttemptId((int)step.getId()).save();
+        job.setStepAttemptId(step.getId()).save();
       }
 
     }
@@ -345,7 +345,7 @@ public class DbPersistence implements WorkflowStatePersistence {
   private MapreduceJob getMapreduceJob(String jobId, StepAttempt step) throws IOException {
     IWorkflowDb conn = init.getDb();
     return Accessors.only(conn.mapreduceJobs().query()
-        .stepAttemptId((int)step.getId())
+        .stepAttemptId(step.getId())
         .jobIdentifier(jobId)
         .find());
   }

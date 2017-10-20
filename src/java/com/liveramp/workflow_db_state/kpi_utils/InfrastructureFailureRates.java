@@ -34,7 +34,7 @@ public class InfrastructureFailureRates {
         .where(StepAttempt.END_TIME.greaterThan(startWindowMillis))
         .where(StepAttempt.END_TIME.lessThanOrEqualTo(endWindowMillis))
         .innerJoin(MapreduceJob.TBL)
-        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)))
+        .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID))
         .select(MapreduceJob.TBL.getAllColumns()).fetch()) {
       if (job == null) {
         continue;
