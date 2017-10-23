@@ -89,7 +89,7 @@ public class DailyAlertPercentagesAlerter {
           .innerJoin(StepAttempt.TBL.with(IndexHints.force(Index.of("index_step_attempts_on_end_time"))))
           .on(StepAttempt.WORKFLOW_ATTEMPT_ID.equalTo(WorkflowAttempt.ID.as(Integer.class)))
           .innerJoin(MapreduceJob.TBL)
-          .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID.as(Integer.class)))
+          .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID))
           .innerJoin(MapreduceCounter.TBL)
           .on(MapreduceCounter.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID.as(Integer.class)))
 
