@@ -342,7 +342,9 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
         null,
         null,
         step.getActionClass(),
-        ""
+        "",
+        null,
+        null
     );
 
   }
