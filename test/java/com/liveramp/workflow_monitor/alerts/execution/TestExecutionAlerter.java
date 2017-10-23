@@ -62,10 +62,10 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     step2.save();
 
     MapreduceJob mapreduceJob = db.mapreduceJobs().create("Job1", "JobName", "");
-    mapreduceJob.setStepAttemptId(step.getIntId()).save();
+    mapreduceJob.setStepAttemptId(step.getId()).save();
     db.mapreduceCounters().create(mapreduceJob.getIntId(), "Group", "Name", 1);
     MapreduceJob mapreduceJob2 = db.mapreduceJobs().create("Job2", "JobName", "");
-    mapreduceJob2.setStepAttemptId(step.getIntId()).save();
+    mapreduceJob2.setStepAttemptId(step.getId()).save();
     db.mapreduceCounters().create(mapreduceJob2.getIntId(), "Group", "Name", 1);
 
     InMemoryAlertsHandler handler = new InMemoryAlertsHandler();
