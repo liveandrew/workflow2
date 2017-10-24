@@ -37,7 +37,7 @@ public class CopyAndPersistNewVersion<T> extends Action {
   @Override
   protected void execute() throws Exception {
 
-    tmpCopy.getBucket().copyAppend(versionToPersist.getBucket(), true, new HashMap<>(), getTmpRoot());
+    tmpCopy.getBucket().copy(versionToPersist.getBucket());
 
     Bucket newVersion = store.getBucketVersionedStore().openNewVersion();
     newVersion.absorbIntoEmpty(tmpCopy.getBucket());
