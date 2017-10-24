@@ -818,8 +818,33 @@ public class WorkflowQueries {
   public static List<StepAttempt.Attributes> getStepAttempts(IWorkflowDb db, Long workflowAttemptId, String stepToken) throws IOException {
     List<StepAttempt.Attributes> executions = Lists.newArrayList();
 
-    for (Record record : queryStepAttempts(db, workflowAttemptId, stepToken).select(StepAttempt.TBL.getAllColumns()).fetch()) {
-      executions.add(record.getAttributes(StepAttempt.TBL));
+    for (Record record : queryStepAttempts(db, workflowAttemptId, stepToken).select(
+        StepAttempt.ID,
+        StepAttempt.WORKFLOW_ATTEMPT_ID,
+        StepAttempt.STEP_TOKEN,
+        StepAttempt.START_TIME,
+        StepAttempt.END_TIME,
+        StepAttempt.STEP_STATUS,
+        StepAttempt.FAILURE_CAUSE,
+        StepAttempt.FAILURE_TRACE,
+        StepAttempt.ACTION_CLASS,
+        StepAttempt.STATUS_MESSAGE).fetch()) {
+
+      executions.add(new StepAttempt.Attributes(
+          record.getLong(StepAttempt.ID),
+          record.getInt(WorkflowAttempt.ID.as(Integer.class)),
+          record.getString(StepAttempt.STEP_TOKEN),
+          record.getLong(StepAttempt.START_TIME),
+          record.getLong(StepAttempt.END_TIME),
+          record.getInt(StepAttempt.STEP_STATUS),
+          record.getString(StepAttempt.FAILURE_CAUSE),
+          record.getString(StepAttempt.FAILURE_TRACE),
+          record.getString(StepAttempt.ACTION_CLASS),
+          record.getString(StepAttempt.STATUS_MESSAGE),
+          null,
+          null
+      ));
+
     }
     return executions;
   }

@@ -337,15 +337,16 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
 
     String token = step.getCheckpointToken();
 
-    return rldb.stepAttempts().create((int)attempt.getId(), token, null, null,
+    StepAttempt stepAttempt = rldb.stepAttempts().create((int)attempt.getId(), token,
         getInitialStatus(token, execution).ordinal(),
-        null,
-        null,
-        step.getActionClass(),
-        "",
-        null,
-        null
+        step.getActionClass()
     );
+
+    stepAttempt.setStatusMessage("");
+
+    stepAttempt.save();
+
+    return stepAttempt;
 
   }
 
