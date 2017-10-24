@@ -17,6 +17,7 @@ import static com.liveramp.workflow.types.StepStatus.MANUALLY_COMPLETED;
 import static com.liveramp.workflow.types.StepStatus.REVERTED;
 import static com.liveramp.workflow.types.StepStatus.ROLLBACK_FAILED;
 import static com.liveramp.workflow.types.StepStatus.ROLLED_BACK;
+import static com.liveramp.workflow.types.StepStatus.ROLLING_BACK;
 import static com.liveramp.workflow.types.StepStatus.RUNNING;
 import static com.liveramp.workflow.types.StepStatus.SKIPPED;
 import static com.liveramp.workflow.types.StepStatus.WAITING;
@@ -92,7 +93,7 @@ public class WorkflowEnums {
 
     //  failed b/c of shutdown hook ordering
     VALID_STEP_STATUS_TRANSITIONS.putAll(COMPLETED,
-        Lists.newArrayList(REVERTED, FAILED, ROLLED_BACK, ROLLBACK_FAILED));
+        Lists.newArrayList(REVERTED, FAILED, ROLLING_BACK));
 
     VALID_STEP_STATUS_TRANSITIONS.putAll(REVERTED,
         Lists.newArrayList(MANUALLY_COMPLETED));
@@ -104,6 +105,9 @@ public class WorkflowEnums {
         Lists.newArrayList(REVERTED));
 
     VALID_STEP_STATUS_TRANSITIONS.putAll(FAILED,
+        Lists.newArrayList(ROLLING_BACK));
+
+    VALID_STEP_STATUS_TRANSITIONS.putAll(ROLLING_BACK,
         Lists.newArrayList(ROLLED_BACK, ROLLBACK_FAILED));
 
   }

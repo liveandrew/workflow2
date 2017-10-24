@@ -18,7 +18,7 @@ public class RollbackStrategy<Config> implements WorkflowStrategy<Config> {
 
   @Override
   public void markStepStart(WorkflowStatePersistence persistence, String token) throws IOException {
-    persistence.markRollbackStarted();
+    persistence.markStepRollingBack(token);
   }
 
   @Override
@@ -67,7 +67,7 @@ public class RollbackStrategy<Config> implements WorkflowStrategy<Config> {
 
   @Override
   public void markAttemptStart(WorkflowStatePersistence persistence) throws IOException {
-    persistence.markWorkflowStarted();
+    persistence.markRollbackStarted();
   }
 
 }
