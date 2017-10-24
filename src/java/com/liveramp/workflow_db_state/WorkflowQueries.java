@@ -832,7 +832,7 @@ public class WorkflowQueries {
 
       executions.add(new StepAttempt.Attributes(
           record.getLong(StepAttempt.ID),
-          record.getInt(WorkflowAttempt.ID.as(Integer.class)),
+          record.getInt(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Integer.class)),
           record.getString(StepAttempt.STEP_TOKEN),
           record.getLong(StepAttempt.START_TIME),
           record.getLong(StepAttempt.END_TIME),
