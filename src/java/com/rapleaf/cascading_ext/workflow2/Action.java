@@ -269,6 +269,14 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
       return Action.this.get(resource);
     }
 
+    public void setStatus(String status) throws IOException {
+      Action.this.setStatusMessage(status);
+    }
+
+    public void setStatusCallback(StatusCallback callback) throws IOException {
+      Action.this.setStatusCallback(callback);
+    }
+
   }
 
   //  stuff available for during action construction
