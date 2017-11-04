@@ -81,7 +81,7 @@ public class TestResourceSemaphore extends WorkflowTestCase {
     cluster.start();
 
     VersionedBucketDataStore<StringOrNone> versionedStore =
-        new VersionedBucketDataStoreImpl<StringOrNone>(FileSystemHelper.getFS(), "store", getTestRoot() + "/input", "", StringOrNone.class);
+        new VersionedBucketDataStoreImpl<StringOrNone>(getFS(), "store", getTestRoot() + "/input", "", StringOrNone.class);
 
     VersionedThriftBucketDataStoreHelper.writeToNewVersion(versionedStore, StringOrNone.string_value("version1"));
     assertEquals(1, versionedStore.getAllCompleteVersions().length);
