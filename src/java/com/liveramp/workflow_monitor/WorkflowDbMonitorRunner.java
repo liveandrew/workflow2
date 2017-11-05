@@ -45,9 +45,7 @@ public class WorkflowDbMonitorRunner {
         db.get()
     );
 
-    Set<String> testEmailVictims = Sets.newHashSet(Arrays.asList(
-        "bpodgursky+alert-firehose@liveramp.com",
-        "kong+alert-firehose@liveramp.com"));
+    Set<String> testEmailVictims = Sets.newHashSet();
 
     ExecutionAlerter testing = new ExecutionAlerter(
         new TestRecipientGenerator(
