@@ -27,6 +27,6 @@ public class CopyAction extends Action {
   protected void execute() throws Exception {
     this.setStatusMessage("Copying " + input.getPath() + " to " + target.getPath());
     completeWithProgress(target.getBucket()
-        .copyOperation(input.getBucket(), getInheritedProperties(), getTmpRoot()));
+        .copy(input.getBucket(), getInheritedProperties(), getTmpRoot()));
   }
 }
