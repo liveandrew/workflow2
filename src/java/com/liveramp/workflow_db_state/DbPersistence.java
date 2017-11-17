@@ -684,7 +684,8 @@ public class DbPersistence implements WorkflowStatePersistence {
       return new ExecutionState(
           execution.getStartTime(),
           execution.getEndTime(),
-          execution.getName()
+          execution.getName(),
+          execution.getWorkflowAttempt().size()
       );
     }
   }
