@@ -5,11 +5,13 @@ import java.util.Set;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.log4j.Level;
 
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.liveramp.java_support.logging.LogOptions;
 import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow_db_state.ThreadLocalWorkflowDb;
 import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
@@ -26,7 +28,11 @@ import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGen
 public class WorkflowDbMonitorRunner {
 
   public static void main(String[] args) throws InterruptedException {
-    LoggingHelper.setLoggingProperties(WorkflowDbMonitorRunner.class.getSimpleName());
+
+    LoggingHelper.configureLoggers(LogOptions.name(WorkflowDbMonitorRunner.class.getSimpleName())
+        .addLogstashCustom(TeamList.DEV_TOOLS, Level.INFO)
+        .addDRFA()
+    );
 
     ThreadLocal<IDatabases> db = new ThreadLocalWorkflowDb();
 
