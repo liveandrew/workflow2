@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.mapred.JobConf;
-import org.junit.Before;
 import org.junit.Test;
 
 import cascading.flow.FlowProcess;
@@ -24,10 +23,6 @@ import cascading.tuple.TupleEntryIterator;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
-import com.rapleaf.db_schemas.rldb.models.CookieMonsterReaderDaysum;
-import com.rapleaf.db_schemas.rldb.models.ElmoDaysum;
-import com.rapleaf.db_schemas.rldb.models.ElmoPublisherVolume;
-import com.rapleaf.db_schemas.rldb.models.SpruceQaDaysum;
 import com.rapleaf.types.new_person_data.IntList;
 
 import static org.junit.Assert.assertEquals;
@@ -43,8 +38,8 @@ public class TestJackModelSerialization extends WorkflowTestCase {
     IntList list2 = new IntList().set_ints(Lists.newArrayList(2, 2, 2));
     IntList list3 = new IntList().set_ints(Lists.newArrayList(3, 3, 3));
 
-    List<IntList> daysums1 = runFlowAndGetOutput(getTestRoot()+"/output1", list1, list2, list1, list3);
-    List<IntList> daysums2 = runFlowAndGetOutput(getTestRoot()+"/output2", list1, list3, list2, list1);
+    List<IntList> daysums1 = runFlowAndGetOutput(getTestRoot() + "/output1", list1, list2, list1, list3);
+    List<IntList> daysums2 = runFlowAndGetOutput(getTestRoot() + "/output2", list1, list3, list2, list1);
 
     // Check that the output is sorted consistently
     assertEquals(daysums1, daysums2);
@@ -74,7 +69,7 @@ public class TestJackModelSerialization extends WorkflowTestCase {
     List<IntList> daysums = new ArrayList<IntList>();
     while (it.hasNext()) {
       TupleEntry te = it.next();
-      IntList desObj = (IntList) te.getObject(0);
+      IntList desObj = (IntList)te.getObject(0);
       daysums.add(desObj);
     }
     return daysums;
