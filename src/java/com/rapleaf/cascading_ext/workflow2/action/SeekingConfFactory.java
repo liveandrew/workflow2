@@ -3,16 +3,16 @@ package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
 
-import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.map_side_join.IExtractor;
 import com.rapleaf.cascading_ext.msj_tap.conf.SeekingInputConf;
 import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 
 public class SeekingConfFactory<K extends Comparable> implements ConfFactory<K> {
 
   private final MapSideJoinableDataStore store;
-  private final Extractor<K> extractor;
+  private final IExtractor<K> extractor;
 
-  public SeekingConfFactory(MapSideJoinableDataStore store, Extractor<K> extractor) {
+  public SeekingConfFactory(MapSideJoinableDataStore store, IExtractor<K> extractor) {
     this.store = store;
     this.extractor = extractor;
   }

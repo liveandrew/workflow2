@@ -32,6 +32,7 @@ import com.rapleaf.cascading_ext.datastore.DataStores;
 import com.rapleaf.cascading_ext.datastore.PartitionedDataStore;
 import com.rapleaf.cascading_ext.datastore.PartitionedThriftDataStoreHelper;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.map_side_join.IExtractor;
 import com.rapleaf.cascading_ext.map_side_join.TIterator;
 import com.rapleaf.cascading_ext.map_side_join.extractors.TByteArrayExtractor;
 import com.rapleaf.cascading_ext.map_side_join.extractors.ThriftExtractor;
@@ -319,7 +320,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
     }
 
     @Override
-    public Extractor<String> makeCopy() {
+    public IExtractor<String> makeCopy() {
       return new StringExtractor();
     }
   }
@@ -612,7 +613,7 @@ public class TestMOMSJTapAction extends WorkflowTestCase {
     }
 
     @Override
-    public Extractor<Integer> makeCopy() {
+    public IExtractor<Integer> makeCopy() {
       return new MockExtractor();
     }
   }

@@ -20,6 +20,7 @@ import cascading.tuple.Tuple;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.map_side_join.IExtractor;
 import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.msj_tap.operation.MSJFunction;
 import com.rapleaf.cascading_ext.tap.bucket2.PartitionStructure;
@@ -43,7 +44,7 @@ public class TestMSJTapAction extends WorkflowTestCase {
     }
 
     @Override
-    public Extractor<Integer> makeCopy() {
+    public IExtractor<Integer> makeCopy() {
       return new MockExtractor();
     }
   }
@@ -199,7 +200,7 @@ public class TestMSJTapAction extends WorkflowTestCase {
     }
 
     @Override
-    public Extractor<String> makeCopy() {
+    public IExtractor<String> makeCopy() {
       return new MockStringExtractor();
     }
 

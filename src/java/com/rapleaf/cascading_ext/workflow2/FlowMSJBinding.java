@@ -1,7 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.pipe.Pipe;
-import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.map_side_join.IExtractor;
 
 public class FlowMSJBinding<T extends Comparable> extends MSJBinding<T> {
 
@@ -9,7 +9,7 @@ public class FlowMSJBinding<T extends Comparable> extends MSJBinding<T> {
   private final String field;
   private final Class recordType;
 
-  public FlowMSJBinding(Extractor<T> extractor, Pipe pipe, String field, Class recordType) {
+  public FlowMSJBinding(IExtractor<T> extractor, Pipe pipe, String field, Class recordType) {
     super(extractor);
     this.pipe = pipe;
     this.field = field;

@@ -4,11 +4,11 @@ import java.util.Collection;
 
 import com.liveramp.commons.collections.list.ListBuilder;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.map_side_join.IExtractor;
 import com.rapleaf.cascading_ext.msj_tap.store.MapSideJoinableDataStore;
 
 public class ExtractorsList<K extends Comparable> extends ListBuilder<StoreExtractor<K>> {
-  public ExtractorsList<K> add(MapSideJoinableDataStore store, Extractor<K> extractor){
+  public ExtractorsList<K> add(MapSideJoinableDataStore store, IExtractor<K> extractor){
     add(new StoreExtractor<K>(store, extractor));
     return this;
   }

@@ -1,15 +1,15 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import cascading.pipe.Pipe;
-import com.rapleaf.cascading_ext.map_side_join.Extractor;
+import com.rapleaf.cascading_ext.map_side_join.IExtractor;
 
 public class SinkField {
   private final String fieldName;
   private final Class fieldClass;
-  private final Extractor extractor;
+  private final IExtractor extractor;
   private final Pipe pipe;
 
-  public SinkField(String fieldName, Class fieldClass, Extractor extractor, Pipe pipe) {
+  public SinkField(String fieldName, Class fieldClass, IExtractor extractor, Pipe pipe) {
     this.fieldName = fieldName;
     this.fieldClass = fieldClass;
     this.extractor = extractor;
@@ -28,7 +28,7 @@ public class SinkField {
     return pipe;
   }
 
-  public Extractor getExtractor() {
+  public IExtractor getExtractor() {
     return extractor;
   }
 }
