@@ -105,6 +105,15 @@ public class ApplicationController {
     }
   }
 
+  public static boolean isRunning(IWorkflowDb db, String appName, String scopeIdentifier) throws IOException {
+    WorkflowExecution latestExecution = WorkflowQueries.getLatestExecution(db, appName, scopeIdentifier);
+    if (latestExecution != null) {
+      return ExecutionController.isRunning(latestExecution);
+    } else {
+      return false;
+    }
+  }
+
   public static boolean isRunning(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
     Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier);
     if (latestExecution.isPresent()) {
