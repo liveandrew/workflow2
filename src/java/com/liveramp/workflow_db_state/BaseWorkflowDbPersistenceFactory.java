@@ -104,8 +104,7 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
       rldb.setAutoCommit(false);
 
       long workflowAttemptId = persistence.getAttemptId();
-      WorkflowAttempt attempt = persistence.getAttempt();
-      WorkflowExecution execution = persistence.getExecution();
+      Long executionId = persistence.getExecutionId();
       Set<DataStoreInfo> allStores = Sets.newHashSet();
 
       for (IStep step : flatSteps.vertexSet()) {
@@ -127,15 +126,19 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
       //  save datastores
       rldb.commit();
 
+      Set<String> completeSteps = Sets.newHashSet();
+      synchronized (persistence.getLock()) {
+        completeSteps.addAll(WorkflowQueries.getCompleteSteps(rldb, executionId));
+      }
+
       Map<String, StepAttempt> attempts = Maps.newHashMap();
       for (IStep step : flatSteps.vertexSet()) {
-
-        StepAttempt stepAttempt = createStepAttempt(rldb, step, attempt, execution);
+        StepAttempt stepAttempt = createStepAttempt(rldb, step, workflowAttemptId, completeSteps);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
       }
 
       //  save created steps
-      rldb.commit();;
+      rldb.commit();
 
       for (IStep step : flatSteps.vertexSet()) {
         StepAttempt stepAttempt = attempts.get(step.getCheckpointToken());
@@ -173,7 +176,7 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
     } catch (Exception e) {
       rldb.rollback();
       throw new RuntimeException(e);
-    }finally {
+    } finally {
       rldb.setAutoCommit(true);
     }
 
@@ -263,12 +266,12 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
       WorkflowRunnerNotification.INTERNAL_ERROR
   );
 
-  private String truncateDescription(String str){
-    if(str == null){
+  private String truncateDescription(String str) {
+    if (str == null) {
       return null;
     }
 
-    if(str.length() > 255){
+    if (str.length() > 255) {
       return str.substring(0, 255);
     }
 
@@ -333,12 +336,12 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
   }
 
 
-  private StepAttempt createStepAttempt(IWorkflowDb rldb, IStep step, WorkflowAttempt attempt, WorkflowExecution execution) throws IOException {
+  private StepAttempt createStepAttempt(IWorkflowDb rldb, IStep step, Long attemptId, Set<String> completeSteps) throws IOException {
 
     String token = step.getCheckpointToken();
 
-    StepAttempt model = rldb.stepAttempts().create((int)attempt.getId(), token, null, null,
-        getInitialStatus(token, execution).ordinal(),
+    StepAttempt model = rldb.stepAttempts().create(attemptId.intValue(), token, null, null,
+        getInitialStatus(token, completeSteps).ordinal(),
         null,
         null,
         step.getActionClass(),
@@ -349,9 +352,9 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
 
   }
 
-  private StepStatus getInitialStatus(String stepId, WorkflowExecution execution) throws IOException {
+  private StepStatus getInitialStatus(String stepId, Set<String> completeTokens) throws IOException {
 
-    if (WorkflowQueries.isStepComplete(stepId, execution)) {
+    if (completeTokens.contains(stepId)) {
       return StepStatus.SKIPPED;
     }
 

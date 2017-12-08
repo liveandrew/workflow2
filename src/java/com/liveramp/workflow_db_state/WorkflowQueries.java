@@ -7,6 +7,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.HashMultimap;
@@ -138,6 +140,23 @@ public class WorkflowQueries {
     return Optional.of(Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases()));
   }
 
+  public static List<String> getCompleteSteps(IWorkflowDb workflowDb, Long executionId) throws IOException {
+    List<String> tokens = Lists.newArrayList();
+    for (Record record : workflowDb.createQuery().from(WorkflowExecution.TBL)
+        .where(WorkflowExecution.ID.equalTo(executionId))
+        .innerJoin(WorkflowAttempt.TBL)
+        .on(WorkflowExecution.ID.equalTo(WorkflowAttempt.WORKFLOW_EXECUTION_ID.as(Long.class)))
+        .innerJoin(StepAttempt.TBL)
+        .on(WorkflowAttempt.ID.equalTo(StepAttempt.WORKFLOW_ATTEMPT_ID.as(Long.class)))
+        .where(StepAttempt.STEP_STATUS.in(WorkflowEnums.COMPLETED_STATUSES.stream().map(
+            stepStatus -> stepStatus.getValue()
+        ).collect(Collectors.toSet())))
+        .select(StepAttempt.STEP_TOKEN)
+        .fetch()) {
+      tokens.add(record.getString(StepAttempt.STEP_TOKEN));
+    }
+    return tokens;
+  }
 
   public static boolean isStepComplete(String step, WorkflowExecution execution) throws IOException {
     return getCompletedStep(step, execution) != null;
