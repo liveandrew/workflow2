@@ -7,7 +7,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Optional;
@@ -56,6 +55,7 @@ import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
+import com.rapleaf.jack.queries.AbstractTable;
 import com.rapleaf.jack.queries.Column;
 import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.Index;
@@ -63,8 +63,6 @@ import com.rapleaf.jack.queries.IndexHints;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
-import com.rapleaf.jack.queries.SingleTableReference;
-import com.rapleaf.jack.queries.TableReference;
 import com.rapleaf.jack.queries.where_operators.Between;
 import com.rapleaf.jack.queries.where_operators.In;
 import com.rapleaf.jack.queries.where_operators.IsNull;
@@ -699,7 +697,7 @@ public class WorkflowQueries {
                                                                 Long startedAfter,
                                                                 Long startedBefore,
                                                                 WorkflowExecutionStatus status,
-                                                                Integer limit) throws IOException{
+                                                                Integer limit) throws IOException {
     return queryWorkflowExecutions(databases, id, null, name, scope, appType, startedAfter, startedBefore, status, limit);
   }
 
@@ -758,14 +756,12 @@ public class WorkflowQueries {
     GenericQuery query;
 
     //  not exactly a work of art
-    TableReference executions;
-    if (startedAfter != null && startedAfter > DateTime.now().minusDays(7).getMillis()){
-      executions = WorkflowExecution.TBL.with(IndexHints.force(Index.of("start_time_idx")));
-    }else{
-      executions = new SingleTableReference(WorkflowExecution.TBL);
+    AbstractTable executions = WorkflowExecution.TBL;
+    if (startedAfter != null && startedAfter > DateTime.now().minusDays(7).getMillis()) {
+      executions = executions.with(IndexHints.force(Index.of("start_time_idx")));
     }
 
-    if(dashboardName != null) {
+    if (dashboardName != null) {
 
       if (name != null || appType != null) {
         throw new IllegalArgumentException();
