@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
+import cascading.flow.FlowDef;
 import cascading.flow.FlowListener;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
@@ -116,6 +117,10 @@ public class FlowBuilder {
 
   public FlowClosure connect(String name, Map<String, Tap> sources, Map<String, Tap> sinks, Map<String, Tap> traps, Pipe... tails) {
     return new FlowClosure(name, sources, sinks, traps, tails);
+  }
+
+  public FlowClosure connect(FlowDef def) {
+    return new FlowClosure(def.getName(), def.getSources(), def.getSinks(), def.getTraps(), def.getTailsArray());
   }
 
   protected interface IFlowClosure {
