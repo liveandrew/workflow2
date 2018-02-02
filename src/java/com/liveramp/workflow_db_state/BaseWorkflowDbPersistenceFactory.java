@@ -145,8 +145,8 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
 
         for (Map.Entry<DSAction, DataStoreInfo> entry : step.getDataStores().entries()) {
           rldb.stepAttemptDatastores().create(
-              (int)stepAttempt.getId(),
-              (int)datastores.get(entry.getValue()).getId(),
+              stepAttempt.getId(),
+              datastores.get(entry.getValue()).getIntId(),
               entry.getKey().ordinal()
           );
         }
@@ -162,8 +162,8 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
         IStep step = flatSteps.getEdgeSource(edge);
 
         rldb.stepDependencies().create(
-            (int)attempts.get(step.getCheckpointToken()).getId(),
-            (int)attempts.get(dep.getCheckpointToken()).getId()
+            attempts.get(step.getCheckpointToken()).getId(),
+            attempts.get(dep.getCheckpointToken()).getId()
         );
 
       }
