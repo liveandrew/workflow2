@@ -3,6 +3,7 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
@@ -34,6 +36,7 @@ import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
+import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
@@ -50,6 +53,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   private final HdfsActionContext context;
 
   private StoreReaderLocker.LockManager lockManager;
+  private FlowSubmissionController controller;
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
 
@@ -179,6 +183,8 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     this.lockManager = context.getLockProvider()
         .createManager(getDatastores(DSAction.READS_FROM))
         .lockProcessStart();
+
+    this.controller = context.getSubmissionController();
   }
 
   protected StoreReaderLocker getLockProvider() {
@@ -223,10 +229,25 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
     Flow flow = flowc.buildFlow();
 
+    blockUntilSubmissionAllowed(flow);
+
     TrackedOperation tracked = new TrackedFlow(flow, skipCompleteListener);
     completeWithProgress(tracked);
 
     return flow;
+  }
+
+  private void blockUntilSubmissionAllowed(Flow flow) {
+    Optional<String> statusMessageSafe = getStatusMessageSafe();
+    String oldMessage = statusMessageSafe.orElse("");
+    String newMessage = oldMessage + " Blocking on Submission Controller";
+    setStatusMessageSafe(newMessage);
+    if (flow.getConfig() instanceof Configuration) {
+      controller.blockUntilSubmissionAllowed((Configuration)flow.getConfig());
+    } else {
+      LOG.error("Config is not of type Configuration. Type is instead " + flow.getConfig().getClass().getCanonicalName());
+    }
+    setStatusMessageSafe(oldMessage);
   }
 
 

@@ -13,6 +13,7 @@ import com.liveramp.cascading_tools.properties.PropertiesUtil;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.support.Rap;
@@ -20,9 +21,11 @@ import com.rapleaf.support.Rap;
 public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
   private StoreReaderLockProvider lockProvider;
+  private FlowSubmissionController flowSubmissionController;
 
   protected WorkflowOptions() {
     super(CascadingHelper.get().getDefaultHadoopProperties(), toProperties(CascadingHelper.get().getJobConf()));
+    flowSubmissionController = new FlowSubmissionController.SubmitImmediately();
   }
 
   protected WorkflowOptions(OverridableProperties defaultProperties,
@@ -68,7 +71,7 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
     return opts;
   }
 
-  public static WorkflowOptions emrProduction(){
+  public static WorkflowOptions emrProduction() {
 
     Map<Object, Object> defaultProperties = CascadingHelper.get().getDefaultProperties();
     defaultProperties.remove(MRJobConfig.MR_AM_COMMAND_OPTS); //  TODO hacky
@@ -77,7 +80,7 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
         new NestedProperties(defaultProperties, false),
         toProperties(CascadingHelper.get().getJobConf())
     );
-    
+
     configureProduction(opts);
     return opts;
   }
@@ -103,5 +106,12 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
   }
 
+  public WorkflowOptions setFlowSubmissionController(FlowSubmissionController flowSubmissionController) {
+    this.flowSubmissionController = flowSubmissionController;
+    return this;
+  }
 
+  public FlowSubmissionController getFlowSubmissionController() {
+    return flowSubmissionController;
+  }
 }

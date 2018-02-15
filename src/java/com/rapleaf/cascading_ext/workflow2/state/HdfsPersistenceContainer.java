@@ -112,6 +112,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
+  public String getStatusMessage(String stepToken) throws IOException {
+    return getState(stepToken).getStatusMessage();
+  }
+
+  @Override
   public Map<String, StepStatus> getStepStatuses() throws IOException {
     Map<String, StepStatus> statuses = Maps.newHashMap();
     for (Map.Entry<String, StepState> entry : getStepStates().entrySet()) {

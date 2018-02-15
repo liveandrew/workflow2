@@ -84,6 +84,11 @@ public class ForwardingPersistence implements WorkflowStatePersistence {
   }
 
   @Override
+  public String getStatusMessage(String stepToken) throws IOException {
+    return delegatePersistence.getStatusMessage(stepToken);
+  }
+
+  @Override
   public Map<String, StepStatus> getStepStatuses() throws IOException {
     return delegatePersistence.getStepStatuses();
   }
