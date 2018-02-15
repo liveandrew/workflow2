@@ -482,6 +482,13 @@ public class DbPersistence implements WorkflowStatePersistence {
   }
 
   @Override
+  public String getStatusMessage(String stepToken) throws IOException {
+    synchronized (lock) {
+      return getStep(stepToken).getStatusMessage();
+    }
+  }
+
+  @Override
   public Map<String, StepState> getStepStates() throws IOException {
     synchronized (lock) {
       return getStates();
