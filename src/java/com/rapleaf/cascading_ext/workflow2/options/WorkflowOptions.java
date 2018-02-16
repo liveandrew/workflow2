@@ -91,7 +91,8 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
     BaseWorkflowOptions.configureProduction(options);
 
     options
-        .setLockProvider(new MockStoreReaderLockProvider());
+        .setLockProvider(new MockStoreReaderLockProvider())
+        .setFlowSubmissionController(new FlowSubmissionController.SubmitImmediately());
   }
 
 
@@ -102,7 +103,8 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
     options
         .setLockProvider(new MockStoreReaderLockProvider())
-        .addWorkflowProperties(Collections.<Object, Object>singletonMap(MRJobConfig.QUEUE_NAME, "test"));
+        .addWorkflowProperties(Collections.<Object, Object>singletonMap(MRJobConfig.QUEUE_NAME, "test"))
+        .setFlowSubmissionController(new FlowSubmissionController.SubmitImmediately());
 
   }
 
