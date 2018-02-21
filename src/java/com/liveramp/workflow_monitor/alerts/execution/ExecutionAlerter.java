@@ -9,6 +9,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -36,6 +39,11 @@ import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.RecipientGenerator;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
+import com.rapleaf.jack.queries.Record;
+import com.rapleaf.jack.queries.Records;
+
+import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
+
 public class ExecutionAlerter {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionAlerter.class);
 
@@ -45,16 +53,20 @@ public class ExecutionAlerter {
   private final RecipientGenerator generator;
   private final IDatabases db;
 
+  private final int suppressEmailAppCountThreshold;
+
   private final Multimap<String, String> countersToFetch = HashMultimap.create();
 
   public ExecutionAlerter(RecipientGenerator generator,
                           List<ExecutionAlertGenerator> executionAlerts,
                           List<MapreduceJobAlertGenerator> jobAlerts,
-                          IDatabases db) {
+                          IDatabases db,
+                          int suppressEmailAppCountThreshold) {
     this.executionAlerts = executionAlerts;
     this.jobAlerts = jobAlerts;
     this.generator = generator;
     this.db = db;
+    this.suppressEmailAppCountThreshold = suppressEmailAppCountThreshold;
 
     for (MapreduceJobAlertGenerator jobAlert : jobAlerts) {
       countersToFetch.putAll(jobAlert.getCountersToFetch());
@@ -62,16 +74,35 @@ public class ExecutionAlerter {
   }
 
   public void generateAlerts() throws IOException, URISyntaxException {
-    generateExecutionAlerts();
-    generateJobAlerts();
-  }
-
-  private void generateJobAlerts() throws IOException, URISyntaxException {
-    LOG.info("Generating job alerts");
 
     //  finished in last hour
     long endTime = System.currentTimeMillis();
-    long jobWindow = endTime - Duration.ofHours(1).toMillis();
+    long dayAgo = endTime - Duration.ofDays(1).toMillis();
+
+    //  get app counts within the past day
+    Set<String> suppressedApps = db.getWorkflowDb().createQuery().from(WorkflowExecution.TBL)
+        .where(WorkflowExecution.END_TIME.greaterThan(dayAgo))
+        .groupBy(WorkflowExecution.NAME)
+        .select(WorkflowExecution.NAME, COUNT(WorkflowExecution.ID)).fetch().stream()
+        .filter(record -> record.getInt(COUNT(WorkflowExecution.ID)) >= suppressEmailAppCountThreshold)
+        .map(record -> record.getString(WorkflowExecution.NAME)).collect(Collectors.toSet());
+
+    generateExecutionAlerts(
+        endTime - Duration.ofDays(7).toMillis(),
+        endTime,
+        suppressedApps
+    );
+
+    generateJobAlerts(
+        endTime - Duration.ofHours(1).toMillis(),
+        endTime,
+        suppressedApps
+    );
+
+  }
+
+  private void generateJobAlerts(long jobWindow, long endTime, Set<String> suppressedApps) throws IOException, URISyntaxException {
+    LOG.info("Generating job alerts");
 
     Map<Long, MapreduceJob> jobs = BaseJackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
         jobWindow,
@@ -101,14 +132,14 @@ public class ExecutionAlerter {
       for (Map.Entry<Long, MapreduceJob> jobEntry : jobs.entrySet()) {
         long jobId = jobEntry.getKey();
         MapreduceJob mapreduceJob = jobEntry.getValue();
-        long stepAttemptId = (long)mapreduceJob.getStepAttemptId();
+        long stepAttemptId = mapreduceJob.getStepAttemptId();
 
         WorkflowExecution execution = relevantExecutions.get(stepAttemptToExecution.get(stepAttemptId));
 
         TwoNestedMap<String, String, Long> counterMap = WorkflowQueries.countersAsMap(countersByJob.get((int)jobId));
         AlertMessage alert = jobAlert.generateAlert(stepsById.get(stepAttemptId), mapreduceJob, counterMap, db);
 
-        if (alert != null) {
+        if (alert != null && !suppressedApps.contains(execution.getName())) {
           sendAlert(alertClass, execution, alert);
         }
 
@@ -117,12 +148,10 @@ public class ExecutionAlerter {
   }
 
 
-  private void generateExecutionAlerts() throws IOException, URISyntaxException {
-    long fetchTime = System.currentTimeMillis();
-    long executionWindow = fetchTime - Duration.ofDays(7).toMillis();
-    LOG.info("Fetching executions to attempts since " + executionWindow);
+  private void generateExecutionAlerts(long beginWindow, long currentTime, Set<String> suppressedApps) throws IOException, URISyntaxException {
+    LOG.info("Fetching executions to attempts since " + beginWindow);
 
-    Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, executionWindow, null, null, null);
+    Multimap<WorkflowExecution, WorkflowAttempt> attempts = WorkflowQueries.getExecutionsToAttempts(db, null, null, null, null, beginWindow, null, null, null);
     LOG.info("Found " + attempts.keySet().size() + " executions");
 
     for (ExecutionAlertGenerator executionAlert : executionAlerts) {
@@ -130,10 +159,9 @@ public class ExecutionAlerter {
       LOG.info("Running alert generator " + alertClass.getName());
 
       for (WorkflowExecution execution : attempts.keySet()) {
-        long executionId = execution.getId();
 
-        AlertMessage alert = executionAlert.generateAlert(fetchTime, execution, attempts.get(execution), db);
-        if (alert != null) {
+        AlertMessage alert = executionAlert.generateAlert(currentTime, execution, attempts.get(execution), db);
+        if (alert != null && !suppressedApps.contains(execution.getName())) {
           sendAlert(alertClass, execution, alert);
         }
 
@@ -144,7 +172,7 @@ public class ExecutionAlerter {
   private static Set<Long> stepAttemptIds(Collection<MapreduceJob> jobs) {
     Set<Long> stepAttemptIds = Sets.newHashSet();
     for (MapreduceJob job : jobs) {
-      stepAttemptIds.add(Long.valueOf(job.getStepAttemptId()));
+      stepAttemptIds.add(job.getStepAttemptId());
     }
     return stepAttemptIds;
   }

@@ -1,15 +1,11 @@
 package com.liveramp.workflow_monitor;
 
-import java.util.Arrays;
-import java.util.Set;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.log4j.Level;
 
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
-import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.logging.LogOptions;
 import com.liveramp.java_support.logging.LoggingHelper;
@@ -36,41 +32,50 @@ public class WorkflowDbMonitorRunner {
 
     ThreadLocal<IDatabases> db = new ThreadLocalWorkflowDb();
 
-    ExecutionAlerter production = new ExecutionAlerter(
+    //  alert every time this happens
+    ExecutionAlerter spammyProduction = new ExecutionAlerter(
         new FromPersistenceGenerator(db.get()),
         Lists.newArrayList(
             new DiedUnclean()
         ),
+        Lists.newArrayList(),
+        db.get(),
+        Integer.MAX_VALUE
+    );
+
+    //  generate alerts but send emails but only if the app runs fewer than 50 times a day
+    ExecutionAlerter filteredProduction = new ExecutionAlerter(
+        new FromPersistenceGenerator(db.get()),
+        Lists.newArrayList(),
         Lists.newArrayList(
             new KilledTasks(),
             new GCTime(),
-            //            new NearMemoryLimit(),
             new CPUUsage(),
             new OutputPerMapTask()
         ),
-        db.get()
+        db.get(),
+        50
     );
 
-    Set<String> testEmailVictims = Sets.newHashSet();
-
-    ExecutionAlerter testing = new ExecutionAlerter(
+    //  generate alerts but never email about it
+    ExecutionAlerter quietProduction = new ExecutionAlerter(
         new TestRecipientGenerator(
-            AlertsHandlers.builder(TeamList.DEV_TOOLS)
-                .setEngineeringRecipient(AlertRecipients.of(testEmailVictims))
-                .build()),
+            AlertsHandlers.builder(TeamList.NULL).build()),
         Lists.newArrayList(
         ),
         Lists.newArrayList(
             new ShortMaps(),
             new ShortReduces()
         ),
-        db.get()
+        db.get(),
+        0
     );
 
     WorkflowMonitor monitor = new WorkflowMonitor(
         Lists.newArrayList(
-            production,
-            testing
+            spammyProduction,
+            filteredProduction,
+            quietProduction
         )
     );
 

@@ -73,7 +73,8 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     ExecutionAlerter alerter = new ExecutionAlerter(new TestRecipientGenerator(handler),
         Lists.newArrayList(new TestExecutionGenerator()),
         Lists.newArrayList(new TestJobGenerator()),
-        databases
+        databases,
+        Integer.MAX_VALUE
     );
 
     alerter.generateAlerts();
