@@ -2,6 +2,7 @@ package com.liveramp.workflow_core.runner;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -213,7 +214,7 @@ public abstract class BaseAction<Config> {
     return resourceFactory;
   }
 
-  protected interface StatusCallback{
+  protected interface StatusCallback {
     String updateStatus();
   }
 
@@ -222,7 +223,7 @@ public abstract class BaseAction<Config> {
     statusCallback = callback;
 
     //  only create a new thread if we have a callback we want to use
-    if(!hasStatusCallback()){
+    if (!hasStatusCallback()) {
       statusCallbackExecutor = Executors.newSingleThreadScheduledExecutor();
 
       statusCallbackExecutor.scheduleAtFixedRate(() -> {
@@ -260,7 +261,7 @@ public abstract class BaseAction<Config> {
       execute();
 
       //  update status one last time
-      if(hasStatusCallback()) {
+      if (hasStatusCallback()) {
         setStatusMessage(statusCallback.updateStatus());
       }
 
@@ -269,7 +270,7 @@ public abstract class BaseAction<Config> {
       throw wrapRuntimeException(t);
     } finally {
 
-      if(hasStatusCallback()) {
+      if (hasStatusCallback()) {
         statusCallbackExecutor.shutdown();
       }
 
@@ -281,7 +282,7 @@ public abstract class BaseAction<Config> {
     return statusCallbackExecutor != null;
   }
 
-  protected final void internalRollback(OverridableProperties properties){
+  protected final void internalRollback(OverridableProperties properties) {
 
     try {
 
@@ -311,6 +312,10 @@ public abstract class BaseAction<Config> {
     persistence.markStepStatusMessage(fullId(), statusMessage);
   }
 
+  protected String getStatusMessage() throws IOException {
+    return persistence.getStatusMessage(fullId());
+  }
+
   /**
    * Same as {@link #setStatusMessage(String)} but only logs failures
    * doesn't rethrow.
@@ -320,6 +325,15 @@ public abstract class BaseAction<Config> {
       setStatusMessage(message);
     } catch (Exception e) {
       LOG.warn("Couldn't set status message.", e);
+    }
+  }
+
+  protected Optional<String> getStatusMessageSafe() {
+    try {
+      return Optional.of(getStatusMessage());
+    } catch (Exception e) {
+      LOG.warn("Couldn't get status message.", e);
+      return Optional.empty();
     }
   }
 

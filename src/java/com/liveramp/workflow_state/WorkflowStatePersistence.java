@@ -43,6 +43,7 @@ public interface WorkflowStatePersistence extends InitializedPersistence{
 
   //  get* methods probably don't need to be quarantined to here.  can be split out?
   public StepStatus getStatus(String stepToken) throws IOException;
+  public String getStatusMessage(String stepToken) throws IOException;
   public Map<String, StepStatus> getStepStatuses() throws IOException;
   public Map<String, StepState> getStepStates() throws IOException;
   public String getShutdownRequest() throws IOException;
