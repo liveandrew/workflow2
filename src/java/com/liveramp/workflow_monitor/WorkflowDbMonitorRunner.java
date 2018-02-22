@@ -14,6 +14,7 @@ import com.liveramp.workflow_monitor.alerts.execution.ExecutionAlerter;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.CPUUsage;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.DiedUnclean;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.GCTime;
+import com.liveramp.workflow_monitor.alerts.execution.alerts.InputPerReduceTask;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.KilledTasks;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.OutputPerMapTask;
 import com.liveramp.workflow_monitor.alerts.execution.alerts.ShortMaps;
@@ -65,7 +66,8 @@ public class WorkflowDbMonitorRunner {
         ),
         Lists.newArrayList(
             new ShortMaps(),
-            new ShortReduces()
+            new ShortReduces(),
+            new InputPerReduceTask()
         ),
         db.get(),
         0

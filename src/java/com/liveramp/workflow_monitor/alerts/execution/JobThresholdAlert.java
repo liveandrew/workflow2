@@ -21,7 +21,7 @@ public abstract class JobThresholdAlert extends MapreduceJobAlertGenerator {
   private final double threshold;
   private ThresholdChecker thresholdCheck;
 
-  private static final DecimalFormat df = new DecimalFormat("#.##");
+  protected static final DecimalFormat df = new DecimalFormat("##.##");
 
   protected JobThresholdAlert(double threshold,
                               WorkflowRunnerNotification notification,
