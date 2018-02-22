@@ -40,6 +40,8 @@ public class WorkflowConstants {
           "If you are explicitly multi-threading, please increase set mapreduce.map.cpu.vcores or mapreduce.reduce.cpu.vcores accordingly.");
       put("OutputPerMapTask", "Reading spills which are this large can cause machine performance problems; please increase the number of " +
           "map tasks this data is spread over.");
+      put("InputPerReduceTask", "Merging spills which are this large can cause performance problems; please increase the number of redcue tasks " +
+          "this data is spread across.");
     }
   });
 }
