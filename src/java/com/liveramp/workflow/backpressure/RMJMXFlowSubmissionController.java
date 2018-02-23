@@ -31,6 +31,9 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   private final long maximumWaitAmount;
   private final long maxWaitDurationMillis;
 
+  private static final double CONTAINER_LOG_FACTOR = 2;
+  private static final double APP_LOG_FACTOR = 1.07;
+
   public static RMJMXFlowSubmissionController production() {
     return production(TimeUnit.HOURS, 6);
   }
@@ -72,8 +75,8 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
       QueueInfo queueInfo = getQueueInfo(mapReduceQueue);
       while (isOverLimit(queueInfo) && System.currentTimeMillis() < maxWaitTimestamp) {
         long sleepMillis = Math.max(
-            determineSleep(queueInfo.pendingContainers, pendingContainerLimit, maxWaitTimestamp - System.currentTimeMillis()),
-            determineSleep(queueInfo.runningApps, runningAppLimit, maxWaitTimestamp - System.currentTimeMillis())
+            determineSleep(queueInfo.pendingContainers, pendingContainerLimit, maxWaitTimestamp - System.currentTimeMillis(), CONTAINER_LOG_FACTOR),
+            determineSleep(queueInfo.runningApps, runningAppLimit, maxWaitTimestamp - System.currentTimeMillis(), APP_LOG_FACTOR)
         );
 
         LOG.info("Queue info: ");
@@ -97,10 +100,14 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   }
 
   long determineSleep(long metric, long limit, long maxSleepMillis) {
+    return determineSleep(metric, limit, maxSleepMillis, 2);
+  }
+
+  long determineSleep(long metric, long limit, long maxSleepMillis, double logFactor) {
     //If there's a large backlog, we should wait longer before checking again if it's clear.
     // Use a log base 2 to ensure we never wait for a really massive time
     double pendingRatio = metric / (double)limit;
-    double logOfRatio = Math.log(pendingRatio) / Math.log(2); //log base 2
+    double logOfRatio = Math.log(pendingRatio) / Math.log(logFactor); //log base 2
     double sleepMultiplier = Math.ceil(logOfRatio);
     long computedSleepMilliseconds = (long)(sleepUnit.toMillis(sleepAmount) * sleepMultiplier);
 
