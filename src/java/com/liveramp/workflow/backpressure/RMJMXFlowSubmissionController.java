@@ -2,11 +2,17 @@ package com.liveramp.workflow.backpressure;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreV2;
+import org.apache.curator.framework.recipes.locks.Lease;
+import org.apache.curator.utils.EnsurePath;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.java_support.functional.IOFunction;
 import com.liveramp.java_support.web.LRHttpUtils;
+import com.liveramp.zk_tools.CuratorFrameworkDefaults;
 
 public class RMJMXFlowSubmissionController implements FlowSubmissionController {
 
@@ -29,6 +36,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   private final long appSleepAmount;
 
   private IOFunction<String, String> jsonRetriever;
+  private Function<QueueParameters, SubmissionSemaphore> semaphoreFactory;
   private final TimeUnit maximumWaitUnit;
   private final long maximumWaitAmount;
   private final long maxWaitDurationMillis;
@@ -48,16 +56,17 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
         5,
         maxWaitUnit,
         maxWaitAmount,
-        LRHttpUtils::GETRequest);
+        LRHttpUtils::GETRequest,
+        ProductionCuratorSemaphore::new);
   }
-
 
   RMJMXFlowSubmissionController(
       long pendingContainerLimit,
       long runningAppLimit,
       TimeUnit sleepUnit, long containerSleepAmount, long appSleepAmount,
       TimeUnit maximumWaitUnit, long maximumWaitAmount,
-      IOFunction<String, String> jsonRetriever) {
+      IOFunction<String, String> jsonRetriever,
+      Function<QueueParameters, SubmissionSemaphore> semaphoreFactory) {
     this.pendingContainerLimit = pendingContainerLimit;
     this.sleepUnit = sleepUnit;
     this.containerSleepAmount = containerSleepAmount;
@@ -65,16 +74,21 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     this.maximumWaitAmount = maximumWaitAmount;
     this.maximumWaitUnit = maximumWaitUnit;
     this.jsonRetriever = jsonRetriever;
+    this.semaphoreFactory = semaphoreFactory;
     this.maxWaitDurationMillis = maximumWaitUnit.toMillis(maximumWaitAmount);
     this.runningAppLimit = runningAppLimit;
   }
 
   @Override
-  public void blockUntilSubmissionAllowed(Configuration flowConfig) {
+  public Runnable blockUntilSubmissionAllowed(Configuration flowConfig) {
+    Runnable cleanupCallback = () -> {};
     try {
       String mapReduceQueue = flowConfig.get(MRJobConfig.QUEUE_NAME);
+      SubmissionSemaphore semaphore = semaphoreFactory.apply(new QueueParameters(mapReduceQueue, runningAppLimit));
+      cleanupCallback = () -> {semaphore.releaseShare();};
       long waitStart = System.currentTimeMillis();
       long maxWaitTimestamp = waitStart + maxWaitDurationMillis;
+      semaphore.blockUntilShareIsAvailable(maxWaitDurationMillis);
       QueueInfo queueInfo = getQueueInfo(mapReduceQueue);
       while (isOverLimit(queueInfo) && System.currentTimeMillis() < maxWaitTimestamp) {
         long sleepMillis = Math.max(
@@ -93,9 +107,10 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
       if ((System.currentTimeMillis() - waitStart) >= maxWaitDurationMillis) {
         LOG.warn("Waited for more than the max wait period of " + maximumWaitAmount + " " + maximumWaitUnit.name() + ". Launching job.");
       }
-    } catch (InterruptedException e) {
+    } catch (Exception e) {
       LOG.error("Error while blocking for job submission. Allowing job to launch", e);
     }
+    return cleanupCallback;
   }
 
   private boolean isOverLimit(QueueInfo queueInfo) {
@@ -116,6 +131,24 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
 
     //We also compute how many milliseconds until our max wait runs out, and use that if it's smaller
     return Math.min(computedSleepMilliseconds, Math.max(maxSleepMillis, 0));
+  }
+
+  public static class QueueParameters {
+    private final String queueName;
+    private final long maxApplications;
+
+    public QueueParameters(String queueName, long maxApplications) {
+      this.queueName = queueName;
+      this.maxApplications = maxApplications;
+    }
+
+    public String getQueueName() {
+      return queueName;
+    }
+
+    public long getMaxApplications() {
+      return maxApplications;
+    }
   }
 
 
@@ -191,5 +224,51 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
       urlParts.add("q" + i + "=" + queueParts[i]);
     }
     return StringUtils.join(urlParts, ",");
+  }
+
+  public static class ProductionCuratorSemaphore implements SubmissionSemaphore {
+
+    public static final String SEMAPHORE_ROOT = "/workflow/flowSubmissionController/queueSempahores/";
+    private InterProcessSemaphoreV2 semaphore;
+    private Lease lease;
+
+    public ProductionCuratorSemaphore(QueueParameters parameters) {
+      String curatorPath = createPath(parameters.getQueueName());
+      CuratorFramework production = CuratorFrameworkDefaults.production();
+      ensurePathExists(curatorPath, production);
+      this.semaphore = new InterProcessSemaphoreV2(production, curatorPath, (int)parameters.getMaxApplications());
+    }
+
+    private void ensurePathExists(String curatorPath, CuratorFramework production) {
+      EnsurePath ensurePath = new EnsurePath(curatorPath);
+      try {
+        ensurePath.ensure(production.getZookeeperClient());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @NotNull
+    private static String createPath(String queue) {
+      return SEMAPHORE_ROOT + queue.replaceAll("[.]", "");
+    }
+
+    @Override
+    public void blockUntilShareIsAvailable(long timeoutMillseconds) {
+      try {
+        //we can get a null result from this method, indicating the timeout was reached.
+        // We actually just want to behave the same way in that case though, so we don't check the result here
+        this.lease = semaphore.acquire(timeoutMillseconds, TimeUnit.MILLISECONDS);
+      } catch (Exception e) {
+        LOG.error("Error during semaphore acquisition - allowing flow to launch:", e);
+      }
+    }
+
+    @Override
+    public void releaseShare() {
+      if (this.lease != null) {
+        semaphore.returnLease(lease);
+      }
+    }
   }
 }

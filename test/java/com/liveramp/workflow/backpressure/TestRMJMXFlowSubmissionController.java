@@ -10,11 +10,15 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.log4j.Level;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
 
 import com.liveramp.java_support.functional.IOFunction;
 import com.rapleaf.java_support.CommonJUnit4TestCase;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
 
@@ -36,7 +40,8 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
             100,
             100,
             TimeUnit.HOURS, 1,
-            jsonRetriever);
+            jsonRetriever,
+            params -> new NoOpSemaphore());
 
     Configuration conf = new Configuration();
     conf.set(MRJobConfig.QUEUE_NAME, "root.team.queue");
@@ -47,6 +52,36 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
     Assert.assertTrue(passed >= 100); //we slept for 1 wait period if this went correctly
     Assert.assertTrue(passed < 200); //we didn't sleep twice
     Assert.assertFalse(itr.hasNext()); //we checked the pending containers twice and exhausted our dummy sequence
+  }
+
+  @Test
+  public void testSemaphore() {
+    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"AppsRunning\":1,\"PendingContainers\":5}]}";
+
+    FlowSubmissionController.SubmissionSemaphore mockSemaphore =
+        mock(FlowSubmissionController.SubmissionSemaphore.class);
+
+    RMJMXFlowSubmissionController controller =
+        new RMJMXFlowSubmissionController(
+            9,
+            Integer.MAX_VALUE,
+            TimeUnit.MILLISECONDS,
+            100,
+            100,
+            TimeUnit.HOURS, 1,
+            jsonRetriever,
+            params -> mockSemaphore);
+
+    Configuration conf = new Configuration();
+    conf.set(MRJobConfig.QUEUE_NAME, "root.team.queue");
+
+    long start = System.currentTimeMillis();
+    Runnable runnable = controller.blockUntilSubmissionAllowed(conf);
+    runnable.run();
+    long passed = System.currentTimeMillis() - start;
+    Assert.assertTrue(passed < 100); //we didn't sleep
+    verify(mockSemaphore, times(1)).blockUntilShareIsAvailable(anyLong());
+    verify(mockSemaphore, times(1)).releaseShare();
   }
 
   @Test
@@ -63,7 +98,8 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
             100,
             100,
             TimeUnit.HOURS, 1,
-            jsonRetriever);
+            jsonRetriever,
+            params -> new NoOpSemaphore());
 
     Configuration conf = new Configuration();
     conf.set(MRJobConfig.QUEUE_NAME, "root.team.queue");
@@ -79,7 +115,7 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
 
   @Test
   public void testDoesntBlock() {
-    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"AppsRunning\":1\",PendingContainers\":5}]}";
+    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"AppsRunning\":1,PendingContainers\":5}]}";
 
     RMJMXFlowSubmissionController controller =
         new RMJMXFlowSubmissionController(
@@ -89,7 +125,8 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
             1,
             1,
             TimeUnit.HOURS, 1,
-            jsonRetriever);
+            jsonRetriever,
+            params -> new NoOpSemaphore());
 
     Configuration conf = new Configuration();
     conf.set(MRJobConfig.QUEUE_NAME, "root.team.queue");
@@ -113,7 +150,8 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
             10,
             10,
             TimeUnit.MILLISECONDS, 100,
-            jsonRetriever);
+            jsonRetriever,
+            params -> new NoOpSemaphore());
 
     Configuration conf = new Configuration();
     conf.set(MRJobConfig.QUEUE_NAME, "root.team.queue");
@@ -137,7 +175,8 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
             1,
             1,
             TimeUnit.MILLISECONDS, 100,
-            jsonRetriever);
+            jsonRetriever,
+            params -> new NoOpSemaphore());
 
     Configuration conf = new Configuration();
     conf.set(MRJobConfig.QUEUE_NAME, "root.team.queue");
@@ -151,7 +190,7 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
   @Test
   public void determineSleepMilliseconds() throws Exception {
     RMJMXFlowSubmissionController controller =
-        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, 1, TimeUnit.HOURS, 1, s -> s);
+        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, 1, TimeUnit.HOURS, 1, s -> s, params -> new NoOpSemaphore());
     Assert.assertEquals(TimeUnit.MINUTES.toMillis(0), controller.determineSleep(3000, 5000, 1, Integer.MAX_VALUE));
     Assert.assertEquals(TimeUnit.MINUTES.toMillis(1), controller.determineSleep(5001, 5000, 1, Integer.MAX_VALUE));
     Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleep(10001, 5000, 1, Integer.MAX_VALUE));
@@ -177,7 +216,7 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
   @Test
   public void getContainersFromJson() throws Exception {
     RMJMXFlowSubmissionController controller =
-        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, 1, TimeUnit.HOURS, 1, s -> s);
+        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, 1, TimeUnit.HOURS, 1, s -> s, params -> new NoOpSemaphore());
     Assert.assertEquals(new RMJMXFlowSubmissionController.QueueInfo(10, 1),
         controller.getInfoFromJson("some.queue", "{\"beans\":[{\"AppsRunning\":\"1\",\"PendingContainers\":10}]}"));
     //if we get nothing back, react defensively and return 0 to let jobs run
@@ -192,6 +231,17 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
 
     queue = "root.applications.ow.acs";
     assertEquals("q0=root,q1=applications,q2=ow,q3=acs", RMJMXFlowSubmissionController.createJMXURLSuffix(queue));
+  }
+
+  private static class NoOpSemaphore implements FlowSubmissionController.SubmissionSemaphore {
+
+    @Override
+    public void blockUntilShareIsAvailable(long timeoutMillseconds) {
+    }
+
+    @Override
+    public void releaseShare() {
+    }
   }
 
 }

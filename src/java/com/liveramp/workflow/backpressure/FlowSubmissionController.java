@@ -6,14 +6,24 @@ import cascading.flow.Flow;
 
 public interface FlowSubmissionController {
 
-  void blockUntilSubmissionAllowed(Configuration flowConfig);
+  //Returns a cleanup callback
+  Runnable blockUntilSubmissionAllowed(Configuration flowConfig);
 
-  public static class SubmitImmediately implements FlowSubmissionController {
+  class SubmitImmediately implements FlowSubmissionController {
 
     @Override
-    public void blockUntilSubmissionAllowed(Configuration flowConfig) {
-      //Don't block
+    public Runnable blockUntilSubmissionAllowed(Configuration flowConfig) {
+      //Don't block, don't cleanup
+      return () -> {};
     }
+  }
+
+  interface SubmissionSemaphore {
+
+    void blockUntilShareIsAvailable(long timeoutMillseconds);
+
+    void releaseShare();
+
   }
 
 }

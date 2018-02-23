@@ -229,25 +229,32 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
     Flow flow = flowc.buildFlow();
 
-    blockUntilSubmissionAllowed(flow);
+    Runnable cleanupCallback = () -> {};
+    try {
+      cleanupCallback = blockUntilSubmissionAllowed(flow);
 
-    TrackedOperation tracked = new TrackedFlow(flow, skipCompleteListener);
-    completeWithProgress(tracked);
+      TrackedOperation tracked = new TrackedFlow(flow, skipCompleteListener);
+      completeWithProgress(tracked);
+    } finally {
+      cleanupCallback.run();
+    }
 
     return flow;
   }
 
-  private void blockUntilSubmissionAllowed(Flow flow) {
+  private Runnable blockUntilSubmissionAllowed(Flow flow) {
     Optional<String> statusMessageSafe = getStatusMessageSafe();
     String oldMessage = statusMessageSafe.orElse("");
     String newMessage = oldMessage + " Blocking on Submission Controller";
     setStatusMessageSafe(newMessage);
+    Runnable cleanupCallback = () -> {};
     if (flow.getConfig() instanceof Configuration) {
-      controller.blockUntilSubmissionAllowed((Configuration)flow.getConfig());
+      cleanupCallback = controller.blockUntilSubmissionAllowed((Configuration)flow.getConfig());
     } else {
       LOG.error("Config is not of type Configuration. Type is instead " + flow.getConfig().getClass().getCanonicalName());
     }
     setStatusMessageSafe(oldMessage);
+    return cleanupCallback;
   }
 
 
