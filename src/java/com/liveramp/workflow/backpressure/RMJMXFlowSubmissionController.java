@@ -23,6 +23,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   private static final String JMX_QUERY_URL_BASE = "http://ds-jt01.liveramp.net:8088/jmx?qry=Hadoop:service=ResourceManager,name=QueueMetrics,";
 
   private final long pendingContainerLimit;
+  private final long runningAppLimit;
   private final TimeUnit sleepUnit;
   private final long sleepAmount;
   private IOFunction<String, String> jsonRetriever;
@@ -37,6 +38,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   public static RMJMXFlowSubmissionController production(TimeUnit maxWaitUnit, long maxWaitAmount) {
     return new RMJMXFlowSubmissionController(
         15000,
+        300,
         TimeUnit.MINUTES,
         1,
         maxWaitUnit,
@@ -47,6 +49,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
 
   RMJMXFlowSubmissionController(
       long pendingContainerLimit,
+      long runningAppLimit,
       TimeUnit sleepUnit, long sleepAmount,
       TimeUnit maximumWaitUnit, long maximumWaitAmount,
       IOFunction<String, String> jsonRetriever) {
@@ -57,7 +60,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     this.maximumWaitUnit = maximumWaitUnit;
     this.jsonRetriever = jsonRetriever;
     this.maxWaitDurationMillis = maximumWaitUnit.toMillis(maximumWaitAmount);
-
+    this.runningAppLimit = runningAppLimit;
   }
 
   @Override
@@ -66,13 +69,20 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
       String mapReduceQueue = flowConfig.get(MRJobConfig.QUEUE_NAME);
       long waitStart = System.currentTimeMillis();
       long maxWaitTimestamp = waitStart + maxWaitDurationMillis;
-      long pendingContainersForQueue = getPendingContainersForQueue(mapReduceQueue);
-      while (pendingContainersForQueue > pendingContainerLimit && System.currentTimeMillis() < maxWaitTimestamp) {
-        long sleepMillis = determineSleepMilliseconds(pendingContainersForQueue, maxWaitTimestamp - System.currentTimeMillis());
-        LOG.info("There are " + pendingContainersForQueue + " pending containers in the queue compared to the limit of " + pendingContainerLimit
-            + ". Delaying job submission for " + sleepUnit.convert(sleepMillis, TimeUnit.MILLISECONDS) + " " + sleepUnit.name());
+      QueueInfo queueInfo = getQueueInfo(mapReduceQueue);
+      while (isOverLimit(queueInfo) && System.currentTimeMillis() < maxWaitTimestamp) {
+        long sleepMillis = Math.max(
+            determineSleep(queueInfo.pendingContainers, pendingContainerLimit, maxWaitTimestamp - System.currentTimeMillis()),
+            determineSleep(queueInfo.runningApps, runningAppLimit, maxWaitTimestamp - System.currentTimeMillis())
+        );
+
+        LOG.info("Queue info: ");
+        LOG.info("\t" + queueInfo.pendingContainers + " pending containers in queue, configured limit: " + pendingContainerLimit);
+        LOG.info("\t" + queueInfo.runningApps + " running apps in queue, configured limit: " + runningAppLimit);
+        LOG.info("\t" + "Delaying job submission for " + sleepUnit.convert(sleepMillis, TimeUnit.MILLISECONDS) + " " + sleepUnit.name() + " ");
+
         TimeUnit.MILLISECONDS.sleep(sleepMillis);
-        pendingContainersForQueue = getPendingContainersForQueue(mapReduceQueue);
+        queueInfo = getQueueInfo(mapReduceQueue);
       }
       if ((System.currentTimeMillis() - waitStart) >= maxWaitDurationMillis) {
         LOG.warn("Waited for more than the max wait period of " + maximumWaitAmount + " " + maximumWaitUnit.name() + ". Launching job.");
@@ -82,10 +92,14 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     }
   }
 
-  long determineSleepMilliseconds(long pendingContainersForQueue, long maxSleepMillis) {
+  private boolean isOverLimit(QueueInfo queueInfo) {
+    return queueInfo.pendingContainers > pendingContainerLimit || queueInfo.runningApps > runningAppLimit;
+  }
+
+  long determineSleep(long metric, long limit, long maxSleepMillis) {
     //If there's a large backlog, we should wait longer before checking again if it's clear.
     // Use a log base 2 to ensure we never wait for a really massive time
-    double pendingRatio = pendingContainersForQueue / (double)pendingContainerLimit;
+    double pendingRatio = metric / (double)limit;
     double logOfRatio = Math.log(pendingRatio) / Math.log(2); //log base 2
     double sleepMultiplier = Math.ceil(logOfRatio);
     long computedSleepMilliseconds = (long)(sleepUnit.toMillis(sleepAmount) * sleepMultiplier);
@@ -94,29 +108,70 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     return Math.min(computedSleepMilliseconds, Math.max(maxSleepMillis, 0));
   }
 
-  private long getPendingContainersForQueue(String mapReduceQueue) {
-    try {
-      String jmxUrl = JMX_QUERY_URL_BASE + createJMXURLSuffix(mapReduceQueue);
-      String jsonString = jsonRetriever.apply(jmxUrl);
-      return getContainersFromJson(mapReduceQueue, jsonString);
-    } catch (Exception e) {
-      LOG.error("Error while blocking for job submission - allowing job to launch", e);
-      return 0;
+
+  public static class QueueInfo {
+    private final long pendingContainers;
+    private final long runningApps;
+
+    public QueueInfo(long pendingContainers, long runningApps) {
+      this.pendingContainers = pendingContainers;
+      this.runningApps = runningApps;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      QueueInfo queueInfo = (QueueInfo)o;
+
+      if (pendingContainers != queueInfo.pendingContainers) {
+        return false;
+      }
+      return runningApps == queueInfo.runningApps;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int)(pendingContainers ^ (pendingContainers >>> 32));
+      result = 31 * result + (int)(runningApps ^ (runningApps >>> 32));
+      return result;
     }
   }
 
-  long getContainersFromJson(String mapReduceQueue, String jsonString) throws JSONException {
+  private QueueInfo getQueueInfo(String mapReduceQueue) {
+    try {
+      String jmxUrl = JMX_QUERY_URL_BASE + createJMXURLSuffix(mapReduceQueue);
+      String jsonString = jsonRetriever.apply(jmxUrl);
+      return getInfoFromJson(mapReduceQueue, jsonString);
+    } catch (Exception e) {
+      LOG.error("Error while blocking for job submission - allowing job to launch", e);
+      return new QueueInfo(0, 0);
+    }
+  }
+
+  QueueInfo getInfoFromJson(String mapReduceQueue, String jsonString) throws JSONException {
     JSONTokener tokener = new JSONTokener(jsonString);
     JSONObject jsonObject = new JSONObject(tokener);
     JSONArray jsonArray = jsonObject.getJSONArray("beans");
 
+    long pendingContainers = 0;
+    long runningApps = 0;
+
     if (jsonArray.length() > 0) {
       JSONObject obj = jsonArray.getJSONObject(0);
-      return obj.getLong("PendingContainers");
+      pendingContainers = obj.getLong("PendingContainers");
+      runningApps = obj.getLong("AppsRunning");
     } else {
-      LOG.error("Queue " + mapReduceQueue + " not found - defaulting to reporting 0 pending containers and allowing job to launch");
-      return 0;
+      LOG.error("Queue " + mapReduceQueue + " not found - defaulting to reporting 0 pending containers and apps and allowing job to launch");
     }
+
+    return new QueueInfo(pendingContainers, runningApps);
+
   }
 
   static String createJMXURLSuffix(String queue) {

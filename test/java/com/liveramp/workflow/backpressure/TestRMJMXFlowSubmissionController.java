@@ -24,12 +24,14 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
 
   @Test
   public void testBlocking() {
-    List<String> sequence = Lists.newArrayList("10", "5");
+    List<String> sequence = Lists.newArrayList("1", "10", "1", "5");
     Iterator<String> itr = sequence.iterator();
-    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"PendingContainers\":" + itr.next() + "}]}";
+    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"AppsRunning\":" + itr.next() + ",\"PendingContainers\":" + itr.next() + "}]}";
 
     RMJMXFlowSubmissionController controller =
-        new RMJMXFlowSubmissionController(9,
+        new RMJMXFlowSubmissionController(
+            9,
+            Integer.MAX_VALUE,
             TimeUnit.MILLISECONDS, 100,
             TimeUnit.HOURS, 1,
             jsonRetriever);
@@ -46,12 +48,39 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
   }
 
   @Test
-  public void testDoesntBlock() {
-    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"PendingContainers\":5}]}";
+  public void testBlockingMaxApps() {
+    List<String> sequence = Lists.newArrayList("10", "1", "1", "1");
+    Iterator<String> itr = sequence.iterator();
+    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"AppsRunning\":" + itr.next() + ",\"PendingContainers\":" + itr.next() + "}]}";
 
     RMJMXFlowSubmissionController controller =
         new RMJMXFlowSubmissionController(
             9,
+            5,
+            TimeUnit.MILLISECONDS, 100,
+            TimeUnit.HOURS, 1,
+            jsonRetriever);
+
+    Configuration conf = new Configuration();
+    conf.set(MRJobConfig.QUEUE_NAME, "root.team.queue");
+
+    long start = System.currentTimeMillis();
+    controller.blockUntilSubmissionAllowed(conf);
+    long passed = System.currentTimeMillis() - start;
+    Assert.assertTrue(passed >= 100); //we slept for 1 wait period if this went correctly
+    Assert.assertTrue(passed < 200); //we didn't sleep twice
+    Assert.assertFalse(itr.hasNext()); //we checked the pending containers twice and exhausted our dummy sequence
+  }
+
+
+  @Test
+  public void testDoesntBlock() {
+    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"AppsRunning\":1\",PendingContainers\":5}]}";
+
+    RMJMXFlowSubmissionController controller =
+        new RMJMXFlowSubmissionController(
+            9,
+            Integer.MAX_VALUE,
             TimeUnit.SECONDS, 1,
             TimeUnit.HOURS, 1,
             jsonRetriever);
@@ -68,11 +97,12 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
   @Test
   public void testMaxWait() {
     //Setup mocks so that there are always too many containers, so we should hit max wait
-    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"PendingContainers\":5}]}";
+    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"AppsRunning\":\"1\",\"PendingContainers\":5}]}";
 
     RMJMXFlowSubmissionController controller =
         new RMJMXFlowSubmissionController(
             4,
+            Integer.MAX_VALUE,
             TimeUnit.MILLISECONDS, 10,
             TimeUnit.MILLISECONDS, 100,
             jsonRetriever);
@@ -89,11 +119,12 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
   @Test
   public void testMaxWaitPremptsWait() {
     //Setup mocks so that there are always too many containers, so we should hit max wait
-    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"PendingContainers\":5}]}";
+    IOFunction<String, String> jsonRetriever = queue -> "{\"beans\":[{\"AppsRunning\":\"1\",\"PendingContainers\":5}]}";
 
     RMJMXFlowSubmissionController controller =
         new RMJMXFlowSubmissionController(
             4,
+            Integer.MAX_VALUE,
             TimeUnit.SECONDS, 1,
             TimeUnit.MILLISECONDS, 100,
             jsonRetriever);
@@ -110,21 +141,21 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
   @Test
   public void determineSleepMilliseconds() throws Exception {
     RMJMXFlowSubmissionController controller =
-        new RMJMXFlowSubmissionController(5000, TimeUnit.MINUTES, 1, TimeUnit.HOURS, 1, s -> s);
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(0), controller.determineSleepMilliseconds(3000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(1), controller.determineSleepMilliseconds(5001, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleepMilliseconds(10001, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleepMilliseconds(15000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(3), controller.determineSleepMilliseconds(20001, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(4), controller.determineSleepMilliseconds(40001, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(4), controller.determineSleepMilliseconds(40001, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(7), controller.determineSleepMilliseconds(400000, Integer.MAX_VALUE));
+        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, TimeUnit.HOURS, 1, s -> s);
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(0), controller.determineSleep(3000, 5000, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(1), controller.determineSleep(5001, 5000, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleep(10001, 5000, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleep(15000, 5000, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(3), controller.determineSleep(20001, 5000, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(4), controller.determineSleep(40001, 5000, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(4), controller.determineSleep(40001, 5000, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(7), controller.determineSleep(400000, 5000, Integer.MAX_VALUE));
 
     //Can't be larger than max wait
-    Assert.assertEquals(6000, controller.determineSleepMilliseconds(Integer.MAX_VALUE, 6000));
+    Assert.assertEquals(6000, controller.determineSleep(Integer.MAX_VALUE, 5000, 6000));
 
     //Can't be negative
-    Assert.assertEquals(0, controller.determineSleepMilliseconds(Integer.MAX_VALUE, -6000));
+    Assert.assertEquals(0, controller.determineSleep(Integer.MAX_VALUE, 5000, -6000));
 
 
   }
@@ -132,12 +163,12 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
   @Test
   public void getContainersFromJson() throws Exception {
     RMJMXFlowSubmissionController controller =
-        new RMJMXFlowSubmissionController(5000, TimeUnit.MINUTES, 1, TimeUnit.HOURS, 1, s -> s);
-    Assert.assertEquals(10,
-        controller.getContainersFromJson("some.queue", "{\"beans\":[{\"PendingContainers\":10}]}"));
+        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, TimeUnit.HOURS, 1, s -> s);
+    Assert.assertEquals(new RMJMXFlowSubmissionController.QueueInfo(10, 1),
+        controller.getInfoFromJson("some.queue", "{\"beans\":[{\"AppsRunning\":\"1\",\"PendingContainers\":10}]}"));
     //if we get nothing back, react defensively and return 0 to let jobs run
-    Assert.assertEquals(0,
-        controller.getContainersFromJson("some.queue", "{\"beans\":[]}"));
+    Assert.assertEquals(new RMJMXFlowSubmissionController.QueueInfo(0, 0),
+        controller.getInfoFromJson("some.queue", "{\"beans\":[]}"));
   }
 
   @Test
