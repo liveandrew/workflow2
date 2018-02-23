@@ -41,7 +41,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   public static RMJMXFlowSubmissionController production(TimeUnit maxWaitUnit, long maxWaitAmount) {
     return new RMJMXFlowSubmissionController(
         15000,
-        300,
+        270,
         TimeUnit.MINUTES,
         1,
         maxWaitUnit,
@@ -108,8 +108,8 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     // Use a log base 2 to ensure we never wait for a really massive time
     double pendingRatio = metric / (double)limit;
     double logOfRatio = Math.log(pendingRatio) / Math.log(logFactor); //log base 2
-    double sleepMultiplier = Math.ceil(logOfRatio);
-    long computedSleepMilliseconds = (long)(sleepUnit.toMillis(sleepAmount) * sleepMultiplier);
+
+    long computedSleepMilliseconds = (long)(sleepUnit.toMillis(sleepAmount) * Math.ceil(logOfRatio));
 
     //We also compute how many milliseconds until our max wait runs out, and use that if it's smaller
     return Math.min(computedSleepMilliseconds, Math.max(maxSleepMillis, 0));
