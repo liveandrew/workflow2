@@ -25,14 +25,15 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   private final long pendingContainerLimit;
   private final long runningAppLimit;
   private final TimeUnit sleepUnit;
-  private final long sleepAmount;
+  private final long containerSleepAmount;
+  private final long appSleepAmount;
+
   private IOFunction<String, String> jsonRetriever;
   private final TimeUnit maximumWaitUnit;
   private final long maximumWaitAmount;
   private final long maxWaitDurationMillis;
 
-  private static final double CONTAINER_LOG_FACTOR = 2;
-  private static final double APP_LOG_FACTOR = 1.07;
+  private static final double LOG_FACTOR = 2;
 
   public static RMJMXFlowSubmissionController production() {
     return production(TimeUnit.HOURS, 6);
@@ -44,6 +45,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
         270,
         TimeUnit.MINUTES,
         1,
+        5,
         maxWaitUnit,
         maxWaitAmount,
         LRHttpUtils::GETRequest);
@@ -53,12 +55,13 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   RMJMXFlowSubmissionController(
       long pendingContainerLimit,
       long runningAppLimit,
-      TimeUnit sleepUnit, long sleepAmount,
+      TimeUnit sleepUnit, long containerSleepAmount, long appSleepAmount,
       TimeUnit maximumWaitUnit, long maximumWaitAmount,
       IOFunction<String, String> jsonRetriever) {
     this.pendingContainerLimit = pendingContainerLimit;
     this.sleepUnit = sleepUnit;
-    this.sleepAmount = sleepAmount;
+    this.containerSleepAmount = containerSleepAmount;
+    this.appSleepAmount = appSleepAmount;
     this.maximumWaitAmount = maximumWaitAmount;
     this.maximumWaitUnit = maximumWaitUnit;
     this.jsonRetriever = jsonRetriever;
@@ -75,8 +78,8 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
       QueueInfo queueInfo = getQueueInfo(mapReduceQueue);
       while (isOverLimit(queueInfo) && System.currentTimeMillis() < maxWaitTimestamp) {
         long sleepMillis = Math.max(
-            determineSleep(queueInfo.pendingContainers, pendingContainerLimit, maxWaitTimestamp - System.currentTimeMillis(), CONTAINER_LOG_FACTOR),
-            determineSleep(queueInfo.runningApps, runningAppLimit, maxWaitTimestamp - System.currentTimeMillis(), APP_LOG_FACTOR)
+            determineSleep(queueInfo.pendingContainers, pendingContainerLimit, containerSleepAmount, maxWaitTimestamp - System.currentTimeMillis(), LOG_FACTOR),
+            determineSleep(queueInfo.runningApps, runningAppLimit, appSleepAmount, maxWaitTimestamp - System.currentTimeMillis(), LOG_FACTOR)
         );
 
         LOG.info("Queue info: ");
@@ -99,11 +102,11 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     return queueInfo.pendingContainers > pendingContainerLimit || queueInfo.runningApps > runningAppLimit;
   }
 
-  long determineSleep(long metric, long limit, long maxSleepMillis) {
-    return determineSleep(metric, limit, maxSleepMillis, 2);
+  long determineSleep(long metric, long limit, long sleepAmount, long maxSleepMillis) {
+    return determineSleep(metric, limit, sleepAmount, maxSleepMillis, 2);
   }
 
-  long determineSleep(long metric, long limit, long maxSleepMillis, double logFactor) {
+  long determineSleep(long metric, long limit, long sleepAmount, long maxSleepMillis, double logFactor) {
     //If there's a large backlog, we should wait longer before checking again if it's clear.
     // Use a log base 2 to ensure we never wait for a really massive time
     double pendingRatio = metric / (double)limit;

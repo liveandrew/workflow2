@@ -32,7 +32,9 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
         new RMJMXFlowSubmissionController(
             9,
             Integer.MAX_VALUE,
-            TimeUnit.MILLISECONDS, 100,
+            TimeUnit.MILLISECONDS,
+            100,
+            100,
             TimeUnit.HOURS, 1,
             jsonRetriever);
 
@@ -57,7 +59,9 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
         new RMJMXFlowSubmissionController(
             9,
             5,
-            TimeUnit.MILLISECONDS, 100,
+            TimeUnit.MILLISECONDS,
+            100,
+            100,
             TimeUnit.HOURS, 1,
             jsonRetriever);
 
@@ -81,7 +85,9 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
         new RMJMXFlowSubmissionController(
             9,
             Integer.MAX_VALUE,
-            TimeUnit.SECONDS, 1,
+            TimeUnit.SECONDS,
+            1,
+            1,
             TimeUnit.HOURS, 1,
             jsonRetriever);
 
@@ -103,7 +109,9 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
         new RMJMXFlowSubmissionController(
             4,
             Integer.MAX_VALUE,
-            TimeUnit.MILLISECONDS, 10,
+            TimeUnit.MILLISECONDS,
+            10,
+            10,
             TimeUnit.MILLISECONDS, 100,
             jsonRetriever);
 
@@ -125,7 +133,9 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
         new RMJMXFlowSubmissionController(
             4,
             Integer.MAX_VALUE,
-            TimeUnit.SECONDS, 1,
+            TimeUnit.SECONDS,
+            1,
+            1,
             TimeUnit.MILLISECONDS, 100,
             jsonRetriever);
 
@@ -141,33 +151,33 @@ public class TestRMJMXFlowSubmissionController extends CommonJUnit4TestCase {
   @Test
   public void determineSleepMilliseconds() throws Exception {
     RMJMXFlowSubmissionController controller =
-        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, TimeUnit.HOURS, 1, s -> s);
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(0), controller.determineSleep(3000, 5000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(1), controller.determineSleep(5001, 5000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleep(10001, 5000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleep(15000, 5000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(3), controller.determineSleep(20001, 5000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(4), controller.determineSleep(40001, 5000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(4), controller.determineSleep(40001, 5000, Integer.MAX_VALUE));
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(7), controller.determineSleep(400000, 5000, Integer.MAX_VALUE));
+        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, 1, TimeUnit.HOURS, 1, s -> s);
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(0), controller.determineSleep(3000, 5000, 1, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(1), controller.determineSleep(5001, 5000, 1, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleep(10001, 5000, 1, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(2), controller.determineSleep(15000, 5000, 1, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(3), controller.determineSleep(20001, 5000, 1, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(4), controller.determineSleep(40001, 5000, 1, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(4), controller.determineSleep(40001, 5000, 1, Integer.MAX_VALUE));
+    Assert.assertEquals(TimeUnit.MINUTES.toMillis(7), controller.determineSleep(400000, 5000, 1, Integer.MAX_VALUE));
 
     //Can't be larger than max wait
-    Assert.assertEquals(6000, controller.determineSleep(Integer.MAX_VALUE, 5000, 6000));
+    Assert.assertEquals(6000, controller.determineSleep(Integer.MAX_VALUE, 5000, 1, 6000));
 
     //Can't be negative
-    Assert.assertEquals(0, controller.determineSleep(Integer.MAX_VALUE, 5000, -6000));
+    Assert.assertEquals(0, controller.determineSleep(Integer.MAX_VALUE, 5000, 1, -6000));
 
     // Changing the log factor extends sleep period
-    Assert.assertEquals(60000, controller.determineSleep(400, 300, Integer.MAX_VALUE, 2));
-    Assert.assertEquals(300000, controller.determineSleep(400, 300, Integer.MAX_VALUE, 1.07));
-    Assert.assertEquals(900000, controller.determineSleep(800, 300, Integer.MAX_VALUE, 1.07));
+    Assert.assertEquals(300000, controller.determineSleep(301, 300, 5, Integer.MAX_VALUE, 2));
+    Assert.assertEquals(300000, controller.determineSleep(400, 300, 5, Integer.MAX_VALUE, 2));
+    Assert.assertEquals(600000, controller.determineSleep(800, 300, 5, Integer.MAX_VALUE, 2));
 
   }
 
   @Test
   public void getContainersFromJson() throws Exception {
     RMJMXFlowSubmissionController controller =
-        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, TimeUnit.HOURS, 1, s -> s);
+        new RMJMXFlowSubmissionController(5000, Integer.MAX_VALUE, TimeUnit.MINUTES, 1, 1, TimeUnit.HOURS, 1, s -> s);
     Assert.assertEquals(new RMJMXFlowSubmissionController.QueueInfo(10, 1),
         controller.getInfoFromJson("some.queue", "{\"beans\":[{\"AppsRunning\":\"1\",\"PendingContainers\":10}]}"));
     //if we get nothing back, react defensively and return 0 to let jobs run
