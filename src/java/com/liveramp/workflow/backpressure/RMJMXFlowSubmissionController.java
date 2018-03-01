@@ -27,7 +27,7 @@ import com.liveramp.zk_tools.CuratorFrameworkDefaults;
 public class RMJMXFlowSubmissionController implements FlowSubmissionController {
 
   private static Logger LOG = LoggerFactory.getLogger(RMJMXFlowSubmissionController.class);
-  private static final String JMX_QUERY_URL_BASE = "http://ds-jt01.liveramp.net:8088/jmx?qry=Hadoop:service=ResourceManager,name=QueueMetrics,";
+  private static final String JMX_QUERY_URL_BASE = "http://ds-jt01.liveramp.net/cached/jmx?qry=Hadoop:service=ResourceManager,name=QueueMetrics,";
 
   private final long pendingContainerLimit;
   private final long runningAppLimit;
