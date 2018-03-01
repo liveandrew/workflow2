@@ -212,12 +212,15 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
   private FlowConnector buildFlowConnector(Map<Object, Object> properties) {
+    CascadingHelper ch = CascadingHelper.get();
+
     return CascadingUtil.buildFlowConnector(
         new JobConf(),
         getPersister(),
         properties,
-        CascadingHelper.get().resolveFlowStepStrategies(),
-        CascadingHelper.get().getInvalidPropertyValues()
+        ch.getIntermediateSchemeClass(),
+        ch.resolveFlowStepStrategies(),
+        ch.getInvalidPropertyValues()
     );
   }
 
