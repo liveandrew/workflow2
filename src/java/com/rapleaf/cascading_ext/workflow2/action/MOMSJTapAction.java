@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.msj_tap.conf.InputConf;
 import com.rapleaf.cascading_ext.msj_tap.operation.MOMSJFunction;
 import com.rapleaf.cascading_ext.msj_tap.partition_mapper.IdentityPartitionMapper;
@@ -116,7 +118,10 @@ public class MOMSJTapAction<E extends Enum<E>, Key extends Comparable> extends A
     this.partitionStructure = partitionStructure;
 
     for (StoreExtractor input : this.extractors) {
-      readsFrom(input.getStore());
+      Collection<DataStore> dataStores = input.getStores();
+      for (DataStore dataStore : dataStores) {
+        readsFrom(dataStore);
+      }
     }
 
 

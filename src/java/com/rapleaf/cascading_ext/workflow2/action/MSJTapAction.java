@@ -1,6 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -128,8 +129,8 @@ public class MSJTapAction<K extends Comparable> extends CascadingAction2 {
 
     List<DataStore> dsStores = Lists.newArrayList();
     for (StoreExtractor input : asList) {
-      DataStore store = input.getStore();
-      dsStores.add(store);
+      Collection<DataStore> stores = input.getStores();
+      dsStores.addAll(stores);
     }
 
     Pipe pipe = bindSource("msj-tap", dsStores, new TapFactory() {
