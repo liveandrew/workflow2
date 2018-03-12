@@ -19,7 +19,7 @@ public class ShortReduces extends JobThresholdAlert {
       .put(JOB_COUNTER_GROUP, LAUNCHED_REDUCES)
       .get();
 
-  protected static final double TASK_TIME_THRESHOLD = Duration.ofSeconds(45).toMillis();
+  protected static final double TASK_TIME_THRESHOLD = Duration.ofSeconds(120).toMillis();
   protected static final double MIN_NUM_THRESHOLD = 1;
 
   public ShortReduces() {
