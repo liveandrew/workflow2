@@ -188,7 +188,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
     final CategoryBucketDataStore<StringList> inputSplit =
         builder().getCategoryBucketDataStore("split_store", new ThriftBucketScheme<>(StringList.class));
-    TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("data_unit"));
+    TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("string_list"));
 
     StringList prevList = new StringList(Lists.newArrayList("a"));
     StringList keepList = new StringList(Lists.newArrayList("b"));
