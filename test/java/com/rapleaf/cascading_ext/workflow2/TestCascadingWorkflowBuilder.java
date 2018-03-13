@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.thrift.TException;
 import org.junit.Before;
@@ -45,14 +46,11 @@ import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
-import com.rapleaf.support.test.NPDH;
-import com.rapleaf.types.new_person_data.DataUnit;
-import com.rapleaf.types.new_person_data.DataUnitValueUnion._Fields;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
 import com.rapleaf.types.new_person_data.IdentitySumm;
 import com.rapleaf.types.new_person_data.PIN;
 import com.rapleaf.types.new_person_data.PINAndOwners;
-import com.rapleaf.types.person_data.GenderType;
+import com.rapleaf.types.new_person_data.StringList;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -62,9 +60,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
   public static final TByteArrayExtractor DIE_EID_EXTRACTOR = new TByteArrayExtractor(DustinInternalEquiv._Fields.EID);
   public static final TByteArrayExtractor ID_SUMM_EID_EXTRACTOR = new TByteArrayExtractor(IdentitySumm._Fields.EID);
   public static final TExtractorComparator<DustinInternalEquiv, BytesWritable> DIE_EID_COMPARATOR =
-      new TExtractorComparator<DustinInternalEquiv, BytesWritable>(DIE_EID_EXTRACTOR);
-  public static final TExtractorComparator<IdentitySumm, BytesWritable> ID_SUMM_EID_COMPARATOR =
-      new TExtractorComparator<IdentitySumm, BytesWritable>(ID_SUMM_EID_EXTRACTOR);
+      new TExtractorComparator<>(DIE_EID_EXTRACTOR);
 
   public static final PIN PIN1 = PIN.email("ben@gmail.com");
   public static final PIN PIN2 = PIN.email("ben@liveramp.com");
@@ -188,18 +184,19 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
   @Test
   public void testTapVsDs() throws IOException, TException {
 
-    final SplitBucketDataStore<DataUnit, _Fields> inputSplit =
-        builder().getSplitBucketDataStore("split_store", DataUnit.class);
+    final SplitBucketDataStore<StringList, Integer> inputSplit =
+        builder().getSplitBucketDataStore("split_store", StringList.class);
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("data_unit"));
 
-    DataUnit prevDU = NPDH.getAgeDataUnit((byte)12);
-    DataUnit keepDU = NPDH.getGenderDataUnit(GenderType.MALE);
+    StringList prevList = new StringList(Lists.newArrayList("a"));
+    StringList keepList = new StringList(Lists.newArrayList("b"));
 
-    ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(_Fields.AGE.getThriftFieldId()),
-        prevDU);
 
-    ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(_Fields.GENDER.getThriftFieldId()),
-        keepDU);
+    ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(1),
+        prevList);
+
+    ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(2),
+        keepList);
 
     CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
 
@@ -207,7 +204,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
             new TapFactory() {
               @Override
               public Tap createTap() throws IOException {
-                return inputSplit.getTap(EnumSet.of(_Fields.GENDER));
+                return inputSplit.getTap(Sets.newHashSet(2));
               }
             }, new PipeFactory.Fresh()),
         new ActionCallback.Default()
@@ -215,12 +212,11 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
 
     execute(workflow.buildTail(pipe1, output));
 
-    assertCollectionEquivalent(Lists.<Tuple>newArrayList(new Tuple(keepDU)),
+    assertCollectionEquivalent(Lists.<Tuple>newArrayList(new Tuple(keepList)),
         HRap.getAllTuples(output.getTap()));
 
-    assertCollectionEquivalent(Lists.<DataUnit>newArrayList(keepDU, prevDU),
-        HRap.<DataUnit>getValuesFromBucket(inputSplit));
-
+    assertCollectionEquivalent(Lists.newArrayList(keepList, prevList),
+        HRap.getValuesFromBucket(inputSplit));
 
   }
 
