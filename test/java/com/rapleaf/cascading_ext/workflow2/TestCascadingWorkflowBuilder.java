@@ -30,6 +30,7 @@ import com.rapleaf.cascading_ext.HRap;
 import com.rapleaf.cascading_ext.assembly.Distinct;
 import com.rapleaf.cascading_ext.assembly.FastSum;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
+import com.rapleaf.cascading_ext.datastore.CategoryBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
@@ -41,6 +42,7 @@ import com.rapleaf.cascading_ext.msj_tap.store.MSJDataStore;
 import com.rapleaf.cascading_ext.msj_tap.store.TMSJDataStore;
 import com.rapleaf.cascading_ext.pipe.PipeFactory;
 import com.rapleaf.cascading_ext.tap.TapFactory;
+import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
@@ -184,18 +186,18 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
   @Test
   public void testTapVsDs() throws IOException, TException {
 
-    final SplitBucketDataStore<StringList, Integer> inputSplit =
-        builder().getSplitBucketDataStore("split_store", StringList.class);
+    final CategoryBucketDataStore<StringList> inputSplit =
+        builder().getCategoryBucketDataStore("split_store", new ThriftBucketScheme<>(StringList.class));
     TupleDataStore output = builder().getTupleDataStore(getTestRoot() + "/store1", new Fields("data_unit"));
 
     StringList prevList = new StringList(Lists.newArrayList("a"));
     StringList keepList = new StringList(Lists.newArrayList("b"));
 
 
-    ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(1),
+    ThriftBucketHelper.writeToBucket(inputSplit.getCategory("1").getBucket(),
         prevList);
 
-    ThriftBucketHelper.writeToBucket(inputSplit.getAttributeBucket().getBucket(2),
+    ThriftBucketHelper.writeToBucket(inputSplit.getCategory("2").getBucket(),
         keepList);
 
     CascadingWorkflowBuilder workflow = new CascadingWorkflowBuilder(getTestRoot() + "/e-workflow", "Test");
@@ -204,7 +206,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
             new TapFactory() {
               @Override
               public Tap createTap() throws IOException {
-                return inputSplit.getTap(Sets.newHashSet(2));
+                return inputSplit.getCategory("2").getTap();
               }
             }, new PipeFactory.Fresh()),
         new ActionCallback.Default()
