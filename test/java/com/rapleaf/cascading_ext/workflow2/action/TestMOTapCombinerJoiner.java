@@ -1,7 +1,7 @@
 package com.rapleaf.cascading_ext.workflow2.action;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -26,7 +26,7 @@ import com.rapleaf.cascading_ext.msj_tap.merger.MSJGroup;
 import com.rapleaf.cascading_ext.msj_tap.operation.functioncall.MOMSJFunctionCall;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.test.BucketHelper;
-import com.rapleaf.types.new_person_data.EidList;
+import com.rapleaf.types.new_person_data.StringList;
 
 public class TestMOTapCombinerJoiner extends WorkflowTestCase {
 
@@ -36,8 +36,8 @@ public class TestMOTapCombinerJoiner extends WorkflowTestCase {
     DataStoreBuilder builder = new DataStoreBuilder(FileSystemHelper.getFS(), getTestRoot() + "/buckets");
 
     BucketDataStore<BytesWritable> store = builder.getBucketDataStore("store1", BytesWritable.class);
-    BucketDataStore<EidList> output1 = builder.getBucketDataStore("output1", EidList.class);
-    BucketDataStore<EidList> output2 = builder.getBucketDataStore("output2", EidList.class);
+    BucketDataStore<StringList> output1 = builder.getBucketDataStore("output1", StringList.class);
+    BucketDataStore<StringList> output2 = builder.getBucketDataStore("output2", StringList.class);
 
     byte[] key1 = {0, 0};
     byte[] key2 = {0, 1};
@@ -66,21 +66,20 @@ public class TestMOTapCombinerJoiner extends WorkflowTestCase {
 
     execute(msj);
 
-    List<EidList> valuesFromBucket1 = HRap.getValuesFromBucket(output1);
+    List<StringList> valuesFromBucket1 = HRap.getValuesFromBucket(output1);
     assertCollectionEquivalent(
         Lists.newArrayList(
-            new EidList(Lists.newArrayList(ByteBuffer.wrap(key1), ByteBuffer.wrap(key2))),
-            new EidList(Lists.newArrayList(ByteBuffer.wrap(key3))
-            )),
+            new StringList(Lists.newArrayList(Arrays.toString(key1), Arrays.toString(key2))),
+            new StringList(Lists.newArrayList(Arrays.toString(key3)))),
         valuesFromBucket1
     );
 
-    List<EidList> valuesFromBucket2 = HRap.getValuesFromBucket(output2);
+    List<StringList> valuesFromBucket2 = HRap.getValuesFromBucket(output2);
     assertCollectionEquivalent(
         Lists.newArrayList(
-            new EidList(Lists.newArrayList(ByteBuffer.wrap(key1))),
-            new EidList(Lists.newArrayList(ByteBuffer.wrap(key2))),
-            new EidList(Lists.newArrayList(ByteBuffer.wrap(key3))
+            new StringList(Lists.newArrayList(Arrays.toString(key1))),
+            new StringList(Lists.newArrayList(Arrays.toString(key2))),
+            new StringList(Lists.newArrayList(Arrays.toString(key3))
             )),
         valuesFromBucket2
     );
@@ -103,8 +102,8 @@ public class TestMOTapCombinerJoiner extends WorkflowTestCase {
     public void operateInternal(MOMSJFunctionCall<OutputType> functionCall, MSJGroup<BytesWritable> group) {
       BytesWritable key = group.getKey();
       try {
-        emit(functionCall, OutputType.LIST1, new EidList(Lists.newArrayList(Bytes.bytesWritableToByteBuffer(key))));
-        emit(functionCall, OutputType.LIST2, new EidList(Lists.newArrayList(Bytes.bytesWritableToByteBuffer(key))));
+        emit(functionCall, OutputType.LIST1, new StringList(Lists.newArrayList(Arrays.toString(Bytes.getBytes(key)))));
+        emit(functionCall, OutputType.LIST2, new StringList(Lists.newArrayList(Arrays.toString(Bytes.getBytes(key)))));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -112,15 +111,15 @@ public class TestMOTapCombinerJoiner extends WorkflowTestCase {
 
     public static class MockAggregator extends MapSideJoinAggregator<TBase> {
       @Override
-      public EidList initialize() {
-        return new EidList(Lists.<ByteBuffer>newArrayList());
+      public StringList initialize() {
+        return new StringList(Lists.<String>newArrayList());
       }
 
       @Override
       public TBase partialAggregate(TBase aggregate, TupleEntry nextValue) {
-        EidList list = (EidList)nextValue.getObject("value");
-        for (ByteBuffer eid : list.get_eids()) {
-          ((EidList)aggregate).add_to_eids(eid);
+        StringList list = (StringList)nextValue.getObject("value");
+        for (String eid : list.get_strings()) {
+          ((StringList)aggregate).add_to_strings(eid);
         }
         return aggregate;
       }
@@ -129,7 +128,7 @@ public class TestMOTapCombinerJoiner extends WorkflowTestCase {
     public static class MockKeyExtractor implements KeyExtractor {
       @Override
       public ByteWritable extractKey(TBase eidList) {
-        return new ByteWritable(((EidList)eidList).get_eids().iterator().next().get(0));
+        return new ByteWritable((byte) ((StringList)eidList).get_strings().iterator().next().charAt(0));
       }
     }
   }
