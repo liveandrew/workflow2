@@ -22,7 +22,7 @@ public class OutputPerMapTask extends JobThresholdAlert {
       .put(JOB_COUNTER_GROUP, LAUNCHED_REDUCES)
       .get();
 
-  private static final long MAX_OUTPUT_THRESHOLD = ByteUnit.GIGABYTES.toBytes(5);
+  private static final long MAX_OUTPUT_THRESHOLD = ByteUnit.GIGABYTES.toBytes(8);
 
   public OutputPerMapTask() {
     super(MAX_OUTPUT_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new GreaterThan());
