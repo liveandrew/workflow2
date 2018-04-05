@@ -44,12 +44,13 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
   private static final double LOG_FACTOR = 2;
 
   public static RMJMXFlowSubmissionController production() {
-    return production(TimeUnit.HOURS, 6);
+    return production(TimeUnit.HOURS, 12);
   }
 
   public static RMJMXFlowSubmissionController production(TimeUnit maxWaitUnit, long maxWaitAmount) {
-    return new RMJMXFlowSubmissionController(
-        15000,
+    return new
+        RMJMXFlowSubmissionController(
+        7500,
         270,
         TimeUnit.MINUTES,
         1,
