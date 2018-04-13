@@ -23,6 +23,7 @@ import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
+import com.liveramp.java_support.concurrent.DaemonThreadFactory;
 import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.OldResource;
@@ -31,6 +32,7 @@ import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.support.thread.NamedThreadFactory;
 
 public abstract class BaseAction<Config> {
   private static final Logger LOG = LoggerFactory.getLogger(BaseAction.class);
@@ -219,30 +221,28 @@ public abstract class BaseAction<Config> {
   }
 
   protected void setStatusCallback(StatusCallback callback) throws IOException {
-
     statusCallback = callback;
-
-    //  only create a new thread if we have a callback we want to use
-    if (!hasStatusCallback()) {
-      statusCallbackExecutor = Executors.newSingleThreadScheduledExecutor();
-
-      statusCallbackExecutor.scheduleAtFixedRate(() -> {
-        try {
-          setStatusMessage(statusCallback.updateStatus());
-        } catch (IOException e) {
-          LOG.error("Failed to update status: ", e);
-        }
-      }, 0L, 30L, TimeUnit.SECONDS);
-
-    }
-
   }
 
 
   //  not really public : /
   public final void internalExecute(OverridableProperties parentProperties) {
 
+    ScheduledExecutorService callbackExecutor = null;
+
     try {
+
+      //  only create a new thread if we have a callback we want to use
+      if (hasStatusCallback()) {
+        callbackExecutor = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory(new NamedThreadFactory("status-callback-thread")));
+        callbackExecutor.scheduleAtFixedRate(() -> {
+          try {
+            setStatusMessage(statusCallback.updateStatus());
+          } catch (IOException e) {
+            LOG.error("Failed to update status: ", e);
+          }
+        }, 0L, 30L, TimeUnit.SECONDS);
+      }
 
       combinedProperties = stepProperties.override(parentProperties);
 
@@ -270,8 +270,8 @@ public abstract class BaseAction<Config> {
       throw wrapRuntimeException(t);
     } finally {
 
-      if (hasStatusCallback()) {
-        statusCallbackExecutor.shutdown();
+      if (callbackExecutor != null) {
+        callbackExecutor.shutdown();
       }
 
       postExecute();
@@ -279,7 +279,7 @@ public abstract class BaseAction<Config> {
   }
 
   private boolean hasStatusCallback() {
-    return statusCallbackExecutor != null;
+    return statusCallback != null;
   }
 
   protected final void internalRollback(OverridableProperties properties) {
@@ -378,6 +378,7 @@ public abstract class BaseAction<Config> {
     public long getEndTime() {
       return endTime;
     }
+
   }
 
 

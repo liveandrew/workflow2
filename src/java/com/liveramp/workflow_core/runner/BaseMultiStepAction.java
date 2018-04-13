@@ -179,4 +179,13 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     throw new RuntimeException("Cannot set a resource in a multistep action!");
   }
 
+  @Override
+  protected void setStatusCallback(StatusCallback callback) throws IOException {
+    throw new RuntimeException("Cannot set a status message in a multistep action!");
+  }
+
+  @Override
+  protected void setStatusMessage(String message) {
+    throw new RuntimeException("Cannot set a status message in a multistep action!");
+  }
 }
