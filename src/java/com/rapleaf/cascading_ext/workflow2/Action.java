@@ -157,10 +157,10 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
   @SuppressWarnings("PMD.BlacklistedMethods") //  temporary hopefully, until we get more cluster space
   private void prepDirs() throws Exception {
-    FileSystem fs = FileSystemHelper.getFS();
     for (DataStore ds : getDatastores(DSAction.CREATES, DSAction.CREATES_TEMPORARY)) {
       String uri = new URI(ds.getPath()).getPath();
       Path path = new Path(ds.getPath());
+      FileSystem fs = FileSystemHelper.getFileSystemForPath(path);
       Boolean trashEnabled = TrashHelper.isEnabled();
 
       if (fs.exists(path)) {
