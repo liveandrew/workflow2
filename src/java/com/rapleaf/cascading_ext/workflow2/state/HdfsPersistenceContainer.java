@@ -58,7 +58,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
     this.checkpointDir = checkpointDir;
     this.deleteCheckpointsOnSuccess = deleteOnSuccess;
-    this.fs = FileSystemHelper.getFS();
+    this.fs = FileSystemHelper.getFileSystemForPath(checkpointDir);
 
     this.id = id;
     this.statuses = statuses;
