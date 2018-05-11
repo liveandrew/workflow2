@@ -17,6 +17,24 @@ import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.IStep;
 
+
+/**
+ * Provides the base class for a workflow "step," the fundamental unit
+ * of progress for the frameworks that execute composite work graphs.
+ * Each workflow step contains an action ({@link BaseAction}) that provides
+ * the actual work to be done.  The step supplies the node in the workflow
+ * graph, while the action supplies the code to be executed.
+ *
+ * Additionally, a step may have a set of children (see {@link #addChild})
+ * and a set of dependencies (supplied during construction).  The workflow
+ * controls the execution of both children and dependencies.
+ *
+ * @param <Config>
+ *   The underlying configuration for this step.  Typically, this will be
+ *   a {@link Collection} of key-value pairs.  The actual configuration
+ *   object may be given to the underlying actions, which may choose to
+ *   alter their behavior based on the configuration values.
+ */
 public class BaseStep<Config> implements IStep {
 
   private final BaseAction<Config> action;

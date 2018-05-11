@@ -34,7 +34,26 @@ import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.support.thread.NamedThreadFactory;
 
+
+/**
+ * Provides the base class for a workflow "action," an executable unit
+ * that runs within a {@link BaseStep} object in composite work graphs.
+ * Each workflow step contains an action that provides
+ * the actual work to be done.  The step supplies the node in the workflow
+ * graph, while the action supplies the code to be executed.
+ *
+ * Additionally, a step may have a set of children (see {@see #addChild})
+ * and a set of dependencies (supplied during construction).  The workflow
+ * controls the execution of both children and dependencies.
+ *
+ * @param <Config> The underlying configuration for this action.  Typically, this will be a {@link
+ * Resource} that holds a special object.  The actual configuration object may be specified through
+ * {@link #setOptionObjects}.  The action's implementation may choose to alter its behavior based on
+ * the configuration values.
+ */
+
 public abstract class BaseAction<Config> {
+
   private static final Logger LOG = LoggerFactory.getLogger(BaseAction.class);
 
   private final ActionId actionId;
@@ -133,14 +152,15 @@ public abstract class BaseAction<Config> {
 
   //  inputs and outputs of the action
   public Multimap<DSAction, DataStoreInfo> getAllDataStoreInfo() {
-    return HashMultimap.create(); // TODO make Action stop storing DataStore and store DataStoreInfo in this class
+    return HashMultimap
+        .create(); // TODO make Action stop storing DataStore and store DataStoreInfo in this class
   }
 
   //  not really public : / make package private after cleanup
   public final void setOptionObjects(WorkflowStatePersistence persistence,
-                                     ResourceManager resourceManager,
-                                     ContextStorage storage,
-                                     Config context) {
+      ResourceManager resourceManager,
+      ContextStorage storage,
+      Config context) {
     this.persistence = persistence;
     this.config = context;
 
@@ -149,7 +169,6 @@ public abstract class BaseAction<Config> {
 
     initialize(context);
   }
-
 
   //  resource actions
 
@@ -191,7 +210,7 @@ public abstract class BaseAction<Config> {
   }
 
   protected <T> T get(ReadResource<T> resource) {
-    return (T)resourceManager.read(resource);
+    return (T) resourceManager.read(resource);
   }
 
   protected <T, R extends WriteResource<T>> void set(R resource, T value) {
@@ -217,6 +236,7 @@ public abstract class BaseAction<Config> {
   }
 
   protected interface StatusCallback {
+
     String updateStatus();
   }
 
@@ -234,7 +254,8 @@ public abstract class BaseAction<Config> {
 
       //  only create a new thread if we have a callback we want to use
       if (hasStatusCallback()) {
-        callbackExecutor = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory(new NamedThreadFactory("status-callback-thread")));
+        callbackExecutor = Executors.newSingleThreadScheduledExecutor(
+            new DaemonThreadFactory(new NamedThreadFactory("status-callback-thread")));
         callbackExecutor.scheduleAtFixedRate(() -> {
           try {
             setStatusMessage(statusCallback.updateStatus());
@@ -297,15 +318,13 @@ public abstract class BaseAction<Config> {
   }
 
   private static RuntimeException wrapRuntimeException(Throwable t) {
-    return (t instanceof RuntimeException) ? (RuntimeException)t : new RuntimeException(t);
+    return (t instanceof RuntimeException) ? (RuntimeException) t : new RuntimeException(t);
   }
 
   /**
    * Set an application-specific status message to display. This will be
    * visible in the logs as well as through the UI. This is a great place to
    * report progress or choices.
-   *
-   * @param statusMessage
    */
   protected void setStatusMessage(String statusMessage) throws IOException {
     LOG.info("Status Message: " + statusMessage);
@@ -363,6 +382,7 @@ public abstract class BaseAction<Config> {
   }
 
   public static class DurationInfo {
+
     private final long startTime;
     private final long endTime;
 
@@ -384,7 +404,8 @@ public abstract class BaseAction<Config> {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + " [checkpointToken=" + getActionId().getRelativeName() + "]";
+    return getClass().getSimpleName() + " [checkpointToken=" + getActionId().getRelativeName()
+        + "]";
   }
 
 }
