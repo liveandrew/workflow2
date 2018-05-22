@@ -287,7 +287,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     opts
         .setMaxConcurrentSteps(Integer.MAX_VALUE)
         .setAlertsHandler(new LoggingAlertsHandler())
-        .setNotificationLevel(WorkflowNotificationLevel.DEBUG)
+        .setNotificationLevel(WorkflowNotificationLevel.ERROR)
         .setStorage(new ContextStorage.None())
         .setStepPollInterval(6000)  // be nice to production DB
         .setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL))
