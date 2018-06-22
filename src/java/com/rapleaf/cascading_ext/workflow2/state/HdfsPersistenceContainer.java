@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -277,7 +279,9 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public void markJobCounters(String stepToken, String jobId, TwoNestedMap<String, String, Long> values) throws IOException {
-    //  no op
+    getState(stepToken).getMrJobsByID().get(jobId).setCounters(values.entrySet().stream().map(
+        entry -> new MapReduceJob.Counter(entry.getK1(), entry.getK2(), entry.getValue())).collect(Collectors.toList())
+    );
   }
 
   @Override
