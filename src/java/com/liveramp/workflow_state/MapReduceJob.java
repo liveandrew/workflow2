@@ -7,8 +7,7 @@ import com.liveramp.commons.state.TaskSummary;
 
 public class MapReduceJob {
 
-  private final List<Counter> counters;
-
+  private List<Counter> counters;
   private LaunchedJob job;
   private TaskSummary taskSummary;
 
@@ -46,6 +45,10 @@ public class MapReduceJob {
 
   public void setTaskSummary(TaskSummary taskSummary) {
     this.taskSummary = taskSummary;
+  }
+
+  public void setCounters(List<Counter> counters){
+    this.counters = counters;
   }
 
   public LaunchedJob getJob() {
