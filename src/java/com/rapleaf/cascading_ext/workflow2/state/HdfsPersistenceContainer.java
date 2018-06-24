@@ -21,7 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.resource.CheckpointUtil;
+import com.liveramp.commons.collections.nested_map.ThreeNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
+import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.commons.state.TaskSummary;
@@ -191,12 +193,33 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   @Override
   public ThreeNestedMap<String, String, String, Long> getCountersByStep() throws IOException {
-    throw new NotImplementedException();
+
+    ThreeNestedCountingMap<String, String, String> counters = new ThreeNestedCountingMap<>(0L);
+    for (Map.Entry<String, StepState> step : statuses.entrySet()) {
+      for (Map.Entry<String, MapReduceJob> jobEntry : step.getValue().getMrJobsByID().entrySet()) {
+        for (MapReduceJob.Counter counter : jobEntry.getValue().getCounters()) {
+          counters.incrementAndGet(step.getKey(), counter.getGroup(), counter.getName(), counter.getValue());
+        }
+      }
+    }
+
+    return counters;
   }
 
   @Override
   public TwoNestedMap<String, String, Long> getFlatCounters() {
-    throw new NotImplementedException();
+
+    TwoNestedCountingMap<String, String> counters = new TwoNestedCountingMap<>(0L);
+    for (Map.Entry<String, StepState> step : statuses.entrySet()) {
+      for (Map.Entry<String, MapReduceJob> jobEntry : step.getValue().getMrJobsByID().entrySet()) {
+        for (MapReduceJob.Counter counter : jobEntry.getValue().getCounters()) {
+          counters.incrementAndGet(counter.getGroup(), counter.getName(), counter.getValue());
+        }
+      }
+    }
+
+    return counters;
+
   }
 
   @Override
