@@ -73,6 +73,11 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     return (T)this;
   }
 
+  public T clearSuccessCallbacks(){
+    onSuccess.clear();
+    return (T) this;
+  }
+
   public List<SuccessCallback> getSuccessCallbacks() {
     return onSuccess;
   }
