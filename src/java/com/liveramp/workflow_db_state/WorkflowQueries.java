@@ -564,7 +564,7 @@ public class WorkflowQueries {
                                                                                      WorkflowExecutionStatus status,
                                                                                      Integer limit) throws IOException {
 
-    return getExecutionsToAttempts(databases, id, null, name, scope, appType, startedAfter, startedBefore, status, limit);
+    return getExecutionsToAttempts(databases, id, null, name, scope, null, appType, startedAfter, startedBefore, status, limit);
   }
 
   public static Multimap<WorkflowExecution, WorkflowAttempt> getExecutionsToAttempts(IDatabases databases,
@@ -572,6 +572,7 @@ public class WorkflowQueries {
                                                                                      String dashboard,
                                                                                      String name,
                                                                                      String scope,
+                                                                                     String host,
                                                                                      Integer appType,
                                                                                      Long startedAfter,
                                                                                      Long startedBefore,
@@ -587,7 +588,9 @@ public class WorkflowQueries {
 
     Multimap<WorkflowExecution, WorkflowAttempt> executionAttempts = HashMultimap.create();
     for (WorkflowAttempt attempt : getWorkflowAttempts(databases, executionsById.keySet())) {
-      executionAttempts.put(executionsById.get((long)attempt.getWorkflowExecutionId()), attempt);
+      if (host == null || host.equals(attempt.getHost())) {
+        executionAttempts.put(executionsById.get((long)attempt.getWorkflowExecutionId()), attempt);
+      }
     }
 
     return executionAttempts;
