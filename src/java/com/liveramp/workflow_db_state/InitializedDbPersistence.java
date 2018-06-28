@@ -11,6 +11,7 @@ import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_state.InitializedPersistence;
 
 import static com.liveramp.workflow_db_state.DbPersistence.HEARTBEAT_INTERVAL;
@@ -63,33 +64,37 @@ public class InitializedDbPersistence implements InitializedPersistence {
 
       LOG.info("Marking workflow stopped");
 
-      WorkflowAttempt attempt = getAttempt()
-          .setEndTime(System.currentTimeMillis());
+      WorkflowAttempt attempt = getAttempt();
 
-      if (attempt.getStatus() == WorkflowAttemptStatus.INITIALIZING.ordinal()) {
-        LOG.info("Workflow initialized without executing, assuming failure");
-        attempt.setStatus(WorkflowAttemptStatus.FAILED.ordinal());
-      } else {
+      if (WorkflowEnums.LIVE_ATTEMPT_STATUSES.contains(attempt.getStatus())) {
 
-        if (WorkflowQueries.workflowComplete(getExecution())) {
-          LOG.info("Marking execution as complete");
-          save(getExecution()
-              .setStatus(WorkflowExecutionStatus.COMPLETE.ordinal())
-              .setEndTime(System.currentTimeMillis())
-          );
-        }
+        attempt.setEndTime(System.currentTimeMillis());
 
-        LOG.info("Stopping attempt: " + attempt);
-        if (attempt.getStatus() == WorkflowAttemptStatus.FAIL_PENDING.ordinal()) {
+        if (attempt.getStatus() == WorkflowAttemptStatus.INITIALIZING.ordinal()) {
+          LOG.info("Workflow initialized without executing, assuming failure");
           attempt.setStatus(WorkflowAttemptStatus.FAILED.ordinal());
-        } else if (attempt.getStatus() == WorkflowAttemptStatus.SHUTDOWN_PENDING.ordinal()) {
-          attempt.setStatus(WorkflowAttemptStatus.SHUTDOWN.ordinal());
-        } else if (attempt.getStatus() == WorkflowAttemptStatus.FAILED.ordinal()) {
-          LOG.info("Attempt was already stopped (via shutdown hook probably)");
         } else {
-          attempt.setStatus(WorkflowAttemptStatus.FINISHED.ordinal());
-        }
 
+          if (WorkflowQueries.workflowComplete(getExecution())) {
+            LOG.info("Marking execution as complete");
+            save(getExecution()
+                .setStatus(WorkflowExecutionStatus.COMPLETE.ordinal())
+                .setEndTime(System.currentTimeMillis())
+            );
+          }
+
+          LOG.info("Stopping attempt: " + attempt);
+          if (attempt.getStatus() == WorkflowAttemptStatus.FAIL_PENDING.ordinal()) {
+            attempt.setStatus(WorkflowAttemptStatus.FAILED.ordinal());
+          } else if (attempt.getStatus() == WorkflowAttemptStatus.SHUTDOWN_PENDING.ordinal()) {
+            attempt.setStatus(WorkflowAttemptStatus.SHUTDOWN.ordinal());
+          } else {
+            attempt.setStatus(WorkflowAttemptStatus.FINISHED.ordinal());
+          }
+
+        }
+      } else {
+        LOG.info("Attempt was already stopped (via shutdown hook probably)");
       }
 
       LOG.info("Marking status of attempt " + attempt.getId() + " as " + attempt.getStatus());
