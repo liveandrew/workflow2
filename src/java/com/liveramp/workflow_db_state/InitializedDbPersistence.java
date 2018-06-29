@@ -117,6 +117,7 @@ public class InitializedDbPersistence implements InitializedPersistence {
     }
   }
 
+  @Override
   public void shutdown() {
 
     killHeartbeat();

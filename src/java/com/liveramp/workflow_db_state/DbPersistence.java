@@ -474,6 +474,7 @@ public class DbPersistence implements WorkflowStatePersistence {
     init.markWorkflowStopped();
   }
 
+  @Override
   public void shutdown() {
     init.shutdown();
   }
