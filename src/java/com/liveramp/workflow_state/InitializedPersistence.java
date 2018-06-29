@@ -9,6 +9,10 @@ public interface InitializedPersistence {
   long getExecutionId() throws IOException;
   long getAttemptId() throws IOException;
 
+  //  indicate that the workflow is stopped
   public void markWorkflowStopped() throws IOException;
+
+  //  terminate all resources. no state cleanup is done before terminating.
+  public void shutdown() throws IOException;
 
 }

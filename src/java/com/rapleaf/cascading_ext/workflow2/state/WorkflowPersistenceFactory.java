@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -26,6 +27,7 @@ import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 public abstract class WorkflowPersistenceFactory<INITIALIZED extends InitializedPersistence, OPTS extends BaseWorkflowOptions<OPTS>> {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowPersistenceFactory.class);
+
 
   public synchronized InitializedWorkflow<INITIALIZED, OPTS> initialize(OPTS options) throws IOException {
     return initialize(getName(options), options);
@@ -78,7 +80,6 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
 
     return new InitializedWorkflow<>(workflowName, options, initialized, this, resourceManager, hook);
   }
-
 
   public static String findDefaultValue(BaseWorkflowOptions options, String property, String defaultValue) {
 
