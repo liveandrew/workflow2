@@ -474,6 +474,10 @@ public class DbPersistence implements WorkflowStatePersistence {
     init.markWorkflowStopped();
   }
 
+  public void shutdown() {
+    init.shutdown();
+  }
+
   @Override
   public StepStatus getStatus(String stepToken) throws IOException {
     synchronized (lock) {

@@ -103,11 +103,30 @@ public class InitializedDbPersistence implements InitializedPersistence {
 
     }
 
+    killHeartbeat();
+
+  }
+
+  private void killHeartbeat(){
+
     heartbeatThread.interrupt();
     try {
       heartbeatThread.join();
     } catch (InterruptedException e) {
       LOG.error("Failed to interrupt heartbeat thread!");
+    }
+  }
+
+  public void shutdown() {
+
+    killHeartbeat();
+
+    synchronized (lock){
+      try {
+        db.close();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
