@@ -48,6 +48,14 @@ public class ResourceDeclarerContainer<ID, RESOURCE_ROOT> implements ResourceDec
   }
 
   @Override
+  public <T> Resource<T> findResource(String name) {
+    if (!managedIds.contains(name)) {
+      throw new RuntimeException("Resource not found: " + name);
+    }
+    return new ResourceImpl<T>(name);
+  }
+
+  @Override
   public <T> ReadResource<T> getReadPermission(Resource<T> resource) {
     return (ResourceImpl<T>)resource;
   }

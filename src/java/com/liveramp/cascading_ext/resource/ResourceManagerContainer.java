@@ -74,6 +74,11 @@ public class ResourceManagerContainer<RESOURCE_ROOT> implements ResourceManager 
   }
 
   @Override
+  public <T> Resource<T> findResource(String name) {
+    return declarer.findResource(name);
+  }
+
+  @Override
   public <T> ReadResource<T> getReadPermission(Resource<T> resource) {
     return declarer.getReadPermission(resource);
   }

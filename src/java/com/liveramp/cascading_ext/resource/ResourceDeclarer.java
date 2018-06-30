@@ -12,6 +12,8 @@ public interface ResourceDeclarer {
 
   <T> Resource<T> emptyResource(String name);
 
+  <T> Resource<T> findResource(String name);
+
   <T> ReadResource<T> getReadPermission(Resource<T> resource);
 
   <T> WriteResource<T> getWritePermission(Resource<T> resource);
@@ -32,6 +34,11 @@ public interface ResourceDeclarer {
 
     @Override
     public <T> Resource<T> emptyResource(String name) {
+      throw new NotImplementedException();
+    }
+
+    @Override
+    public <T> Resource<T> findResource(String name) {
       throw new NotImplementedException();
     }
 
