@@ -54,6 +54,11 @@ public class ForwardingPersistence implements WorkflowStatePersistence {
   }
 
   @Override
+  public void shutdown() throws IOException {
+    delegatePersistence.shutdown();
+  }
+
+  @Override
   public void markStepReverted(String stepToken) throws IOException {
     delegatePersistence.markStepReverted(stepToken);
   }

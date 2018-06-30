@@ -60,6 +60,11 @@ public class HdfsInitializedPersistence implements InitializedPersistence {
     //  no op
   }
 
+  @Override
+  public void shutdown() throws IOException {
+    fs.close();
+  }
+
   public FileSystem getFs() {
     return fs;
   }

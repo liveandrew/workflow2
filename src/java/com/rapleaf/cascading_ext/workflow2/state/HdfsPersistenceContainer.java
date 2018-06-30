@@ -93,6 +93,12 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
 
   }
 
+  @Override
+  public void shutdown() throws IOException {
+    initializedPersistence.shutdown();
+    fs.close();
+  }
+
   private void clearCheckpoints() throws IOException {
     LOG.debug("Deleting checkpoints in checkpoint dir " + checkpointDir);
     CheckpointUtil.clearCheckpoints(fs, new Path(checkpointDir));
