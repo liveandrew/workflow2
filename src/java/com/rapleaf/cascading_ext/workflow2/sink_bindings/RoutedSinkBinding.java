@@ -116,7 +116,7 @@ public class RoutedSinkBinding implements SinkBinding {
         routeToSinkFields);
   }
 
-  private static class RoutingSinkTapFactory extends TapFactory {
+  private static class RoutingSinkTapFactory implements TapFactory {
 
     private final String routeField;
     private final String valueField;
