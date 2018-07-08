@@ -67,7 +67,7 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
 
     Set<BaseStep<WorkflowRunner.ExecuteConfig>> tails = Collections.<BaseStep<WorkflowRunner.ExecuteConfig>>singleton(s3);
     WorkflowUtil.setCheckpointPrefixes(tails);
-    assertTrue(WorkflowDiagram.getOrphanedTailSteps(tails).isEmpty());
+    assertTrue(WorkflowDiagram.getOrphanedTailSteps(new MSAUnwrapper<>(), tails).isEmpty());
   }
 
   @Test
@@ -80,7 +80,7 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     Step s4 = new Step(new FakeAction("s4", new DataStore[]{ds}, new DataStore[]{ds}), s3);
     Set<BaseStep<WorkflowRunner.ExecuteConfig>> tails = Collections.<BaseStep<WorkflowRunner.ExecuteConfig>>singleton(s4);
     WorkflowUtil.setCheckpointPrefixes(tails);
-    Set<BaseStep<WorkflowRunner.ExecuteConfig>> orphans = WorkflowDiagram.getOrphanedTailSteps(tails);
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> orphans = WorkflowDiagram.getOrphanedTailSteps(new MSAUnwrapper<>(), tails);
     assertTrue(orphans.isEmpty());
   }
 
@@ -91,9 +91,12 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     Step s1 = new Step(new FakeAction("s1", new DataStore[]{ds}, new DataStore[]{ds}));
     Step s2 = new Step(new FakeAction("s2", new DataStore[]{ds}, new DataStore[]{ds}), s1);
     Step s3 = new Step(new FakeMultistepAction("s3", getTestRoot(), new Step[]{}), s2);
-    Set<Step> tails = Collections.singleton(s3);
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> tails = Collections.singleton(s3);
     WorkflowUtil.setCheckpointPrefixes(tails);
-    Set<BaseStep<WorkflowRunner.ExecuteConfig>> orphans = WorkflowDiagram.getOrphanedTailSteps(tails);
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> orphans = WorkflowDiagram.getOrphanedTailSteps(
+        new MSAUnwrapper<>(),
+        tails
+    );
     assertTrue(orphans.isEmpty());
   }
 
@@ -139,12 +142,12 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
 
   @Test
   public void testNoOrphanedTails() throws Exception {
-    Step realTail = getComplexNestedWorkflowTail();
-    Set<BaseStep<WorkflowRunner.ExecuteConfig>> allSteps = WorkflowDiagram.reachableSteps(Collections.singleton(realTail));
+    BaseStep<WorkflowRunner.ExecuteConfig> realTail = getComplexNestedWorkflowTail();
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> allSteps = WorkflowDiagram.reachableSteps(new MSAUnwrapper<>(), Collections.singleton(realTail));
     for (BaseStep<WorkflowRunner.ExecuteConfig> badTail : allSteps) {
       if (badTail != realTail) {
         try {
-          WorkflowDiagram.verifyNoOrphanedTailSteps(Collections.singleton(badTail));
+          WorkflowDiagram.verifyNoOrphanedTailSteps(new MSAUnwrapper<>(), Collections.singleton(badTail));
           fail("badTail: " + badTail);
         } catch (RuntimeException e) {
           // pass
@@ -173,30 +176,30 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     Step s4_1 = new Step(new FakeAction("1", new DataStore[]{d1}, new DataStore[]{d1, id1}));
     Step s4_2 = new Step(new FakeAction("2", new DataStore[]{d2}, new DataStore[]{id2}));
     Step s4_3 = new Step(new FakeAction("3", new DataStore[]{d1, id1, id2},
-      new DataStore[]{d4}), s4_1, s4_2);
+        new DataStore[]{d4}), s4_1, s4_2);
     Step s4 = new Step(new FakeMultistepAction("s4", getTestRoot(), new Step[]{s4_1, s4_2, s4_3}), s2);
 
     Step s5_1_1 = new Step(new FakeAction("1", new DataStore[]{d2, d3}, new DataStore[]{d3}));
     Step s5_1_2 = new Step(new FakeAction("2", new DataStore[]{d3}, new DataStore[]{id3}),
-      s5_1_1);
+        s5_1_1);
     Step s5_1 = new Step(new FakeMultistepAction("1", getTestRoot(), new Step[]{s5_1_1, s5_1_2}));
 
     Step s5_2 = new Step(new FakeAction("2", new DataStore[]{d3}, new DataStore[]{id4}), s3);
     Step s5_3 = new Step(new FakeAction("3", new DataStore[]{id4}, new DataStore[]{d6}), s5_2);
     Step s5_4 = new Step(new FakeAction("4", new DataStore[]{id3, id4}, new DataStore[]{d5}),
-      s5_1, s5_2);
+        s5_1, s5_2);
     Step s5 = new Step(new FakeMultistepAction("s5", getTestRoot(), new Step[]{s5_1, s5_2, s5_3, s5_4}), s2, s3);
 
     Step s6 = new Step(new FakeAction("s6", new DataStore[]{d5, d6}, new DataStore[]{d7}), s5);
 
     return new Step(new FakeAction("s7", new DataStore[]{d1, d4, d7}, new DataStore[0]), s4,
-      s6);
+        s6);
   }
 
   private void setupWorkflowGraph(Step tailStep) throws IOException {
-    HashSet<Step> tail = Sets.newHashSet(tailStep);
+    Set<BaseStep<WorkflowRunner.ExecuteConfig>> tail = Sets.newHashSet(tailStep);
     WorkflowUtil.setCheckpointPrefixes(tail);
-    graph = new EdgeReversedGraph<>(WorkflowDiagram.dependencyGraphFromTailSteps(tail));
+    graph = new EdgeReversedGraph<>(WorkflowDiagram.dependencyGraphFromTailSteps(new MSAUnwrapper<>(), tail));
 
     populateNameToVertex(graph);
   }
@@ -213,12 +216,12 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
 
   private void verifyNumVertices(int expectedNumVertices) {
     assertEquals("Wrong number of vertices in workflow graph.", expectedNumVertices,
-      graph.vertexSet().size());
+        graph.vertexSet().size());
   }
 
   private void verifyNumEdges(int expectedNumEdges) {
     assertEquals("Wrong number of edges in workflow graph.", expectedNumEdges,
-      graph.edgeSet().size());
+        graph.edgeSet().size());
   }
 
   private void verifyVertexInGraph(String vname) {
