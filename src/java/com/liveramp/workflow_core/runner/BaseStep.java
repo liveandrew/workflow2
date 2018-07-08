@@ -35,7 +35,7 @@ import com.liveramp.workflow_state.IStep;
  *   object may be given to the underlying actions, which may choose to
  *   alter their behavior based on the configuration values.
  */
-public class BaseStep<Config> implements IStep {
+public class BaseStep<Config> implements IStep  {
 
   private final BaseAction<Config> action;
   private final Set<BaseStep<Config>> dependencies;

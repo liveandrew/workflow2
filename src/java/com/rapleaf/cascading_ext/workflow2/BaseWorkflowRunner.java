@@ -3,7 +3,6 @@ package com.rapleaf.cascading_ext.workflow2;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 import com.google.common.collect.Multimap;
@@ -100,7 +99,12 @@ public class BaseWorkflowRunner<Config> {
     this.rollbackBehavior = options.getRollBackBehavior();
 
     WorkflowUtil.setCheckpointPrefixes(tailSteps);
-    this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(Sets.newHashSet(tailSteps));
+    this.dependencyGraph = WorkflowDiagram.dependencyGraphFromTailSteps(
+        new MSAUnwrapper<>(),
+        Sets.newHashSet(tailSteps)
+    );
+
+    WorkflowDiagram.verifyUniqueCheckpointTokens(this.dependencyGraph.vertexSet());
 
     this.persistence = initializedData.prepare(dependencyGraph);
 
