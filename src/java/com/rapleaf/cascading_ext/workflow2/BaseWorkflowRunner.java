@@ -104,7 +104,7 @@ public class BaseWorkflowRunner<Config> {
 
     this.persistence = initializedData.prepare(dependencyGraph);
 
-    removeRedundantEdges(dependencyGraph);
+    WorkflowUtil.removeRedundantEdges(dependencyGraph);
     setStepContextObjects(dependencyGraph);
 
     assertSandbox(options.getSandboxDir());
@@ -154,37 +154,7 @@ public class BaseWorkflowRunner<Config> {
       );
     }
   }
-
-  private void removeRedundantEdges(DirectedGraph<BaseStep<Config>, DefaultEdge> graph) {
-    for (BaseStep<Config> step : graph.vertexSet()) {
-      Set<BaseStep<Config>> firstDegDeps = new HashSet<>();
-      Set<BaseStep<Config>> secondPlusDegDeps = new HashSet<>();
-      for (DefaultEdge edge : graph.outgoingEdgesOf(step)) {
-        BaseStep<Config> depStep = graph.getEdgeTarget(edge);
-        firstDegDeps.add(depStep);
-        getDepsRecursive(depStep, secondPlusDegDeps, graph);
-      }
-
-      for (BaseStep<Config> firstDegDep : firstDegDeps) {
-        if (secondPlusDegDeps.contains(firstDegDep)) {
-          LOG.debug("Found a redundant edge from " + step.getCheckpointToken()
-              + " to " + firstDegDep.getCheckpointToken());
-          graph.removeAllEdges(step, firstDegDep);
-        }
-      }
-    }
-  }
-
-  private void getDepsRecursive(BaseStep<Config> step, Set<BaseStep<Config>> deps, DirectedGraph<BaseStep<Config>, DefaultEdge> graph) {
-    for (DefaultEdge edge : graph.outgoingEdgesOf(step)) {
-      BaseStep<Config> s = graph.getEdgeTarget(edge);
-      boolean isNew = deps.add(s);
-      if (isNew) {
-        getDepsRecursive(s, deps, graph);
-      }
-    }
-  }
-
+  
   private static String canonicalPath(String path) throws IOException {
     return new File(path).getCanonicalPath();
   }
