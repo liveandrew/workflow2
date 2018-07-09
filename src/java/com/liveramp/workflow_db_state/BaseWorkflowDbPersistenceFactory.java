@@ -1,6 +1,7 @@
 package com.liveramp.workflow_db_state;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -108,9 +109,9 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
       Set<DataStoreInfo> allStores = Sets.newHashSet();
 
       for (IStep step : flatSteps.vertexSet()) {
-        for (DataStoreInfo store : step.getDataStores().values()) {
-          allStores.add(store);
-        }
+        //  the fact that this is a warning is a flaw in Java's generics
+        @SuppressWarnings("unchecked") Collection<DataStoreInfo> values = step.getDataStores().values();
+        allStores.addAll(values);
       }
 
       Map<DataStoreInfo, WorkflowAttemptDatastore> datastores = Maps.newHashMap();
@@ -143,7 +144,8 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
       for (IStep step : flatSteps.vertexSet()) {
         StepAttempt stepAttempt = attempts.get(step.getCheckpointToken());
 
-        for (Map.Entry<DSAction, DataStoreInfo> entry : step.getDataStores().entries()) {
+        @SuppressWarnings("unchecked") Collection<Map.Entry<DSAction, DataStoreInfo>> entries = step.getDataStores().entries();
+        for (Map.Entry<DSAction, DataStoreInfo> entry : entries) {
           rldb.stepAttemptDatastores().create(
               stepAttempt.getId(),
               datastores.get(entry.getValue()).getIntId(),
