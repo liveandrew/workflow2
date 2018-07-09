@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import org.jetbrains.annotations.NotNull;
 
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.WriteResource;
@@ -17,6 +18,8 @@ import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.step.NoOp;
+import com.liveramp.workflow_state.IStep;
+import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram;
 
 public class BaseMultiStepAction<Config> extends BaseAction<Config> {
 
@@ -80,47 +83,23 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     setSubStepsFromTails(Arrays.asList(tails));
   }
 
-  protected final void setSubStepsFromTails(Collection<? extends BaseStep<Config>> tails) {
-    Set<BaseStep<Config>> steps = new HashSet<>(tails);
-    List<BaseStep<Config>> queue = new ArrayList<>(tails);
-    int index = 0;
-    while (index < queue.size()) {
-      BaseStep<Config> curStep = queue.get(index);
-      Set<BaseStep<Config>> deps = curStep.getDependencies();
-      for (BaseStep<Config> curDep : deps) {
-        if (!steps.contains(curDep)) {
-          steps.add(curDep);
-          queue.add(curDep);
-        }
-      }
-      index++;
-    }
-    setSubSteps(steps);
-  }
-
   public Set<BaseStep<Config>> getSubSteps() {
     verifyStepsAreSet();
     return new HashSet<>(steps);
   }
 
+  protected final void setSubStepsFromTails(Collection<? extends BaseStep<Config>> tails) {
+    setSubSteps(WorkflowDiagram.getSubStepsFromTails(tails));
+  }
+
   public Set<BaseStep<Config>> getHeadSteps() {
     verifyStepsAreSet();
-    Set<BaseStep<Config>> heads = new HashSet<>();
-    for (BaseStep<Config> s : steps) {
-      if (s.getDependencies().isEmpty()) {
-        heads.add(s);
-      }
-    }
-    return heads;
+    return WorkflowDiagram.getHeads(steps);
   }
 
   public Set<BaseStep<Config>> getTailSteps() {
     verifyStepsAreSet();
-    Set<BaseStep<Config>> possibleTails = new HashSet<>(steps);
-    for (BaseStep<Config> s : steps) {
-      possibleTails.removeAll(s.getDependencies());
-    }
-    return possibleTails;
+    return WorkflowDiagram.getTails(steps);
   }
 
   private void verifyStepsAreSet() {

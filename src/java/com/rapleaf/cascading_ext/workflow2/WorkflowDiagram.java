@@ -1,7 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
@@ -222,4 +225,42 @@ public class WorkflowDiagram {
       dependencyGraph.addEdge(step, dep);
     }
   }
+
+  public static <Dep extends IStep<Dep>> Set<Dep> getSubStepsFromTails(Collection<? extends Dep> tails) {
+    Set<Dep> steps = new HashSet<>(tails);
+    List<Dep> queue = new ArrayList<>(tails);
+    int index = 0;
+    while (index < queue.size()) {
+      Dep curStep = queue.get(index);
+      Set<Dep> deps = curStep.getDependencies();
+      for (Dep curDep : deps) {
+        if (!steps.contains(curDep)) {
+          steps.add(curDep);
+          queue.add(curDep);
+        }
+      }
+      index++;
+    }
+    return steps;
+  }
+
+  public static <Dep extends IStep<Dep>> Set<Dep> getHeads(Collection<? extends Dep> steps) {
+    Set<Dep> heads = new HashSet<>();
+    for (Dep s : steps) {
+      if (s.getDependencies().isEmpty()) {
+        heads.add(s);
+      }
+    }
+    return heads;
+  }
+
+  public static <Dep extends IStep<Dep>> Set<Dep> getTails(Collection<? extends Dep> steps){
+    Set<Dep> possibleTails = new HashSet<>(steps);
+    for (Dep s : steps) {
+      possibleTails.removeAll(s.getDependencies());
+    }
+    return possibleTails;
+  }
+
+
 }
