@@ -26,17 +26,8 @@ public class MSAUnwrapper<Config> implements WorkflowDiagram.GraphUnwrapper<Base
   }
 
   @Override
-  public Set<BaseStep<Config>> getDependencies(BaseStep<Config> configBaseStep) {
-    return configBaseStep.getDependencies();
-  }
-
-  @Override
   public Set<BaseStep<Config>> getHeadSteps(BaseMultiStepAction<Config> configBaseMultiStepAction) {
     return configBaseMultiStepAction.getHeadSteps();
   }
 
-  @Override
-  public Set<BaseStep<Config>> getChildren(BaseStep<Config> configBaseStep) {
-    return configBaseStep.getChildren();
-  }
 }

@@ -14,22 +14,19 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 import com.liveramp.workflow_core.runner.BaseMultiStepAction;
 import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_core.runner.ExecutionNode;
+import com.liveramp.workflow_state.IStep;
 
 
 public class WorkflowDiagram {
 
-  interface GraphUnwrapper<Base, Multi> {
+  interface GraphUnwrapper<Base extends IStep<Base>, Multi> {
     Multi getMultiNode(Base node);
     Set<Base> getMultiSubSteps(Multi multi);
     Set<Base> getTailSteps(Multi multi);
     Set<Base> getHeadSteps(Multi multi);
-
-    //  TODO it might be worth making Base just BaseAction and unwrapping this generic.  not sure.
-    Set<Base> getChildren(Base base);
-    Set<Base> getDependencies(Base base);
   }
 
-  public static <Base, Multi> DirectedGraph<Base, DefaultEdge> dependencyGraphFromTailSteps(
+  public static <Base extends IStep<Base>, Multi> DirectedGraph<Base, DefaultEdge> dependencyGraphFromTailSteps(
       GraphUnwrapper<Base, Multi> expander,
       Set<Base> tailSteps) {
     verifyNoOrphanedTailSteps(expander, tailSteps);
@@ -37,11 +34,11 @@ public class WorkflowDiagram {
   }
 
 
-  private static <Base, Multi> DirectedGraph<Base, DefaultEdge> dependencyGraphFromTailStepsNoVerification(
+  private static <Base extends IStep<Base>, Multi> DirectedGraph<Base, DefaultEdge> dependencyGraphFromTailStepsNoVerification(
       GraphUnwrapper<Base, Multi> expander,
       Set<Base> tailSteps) {
 
-    Set<Base> tailsAndDependencies = addDependencies(expander, tailSteps);
+    Set<Base> tailsAndDependencies = addDependencies(tailSteps);
     DirectedGraph<Base, DefaultEdge> dependencyGraph = createGraph(expander, tailsAndDependencies);
 
     Queue<Base> multiSteps = new LinkedList<>(filterMultiStep(expander, tailsAndDependencies));
@@ -75,7 +72,7 @@ public class WorkflowDiagram {
     return dependencyGraph;
   }
 
-  private static <Base, Multi> DirectedGraph<Base, DefaultEdge> createGraph(
+  private static <Base extends IStep<Base>, Multi> DirectedGraph<Base, DefaultEdge> createGraph(
       GraphUnwrapper<Base, Multi> graphUnwrapper,
       Set<Base> tailsAndDependencies) {
     DirectedGraph<Base, DefaultEdge> dependencyGraph = new SimpleDirectedGraph<>(DefaultEdge.class);
@@ -85,14 +82,14 @@ public class WorkflowDiagram {
     return dependencyGraph;
   }
 
-  public static <Base, Multi> void verifyNoOrphanedTailSteps(GraphUnwrapper<Base, Multi> unwrapper, Set<Base> tailSteps) {
+  public static <Base extends IStep<Base>, Multi> void verifyNoOrphanedTailSteps(GraphUnwrapper<Base, Multi> unwrapper, Set<Base> tailSteps) {
     Set<Base> orphans = getOrphanedTailSteps(unwrapper, tailSteps);
     if (orphans.size() != 0) {
       throw new RuntimeException("Orphaned tail steps:\n" + Joiner.on("\n").join(orphans));
     }
   }
 
-  public static <Base, Multi> Set<Base> reachableSteps(GraphUnwrapper<Base, Multi> unwrapper, Set<Base> steps) {
+  public static <Base extends IStep<Base>, Multi> Set<Base> reachableSteps(GraphUnwrapper<Base, Multi> unwrapper, Set<Base> steps) {
     Set<Base> reachableSteps = new HashSet<>();
     Stack<Base> toProcess = new Stack<>();
     toProcess.addAll(steps);
@@ -100,14 +97,14 @@ public class WorkflowDiagram {
       Base step = toProcess.pop();
       if (!reachableSteps.contains(step)) {
         reachableSteps.add(step);
-        toProcess.addAll(unwrapper.getChildren(step));
-        toProcess.addAll(unwrapper.getDependencies(step));
+        toProcess.addAll(step.getChildren());
+        toProcess.addAll(step.getDependencies());
       }
     }
     return reachableSteps;
   }
 
-  static <Base, Multi> Set<Base> getOrphanedTailSteps(GraphUnwrapper<Base, Multi> unwrapper, Set<Base> tailSteps) {
+  static <Base extends IStep<Base>, Multi> Set<Base> getOrphanedTailSteps(GraphUnwrapper<Base, Multi> unwrapper, Set<Base> tailSteps) {
     return getOrphanedTailSteps(
         unwrapper,
         dependencyGraphFromTailStepsNoVerification(unwrapper, tailSteps),
@@ -115,12 +112,12 @@ public class WorkflowDiagram {
     );
   }
 
-  private static <Base, Multi> Set<Base> getOrphanedTailSteps(GraphUnwrapper<Base, Multi> unwrapper, DirectedGraph<Base, DefaultEdge> dependencyGraph, Set<Base> allSteps) {
+  private static <Base extends IStep<Base>, Multi> Set<Base> getOrphanedTailSteps(GraphUnwrapper<Base, Multi> unwrapper, DirectedGraph<Base, DefaultEdge> dependencyGraph, Set<Base> allSteps) {
     Set<Base> tailSteps = new HashSet<>();
     for (Base step : allSteps) {
 
       if(unwrapper.getMultiNode(step) == null){
-        for (Base child : unwrapper.getChildren(step)) {
+        for (Base child : step.getChildren()) {
           if (!dependencyGraph.containsVertex(child) && unwrapper.getMultiNode(child) == null) {
             tailSteps.add(child);
           }
@@ -131,9 +128,9 @@ public class WorkflowDiagram {
     return tailSteps;
   }
 
-  public static <T> void verifyUniqueCheckpointTokens(Iterable<BaseStep<T>> steps) {
-    Set<String> tokens = new HashSet<String>();
-    for (BaseStep<T> step : steps) {
+  public static <T> void verifyUniqueCheckpointTokens(Iterable<? extends IStep> steps) {
+    Set<String> tokens = new HashSet<>();
+    for (IStep step : steps) {
       String token = step.getCheckpointToken();
       if (tokens.contains(token)) {
         throw new IllegalArgumentException(step.toString() + " has a non-unique checkpoint token!");
@@ -142,20 +139,20 @@ public class WorkflowDiagram {
     }
   }
 
-  private static <Base, Multi> Set<Base> addDependencies(GraphUnwrapper<Base, Multi> unwrapper, Set<Base> steps) {
+  private static <Base extends IStep<Base>, Multi> Set<Base> addDependencies(Set<Base> steps) {
     Queue<Base> toProcess = new LinkedList<>(steps);
     Set<Base> visited = new HashSet<>();
     while (!toProcess.isEmpty()) {
       Base step = toProcess.poll();
       if (!visited.contains(step)) {
         visited.add(step);
-        toProcess.addAll(unwrapper.getDependencies(step));
+        toProcess.addAll(step.getDependencies());
       }
     }
     return visited;
   }
 
-  private static <Base, Multi> Set<Base> filterMultiStep(GraphUnwrapper<Base, Multi> unwrapper, Iterable<Base> steps) {
+  private static <Base extends IStep<Base>, Multi> Set<Base> filterMultiStep(GraphUnwrapper<Base, Multi> unwrapper, Iterable<Base> steps) {
     Set<Base> multiSteps = new HashSet<>();
     for (Base step : steps) {
 
@@ -168,7 +165,7 @@ public class WorkflowDiagram {
     return multiSteps;
   }
 
-  private static <Base, Multi> void copyOutgoingEdges(GraphUnwrapper<Base, Multi> unwrapper, DirectedGraph<Base, DefaultEdge> dependencyGraph, Base s, Multi msa) {
+  private static <Base extends IStep<Base>, Multi> void copyOutgoingEdges(GraphUnwrapper<Base, Multi> unwrapper, DirectedGraph<Base, DefaultEdge> dependencyGraph, Base s, Multi msa) {
     // next, the head steps of this multistep, which are naturally dependent
     // upon nothing, should depend on all the dependencies of the multistep
     for (DefaultEdge dependedUponEdge : dependencyGraph.outgoingEdgesOf(s)) {
@@ -181,7 +178,7 @@ public class WorkflowDiagram {
     }
   }
 
-  private static <Base, Multi> void copyIncomingEdges(GraphUnwrapper<Base, Multi> unwrapper, DirectedGraph<Base, DefaultEdge> dependencyGraph, Base s, Multi msa) {
+  private static <Base extends IStep<Base>, Multi> void copyIncomingEdges(GraphUnwrapper<Base, Multi> unwrapper, DirectedGraph<Base, DefaultEdge> dependencyGraph, Base s, Multi msa) {
     // anyone who was dependent on this multistep should instead be
     // dependent on the tail steps of the multistep
     for (DefaultEdge dependsOnThis : dependencyGraph.incomingEdgesOf(s)) {
@@ -193,7 +190,7 @@ public class WorkflowDiagram {
     }
   }
 
-  private static <Base, Multi> void pullUpSubstepsAndAdjustCheckpointTokens(
+  private static <Base extends IStep<Base>, Multi> void pullUpSubstepsAndAdjustCheckpointTokens(
       GraphUnwrapper<Base, Multi> unwrapper,
       DirectedGraph<Base, DefaultEdge> dependencyGraph,
       Queue<Base> multiSteps,
@@ -215,12 +212,12 @@ public class WorkflowDiagram {
     }
   }
 
-  private static <Base, Multi> void addStepAndDependencies(
+  private static <Base extends IStep<Base>, Multi> void addStepAndDependencies(
       GraphUnwrapper<Base, Multi> unwrapper,
       DirectedGraph<Base, DefaultEdge> dependencyGraph,
       Base step) {
     dependencyGraph.addVertex(step);
-    for (Base dep : unwrapper.getDependencies(step)) {
+    for (Base dep : step.getDependencies()) {
       dependencyGraph.addVertex(dep);
       dependencyGraph.addEdge(step, dep);
     }
