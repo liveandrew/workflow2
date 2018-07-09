@@ -134,5 +134,5 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
   }
 
 
-  public abstract WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<IStep, DefaultEdge> flatSteps);
+  public abstract <S extends IStep> WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<S, DefaultEdge> flatSteps);
 }
