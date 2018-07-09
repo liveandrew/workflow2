@@ -98,7 +98,7 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
   }
 
   @Override
-  public synchronized DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<IStep, DefaultEdge> flatSteps) {
+  public synchronized <S extends IStep> DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<S, DefaultEdge> flatSteps) {
     IWorkflowDb rldb = persistence.getDb();
 
     try {
