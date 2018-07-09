@@ -94,8 +94,8 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
   }
 
   @Override
-  public WorkflowStatePersistence prepare(HdfsInitializedPersistence persistence,
-                                          DirectedGraph<IStep, DefaultEdge> flatSteps) {
+  public <S extends IStep> WorkflowStatePersistence prepare(HdfsInitializedPersistence persistence,
+                                          DirectedGraph<S, DefaultEdge> flatSteps) {
 
     FileSystem fs = persistence.getFs();
 
@@ -103,7 +103,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
 
     try {
 
-      for (IStep val : flatSteps.vertexSet()) {
+      for (S val : flatSteps.vertexSet()) {
 
         Set<String> dependencies = Sets.newHashSet();
         for (DefaultEdge edge : flatSteps.outgoingEdgesOf(val)) {

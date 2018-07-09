@@ -41,7 +41,7 @@ public class FailingPersistenceFactory<INITIALIZED extends InitializedPersistenc
   }
 
   @Override
-  public WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<IStep, DefaultEdge> flatSteps) {
+  public <S extends IStep> WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<S, DefaultEdge> flatSteps) {
     return new FailingPersistence(delegate.prepare(persistence, flatSteps), stepsToFailFullNames);
   }
 

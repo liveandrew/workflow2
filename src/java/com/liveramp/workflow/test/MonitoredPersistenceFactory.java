@@ -32,7 +32,7 @@ public class MonitoredPersistenceFactory<INITIALIZED extends InitializedPersiste
   }
 
   @Override
-  public MonitoredPersistence prepare(INITIALIZED initialized, DirectedGraph<IStep, DefaultEdge> flatSteps) {
+  public <S extends IStep> MonitoredPersistence prepare(INITIALIZED initialized, DirectedGraph<S, DefaultEdge> flatSteps) {
     return new MonitoredPersistence(delegate.prepare(initialized, flatSteps));
   }
 
