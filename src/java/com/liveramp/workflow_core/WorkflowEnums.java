@@ -31,13 +31,22 @@ public class WorkflowEnums {
       WorkflowAttemptStatus.INITIALIZING
   );
 
+  private static final Set<WorkflowAttemptStatus> EXECUTING_ATTEMPT_STATUS = Sets.newHashSet(
+      WorkflowAttemptStatus.RUNNING,
+      WorkflowAttemptStatus.FAIL_PENDING,
+      WorkflowAttemptStatus.SHUTDOWN_PENDING
+  );
+
   public static final Set<Integer> LIVE_ATTEMPT_STATUSES = Sets.newHashSet();
+  public static final Set<Integer> EXECUTING_ATTEMPT_STATUSES = Sets.newHashSet();
 
   static {
     for (WorkflowAttemptStatus status : LIVE_ATTEMPT_STATUS) {
       LIVE_ATTEMPT_STATUSES.add(status.ordinal());
     }
-
+    for (WorkflowAttemptStatus status : EXECUTING_ATTEMPT_STATUS) {
+      EXECUTING_ATTEMPT_STATUSES.add(status.ordinal());
+    }
   }
 
   //  for forward execution
