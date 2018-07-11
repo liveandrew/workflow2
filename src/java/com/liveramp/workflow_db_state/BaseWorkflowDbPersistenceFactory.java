@@ -15,6 +15,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
@@ -58,6 +59,7 @@ public class BaseWorkflowDbPersistenceFactory<OPTS extends BaseWorkflowOptions<O
                                                                   String launchJar,
                                                                   Set<WorkflowRunnerNotification> configuredNotifications,
                                                                   AlertsHandler providedHandler,
+                                                                  Class<? extends ResourceDeclarerFactory> resourceFactory,
                                                                   String remote,
                                                                   String implementationBuild) throws IOException {
 
