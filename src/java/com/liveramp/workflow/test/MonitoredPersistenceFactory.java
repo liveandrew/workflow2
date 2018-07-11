@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_state.IStep;
@@ -27,8 +28,8 @@ public class MonitoredPersistenceFactory<INITIALIZED extends InitializedPersiste
   }
 
   @Override
-  public INITIALIZED initializeInternal(String name, String scopeId, String description, AppType appType, String host, String username, String pool, String priority, String launchDir, String launchJar, Set<WorkflowRunnerNotification> configuredNotifications, AlertsHandler providedHandler, String remote, String implementationBuild) throws IOException {
-    return delegate.initializeInternal(name, scopeId, description, appType, host, username, pool, priority, launchDir, launchJar, configuredNotifications, providedHandler, remote, implementationBuild);
+  public INITIALIZED initializeInternal(String name, String scopeId, String description, AppType appType, String host, String username, String pool, String priority, String launchDir, String launchJar, Set<WorkflowRunnerNotification> configuredNotifications, AlertsHandler providedHandler, Class<? extends ResourceDeclarerFactory> resourceFactory, String remote, String implementationBuild) throws IOException {
+    return delegate.initializeInternal(name, scopeId, description, appType, host, username, pool, priority, launchDir, launchJar, configuredNotifications, providedHandler, resourceFactory, remote, implementationBuild);
   }
 
   @Override

@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.resource.CheckpointUtil;
+import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
@@ -56,6 +57,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
                                                        String launchJar,
                                                        Set<WorkflowRunnerNotification> configuredNotifications,
                                                        AlertsHandler providedHandler,
+                                                       Class<? extends ResourceDeclarerFactory> resourceFactory,
                                                        String remote,
                                                        String implementationBuild) throws IOException {
 

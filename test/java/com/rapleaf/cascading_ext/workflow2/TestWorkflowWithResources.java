@@ -58,7 +58,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
 
   private ResourceDeclarer getDeclarer(IRlDb rldb, DbStorage.Factory storage) throws IOException {
 
-    ResourceDeclarerContainer<String, ResourceRoot> declarer = new ResourceDeclarerContainer<>(
+    ResourceDeclarerContainer<ResourceRoot> declarer = new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
         new RootManager<>(
             new DbStorageRootDeterminer(rldb),
@@ -79,7 +79,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
 
   private ResourceDeclarer getDeclarer(IRlDb rldb, HdfsStorage.Factory storage, String workflowRoot) throws IOException {
 
-    ResourceDeclarerContainer<String, String> declarer = new ResourceDeclarerContainer<>(
+    ResourceDeclarerContainer<String> declarer = new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
         new RootManager<>(
             new HdfsStorageRootDeterminer(workflowRoot),
