@@ -11,7 +11,7 @@ import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
 
-public class ResourceDeclarerContainer<ID, RESOURCE_ROOT> implements ResourceDeclarer {
+public class ResourceDeclarerContainer<RESOURCE_ROOT> implements ResourceDeclarer {
 
   private final Tagger tagger;
   private final RootManager<RESOURCE_ROOT> rootManager;

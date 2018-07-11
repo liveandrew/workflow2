@@ -18,9 +18,14 @@ public interface ResourceDeclarer {
 
   <T> WriteResource<T> getWritePermission(Resource<T> resource);
 
+  class NotImplementedFactory implements ResourceDeclarerFactory {
+    @Override
+    public ResourceDeclarer create() throws IOException {
+      return new NotImplemented();
+    }
+  }
 
   public static class NotImplemented implements ResourceDeclarer {
-
 
     @Override
     public ResourceManager create(long version, String versionType) {
