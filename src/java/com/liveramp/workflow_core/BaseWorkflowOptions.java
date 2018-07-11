@@ -1,5 +1,6 @@
 package com.liveramp.workflow_core;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
+import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
@@ -50,6 +52,8 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private RollbackBehavior rollBackOnFailure = new RollbackBehavior.Unconditional(false);
 
   private TrackerURLBuilder urlBuilder;
+
+  private Class<? extends ResourceDeclarerFactory> declarerFactory;
   private ResourceDeclarer resourceDeclarer;
   private HostnameProvider hostnameProvider;
 
@@ -229,6 +233,26 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     return (T)this;
   }
 
+  public T setResourceManagerFactory(Class<? extends ResourceDeclarerFactory> factoryClass)  {
+    this.declarerFactory = factoryClass;
+    //  this isn't ideal (would rather do it during initialization)
+    //  but a few workflows set the declarer in the options and then immediately retrieve
+    //  it and who am I to judge them.
+    try {
+      ResourceDeclarerFactory factory = factoryClass.newInstance();
+      this.resourceDeclarer = factory.create();
+    } catch(Exception e){
+      throw new RuntimeException(e);
+    }
+
+    return (T) this;
+  }
+
+  public Class<? extends ResourceDeclarerFactory> getResourceManagerFactory(){
+    return this.declarerFactory;
+  }
+
+  //  if you use a background workflow, you must use the factory version of this method above
   public T setResourceManager(ResourceDeclarer resourceManager) {
     this.resourceDeclarer = resourceManager;
     return (T)this;
@@ -297,7 +321,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
         .setStepPollInterval(6000)  // be nice to production DB
         .setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL))
         .setHostnameProvider(new DefaultHostnameProvider())
-        .setResourceManager(new ResourceManager.NotImplemented())
+        .setResourceManagerFactory(ResourceManager.NotImplementedFactory.class)
         .addSuccessCallback(DataDogDurationPusher.production());
   }
 
@@ -318,7 +342,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
         .setStepPollInterval(100)
         .setUrlBuilder(new TrackerURLBuilder.None())
         .setHostnameProvider(new FixedHostnameProvider())
-        .setResourceManager(new ResourceDeclarer.NotImplemented());
+        .setResourceManagerFactory(ResourceManager.NotImplementedFactory.class);
   }
 
 }

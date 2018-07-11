@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
+import com.liveramp.cascading_ext.resource.ResourceDeclarerContainer;
+import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
@@ -51,6 +53,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
         RunJarUtil.getLaunchJarName(),
         options.getEnabledNotifications(),
         options.getAlertsHandler(),
+        options.getResourceManagerFactory(),
         scmInfo.getGitRemote(),
         scmInfo.getRevision()
     );
@@ -107,6 +110,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
                                                  String launchJar,
                                                  Set<WorkflowRunnerNotification> configuredNotifications,
                                                  AlertsHandler providedHandler,
+                                                 Class<? extends ResourceDeclarerFactory> resourceFactory,
                                                  String remote,
                                                  String implementationBuild) throws IOException;
 
