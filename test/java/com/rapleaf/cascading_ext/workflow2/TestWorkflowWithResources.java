@@ -70,7 +70,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
 
   @NotNull
   private DbStorage.Factory getStorage(IRlDb rldb) {
-    return DbResourceManager.dbStorage(rldb, Maps.<Class, JsonReader.ClassFactory>newHashMap());
+    return DbResourceManager.dbStorage(rldb);
   }
 
   private HdfsStorage.Factory getHdfsStorage() {
