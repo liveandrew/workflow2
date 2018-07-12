@@ -305,8 +305,8 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   //  static helpers
 
-  public static ConcreteOptions production() {
-    ConcreteOptions opts = new ConcreteOptions(new NestedProperties(Maps.newHashMap(), false));
+  public static ExecutionOptions production() {
+    ExecutionOptions opts = new ExecutionOptions(new NestedProperties(Maps.newHashMap(), false));
     configureProduction(opts);
     return opts;
   }
@@ -325,10 +325,10 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
         .addSuccessCallback(DataDogDurationPusher.production());
   }
 
-  public static ConcreteOptions test() {
+  public static ExecutionOptions test() {
     Rap.assertTest();
 
-    ConcreteOptions opts = new ConcreteOptions(new NestedProperties(Maps.newHashMap(), false));
+    ExecutionOptions opts = new ExecutionOptions(new NestedProperties(Maps.newHashMap(), false));
     configureTest(opts);
     return opts;
   }
