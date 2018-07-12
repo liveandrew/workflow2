@@ -26,12 +26,12 @@ public class InitializedDbPersistence implements InitializedPersistence {
   private final Thread heartbeatThread;
   private final AlertsHandler providedHandler;
 
-  public InitializedDbPersistence(long workflowAttemptId, IWorkflowDb db, boolean runMode, AlertsHandler providedHandler) {
+  public InitializedDbPersistence(long workflowAttemptId, IWorkflowDb db, boolean isLive, AlertsHandler providedHandler) {
     this.db = db;
     this.db.disableCaching();
     this.workflowAttemptId = workflowAttemptId;
 
-    if (runMode) {
+    if (isLive) {
       this.heartbeatThread = new Thread(new Heartbeat());
       this.heartbeatThread.setDaemon(true);
       this.heartbeatThread.start();
@@ -107,13 +107,14 @@ public class InitializedDbPersistence implements InitializedPersistence {
 
   }
 
-  private void killHeartbeat(){
-
-    heartbeatThread.interrupt();
-    try {
-      heartbeatThread.join();
-    } catch (InterruptedException e) {
-      LOG.error("Failed to interrupt heartbeat thread!");
+  private void killHeartbeat() {
+    if (heartbeatThread != null) {
+      heartbeatThread.interrupt();
+      try {
+        heartbeatThread.join();
+      } catch (InterruptedException e) {
+        LOG.error("Failed to interrupt heartbeat thread!");
+      }
     }
   }
 
@@ -122,7 +123,7 @@ public class InitializedDbPersistence implements InitializedPersistence {
 
     killHeartbeat();
 
-    synchronized (lock){
+    synchronized (lock) {
       try {
         db.close();
       } catch (IOException e) {

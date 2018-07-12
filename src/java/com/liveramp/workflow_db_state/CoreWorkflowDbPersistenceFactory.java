@@ -1,6 +1,7 @@
 package com.liveramp.workflow_db_state;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang.SerializationUtils;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotification;
+import com.liveramp.databases.workflow_db.models.BackgroundAttemptInfo;
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
@@ -36,6 +39,7 @@ import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
+import com.liveramp.workflow_core.StepStateManager;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.IStep;
@@ -43,10 +47,15 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public abstract class CoreWorkflowDbPersistenceFactory<
+public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     OPTS extends BaseWorkflowOptions<OPTS>,
-    WORKFLOW extends InitializedWorkflow<InitializedDbPersistence, OPTS>> extends WorkflowPersistenceFactory<InitializedDbPersistence, OPTS, WORKFLOW> {
+    WORKFLOW extends InitializedWorkflow<S, InitializedDbPersistence, OPTS>> extends WorkflowPersistenceFactory<S, InitializedDbPersistence, OPTS, WORKFLOW> {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
+
+  public CoreWorkflowDbPersistenceFactory(StepStateManager<S> manager) {
+    super(manager);
+  }
+
 
   @Override
   public synchronized InitializedDbPersistence initializeInternal(String name,
@@ -90,7 +99,8 @@ public abstract class CoreWorkflowDbPersistenceFactory<
         configuredNotifications,
         execution,
         remote,
-        implementationBuild
+        implementationBuild,
+        resourceFactory
     );
 
     assertOnlyLiveAttempt(workflowDb, execution, attempt);
@@ -98,11 +108,12 @@ public abstract class CoreWorkflowDbPersistenceFactory<
     long workflowAttemptId = attempt.getId();
     LOG.info("Using new attempt: " + attempt + " id " + workflowAttemptId);
 
-    return new InitializedDbPersistence(attempt.getId(), workflowDb, true, providedHandler);
+    return new InitializedDbPersistence(attempt.getId(), workflowDb, getManager().isLive(), providedHandler);
   }
 
   @Override
-  public synchronized <S extends IStep> DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<S, DefaultEdge> flatSteps) {
+  public synchronized DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<S, DefaultEdge> flatSteps) {
+
     IWorkflowDb rldb = persistence.getDb();
 
     try {
@@ -112,9 +123,8 @@ public abstract class CoreWorkflowDbPersistenceFactory<
       Long executionId = persistence.getExecutionId();
       Set<DataStoreInfo> allStores = Sets.newHashSet();
 
-      for (IStep step : flatSteps.vertexSet()) {
-        //  the fact that this is a warning is a flaw in Java's generics
-        @SuppressWarnings("unchecked") Collection<DataStoreInfo> values = step.getDataStores().values();
+      for (S step : flatSteps.vertexSet()) {
+        Collection<DataStoreInfo> values = step.getDataStores().values();
         allStores.addAll(values);
       }
 
@@ -137,7 +147,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<
       }
 
       Map<String, StepAttempt> attempts = Maps.newHashMap();
-      for (IStep step : flatSteps.vertexSet()) {
+      for (S step : flatSteps.vertexSet()) {
         StepAttempt stepAttempt = createStepAttempt(rldb, step, workflowAttemptId, completeSteps);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
       }
@@ -145,7 +155,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<
       //  save created steps
       rldb.commit();
 
-      for (IStep step : flatSteps.vertexSet()) {
+      for (S step : flatSteps.vertexSet()) {
         StepAttempt stepAttempt = attempts.get(step.getCheckpointToken());
 
         @SuppressWarnings("unchecked") Collection<Map.Entry<DSAction, DataStoreInfo>> entries = step.getDataStores().entries();
@@ -284,7 +294,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<
     return str;
   }
 
-  private WorkflowAttempt createAttempt(IDatabases databases, String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution.Attributes execution, String remote, String implementationBuild) throws IOException {
+  private WorkflowAttempt createAttempt(IDatabases databases, String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution.Attributes execution, String remote, String implementationBuild, Class<? extends ResourceDeclarerFactory> resourceFactory) throws IOException {
     IWorkflowDb rldb = databases.getWorkflowDb();
 
     Map<AlertSeverity, String> recipients = Maps.newHashMap();
@@ -292,6 +302,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<
       recipients.put(severity, getEmail(providedHandler, AlertRecipients.engineering(severity)));
     }
 
+    StepStateManager<S> manager = getManager();
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setStatus(WorkflowAttemptStatus.INITIALIZING.ordinal())
         .setDescription(truncateDescription(description))
@@ -299,10 +310,28 @@ public abstract class CoreWorkflowDbPersistenceFactory<
         .setLaunchJar(launchJar)
         .setErrorEmail(recipients.get(AlertSeverity.ERROR))     //  TODO remove these on attempt once notifications redone
         .setInfoEmail(recipients.get(AlertSeverity.INFO))
-        .setLastHeartbeat(System.currentTimeMillis())
         .setScmRemote(remote)
         .setCommitRevision(implementationBuild);
+
+    if (manager.isLive()) {
+      attempt.setLastHeartbeat(System.currentTimeMillis());
+    }else{
+      attempt.setLastHeartbeat(0L);
+    }
+
     attempt.save();
+
+    if(!manager.isLive()) {
+      BackgroundAttemptInfo backgroundInfo = rldb.backgroundAttemptInfos().create(attempt.getId());
+
+      if(resourceFactory != null){
+        backgroundInfo.setResourceManagerFactory(resourceFactory.getName());
+        //  this is dumb, but I don't want to clean up Resource right now to fix it.
+        backgroundInfo.setResourceManagerVersionClass(InitializedDbPersistence.class.getName());
+        backgroundInfo.save();
+      }
+
+    }
 
 
     for (WorkflowRunnerNotification notification : configuredNotifications) {
@@ -342,7 +371,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<
   }
 
 
-  private StepAttempt createStepAttempt(IWorkflowDb rldb, IStep step, Long attemptId, Set<String> completeSteps) throws IOException {
+  private StepAttempt createStepAttempt(IWorkflowDb rldb, S step, Long attemptId, Set<String> completeSteps) throws IOException {
 
     String token = step.getCheckpointToken();
 
@@ -353,6 +382,17 @@ public abstract class CoreWorkflowDbPersistenceFactory<
         step.getActionClass(),
         ""
     );
+
+    StepStateManager<S> manager = getManager();
+    Serializable context = manager.getStepContext(step);
+    if (context != null) {
+      rldb.backgroundStepAttemptInfos().create(
+          model.getId(),
+          SerializationUtils.serialize(context),
+          System.currentTimeMillis(),
+          manager.getPrereqCheckCooldown(step)
+      );
+    }
 
     return model;
 

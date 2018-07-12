@@ -229,12 +229,18 @@ public class WorkflowQueries {
   }
 
   public static ProcessStatus getProcessStatus(long fetchTime, WorkflowAttempt attempt, WorkflowExecution execution, int missedHeartbeatsThreshold) {
+
     Long lastHeartbeat = attempt.getLastHeartbeat();
 
     Integer status = attempt.getStatus();
 
     if (!WorkflowEnums.LIVE_ATTEMPT_STATUSES.contains(status)) {
       return ProcessStatus.STOPPED;
+    }
+
+    //  background attempts never time out
+    if(attempt.getLastHeartbeat() == 0L){
+      return ProcessStatus.ALIVE;
     }
 
     //  assume dead (OOME killed, etc) if no heartbeat for 4x interval

@@ -2,6 +2,7 @@ package com.liveramp.workflow_db_state;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,7 @@ import com.liveramp.commons.state.LaunchedJob;
 import com.liveramp.commons.state.TaskFailure;
 import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
+import com.liveramp.databases.workflow_db.models.BackgroundStepAttemptInfo;
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.MapreduceCounter;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
@@ -41,7 +44,6 @@ import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
-import com.liveramp.java_support.functional.Either;
 import com.liveramp.java_support.web.LRHttpUtils;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
@@ -55,6 +57,7 @@ import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_db_state.json.WorkflowJSON;
+import com.rapleaf.jack.queries.where_operators.EqualTo;
 
 public class DbPersistence implements WorkflowStatePersistence {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
@@ -484,6 +487,27 @@ public class DbPersistence implements WorkflowStatePersistence {
     synchronized (lock) {
       return WorkflowQueries.getStepStatuses(init.getDb(), init.getAttemptId(), stepToken).get(stepToken);
     }
+  }
+
+  @Override
+  public Serializable getContext(String stepToken) throws IOException {
+
+    byte[] serializedContext;
+
+    synchronized (lock) {
+
+      StepAttempt step = getStep(stepToken);
+      BackgroundStepAttemptInfo context = Accessors.only(init.getDb().backgroundStepAttemptInfos().query()
+          .whereStepAttemptId(new EqualTo<>(step.getId()))
+          .find()
+      );
+
+      serializedContext = context.getSerializedContext();
+
+    }
+
+    return (Serializable)SerializationUtils.deserialize(serializedContext);
+
   }
 
   @Override
