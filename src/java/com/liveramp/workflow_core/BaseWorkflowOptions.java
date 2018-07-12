@@ -305,12 +305,6 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   //  static helpers
 
-  public static BaseWorkflowOptions production() {
-    BaseWorkflowOptions opts = new BaseWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
-    configureProduction(opts);
-    return opts;
-  }
-
   protected static void configureProduction(BaseWorkflowOptions opts) {
     Rap.assertProduction();
     opts
@@ -324,15 +318,6 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
         .setResourceManagerFactory(ResourceManager.NotImplementedFactory.class)
         .addSuccessCallback(DataDogDurationPusher.production());
   }
-
-  public static BaseWorkflowOptions test() {
-    Rap.assertTest();
-
-    BaseWorkflowOptions opts = new BaseWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
-    configureTest(opts);
-    return opts;
-  }
-
 
   protected static void configureTest(BaseWorkflowOptions opts) {
     opts.setMaxConcurrentSteps(1)
