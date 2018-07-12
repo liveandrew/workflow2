@@ -34,7 +34,7 @@ public abstract class WorkflowPersistenceFactory<
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowPersistenceFactory.class);
 
 
-  public synchronized InitializedWorkflow<INITIALIZED, OPTS> initialize(OPTS options) throws IOException {
+  public synchronized WORKFLOW initialize(OPTS options) throws IOException {
     return initialize(getName(options), options);
   }
 
