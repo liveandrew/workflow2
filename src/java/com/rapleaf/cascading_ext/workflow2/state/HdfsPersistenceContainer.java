@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +120,11 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   @Override
   public StepStatus getStatus(String stepToken) throws IOException {
     return getState(stepToken).getStatus();
+  }
+
+  @Override
+  public Serializable getContext(String stepToken) throws IOException {
+    return null;
   }
 
   @Override

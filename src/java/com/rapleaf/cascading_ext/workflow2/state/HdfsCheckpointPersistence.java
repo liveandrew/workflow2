@@ -24,14 +24,16 @@ import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
-import com.liveramp.workflow_state.IStep;
+import com.liveramp.workflow_core.JVMState;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.support.Rap;
 
-public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsInitializedPersistence, WorkflowOptions, HadoopWorkflow> {
+public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, HdfsInitializedPersistence, WorkflowOptions, HadoopWorkflow> {
+
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
   private final String checkpointDir;
@@ -42,6 +44,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
   }
 
   public HdfsCheckpointPersistence(String checkpointDir, boolean deleteOnSuccess) {
+    super(new JVMState());
     this.checkpointDir = checkpointDir;
     this.deleteOnSuccess = deleteOnSuccess;
   }
@@ -103,8 +106,8 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
   }
 
   @Override
-  public <S extends IStep> WorkflowStatePersistence prepare(HdfsInitializedPersistence persistence,
-                                          DirectedGraph<S, DefaultEdge> flatSteps) {
+  public WorkflowStatePersistence prepare(HdfsInitializedPersistence persistence,
+                                          DirectedGraph<Step, DefaultEdge> flatSteps) {
 
     FileSystem fs = persistence.getFs();
 
@@ -112,7 +115,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
 
     try {
 
-      for (S val : flatSteps.vertexSet()) {
+      for (Step val : flatSteps.vertexSet()) {
 
         Set<String> dependencies = Sets.newHashSet();
         for (DefaultEdge edge : flatSteps.outgoingEdgesOf(val)) {

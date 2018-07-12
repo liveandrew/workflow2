@@ -1,6 +1,7 @@
 package com.liveramp.workflow.test;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -86,6 +87,11 @@ public class ForwardingPersistence implements WorkflowStatePersistence {
   @Override
   public StepStatus getStatus(String stepToken) throws IOException {
     return delegatePersistence.getStatus(stepToken);
+  }
+
+  @Override
+  public Serializable getContext(String stepToken) throws IOException {
+    return delegatePersistence.getContext(stepToken);
   }
 
   @Override

@@ -5,14 +5,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.hp.gagawa.java.elements.S;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import com.liveramp.cascading_ext.resource.ResourceDeclarerContainer;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_core.JVMState;
+import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.IStep;
@@ -20,15 +24,17 @@ import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class MonitoredPersistenceFactory extends WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> {
+public class MonitoredPersistenceFactory extends WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> {
 
-  private final WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate;
+  private final WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate;
 
-  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate) {
+  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate) {
+    super(new JVMState());
     this.delegate = delegate;
   }
 
@@ -43,7 +49,7 @@ public class MonitoredPersistenceFactory extends WorkflowPersistenceFactory<Init
   }
 
   @Override
-  public <S extends IStep> MonitoredPersistence prepare(InitializedDbPersistence initialized, DirectedGraph<S, DefaultEdge> flatSteps) {
+  public  MonitoredPersistence prepare(InitializedDbPersistence initialized, DirectedGraph<Step, DefaultEdge> flatSteps) {
     return new MonitoredPersistence(delegate.prepare(initialized, flatSteps));
   }
 

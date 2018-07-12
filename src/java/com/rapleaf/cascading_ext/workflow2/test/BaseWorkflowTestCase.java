@@ -73,11 +73,11 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(Sets.newHashSet(new Step(action)), resourceManager);
   }
 
-  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps) throws IOException {
+  public WorkflowRunner execute(Set<Step> steps) throws IOException {
     return execute(steps, context);
   }
 
-  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, WorkflowOptions options) throws IOException {
+  public WorkflowRunner execute(Set<Step> steps, WorkflowOptions options) throws IOException {
     return execute(steps, options, context, ResourceManagers.inMemoryResourceManager());
   }
 
@@ -89,11 +89,11 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(Sets.newHashSet(step), options, context, ResourceManagers.inMemoryResourceManager());
   }
 
-  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps, ContextStorage storage) throws IOException {
+  public WorkflowRunner execute(Set<Step> steps, ContextStorage storage) throws IOException {
     return execute(steps, WorkflowOptions.test(), storage, ResourceManagers.inMemoryResourceManager());
   }
 
-  public WorkflowRunner execute(Set<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps,
+  public WorkflowRunner execute(Set<Step> steps,
                                 WorkflowOptions options,
                                 ContextStorage storage,
                                 ResourceDeclarer manager) throws IOException {
@@ -175,7 +175,6 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
         workflowName,
         WorkflowOptions.test()
             .setResourceManager(declarer));
-
   }
 
 

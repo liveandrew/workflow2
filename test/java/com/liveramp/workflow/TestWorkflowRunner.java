@@ -27,7 +27,9 @@ import cascading.flow.FlowProcess;
 import cascading.operation.BaseOperation;
 import cascading.operation.Filter;
 import cascading.operation.FilterCall;
+import cascading.pipe.Checkpoint;
 import cascading.pipe.Each;
+import cascading.pipe.GroupBy;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
@@ -69,6 +71,7 @@ import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
+import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_core.step.NoOp;
 import com.liveramp.workflow_db_state.DbPersistence;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
@@ -1575,7 +1578,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     Step step = new Step(new NoOpAction("no-op"));
 
-    WorkflowRunner runner = new WorkflowRunner(workflow, Sets.<Step>newHashSet(step));
+    WorkflowRunner runner = new WorkflowRunner(workflow, Sets.newHashSet(step));
     runner.run();
 
     dbInitialized = workflow.getInitializedPersistence();
@@ -1864,7 +1867,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     try {
       runner.run();
       fail();
-    }catch(Exception e){
+    } catch (Exception e) {
       //  expected
     }
 
@@ -1890,7 +1893,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     try {
       runner.run();
       fail();
-    }catch(Exception e){
+    } catch (Exception e) {
       //  expected
     }
 

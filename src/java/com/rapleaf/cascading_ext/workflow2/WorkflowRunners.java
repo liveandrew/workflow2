@@ -7,6 +7,7 @@ import java.util.function.Function;
 
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
+import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
@@ -37,13 +38,15 @@ public class WorkflowRunners {
     WorkflowRunners.run(new HdfsCheckpointPersistence(hdfsPath), workflowName, options, constructor, new NoOp<>());
   }
 
-  public static <INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>> void run(
-      WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions, WORKFLOW> persistenceFactory,
+
+  public static <INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, WorkflowOptions>> void run(
+      WorkflowPersistenceFactory<Step, INITIALIZED, WorkflowOptions, WORKFLOW> persistenceFactory,
       String workflowName,
       WorkflowOptions options,
       WorkflowBuilder<INITIALIZED, WORKFLOW> constructor,
       PostRunCallback<INITIALIZED, WORKFLOW> callback
   ) throws IOException {
+
 
     WORKFLOW initialized = null;
 
@@ -68,13 +71,13 @@ public class WorkflowRunners {
 
   }
 
-  public interface WorkflowBuilder<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>>
+  public interface WorkflowBuilder<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, WorkflowOptions>>
       extends Function<WORKFLOW, Set<Step>> {}
 
-  public interface PostRunCallback<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>>
+  public interface PostRunCallback<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, WorkflowOptions>>
       extends Consumer<WORKFLOW> {}
 
-  public static class NoOp<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>> implements PostRunCallback<INITIALIZED, WORKFLOW>{
+  public static class NoOp<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, WorkflowOptions>> implements PostRunCallback<INITIALIZED, WORKFLOW>{
     @Override
     public void accept(WORKFLOW initialized) {
       //  nope

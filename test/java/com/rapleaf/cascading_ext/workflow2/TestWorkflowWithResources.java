@@ -28,7 +28,6 @@ import com.liveramp.resource_db_manager.DbStorage;
 import com.liveramp.resource_db_manager.DbStorageRootDeterminer;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.db_schemas.rldb.IRlDb;
@@ -103,7 +102,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     Step step = new Step(new SetResource("step-1", resource));
     Step step2 = new Step(new FailingAction("step-2"), step);
 
-    InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> workflow = initializeWorkflow("Test Workflow", declarer);
+    InitializedWorkflow workflow = initializeWorkflow("Test Workflow", declarer);
 
     WorkflowRunner runner = new WorkflowRunner(
         workflow,
@@ -208,7 +207,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     Step step = new Step(new NoOpAction("step-1"));
     Step step2 = new Step(new FailingAction("step-2"), step);
 
-    InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> workflow = initializeWorkflow(
+    InitializedWorkflow workflow = initializeWorkflow(
         "Test Workflow",
         getDeclarer(rldb, getStorage(rldb))
     );
@@ -275,7 +274,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   @Test
   public void testContextTool() throws IOException {
 
-    InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> workflow = initializeWorkflow();
+    InitializedWorkflow workflow = initializeWorkflow();
     ResourceManager resourceManager = workflow.getManager();
 
     SimpleContext context = new SimpleContext();

@@ -14,19 +14,18 @@ import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.functional.Fn;
 import com.liveramp.java_support.functional.Fns;
+import com.liveramp.workflow_core.JVMState;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
-import com.liveramp.workflow_state.IStep;
-import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
+import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class FailingPersistenceFactory extends WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> {
+public class FailingPersistenceFactory extends WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> {
 
-  protected final WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate;
+  protected final WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate;
   private final Set<String> stepsToFailFullNames;
 
   public FailingPersistenceFactory(WorkflowPersistenceFactory delegate, StepNameBuilder stepNameBuilder) {
@@ -37,6 +36,7 @@ public class FailingPersistenceFactory extends WorkflowPersistenceFactory<Initia
    * @param stepNameBuilders any given steps are failed after they finish executing
    */
   public FailingPersistenceFactory(WorkflowPersistenceFactory delegate, Set<StepNameBuilder> stepNameBuilders) {
+    super(new JVMState());
     this.delegate = delegate;
     this.stepsToFailFullNames = Sets.newHashSet(Fns.map(new Fn<StepNameBuilder, String>() {
       @Override
@@ -47,7 +47,7 @@ public class FailingPersistenceFactory extends WorkflowPersistenceFactory<Initia
   }
 
   @Override
-  public <S extends IStep> WorkflowStatePersistence prepare(InitializedDbPersistence persistence, DirectedGraph<S, DefaultEdge> flatSteps) {
+  public WorkflowStatePersistence prepare(InitializedDbPersistence persistence, DirectedGraph<Step, DefaultEdge> flatSteps) {
     return new FailingPersistence(delegate.prepare(persistence, flatSteps), stepsToFailFullNames);
   }
 
