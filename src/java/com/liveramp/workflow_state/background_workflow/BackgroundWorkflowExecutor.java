@@ -254,7 +254,7 @@ public class BackgroundWorkflowExecutor {
         //  if an attempt has no more runnable steps not blocked by failures, attempt fails
       } catch (Exception e) {
         //  TODO real handling
-        e.printStackTrace();
+        LOG.error("Error", e);
       }
     }
 
