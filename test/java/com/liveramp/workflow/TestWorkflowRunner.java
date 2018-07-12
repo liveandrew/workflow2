@@ -61,6 +61,7 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.workflow.ActionId;
+import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow.test.MonitoredPersistenceFactory;
 import com.liveramp.workflow.types.StepStatus;
@@ -1547,7 +1548,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testStepCreationFailure() throws IOException, InterruptedException {
 
     //  initialize the workflow with a name and scope to get an execution ID
-    InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> workflow = new WorkflowDbPersistenceFactory().initialize(
+    DbHadoopWorkflow workflow = new WorkflowDbPersistenceFactory().initialize(
         "Test Workflow",
         WorkflowOptions.test()
             .setUniqueIdentifier("1")
