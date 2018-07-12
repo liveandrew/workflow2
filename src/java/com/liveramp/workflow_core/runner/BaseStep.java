@@ -39,10 +39,10 @@ public class BaseStep<Config> implements IStep<BaseStep<Config>>  {
 
   private final BaseAction<Config> action;
   private final Set<BaseStep<Config>> dependencies;
-  private Set<BaseStep<Config>> children;
+  private final Set<BaseStep<Config>> children;
 
   public BaseStep(BaseAction<Config> action) {
-    this(action, Lists.<BaseStep<Config>>newArrayList());
+    this(action, Lists.newArrayList());
   }
 
   public BaseStep(BaseAction<Config> action, BaseStep<Config> dependency) {
@@ -99,6 +99,7 @@ public class BaseStep<Config> implements IStep<BaseStep<Config>>  {
     return action.getAllDataStoreInfo();
   }
 
+  @Override
   public String getCheckpointToken() {
     return getAction().fullId();
   }

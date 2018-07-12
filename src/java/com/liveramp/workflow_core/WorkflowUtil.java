@@ -48,7 +48,6 @@ public class WorkflowUtil {
 
 
   public static void setCheckpointPrefixes(Set<? extends BaseStep> tailSteps) {
-
     Set<String> explored = Sets.newHashSet();
     for (BaseStep tailStep : tailSteps) {
       setCheckpointPrefixes(tailStep, "", explored);

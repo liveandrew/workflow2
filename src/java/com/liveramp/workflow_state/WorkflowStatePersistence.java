@@ -1,6 +1,7 @@
 package com.liveramp.workflow_state;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +44,7 @@ public interface WorkflowStatePersistence extends InitializedPersistence{
 
   //  get* methods probably don't need to be quarantined to here.  can be split out?
   public StepStatus getStatus(String stepToken) throws IOException;
+  public Serializable getContext(String stepToken) throws IOException;
   public String getStatusMessage(String stepToken) throws IOException;
   public Map<String, StepStatus> getStepStatuses() throws IOException;
   public Map<String, StepState> getStepStates() throws IOException;

@@ -14,20 +14,21 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
-import com.liveramp.workflow_core.runner.BaseMultiStepAction;
-import com.liveramp.workflow_core.runner.BaseStep;
-import com.liveramp.workflow_core.runner.ExecutionNode;
 import com.liveramp.workflow_state.IStep;
 
 
 public class WorkflowDiagram {
 
-  interface GraphUnwrapper<Base extends IStep<Base>, Multi> {
+  public interface GraphUnwrapper<Base extends IStep<Base>, Multi> {
     Multi getMultiNode(Base node);
+
     Set<Base> getMultiSubSteps(Multi multi);
+
     Set<Base> getTailSteps(Multi multi);
+
     Set<Base> getHeadSteps(Multi multi);
   }
+
 
   public static <Base extends IStep<Base>, Multi> DirectedGraph<Base, DefaultEdge> dependencyGraphFromTailSteps(
       GraphUnwrapper<Base, Multi> expander,
@@ -119,7 +120,7 @@ public class WorkflowDiagram {
     Set<Base> tailSteps = new HashSet<>();
     for (Base step : allSteps) {
 
-      if(unwrapper.getMultiNode(step) == null){
+      if (unwrapper.getMultiNode(step) == null) {
         for (Base child : step.getChildren()) {
           if (!dependencyGraph.containsVertex(child) && unwrapper.getMultiNode(child) == null) {
             tailSteps.add(child);
@@ -160,7 +161,7 @@ public class WorkflowDiagram {
     for (Base step : steps) {
 
       Multi multi = unwrapper.getMultiNode(step);
-      if(multi != null){
+      if (multi != null) {
         multiSteps.add(step);
       }
 
@@ -203,11 +204,12 @@ public class WorkflowDiagram {
     // this is certain to visit some vertices repeatedly, and could probably
     // be done more elegantly with a tail-first traversal.
     // TODO, perhaps?
+
     for (Base substep : unwrapper.getMultiSubSteps(msa)) {
 
       // if we encounter another multistep, put it on the queue to be expanded
       Multi multiNode = unwrapper.getMultiNode(substep);
-      if(multiNode != null){
+      if (multiNode != null) {
         multiSteps.add(substep);
       }
 

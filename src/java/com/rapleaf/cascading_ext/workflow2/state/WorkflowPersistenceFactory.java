@@ -2,7 +2,6 @@ package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -18,6 +17,7 @@ import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.java_support.RunJarUtil;
+import com.liveramp.workflow_core.StepStateManager;
 import com.liveramp.workflow_core.WorkflowConstants;
 import com.liveramp.workflow_core.info.WorkflowInfo;
 import com.liveramp.workflow_core.info.WorkflowInfoConsumer;
@@ -28,15 +28,26 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 public abstract class WorkflowPersistenceFactory<
+    S extends IStep,
     INITIALIZED extends InitializedPersistence,
     OPTS extends BaseWorkflowOptions<OPTS>,
-    WORKFLOW extends InitializedWorkflow<INITIALIZED, OPTS>> {
+    WORKFLOW extends InitializedWorkflow<S, INITIALIZED, OPTS>> {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowPersistenceFactory.class);
 
+  private final StepStateManager<S> manager;
+
+  protected WorkflowPersistenceFactory(StepStateManager<S> manager) {
+    this.manager = manager;
+  }
+
+  protected StepStateManager<S> getManager() {
+    return manager;
+  }
 
   public synchronized WORKFLOW initialize(OPTS options) throws IOException {
     return initialize(getName(options), options);
   }
+
 
   public WORKFLOW initialize(String workflowName, OPTS options) throws IOException {
     verifyName(workflowName, options);
@@ -62,13 +73,16 @@ public abstract class WorkflowPersistenceFactory<
     );
 
     MultiShutdownHook hook = new MultiShutdownHook(workflowName);
-    hook.add(new MultiShutdownHook.Hook() {
-      @Override
-      public void onShutdown() throws Exception {
-        LOG.info("Invoking workflow shutdown hook");
-        initialized.markWorkflowStopped();
-      }
-    });
+
+    if(manager.isLive()) {
+      hook.add(new MultiShutdownHook.Hook() {
+        @Override
+        public void onShutdown() throws Exception {
+          LOG.info("Invoking workflow shutdown hook");
+          initialized.markWorkflowStopped();
+        }
+      });
+    }
 
     ResourceDeclarer resourceDeclarer = options.getResourceManager();
 
@@ -147,6 +161,6 @@ public abstract class WorkflowPersistenceFactory<
     return appType.name();
   }
 
+  public abstract WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<S, DefaultEdge> flatSteps);
 
-  public abstract <S extends IStep> WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<S, DefaultEdge> flatSteps);
 }
