@@ -1,6 +1,5 @@
 package com.liveramp.workflow_core;
 
-import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +33,7 @@ import com.rapleaf.cascading_ext.workflow2.rollback.SuccessCallback;
 import com.rapleaf.support.Rap;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
+
   public static final String WORKFLOW_UI_URL = "http://workflows.liveramp.net";
 
   private final OverridableProperties defaultProperties;
@@ -305,8 +305,8 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   //  static helpers
 
-  public static BaseWorkflowOptions production() {
-    BaseWorkflowOptions opts = new BaseWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
+  public static ConcreteOptions production() {
+    ConcreteOptions opts = new ConcreteOptions(new NestedProperties(Maps.newHashMap(), false));
     configureProduction(opts);
     return opts;
   }
@@ -325,10 +325,10 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
         .addSuccessCallback(DataDogDurationPusher.production());
   }
 
-  public static BaseWorkflowOptions test() {
+  public static ConcreteOptions test() {
     Rap.assertTest();
 
-    BaseWorkflowOptions opts = new BaseWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
+    ConcreteOptions opts = new ConcreteOptions(new NestedProperties(Maps.newHashMap(), false));
     configureTest(opts);
     return opts;
   }
