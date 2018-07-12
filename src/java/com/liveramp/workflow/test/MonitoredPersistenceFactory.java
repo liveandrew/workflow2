@@ -24,12 +24,11 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class MonitoredPersistenceFactory<
-    WORKFLOW extends InitializedWorkflow<InitializedDbPersistence, WorkflowOptions>> extends WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> {
+public class MonitoredPersistenceFactory extends WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> {
 
-  private final WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, WORKFLOW> delegate;
+  private final WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate;
 
-  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, WORKFLOW> delegate) {
+  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate) {
     this.delegate = delegate;
   }
 
