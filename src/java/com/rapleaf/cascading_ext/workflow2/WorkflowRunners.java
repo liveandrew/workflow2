@@ -5,11 +5,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.state.HadoopWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsInitializedPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
@@ -21,7 +23,7 @@ public class WorkflowRunners {
   public static void dbRun(
       String workflowName,
       WorkflowOptions options,
-      WorkflowBuilder<InitializedDbPersistence> constructor
+      WorkflowBuilder<InitializedDbPersistence, DbHadoopWorkflow> constructor
   ) throws IOException {
     WorkflowRunners.run(new WorkflowDbPersistenceFactory(), workflowName, options, constructor, new NoOp<>());
   }
@@ -30,7 +32,7 @@ public class WorkflowRunners {
       String workflowName,
       String hdfsPath,
       WorkflowOptions options,
-      WorkflowBuilder<HdfsInitializedPersistence> constructor
+      WorkflowBuilder<HdfsInitializedPersistence, HadoopWorkflow> constructor
   ) throws IOException {
     WorkflowRunners.run(new HdfsCheckpointPersistence(hdfsPath), workflowName, options, constructor, new NoOp<>());
   }
@@ -39,11 +41,11 @@ public class WorkflowRunners {
       WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions, WORKFLOW> persistenceFactory,
       String workflowName,
       WorkflowOptions options,
-      WorkflowBuilder<INITIALIZED> constructor,
-      PostRunCallback<INITIALIZED> callback
+      WorkflowBuilder<INITIALIZED, WORKFLOW> constructor,
+      PostRunCallback<INITIALIZED, WORKFLOW> callback
   ) throws IOException {
 
-    InitializedWorkflow<INITIALIZED, WorkflowOptions> initialized = null;
+    WORKFLOW initialized = null;
 
     try {
       initialized = persistenceFactory.initialize(workflowName, options);
@@ -66,13 +68,15 @@ public class WorkflowRunners {
 
   }
 
-  public interface WorkflowBuilder<INITIALIZED extends InitializedPersistence> extends Function<InitializedWorkflow<INITIALIZED, WorkflowOptions>, Set<Step>> {}
+  public interface WorkflowBuilder<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>>
+      extends Function<WORKFLOW, Set<Step>> {}
 
-  public interface PostRunCallback<INITIALIZED extends InitializedPersistence> extends Consumer<InitializedWorkflow<INITIALIZED, WorkflowOptions>> {}
+  public interface PostRunCallback<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>>
+      extends Consumer<WORKFLOW> {}
 
-  public static class NoOp<INITIALIZED extends InitializedPersistence> implements PostRunCallback<INITIALIZED>{
+  public static class NoOp<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>> implements PostRunCallback<INITIALIZED, WORKFLOW>{
     @Override
-    public void accept(InitializedWorkflow<INITIALIZED, WorkflowOptions> initialized) {
+    public void accept(WORKFLOW initialized) {
       //  nope
     }
   }

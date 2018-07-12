@@ -10,6 +10,7 @@ import org.junit.Before;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManagers;
+import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_core.ContextStorage;
@@ -164,12 +165,12 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     );
   }
 
-  public InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> initializeWorkflow() throws IOException {
+  public DbHadoopWorkflow initializeWorkflow() throws IOException {
     return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getRlDb()));
   }
 
-  public InitializedWorkflow<InitializedDbPersistence, WorkflowOptions> initializeWorkflow(String workflowName,
-                                                                                           ResourceDeclarer declarer) throws IOException {
+  public DbHadoopWorkflow initializeWorkflow(String workflowName,
+                                             ResourceDeclarer declarer) throws IOException {
     return new WorkflowDbPersistenceFactory().initialize(
         workflowName,
         WorkflowOptions.test()
