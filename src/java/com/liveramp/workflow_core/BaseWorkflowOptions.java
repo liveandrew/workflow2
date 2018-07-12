@@ -305,8 +305,8 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   //  static helpers
 
-  public static CoreWorkflowOptions production() {
-    CoreWorkflowOptions opts = new CoreWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
+  public static BaseWorkflowOptions production() {
+    BaseWorkflowOptions opts = new BaseWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
     configureProduction(opts);
     return opts;
   }
@@ -325,10 +325,10 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
         .addSuccessCallback(DataDogDurationPusher.production());
   }
 
-  public static CoreWorkflowOptions test() {
+  public static BaseWorkflowOptions test() {
     Rap.assertTest();
 
-    CoreWorkflowOptions opts = new CoreWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
+    BaseWorkflowOptions opts = new BaseWorkflowOptions(new NestedProperties(Maps.newHashMap(), false));
     configureTest(opts);
     return opts;
   }
