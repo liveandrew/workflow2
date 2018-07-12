@@ -27,7 +27,10 @@ import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
-public abstract class WorkflowPersistenceFactory<INITIALIZED extends InitializedPersistence, OPTS extends BaseWorkflowOptions<OPTS>> {
+public abstract class WorkflowPersistenceFactory<
+    INITIALIZED extends InitializedPersistence,
+    OPTS extends BaseWorkflowOptions<OPTS>,
+    WORKFLOW extends InitializedWorkflow<INITIALIZED, OPTS>> {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowPersistenceFactory.class);
 
 
@@ -35,7 +38,7 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
     return initialize(getName(options), options);
   }
 
-  public InitializedWorkflow<INITIALIZED, OPTS> initialize(String workflowName, OPTS options) throws IOException {
+  public WORKFLOW initialize(String workflowName, OPTS options) throws IOException {
     verifyName(workflowName, options);
 
     RunJarUtil.ScmInfo scmInfo = RunJarUtil.getRemoteAndCommit();
@@ -81,8 +84,15 @@ public abstract class WorkflowPersistenceFactory<INITIALIZED extends Initialized
 
     Runtime.getRuntime().addShutdownHook(hook);
 
-    return new InitializedWorkflow<>(workflowName, options, initialized, this, resourceManager, hook);
+    return construct(workflowName, options, initialized, resourceManager, hook);
   }
+
+  //  force implementers to override to avoid generics overload
+  public abstract WORKFLOW construct(String workflowName,
+                                        OPTS options,
+                                        INITIALIZED initialized,
+                                        ResourceManager manager,
+                                        MultiShutdownHook hook);
 
   public static String findDefaultValue(BaseWorkflowOptions options, String property, String defaultValue) {
 

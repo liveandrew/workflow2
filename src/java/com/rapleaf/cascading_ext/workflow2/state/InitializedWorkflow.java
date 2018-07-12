@@ -10,20 +10,20 @@ import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
-public class InitializedWorkflow<INITIALIZED extends InitializedPersistence, OPTS extends BaseWorkflowOptions<OPTS>> {
+public class InitializedWorkflow<INITIALIZED extends InitializedPersistence, OPTS extends BaseWorkflowOptions> {
 
 
   private final String workflowName;
   private final OPTS options;
   private final INITIALIZED persistence;
-  private final WorkflowPersistenceFactory<INITIALIZED, OPTS> factory;
+  private final WorkflowPersistenceFactory<INITIALIZED, ?, ?> factory;
   private final ResourceManager manager;
   private final MultiShutdownHook hook;
 
   public InitializedWorkflow(String workflowName,
                              OPTS options,
                              INITIALIZED reservedPersistence,
-                             WorkflowPersistenceFactory<INITIALIZED, OPTS> factory,
+                             WorkflowPersistenceFactory<INITIALIZED, ?, ?> factory,
                              ResourceManager manager,
                              MultiShutdownHook hook){
 
