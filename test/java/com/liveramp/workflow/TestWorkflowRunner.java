@@ -1495,7 +1495,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     WorkflowRunner runner = new WorkflowRunner(
         getClass().getName(),
-        new MonitoredPersistenceFactory(new WorkflowDbPersistenceFactory()),
+        new MonitoredPersistenceFactory<>(new WorkflowDbPersistenceFactory()),
         WorkflowOptions.test()
             .setStepPollInterval(2000)
             //  concurrency 200

@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.resource.CheckpointUtil;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
+import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
@@ -29,7 +31,7 @@ import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.support.Rap;
 
-public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsInitializedPersistence, WorkflowOptions> {
+public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsInitializedPersistence, WorkflowOptions, HadoopWorkflow> {
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
   private final String checkpointDir;
@@ -42,6 +44,11 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<HdfsIn
   public HdfsCheckpointPersistence(String checkpointDir, boolean deleteOnSuccess) {
     this.checkpointDir = checkpointDir;
     this.deleteOnSuccess = deleteOnSuccess;
+  }
+
+  @Override
+  public HadoopWorkflow construct(String workflowName, WorkflowOptions options, HdfsInitializedPersistence hdfsInitializedPersistence, ResourceManager manager, MultiShutdownHook hook) {
+    return new HadoopWorkflow(workflowName, options, hdfsInitializedPersistence, this, manager, hook);
   }
 
   @Override

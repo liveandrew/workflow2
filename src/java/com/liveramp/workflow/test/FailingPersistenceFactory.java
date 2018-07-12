@@ -8,6 +8,8 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
+import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.functional.Fn;
@@ -17,11 +19,12 @@ import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class FailingPersistenceFactory<INITIALIZED extends InitializedPersistence> extends WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions> {
+public class FailingPersistenceFactory<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>> extends WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions, WORKFLOW> {
 
-  protected final WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions> delegate;
+  protected final WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions, WORKFLOW> delegate;
   private final Set<String> stepsToFailFullNames;
 
   public FailingPersistenceFactory(WorkflowPersistenceFactory delegate, StepNameBuilder stepNameBuilder) {
@@ -44,6 +47,11 @@ public class FailingPersistenceFactory<INITIALIZED extends InitializedPersistenc
   @Override
   public <S extends IStep> WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<S, DefaultEdge> flatSteps) {
     return new FailingPersistence(delegate.prepare(persistence, flatSteps), stepsToFailFullNames);
+  }
+
+  @Override
+  public WORKFLOW construct(String workflowName, WorkflowOptions options, INITIALIZED initialized, ResourceManager manager, MultiShutdownHook hook) {
+    return delegate.construct(workflowName, options, initialized, manager, hook);
   }
 
   @Override

@@ -35,8 +35,8 @@ public class WorkflowRunners {
     WorkflowRunners.run(new HdfsCheckpointPersistence(hdfsPath), workflowName, options, constructor, new NoOp<>());
   }
 
-  public static <INITIALIZED extends InitializedPersistence> void run(
-      WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions> persistenceFactory,
+  public static <INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<INITIALIZED, WorkflowOptions>> void run(
+      WorkflowPersistenceFactory<INITIALIZED, WorkflowOptions, WORKFLOW> persistenceFactory,
       String workflowName,
       WorkflowOptions options,
       WorkflowBuilder<INITIALIZED> constructor,

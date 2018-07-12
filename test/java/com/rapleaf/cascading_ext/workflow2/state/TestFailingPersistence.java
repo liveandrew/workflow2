@@ -39,7 +39,7 @@ public class TestFailingPersistence extends WorkflowTestCase {
     try {
       new WorkflowRunner(
           TestWorkflow.class,
-          new FailingPersistenceFactory(new WorkflowDbPersistenceFactory(), new StepNameBuilder(WORKFLOW_CHKPT_TOKEN, SHOULD_FAIL_CHKPT_TOKEN)),
+          new FailingPersistenceFactory<>(new WorkflowDbPersistenceFactory(), new StepNameBuilder(WORKFLOW_CHKPT_TOKEN, SHOULD_FAIL_CHKPT_TOKEN)),
           new TestWorkflowOptions(),
           new Step(new TestWorkflow(
               WORKFLOW_CHKPT_TOKEN,
