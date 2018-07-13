@@ -104,9 +104,12 @@ public class BackgroundWorkflowExecutor {
 
         ExecutorService executorService = Executors.newCachedThreadPool();
 
+        LiveAttemptCache cache = new LiveAttemptCache();
+
         while (true) {
 
           if (shouldShutdown) {
+            cache.shutdown();
             executorService.shutdown();
             executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
             break;
@@ -159,9 +162,6 @@ public class BackgroundWorkflowExecutor {
               .fetch()
               .stream().map(record -> record.getAttributes(StepDependency.TBL))
               .collect(Collectors.toList());
-
-
-          LiveAttemptCache cache = new LiveAttemptCache();
 
           for (Map.Entry<Long, AttemptState> attemptEntry : splitStepsByAttempt(incompleteAttempts.keySet(), incompleteSteps, dependencies).entrySet()) {
             Long workflowAttemptID = attemptEntry.getKey();
@@ -233,8 +233,6 @@ public class BackgroundWorkflowExecutor {
 
 
           }
-
-          cache.shutdown();
 
           //  TODO more efficient
           //  1) batch up things we can potentially start
