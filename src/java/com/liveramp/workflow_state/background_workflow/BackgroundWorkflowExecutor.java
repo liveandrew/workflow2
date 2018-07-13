@@ -334,7 +334,7 @@ public class BackgroundWorkflowExecutor {
     Map<Long, WorkflowStatePersistence> cachedPersistences = Maps.newHashMap();
     Map<Long, ResourceManager> cachedManagers = Maps.newHashMap();
 
-    public ResourceManager getManager(WorkflowAttempt.Attributes attempt, BackgroundAttemptInfo.Attributes info) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    public synchronized ResourceManager getManager(WorkflowAttempt.Attributes attempt, BackgroundAttemptInfo.Attributes info) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
 
       long attemptId = attempt.getId();
       if(!cachedManagers.containsKey(attemptId)){
@@ -347,14 +347,14 @@ public class BackgroundWorkflowExecutor {
 
     }
 
-    public WorkflowStatePersistence getPersistence(Long workflowAttemptID) {
+    public synchronized WorkflowStatePersistence getPersistence(Long workflowAttemptID) {
       if (!cachedPersistences.containsKey(workflowAttemptID)) {
         cachedPersistences.put(workflowAttemptID, DbPersistence.queryPersistence(workflowAttemptID, new DatabasesImpl().getWorkflowDb()));
       }
       return cachedPersistences.get(workflowAttemptID);
     }
 
-    public void shutdown() throws IOException {
+    public synchronized void shutdown() throws IOException {
       for (WorkflowStatePersistence persistence : cachedPersistences.values()) {
         persistence.shutdown();
       }
