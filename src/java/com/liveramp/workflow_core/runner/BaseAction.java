@@ -141,6 +141,12 @@ public abstract class BaseAction<Config> {
   //  action work, implemented by end-user
   protected abstract void execute() throws Exception;
 
+  //  attempt to immediately stop execution of this action.  expect the result to be a
+  //  FAILED step
+  protected void stop() throws InterruptedException {
+
+  }
+
   protected void rollback() throws Exception {
 
   }
