@@ -143,7 +143,7 @@ public abstract class BaseAction<Config> {
 
   //  attempt to immediately stop execution of this action.  expect the result to be a
   //  FAILED step
-  protected void stop() throws InterruptedException {
+  public void stop() throws InterruptedException {
 
   }
 
