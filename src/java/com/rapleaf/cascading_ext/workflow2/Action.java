@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -232,7 +233,8 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
     Flow flow = flowc.buildFlow();
 
-    Runnable cleanupCallback = () -> {};
+    Runnable cleanupCallback = () -> {
+    };
     try {
       cleanupCallback = blockUntilSubmissionAllowed(flow);
 
@@ -250,7 +252,8 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     String oldMessage = statusMessageSafe.orElse("");
     String newMessage = oldMessage + " Blocking on Submission Controller";
     setStatusMessageSafe(newMessage);
-    Runnable cleanupCallback = () -> {};
+    Runnable cleanupCallback = () -> {
+    };
     if (flow.getConfig() instanceof Configuration) {
       cleanupCallback = controller.blockUntilSubmissionAllowed((Configuration)flow.getConfig());
     } else {
@@ -269,12 +272,35 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     );
   }
 
+  private transient final List<TrackedOperation> runningJobs = Lists.newArrayList();
+
   protected void completeWithProgress(TrackedOperation tracked) {
     JobPersister persister = getPersister();
+
+    runningJobs.add(tracked);
     tracked.complete(
         persister,
         isFailOnCounterFetch()
     );
+    runningJobs.remove(tracked);
+  }
+
+  @Override
+  protected void stop() throws InterruptedException {
+    super.stop();
+
+    //  unlikely that many are running in practice, but can't hurt
+    List<Thread> killThreads = Lists.newArrayList();
+    for (TrackedOperation runningJob : runningJobs) {
+      Thread kill = new Thread(runningJob::stop);
+      kill.start();
+      killThreads.add(kill);
+    }
+
+    for (Thread killThread : killThreads) {
+      killThread.join();
+    }
+
   }
 
   protected FlowRunner completeWithProgressClosure() {
