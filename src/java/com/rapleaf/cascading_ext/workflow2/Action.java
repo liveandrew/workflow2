@@ -286,7 +286,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
   @Override
-  protected void stop() throws InterruptedException {
+  public void stop() throws InterruptedException {
     super.stop();
 
     //  unlikely that many are running in practice, but can't hurt
