@@ -32,6 +32,7 @@ import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.ApplicationCounterSummary;
+import com.liveramp.databases.workflow_db.models.BackgroundStepAttemptInfo;
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.Dashboard;
 import com.liveramp.databases.workflow_db.models.DashboardApplication;
@@ -53,6 +54,7 @@ import com.liveramp.importer.generated.AppType;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.WorkflowEnums;
+import com.liveramp.workflow_core.background_workflow.BackgroundStep;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.jack.queries.AbstractTable;
@@ -239,7 +241,7 @@ public class WorkflowQueries {
     }
 
     //  background attempts never time out
-    if(attempt.getLastHeartbeat() == 0L){
+    if (attempt.getLastHeartbeat() == 0L) {
       return ProcessStatus.ALIVE;
     }
 
@@ -833,6 +835,26 @@ public class WorkflowQueries {
     }
 
     return query;
+  }
+
+  public static Map<StepAttempt.Attributes, BackgroundStepAttemptInfo.Attributes> getStepBackgroundInfo(IWorkflowDb db, Long workflowAttemptId) throws IOException {
+
+    Map<StepAttempt.Attributes, BackgroundStepAttemptInfo.Attributes> info = Maps.newHashMap();
+
+    for (Record record : queryStepAttempts(db, workflowAttemptId, null)
+        .leftJoin(BackgroundStepAttemptInfo.TBL)
+        .on(BackgroundStepAttemptInfo.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID))
+        .fetch()) {
+
+      info.put(
+          record.getAttributes(StepAttempt.TBL),
+          record.getAttributes(BackgroundStepAttemptInfo.TBL)
+      );
+
+    }
+
+    return info;
+
   }
 
   public static List<StepAttempt.Attributes> getStepAttempts(IWorkflowDb db, Long workflowAttemptId) throws IOException {
