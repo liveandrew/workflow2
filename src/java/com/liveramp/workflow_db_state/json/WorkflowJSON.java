@@ -23,8 +23,6 @@ import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.map.MapBuilder;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
-import com.liveramp.databases.workflow_db.models.BackgroundAttemptInfo;
-import com.liveramp.databases.workflow_db.models.BackgroundStepAttemptInfo;
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.MapreduceCounter;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
@@ -53,12 +51,12 @@ public class WorkflowJSON {
 
     long workflowAttemptId = persistence.getAttemptId();
 
-    Map<StepAttempt.Attributes, BackgroundStepAttemptInfo.Attributes> attempts =  WorkflowQueries.getStepBackgroundInfo(
-      db, workflowAttemptId
+    List<StepAttempt.Attributes> attempts = WorkflowQueries.getStepAttempts(db,
+        workflowAttemptId
     );
 
     Map<Long, StepAttempt.Attributes> attemptsById = Maps.newHashMap();
-    for (StepAttempt.Attributes attempt : attempts.keySet()) {
+    for (StepAttempt.Attributes attempt : attempts) {
       graph.addVertex(attempt.getId());
       attemptsById.put(attempt.getId(), attempt);
     }
@@ -137,7 +135,7 @@ public class WorkflowJSON {
                 .put("task_exceptions", toJSON(taskExceptionsByJobId.get(jobID))));
       }
 
-      JSONObject stepInfo = new JSONObject()
+      steps.put(new JSONObject()
           .put("id", step.getStepToken())
           .put("index", nodeIndex)
           .put("status", StepStatus.findByValue(step.getStepStatus()).name().toLowerCase())
@@ -147,18 +145,8 @@ public class WorkflowJSON {
           .put("action_name", safeStr(step.getActionClass()))
           .put("mapreduce_jobs", mapReduceJobs)
           .put("failure_message", step.getFailureCause())
-          .put("failure_trace", step.getFailureTrace());
-
-      BackgroundStepAttemptInfo.Attributes backgroundInfo = attempts.get(step);
-      if (backgroundInfo != null) {
-        stepInfo.put("background_info", BaseJackUtil.toJSON(
-            backgroundInfo,
-            Collections.EMPTY_MAP,
-            ""
-        ));
-      }
-
-      steps.put(stepInfo);
+          .put("failure_trace", step.getFailureTrace())
+      );
 
       for (DefaultEdge inEdge : graph.incomingEdgesOf(stepId)) {
         Long source = graph.getEdgeSource(inEdge);
