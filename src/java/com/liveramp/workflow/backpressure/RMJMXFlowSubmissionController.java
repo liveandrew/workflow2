@@ -47,6 +47,20 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     return production(TimeUnit.HOURS, 12);
   }
 
+  public static RMJMXFlowSubmissionController production(int appLimit, TimeUnit maxWaitUnit, long maxWaitAmount) {
+    return new
+        RMJMXFlowSubmissionController(
+        7500,
+        appLimit,
+        TimeUnit.MINUTES,
+        1,
+        5,
+        maxWaitUnit,
+        maxWaitAmount,
+        LRHttpUtils::GETRequest,
+        ProductionCuratorSemaphore::new);
+  }
+
   public static RMJMXFlowSubmissionController production(TimeUnit maxWaitUnit, long maxWaitAmount) {
     return new
         RMJMXFlowSubmissionController(
@@ -82,11 +96,14 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
 
   @Override
   public Runnable blockUntilSubmissionAllowed(Configuration flowConfig) {
-    Runnable cleanupCallback = () -> {};
+    Runnable cleanupCallback = () -> {
+    };
     try {
       String mapReduceQueue = flowConfig.get(MRJobConfig.QUEUE_NAME);
       SubmissionSemaphore semaphore = semaphoreFactory.apply(new QueueParameters(mapReduceQueue, runningAppLimit));
-      cleanupCallback = () -> {semaphore.releaseShare();};
+      cleanupCallback = () -> {
+        semaphore.releaseShare();
+      };
       long waitStart = System.currentTimeMillis();
       long maxWaitTimestamp = waitStart + maxWaitDurationMillis;
       semaphore.blockUntilShareIsAvailable(maxWaitDurationMillis);
