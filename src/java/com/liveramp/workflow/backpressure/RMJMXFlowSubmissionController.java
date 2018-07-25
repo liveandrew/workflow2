@@ -65,7 +65,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     return new
         RMJMXFlowSubmissionController(
         7500,
-        270,
+        150,
         TimeUnit.MINUTES,
         1,
         5,

@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.options;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapred.JobConf;
@@ -14,6 +15,7 @@ import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
+import com.liveramp.workflow.backpressure.RMJMXFlowSubmissionController;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.support.Rap;
@@ -92,7 +94,7 @@ public class WorkflowOptions extends BaseWorkflowOptions<WorkflowOptions> {
 
     options
         .setLockProvider(new MockStoreReaderLockProvider())
-        .setFlowSubmissionController(new FlowSubmissionController.SubmitImmediately());
+        .setFlowSubmissionController(RMJMXFlowSubmissionController.production(20, TimeUnit.HOURS, 6));
   }
 
 
