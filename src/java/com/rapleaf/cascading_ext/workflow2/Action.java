@@ -204,7 +204,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     return new NestedProperties(childProperties, false).override(getCombinedProperties()).getPropertiesMap();
   }
 
-  protected FlowBuilder buildFlow() {
+  public FlowBuilder buildFlow() {
     return buildFlow(Maps.newHashMap());
   }
 
@@ -225,7 +225,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     );
   }
 
-  protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc) {
+  public Flow completeWithProgress(FlowBuilder.IFlowClosure flowc) {
     return completeWithProgress(flowc, false);
   }
 
@@ -264,7 +264,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
 
-  protected JobPersister getPersister() {
+  public JobPersister getPersister() {
     return new WorkflowJobPersister(
         getPersistence(),
         getActionId().resolve(),
@@ -274,7 +274,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
   private transient final List<TrackedOperation> runningJobs = Lists.newArrayList();
 
-  protected void completeWithProgress(TrackedOperation tracked) {
+  public void completeWithProgress(TrackedOperation tracked) {
     JobPersister persister = getPersister();
 
     runningJobs.add(tracked);
