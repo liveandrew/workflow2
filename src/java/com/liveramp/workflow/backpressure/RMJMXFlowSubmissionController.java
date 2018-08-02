@@ -102,12 +102,18 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
       String mapReduceQueue = flowConfig.get(MRJobConfig.QUEUE_NAME);
       SubmissionSemaphore semaphore = semaphoreFactory.apply(new QueueParameters(mapReduceQueue, runningAppLimit));
       cleanupCallback = () -> {
+        LOG.info("Releasing submission semaphore lease");
         semaphore.releaseShare();
       };
       long waitStart = System.currentTimeMillis();
       long maxWaitTimestamp = waitStart + maxWaitDurationMillis;
+      LOG.info("Acquiring submission semaphore...");
       semaphore.blockUntilShareIsAvailable(maxWaitDurationMillis);
+      LOG.info("Obtained semaphore lease");
+      LOG.info("Retrieving queue info");
+      long startInfoGet = System.currentTimeMillis();
       QueueInfo queueInfo = getQueueInfo(mapReduceQueue);
+      LOG.info("Took " + (System.currentTimeMillis() - startInfoGet) + " to retrieve queue info first time");
       while (isOverLimit(queueInfo) && System.currentTimeMillis() < maxWaitTimestamp) {
         long sleepMillis = Math.max(
             determineSleep(queueInfo.pendingContainers, pendingContainerLimit, containerSleepAmount, maxWaitTimestamp - System.currentTimeMillis(), LOG_FACTOR),
@@ -128,6 +134,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     } catch (Exception e) {
       LOG.error("Error while blocking for job submission. Allowing job to launch", e);
     }
+    LOG.info("Allowing flow submission");
     return cleanupCallback;
   }
 
@@ -249,12 +256,14 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
     public static final String SEMAPHORE_ROOT = "/workflow/flowSubmissionController/queueSempahores/";
     private InterProcessSemaphoreV2 semaphore;
     private Lease lease;
+    private final int maxApplications;
 
     public ProductionCuratorSemaphore(QueueParameters parameters) {
       String curatorPath = createPath(parameters.getQueueName());
       CuratorFramework production = CuratorFrameworkDefaults.production();
       ensurePathExists(curatorPath, production);
-      this.semaphore = new InterProcessSemaphoreV2(production, curatorPath, (int)parameters.getMaxApplications());
+      maxApplications = (int)parameters.getMaxApplications();
+      this.semaphore = new InterProcessSemaphoreV2(production, curatorPath, maxApplications);
     }
 
     private void ensurePathExists(String curatorPath, CuratorFramework production) {
@@ -276,6 +285,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
       try {
         //we can get a null result from this method, indicating the timeout was reached.
         // We actually just want to behave the same way in that case though, so we don't check the result here
+        LOG.info("Estimating " + semaphore.getParticipantNodes() + "/" + maxApplications + " are being used");
         this.lease = semaphore.acquire(timeoutMillseconds, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         LOG.error("Error during semaphore acquisition - allowing flow to launch:", e);
