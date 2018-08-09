@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.jgrapht.DirectedGraph;
@@ -89,7 +90,7 @@ public class BaseWorkflowRunner<Config> {
                             Config config,
                             OnShutdown<Config> shutdownHook,
                             OnStepRunnerStart onStart) throws IOException {
-
+    Preconditions.checkArgument(!tailSteps.isEmpty(), "Workflows must have at least 1 step");
     BaseWorkflowOptions options = initializedData.getOptions();
 
     this.context = config;
