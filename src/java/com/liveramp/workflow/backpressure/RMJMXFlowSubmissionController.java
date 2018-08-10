@@ -113,7 +113,7 @@ public class RMJMXFlowSubmissionController implements FlowSubmissionController {
       LOG.info("Retrieving queue info");
       long startInfoGet = System.currentTimeMillis();
       QueueInfo queueInfo = getQueueInfo(mapReduceQueue);
-      LOG.info("Took " + (System.currentTimeMillis() - startInfoGet) + " to retrieve queue info first time");
+      LOG.info("Took " + (System.currentTimeMillis() - startInfoGet) + " ms to retrieve queue info first time");
       while (isOverLimit(queueInfo) && System.currentTimeMillis() < maxWaitTimestamp) {
         long sleepMillis = Math.max(
             determineSleep(queueInfo.pendingContainers, pendingContainerLimit, containerSleepAmount, maxWaitTimestamp - System.currentTimeMillis(), LOG_FACTOR),
