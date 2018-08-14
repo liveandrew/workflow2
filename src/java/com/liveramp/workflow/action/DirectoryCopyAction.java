@@ -1,5 +1,9 @@
 package com.liveramp.workflow.action;
 
+import java.io.IOException;
+import java.util.List;
+
+import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -12,7 +16,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 
 public class DirectoryCopyAction extends Action {
 
-  private final Path srcPath;
+  private final List<Path> srcPaths;
   private final Path dstPath;
 
   private final long sizeCutoff;
@@ -22,46 +26,65 @@ public class DirectoryCopyAction extends Action {
   public DirectoryCopyAction(String checkpointToken,
                              Path srcPath,
                              Path dstPath) {
-    this(checkpointToken, srcPath, dstPath, DEFAULT_LOCAL_COPY_SIZE_CUTOFF);
+    this(checkpointToken, Lists.newArrayList(srcPath), dstPath, DEFAULT_LOCAL_COPY_SIZE_CUTOFF);
+  }
+
+  public DirectoryCopyAction(String checkpointToken,
+                             List<Path> srcPaths,
+                             Path dstPath) {
+    this(checkpointToken, srcPaths, dstPath, DEFAULT_LOCAL_COPY_SIZE_CUTOFF);
   }
 
 
   public DirectoryCopyAction(String checkpointToken,
-                             Path srcPath,
+                             List<Path> srcPaths,
                              Path dstPath,
                              long sizeCutoff) {
     super(checkpointToken);
 
-    this.srcPath = srcPath;
+    this.srcPaths = srcPaths;
     this.dstPath = dstPath;
 
     this.sizeCutoff = sizeCutoff;
 
   }
 
+  private long getInputSize(List<Path> inputPaths) throws IOException {
+    long size = 0L;
+    for (Path inputPath : inputPaths) {
+      FileSystem srcFs = FileSystemHelper.getFileSystemForPath(inputPath);
+      size += srcFs.getContentSummary(inputPath).getLength();
+    }
+    return size;
+  }
+
   @Override
   protected void execute() throws Exception {
 
-    FileSystem srcFs = FileSystemHelper.getFileSystemForPath(srcPath);
+    long inputSize = getInputSize(srcPaths);
     FileSystem dstFs = FileSystemHelper.getFileSystemForPath(dstPath);
-
-    long inputSize = srcFs.getContentSummary(srcPath).getLength();
 
     if (inputSize > sizeCutoff) {
 
       completeWithProgress(new TrackableDirectoryDistCp(new TrackableDirectoryDistCp.TrackedDistCpOptions(
-          srcPath,
+          srcPaths,
           dstPath,
           getInheritedProperties()
       )));
 
     } else {
 
-      FileUtil.copy(
-          srcFs, srcPath,
-          dstFs, dstPath,
-          false, CascadingHelper.get().getJobConf()
-      );
+      for (Path srcPath : srcPaths) {
+
+        FileSystem srcFs = FileSystemHelper.getFileSystemForPath(srcPath);
+
+        FileUtil.copy(
+            srcFs, srcPath,
+            dstFs, dstPath,
+            false, CascadingHelper.get().getJobConf()
+        );
+
+      }
 
     }
 

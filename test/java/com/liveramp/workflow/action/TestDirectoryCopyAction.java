@@ -5,8 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.tools.DistCp;
+import org.apache.hadoop.tools.DistCpOptions;
 import org.apache.thrift.TException;
 import org.junit.Test;
 
@@ -34,7 +39,7 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
     Path dstPath = new Path(getTestRootPath(), "dst_path");
 
     Path inputRoot = inputBucket.getInstanceRoot();
-    WorkflowRunner runner = execute(new DirectoryCopyAction("test", inputRoot, dstPath, 1L));
+    WorkflowRunner runner = execute(new DirectoryCopyAction("test", Lists.newArrayList(inputRoot), dstPath, 1L));
 
     //  assert we recorded counters
     assertTrue(runner.getPersistence().getFlatCounters().size() > 0);
@@ -54,6 +59,49 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
   }
 
   @Test
+  public void testMultiple() throws Exception {
+
+    //  set up a dir
+    Bucket inputBucket1 = builder().getBucketDataStore("tmp/input_path1", PIN.class).getBucket();
+    ThriftBucketHelper.writeToBucket(inputBucket1,
+        PIN.email("ben@altavista.com")
+    );
+
+    Bucket inputBucket2 = builder().getBucketDataStore("tmp/input_path2", PIN.class).getBucket();
+    ThriftBucketHelper.writeToBucket(inputBucket1,
+        PIN.email("ben@gmail.com")
+    );
+
+    Path dstPath = new Path(getTestRootPath(), "dst_path");
+
+    WorkflowRunner runner = execute(new DirectoryCopyAction("test",
+        Lists.newArrayList(inputBucket1.getInstanceRoot(), inputBucket2.getInstanceRoot()),
+        dstPath,
+        1L
+    ));
+
+    //  assert we recorded counters
+    assertTrue(runner.getPersistence().getFlatCounters().size() > 0);
+
+    List<FileStatus> inputFiles = Lists.newArrayList();
+    inputFiles.addAll(Lists.newArrayList(getFS().listStatus(inputBucket1.getInstanceRoot())));
+    inputFiles.addAll(Lists.newArrayList(getFS().listStatus(inputBucket2.getInstanceRoot())));
+
+    List<LocatedFileStatus> files = Lists.newArrayList();
+    RemoteIterator<LocatedFileStatus> iter = getFS().listFiles(dstPath, true);
+
+    while (iter.hasNext()) {
+      files.add(iter.next());
+    }
+
+    //  4 total files
+    assertEquals(inputFiles.size(), files.size());
+    //  check we have 2 root files
+    assertEquals(2, getFS().listStatus(dstPath).length);
+  }
+
+
+  @Test
   public void testLocalCopy() throws IOException, TException {
 
 
@@ -69,7 +117,7 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
     WorkflowRunner runner = execute(new DirectoryCopyAction("test", inputRoot, dstPath));
 
     //  assert no MR job
-    assertEquals(0, runner.getPersistence().getFlatCounters().size() );
+    assertEquals(0, runner.getPersistence().getFlatCounters().size());
 
     List<FileStatus> inputFiles = Lists.newArrayList(getFS().listStatus(inputRoot));
     List<FileStatus> dstFiles = Lists.newArrayList(getFS().listStatus(dstPath));
@@ -82,8 +130,6 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
     for (FileStatus file : inputFiles) {
       assertEquals(file.getLen(), getFS().getFileStatus(new Path(dstPath, file.getPath().getName())).getLen());
     }
-
-
 
 
   }
