@@ -34,7 +34,7 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
     Path dstPath = new Path(getTestRootPath(), "dst_path");
 
     Path inputRoot = inputBucket.getInstanceRoot();
-    WorkflowRunner runner = execute(new DirectoryCopyAction("test", inputRoot, dstPath));
+    WorkflowRunner runner = execute(new DirectoryCopyAction("test", inputRoot, dstPath, 1L));
 
     //  assert we recorded counters
     assertTrue(runner.getPersistence().getFlatCounters().size() > 0);
@@ -50,6 +50,41 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
     for (FileStatus file : inputFiles) {
       assertEquals(file.getLen(), getFS().getFileStatus(new Path(dstPath, file.getPath().getName())).getLen());
     }
+
+  }
+
+  @Test
+  public void testLocalCopy() throws IOException, TException {
+
+
+    Bucket inputBucket = builder().getBucketDataStore("input_path", PIN.class).getBucket();
+    ThriftBucketHelper.writeToBucket(inputBucket,
+        PIN.email("ben@gmail.com"),
+        PIN.email("ben@altavista.com")
+    );
+
+    Path dstPath = new Path(getTestRootPath(), "dst_path");
+
+    Path inputRoot = inputBucket.getInstanceRoot();
+    WorkflowRunner runner = execute(new DirectoryCopyAction("test", inputRoot, dstPath));
+
+    //  assert no MR job
+    assertEquals(0, runner.getPersistence().getFlatCounters().size() );
+
+    List<FileStatus> inputFiles = Lists.newArrayList(getFS().listStatus(inputRoot));
+    List<FileStatus> dstFiles = Lists.newArrayList(getFS().listStatus(dstPath));
+
+    //  check we have dst files
+    assertEquals(2, dstFiles.size());
+    assertEquals(inputFiles.size(), dstFiles.size());
+
+    //  check they are the same
+    for (FileStatus file : inputFiles) {
+      assertEquals(file.getLen(), getFS().getFileStatus(new Path(dstPath, file.getPath().getName())).getLen());
+    }
+
+
+
 
   }
 
