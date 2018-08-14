@@ -303,6 +303,14 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
   }
 
+  public interface TrackedOperationClosure {
+    void complete(TrackedOperation operation);
+  }
+
+  protected TrackedOperationClosure completeOperationClosure(){
+    return this::completeWithProgress;
+  }
+
   protected FlowRunner completeWithProgressClosure() {
     return new ActionFlowRunner();
   }
