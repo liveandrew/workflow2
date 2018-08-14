@@ -73,7 +73,7 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
     WorkflowRunner runner = execute(new DirectoryCopyAction("test",
         Lists.newArrayList(inputBucket1.getInstanceRoot(), inputBucket2.getInstanceRoot()),
         dstPath,
-        new TrackedDistCpOptions(),
+        new TrackedDistCpOptions().setAsRawPaths(true),
         1L
     ));
 
