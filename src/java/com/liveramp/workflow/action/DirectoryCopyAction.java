@@ -10,6 +10,8 @@ import org.apache.hadoop.fs.Path;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_tools.util.TrackableDirectoryDistCp;
+import com.liveramp.cascading_tools.util.TrackedDistCpConfig;
+import com.liveramp.cascading_tools.util.TrackedDistCpOptions;
 import com.liveramp.java_support.ByteUnit;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.Action;
@@ -18,7 +20,7 @@ public class DirectoryCopyAction extends Action {
 
   private final List<Path> srcPaths;
   private final Path dstPath;
-  private final TrackableDirectoryDistCp.TrackedDistCpOptions opts;
+  private final TrackedDistCpOptions opts;
 
   private final long sizeCutoff;
 
@@ -27,20 +29,20 @@ public class DirectoryCopyAction extends Action {
   public DirectoryCopyAction(String checkpointToken,
                              Path srcPath,
                              Path dstPath) {
-    this(checkpointToken, Lists.newArrayList(srcPath), dstPath, new TrackableDirectoryDistCp.TrackedDistCpOptions(), DEFAULT_LOCAL_COPY_SIZE_CUTOFF);
+    this(checkpointToken, Lists.newArrayList(srcPath), dstPath, new TrackedDistCpOptions(), DEFAULT_LOCAL_COPY_SIZE_CUTOFF);
   }
 
   public DirectoryCopyAction(String checkpointToken,
                              List<Path> srcPaths,
                              Path dstPath) {
-    this(checkpointToken, srcPaths, dstPath,  new TrackableDirectoryDistCp.TrackedDistCpOptions(), DEFAULT_LOCAL_COPY_SIZE_CUTOFF);
+    this(checkpointToken, srcPaths, dstPath,  new TrackedDistCpOptions(), DEFAULT_LOCAL_COPY_SIZE_CUTOFF);
   }
 
 
   public DirectoryCopyAction(String checkpointToken,
                              List<Path> srcPaths,
                              Path dstPath,
-                             TrackableDirectoryDistCp.TrackedDistCpOptions opts,
+                             TrackedDistCpOptions opts,
                              long sizeCutoff) {
     super(checkpointToken);
 
@@ -69,7 +71,7 @@ public class DirectoryCopyAction extends Action {
 
     if (inputSize > sizeCutoff) {
 
-      completeWithProgress(new TrackableDirectoryDistCp(new TrackableDirectoryDistCp.TrackedDistCpConfig(
+      completeWithProgress(new TrackableDirectoryDistCp(new TrackedDistCpConfig(
           srcPaths,
           dstPath,
           getInheritedProperties(),

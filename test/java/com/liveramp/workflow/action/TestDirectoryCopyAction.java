@@ -1,22 +1,17 @@
 package com.liveramp.workflow.action;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
-import org.apache.hadoop.tools.DistCp;
-import org.apache.hadoop.tools.DistCpOptions;
 import org.apache.thrift.TException;
 import org.junit.Test;
 
-import com.liveramp.cascading_tools.util.TrackableDirectoryDistCp;
-import com.liveramp.commons.collections.nested_map.TwoNestedMap;
+import com.liveramp.cascading_tools.util.TrackedDistCpOptions;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.formats.bucket.Bucket;
@@ -40,7 +35,7 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
     Path dstPath = new Path(getTestRootPath(), "dst_path");
 
     Path inputRoot = inputBucket.getInstanceRoot();
-    WorkflowRunner runner = execute(new DirectoryCopyAction("test", Lists.newArrayList(inputRoot), dstPath, new TrackableDirectoryDistCp.TrackedDistCpOptions(), 1L));
+    WorkflowRunner runner = execute(new DirectoryCopyAction("test", Lists.newArrayList(inputRoot), dstPath, new TrackedDistCpOptions(), 1L));
 
     //  assert we recorded counters
     assertTrue(runner.getPersistence().getFlatCounters().size() > 0);
@@ -78,7 +73,7 @@ public class TestDirectoryCopyAction extends WorkflowTestCase {
     WorkflowRunner runner = execute(new DirectoryCopyAction("test",
         Lists.newArrayList(inputBucket1.getInstanceRoot(), inputBucket2.getInstanceRoot()),
         dstPath,
-        new TrackableDirectoryDistCp.TrackedDistCpOptions(),
+        new TrackedDistCpOptions(),
         1L
     ));
 
