@@ -36,6 +36,7 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
+import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow_core.OldResource;
@@ -229,6 +230,15 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     return completeWithProgress(flowc, false);
   }
 
+  protected Configuration getConfiguration() {
+    JobConf conf = new JobConf();
+    Map<Object, Object> properties = getInheritedProperties();
+    for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+      conf.set(entry.getKey().toString(), entry.getValue().toString());
+    }
+    return conf;
+  }
+
   //  TODO sweep when we figure out cascading npe (prolly upgrade past 2.5.1)
   protected Flow completeWithProgress(FlowBuilder.IFlowClosure flowc, boolean skipCompleteListener) {
     Flow flow = flowc.buildFlow();
@@ -307,7 +317,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     void complete(TrackedOperation operation);
   }
 
-  protected TrackedOperationClosure completeOperationClosure(){
+  protected TrackedOperationClosure completeOperationClosure() {
     return this::completeWithProgress;
   }
 

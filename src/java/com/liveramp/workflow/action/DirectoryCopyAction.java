@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -54,10 +55,10 @@ public class DirectoryCopyAction extends Action {
 
   }
 
-  private long getInputSize(List<Path> inputPaths) throws IOException {
+  private long getInputSize(List<Path> inputPaths, Configuration config) throws IOException {
     long size = 0L;
     for (Path inputPath : inputPaths) {
-      FileSystem srcFs = FileSystemHelper.getFileSystemForPath(inputPath);
+      FileSystem srcFs = FileSystemHelper.getFileSystemForPath(inputPath, config);
       size += srcFs.getContentSummary(inputPath).getLength();
     }
     return size;
@@ -66,8 +67,10 @@ public class DirectoryCopyAction extends Action {
   @Override
   protected void execute() throws Exception {
 
-    long inputSize = getInputSize(srcPaths);
-    FileSystem dstFs = FileSystemHelper.getFileSystemForPath(dstPath);
+    Configuration config = getConfiguration();
+
+    long inputSize = getInputSize(srcPaths, config);
+    FileSystem dstFs = FileSystemHelper.getFileSystemForPath(dstPath, config);
 
     if (inputSize > sizeCutoff) {
 
