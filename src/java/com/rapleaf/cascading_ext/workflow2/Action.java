@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -237,6 +238,16 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
       conf.set(entry.getKey().toString(), entry.getValue().toString());
     }
     return conf;
+  }
+
+  protected Map<Object, Object> asProperties(Configuration conf){
+    Map<Object, Object> properties = Maps.newHashMap();
+    Iterator<Map.Entry<String, String>> iter = conf.iterator();
+    while(iter.hasNext()){
+      Map.Entry<String, String> entry = iter.next();
+      properties.put(entry.getKey(), entry.getValue());
+    }
+    return properties;
   }
 
   //  TODO sweep when we figure out cascading npe (prolly upgrade past 2.5.1)
