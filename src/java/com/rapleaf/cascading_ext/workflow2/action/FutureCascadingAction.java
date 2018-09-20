@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -25,6 +26,7 @@ public class FutureCascadingAction extends Action {
   private final Map<String, TapFactory> sourceTaps = Maps.newHashMap();
   private final Map<String, TapFactory> sinkTaps;
   private final List<Pipe> tails;
+  private final Supplier<Map<Object, Object>> propertiesSupplier;
   private final FlowListener listener;
   private final List<ActionCallback> preExecuteHooks = Lists.newArrayList();
   private final boolean skipCompleteListener;
@@ -36,6 +38,7 @@ public class FutureCascadingAction extends Action {
                                List<Pipe> tails,
                                Collection<DataStore> createStores,
                                Map<Object, Object> properties,
+                               Supplier<Map<Object, Object>> propertiesSupplier,
                                FlowListener listener,
                                boolean skipCompleteListener) {
     super(checkpointToken, properties);
@@ -61,6 +64,7 @@ public class FutureCascadingAction extends Action {
     this.flowName = flowName;
     this.sinkTaps = sinkTapFactories;
     this.tails = tails;
+    this.propertiesSupplier = propertiesSupplier;
     this.listener = listener;
     this.skipCompleteListener = skipCompleteListener;
 
@@ -88,7 +92,7 @@ public class FutureCascadingAction extends Action {
       sinkTaps.put(entry.getKey(), tap);
     }
 
-    FlowBuilder.FlowClosure f = buildFlow().connect(
+    FlowBuilder.FlowClosure f = buildFlow(propertiesSupplier.get()).connect(
         flowName + ": " + getActionId().getRelativeName(),
         sourceTaps,
         sinkTaps,

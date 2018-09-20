@@ -1,9 +1,11 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
@@ -97,10 +99,16 @@ public class CascadingWorkflowBuilder {
   }
 
   public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields, FlowListener flowListener) throws IOException {
+    return addCheckpoint(endPipe, checkpointName, fields, flowListener, emptySupplier());
+  }
+
+  public Pipe addCheckpoint(Pipe endPipe, String checkpointName, Fields fields, FlowListener flowListener,
+                            Supplier<Map<Object, Object>> propertiesSupplier) throws IOException {
     LOG.info("determined output fields to be " + fields + " for step " + checkpointName);
     TupleDataStore checkpointStore = dsBuilder.getTupleDataStore(checkpointName, fields);
 
-    Step step = completeFlows(checkpointName, Lists.newArrayList(new DSSink(endPipe, checkpointStore)), flowListener);
+    Step step = completeFlows(checkpointName, Lists.newArrayList(new DSSink(endPipe, checkpointStore)), flowListener,
+        propertiesSupplier);
 
     String nextPipeName = "tail-" + checkpointName;
 
@@ -123,28 +131,35 @@ public class CascadingWorkflowBuilder {
   }
 
   public Step buildTail(String tailStepName, Pipe output, DataStore outputStore) {
-    return buildTail(tailStepName, Lists.newArrayList(new DSSink(output, outputStore)), new EmptyListener());
+    return buildTail(tailStepName, Lists.newArrayList(new DSSink(output, outputStore)), new EmptyListener(),
+        emptySupplier());
   }
 
   public Step buildPartitionedTail(String tailStepName, Pipe output, PartitionableDataStore outputStore, PartitionFactory structure) {
-    return buildTail(tailStepName, Lists.newArrayList(new SinkBinding.PartitionedSink(output, outputStore, structure)), new EmptyListener());
+    return buildTail(tailStepName, Lists.newArrayList(new SinkBinding.PartitionedSink(output, outputStore, structure)), new EmptyListener(),
+        emptySupplier());
   }
 
   public Step buildTail(String tailStepName, Pipe output, DataStore outputStore, FlowListener listener) {
-    return buildTail(tailStepName, Lists.newArrayList(new DSSink(output, outputStore)), listener);
+    return buildTail(tailStepName, Lists.newArrayList(new DSSink(output, outputStore)), listener, emptySupplier());
   }
 
   public Step buildTail(String tailStepName, List<? extends SinkBinding> sinks) {
-    return buildTail(tailStepName, sinks, new EmptyListener());
+    return buildTail(tailStepName, sinks, new EmptyListener(), emptySupplier());
   }
 
-  public Step buildTail(String tailStepName, List<? extends SinkBinding> sinks, FlowListener listener) {
-    Step tail = completeFlows(tailStepName, sinks, listener);
+  public Step buildTail(String tailStepName, List<? extends SinkBinding> sinks, FlowListener listener,
+                        Supplier<Map<Object, Object>> propertiesSupplier) {
+    Step tail = completeFlows(tailStepName, sinks, listener, propertiesSupplier);
 
     List<Step> steps = Lists.newArrayList(subSteps);
     steps.add(tail);
 
     return tail;
+  }
+
+  private Supplier<Map<Object, Object>> emptySupplier() {
+    return Collections::emptyMap;
   }
 
   //  internal stuff
@@ -153,7 +168,8 @@ public class CascadingWorkflowBuilder {
     return "step-" + (checkpointCount++);
   }
 
-  private Step completeFlows(String checkpointName, List<? extends SinkBinding> sinkBindings, FlowListener flowListener) {
+  private Step completeFlows(String checkpointName, List<? extends SinkBinding> sinkBindings, FlowListener flowListener,
+                             Supplier<Map<Object, Object>> propertiesSupplier) {
 
     Map<String, BindInfo> scopedBind = Maps.newHashMap();
     Map<String, TapFactory> sinks = Maps.newHashMap();
@@ -190,6 +206,7 @@ public class CascadingWorkflowBuilder {
         pipes,
         sinkStores,
         flowProperties,
+        propertiesSupplier,
         flowListener,
         skipCompleteListener
     );

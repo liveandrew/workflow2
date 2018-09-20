@@ -2,8 +2,10 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -46,11 +48,21 @@ public class CascadingAction2 extends MultiStepAction {
   }
 
   protected void complete(String stepName, List<? extends SinkBinding> sinkBindings) {
-    setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, new EmptyListener()));
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, new EmptyListener(), Collections::emptyMap));
+  }
+
+  protected void complete(String stepName, List<? extends SinkBinding> sinkBindings,
+                          Supplier<Map<Object, Object>> propertiesSupplier) {
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, new EmptyListener(), propertiesSupplier));
   }
 
   protected void complete(String stepName, List<? extends SinkBinding> sinkBindings, FlowListener listener) {
-    setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, listener));
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, listener, Collections::emptyMap));
+  }
+
+  protected void complete(String stepName, List<? extends SinkBinding> sinkBindings, FlowListener listener,
+                          Supplier<Map<Object, Object>> propertiesSupplier) {
+    setSubStepsFromTail(workflowHelper.buildTail(stepName, sinkBindings, listener, propertiesSupplier));
   }
 
   protected void complete(String stepName, Pipe output, DataStore outputStore, FlowListener listener) {
