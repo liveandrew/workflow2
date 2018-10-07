@@ -1,0 +1,15 @@
+source 'http://gemserver.liveramp.net/'
+
+gem 'rails', '3.0.20'
+gem 'mysql2', '0.2.24'
+gem 'thrift', '0.9.3.0'
+gem 'db_support'
+gem 'rap_support'
+gem 'rapleaf_types'
+
+group :test do
+  gem 'rspec-rails', '2.6.1'
+  gem 'factory_girl', '2.0.1'
+  gem 'factory_girl_rails', '1.1.0'
+  gem 'shoulda', '>= 2.11.0'
+end

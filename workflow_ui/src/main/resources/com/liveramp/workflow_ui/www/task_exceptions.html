@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <link rel="shortcut icon" href="images/favicon.ico">
+  <title>Task Exception Dashboard</title>
+
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css/workflow_service.css">
+  <link rel="stylesheet" type="text/css" href="css/task_exceptions.css">
+
+  <script type="text/javascript" src="resources/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="resources/jquery.cookie.js"></script>
+  <script type="text/javascript" src="resources/bootstrap.min.js"></script>
+  <script type="text/javascript" src="resources/moment-with-langs.min.js"></script>
+  <script type="text/javascript" src="resources/d3.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="resources/dagre-d3.min.js"></script>
+  <script type="text/javascript" src="resources/underscore-min.js"></script>
+
+  <script type="text/javascript" src="js/common.js"></script>
+
+</head>
+
+<body>
+
+<div id="navbar"></div>
+<script>
+  configureNavbar($("#navbar"))
+</script>
+
+<div class="container-fluid service-container">
+  <div class="row">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h4>Task Exception Dashboard</h4></div>
+      <div class="input-append">
+        <div class="btn-group" id="exception-display-toggle" data-toggle="buttons">
+          <label class="btn btn-primary active">
+            <input type="radio" name="options" id="all"> All Exceptions
+          </label>
+          <label class="btn btn-primary">
+            <input type="radio" name="options" id="exception-hosts"> Hosts by Exception
+          </label>
+          <label class="btn btn-primary">
+            <input type="radio" name="options" id="host-exceptions"> Exceptions by Host
+          </label>
+          <label class="btn btn-primary">
+            <input type="radio" name="options" id="aggregate-app-exceptions"> Aggregate by App
+          </label>
+          <label class="btn btn-primary">
+            <input type="radio" name="options" id="aggregate-host-exceptions"> Aggregate by Host
+          </label>
+        </div>
+        <div class="col-sm-3">
+          <div class="input-group" id="query-num">
+            <input class="form-control" type="number" step="100" placeholder="Num to Query" id="num-exceptions">
+                        <span class="input-group-btn">
+                            <button class="btn btn-secondary" type="button">Refresh</button>
+                        </span>
+          </div>
+        </div>
+        <div class="col-sm-2">
+            <label class="btn btn-primary">
+                <input type="checkbox" name="options" id="infra_only"> Hide Non-Infra
+            </label>
+        </div>
+      </div>
+      <div class="table table-condensed">
+        <table class="table">
+          <thead id="task_columns">
+          </thead>
+          <tbody id="task_errors">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  var errorList = [];
+  var columns = [];
+  displayType = "all";
+  num_query = 1000;
+  infra_only_disp = 0;
+
+  function refreshTable() {
+    if ($('#infra_only').prop('checked')) {
+      infra_only_disp = 1;
+    } else {
+      infra_only_disp = 0;
+    }
+
+    $.ajax({
+      type: 'GET',
+      dataType: 'html',
+      url: "tasks",
+      data: {
+        limit: num_query,
+        infra: infra_only_disp
+      },
+      success: function (dataStr) {
+        errorList = JSON.parse(dataStr);
+        redraw();
+      }
+    });
+
+  }
+
+  function redraw() {
+    if (displayType === "all") {
+      populateTaskExceptions(errorList.all, $("#task_errors"));
+      columns = errorList.columns.all;
+    }
+    else if (displayType === "exception-hosts") {
+      populateException2Hosts(errorList.by_exception, $("#task_errors"));
+      columns = errorList.columns.exceptions;
+    }
+    else if (displayType === "aggregate-host-exceptions"){
+      populateHostToAggregateExceptions(errorList.by_host, $("#task_errors"));
+      columns = errorList.columns.aggregateHosts;
+    }
+    else if(displayType === 'aggregate-app-exceptions'){
+      populateAppToAggregateExceptions(errorList.by_app, $("#task_errors"));
+      columns = errorList.columns.aggregateApps;
+    }
+    else {
+      populateHost2Exceptions(errorList.by_host, $("#task_errors"));
+      columns = errorList.columns.hosts;
+    }
+    populateTaskHeader(columns, $("#task_columns"));
+  }
+
+  $("#exception-display-toggle").click(function (e) {
+    e.preventDefault();
+    displayType = $(e.target).find('input').attr('id');
+    redraw();
+  });
+
+  $('#infra_only').click(function (e) {
+    refreshTable();
+  });
+
+  $("#query-num").click(function (e) {
+    e.preventDefault();
+    val = document.getElementById('num-exceptions').value;
+    if (val != null && val == parseInt(val, 10)) {
+      num_query = val;
+      refreshTable();
+    }
+  });
+
+  refreshTable();
+  setInterval(refreshTable, 60000);
+
+</script>

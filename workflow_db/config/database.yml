@@ -1,0 +1,13 @@
+development:
+  database: rapleaf_test
+  adapter: mysql
+  host: 127.0.0.1
+  username: root
+  password:
+
+test:
+  database: workflow_db_test
+  adapter: mysql
+  host: 127.0.0.1
+  username: root
+  password:
