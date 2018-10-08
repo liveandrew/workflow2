@@ -9,9 +9,9 @@
   </parent>
 
   <properties>
-    <jobjar.descriptor>com/liveramp/build_tools/assembly/jobjar-flat.xml</jobjar.descriptor>
     <skip.jobjar>false</skip.jobjar>
     <skip.deploy.bundle>false</skip.deploy.bundle>
+    <skip.jenkins.artifact.clean>false</skip.jenkins.artifact.clean>
   </properties>
 
   <groupId>com.liveramp.workflow2</groupId>
