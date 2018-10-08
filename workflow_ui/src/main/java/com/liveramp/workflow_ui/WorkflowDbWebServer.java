@@ -113,7 +113,7 @@ public class WorkflowDbWebServer implements Runnable {
           .toDate();
 
       taskTimer.scheduleAtFixedRate(
-          new Prime("workflows.liveramp.net:8080", getURLsToPrime()),
+          new Prime("127.0.0.1:8080", getURLsToPrime()),
           firstExecution,
           TimeUnit.DAYS.toMillis(1)
       );
