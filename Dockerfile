@@ -27,3 +27,5 @@ RUN ln -sf /apps/secrets/workflow_ui/database.yml /apps/workflow_ui/config/datab
     ln -sf /apps/secrets/workflow_ui/environment.yml /apps/workflow_ui/config/environment.yml
 
 COPY container/entrypoint.sh /apps/
+
+ENTRYPOINT /apps/entrypoint.sh
