@@ -1,6 +1,5 @@
 class IncreasedStepAttemptSize < ActiveRecord::Migration
   def self.up
-    execute "SET sql_log_bin=0"
     execute "ALTER TABLE step_attempts MODIFY COLUMN id BIGINT AUTO_INCREMENT"
 
     change_column :step_dependencies, :step_attempt_id, :integer, :limit => 8
@@ -12,7 +11,6 @@ class IncreasedStepAttemptSize < ActiveRecord::Migration
   end
 
   def self.down
-    execute "SET sql_log_bin=0"
     execute "ALTER TABLE step_attempts MODIFY COLUMN id INTEGER AUTO_INCREMENT"
 
     change_column :step_dependencies, :step_attempt_id, :integer, :limit => 4
