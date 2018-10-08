@@ -10,6 +10,6 @@ docker pull centos:centos7
 
 docker build -t workflow2:latest .
 
-docker tag worfkflow2 gcr.io/liveramp-eng-bdi/workflow2
+docker tag workflow2 gcr.io/liveramp-eng-bdi/workflow2
 
 docker push gcr.io/liveramp-eng-bdi/workflow2
