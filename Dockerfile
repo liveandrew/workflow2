@@ -26,6 +26,4 @@ RUN mkdir -p /apps/workflow_ui/config/
 RUN ln -sf /apps/secrets/workflow_ui/database.yml /apps/workflow_ui/config/database.yml && \
     ln -sf /apps/secrets/workflow_ui/environment.yml /apps/workflow_ui/config/environment.yml
 
-# copy entrypoint to /apps/entrypoint.sh
 COPY container/entrypoint.sh /apps/
-

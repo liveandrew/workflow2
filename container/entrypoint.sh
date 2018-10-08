@@ -4,6 +4,7 @@ set -e
 
 cd /apps/workflow_db/
 
+export RAILS_ENV=production
 bundle exec rake rapleaf:migrate
 
 cd /apps/workflow_ui/
