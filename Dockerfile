@@ -10,7 +10,7 @@ RUN mkdir -p /apps/workflow_db/config/
 
 RUN ln -sf /apps/secrets/workflow_db/database.yml /apps/workflow_db/config/database.yml
 
-RUN yum -y install ruby ruby-devel make gcc mysql-devel gcc-c++ && \
+RUN yum -y install ruby ruby-devel make gcc mysql-devel gcc-c++ java-1.8.0-openjdk && \
   gem install bundler && \
   cd /apps/workflow_db && bundle install
 
