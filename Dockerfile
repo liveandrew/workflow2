@@ -21,6 +21,8 @@ RUN yum -y install java-1.8.0-openjdk
 
 RUN mkdir -p /apps/workflow_ui/
 
+RUN mkdir -p /var/www/tmp
+
 COPY workflow_ui/target/workflow_ui.job.jar /apps/workflow_ui/
 
 RUN mkdir -p /apps/workflow_ui/config/
