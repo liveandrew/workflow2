@@ -16,7 +16,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 60
       containers:
-      - image: gcr.io/liveramp-eng-bdi/gcr.io/liveramp-eng-bdi/workflow2
+      - image: gcr.io/liveramp-eng-bdi/workflow2
         name: workflow2
         imagePullPolicy: "Always"
         command: ["tail", "-f", "/dev/null"]
