@@ -12,6 +12,7 @@
     <db.target>workflow_db</db.target>
   </properties>
 
+  <groupId>com.liveramp.workflow2</groupId>
   <artifactId>workflow_db</artifactId>
 
   <dependencies>

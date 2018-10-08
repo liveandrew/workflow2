@@ -17,7 +17,6 @@ public abstract class WorkflowUITestCase extends CommonJUnit4TestCase {
 
   @Before
   public void setUp() throws Exception {
-    new DatabasesImpl().getRlDb().deleteAll();
     new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb().deleteAll();
   }
 }

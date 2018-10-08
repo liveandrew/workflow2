@@ -14,6 +14,7 @@
     <skip.deploy.bundle>false</skip.deploy.bundle>
   </properties>
 
+  <groupId>com.liveramp.workflow2</groupId>
   <artifactId>workflow_ui</artifactId>
   <version>${snapshot.version}</version>
 

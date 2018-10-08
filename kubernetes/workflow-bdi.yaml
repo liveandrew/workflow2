@@ -1,0 +1,54 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: workflow2
+  name: workflow2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: cloudera-director-mvp
+  template:
+    metadata:
+      labels:
+        run: cloudera-director-mvp
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - image: gcr.io/liveramp-eng-bdi/gcr.io/liveramp-eng-bdi/workflow2
+        name: workflow2
+        imagePullPolicy: "Always"
+          command: ["tail", "-f", "/dev/null"]
+#        ports:
+#        - containerPort: 7189
+#          protocol: TCP
+        volumeMounts:
+        - name: workflowdb-creds
+          mountPath: /apps/secrets/workflow_db
+          readOnly: true
+        - name: workflowui-creds
+          mountPath: /apps/secrets/workflow_ui
+          readOnly: true
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        command: ["/cloud_sql_proxy",
+                  "-instances=liveramp-eng-bdi:us-central1:bdi-workflow-dbs=tcp:3306",
+                  "-credential_file=/apps/secrets/cloudsql/credentials.json"]
+        securityContext:
+          runAsUser: 2  # non-root user
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - name: cloudsql-credentials
+          mountPath: /apps/secrets/cloudsql
+          readOnly: true
+      volumes:
+      - name: workflowdb-creds
+        secret:
+          secretName: workflow2-workflowdb-config
+      - name: workflowui-creds
+        secret:
+          secretName: workflow2-workflowui-config
+      - name: cloudsql-credentials
+        secret:
+          secretName: workflow2-cloudsql-proxy-credentials
