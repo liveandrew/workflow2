@@ -20,9 +20,9 @@ spec:
         name: workflow2
         imagePullPolicy: "Always"
         command: ["tail", "-f", "/dev/null"]
-#        ports:
-#        - containerPort: 7189
-#          protocol: TCP
+        ports:
+        - containerPort: 8080
+          protocol: TCP
         volumeMounts:
         - name: workflowdb-creds
           mountPath: /apps/secrets/workflow_db
