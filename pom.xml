@@ -18,6 +18,7 @@
   <properties>
     <skip.db.init>true</skip.db.init>
     <maven.clean.skip>true</maven.clean.skip>
+    <skip.jenkins.artifact.clean>true</skip.jenkins.artifact.clean>
   </properties>
 
   <modules>
