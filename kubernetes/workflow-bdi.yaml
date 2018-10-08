@@ -52,3 +52,19 @@ spec:
       - name: cloudsql-credentials
         secret:
           secretName: workflow2-cloudsql-proxy-credentials
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: workflow2 # Service name
+  annotations:
+    cloud.google.com/load-balancer-type: "Internal"
+spec:
+  type: LoadBalancer
+  loadBalancerSourceRanges:
+  - 10.0.0.0/8
+  selector:
+    run: workflow2
+  ports:
+  - port: 80 # Port used to access the Service on the LB.
+    targetPort: 8080 # Port opened by targeted Pods
