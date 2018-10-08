@@ -8,18 +8,18 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      run: cloudera-director-mvp
+      run: workflow2
   template:
     metadata:
       labels:
-        run: cloudera-director-mvp
+        run: workflow2
     spec:
       terminationGracePeriodSeconds: 60
       containers:
       - image: gcr.io/liveramp-eng-bdi/gcr.io/liveramp-eng-bdi/workflow2
         name: workflow2
         imagePullPolicy: "Always"
-          command: ["tail", "-f", "/dev/null"]
+        command: ["tail", "-f", "/dev/null"]
 #        ports:
 #        - containerPort: 7189
 #          protocol: TCP
