@@ -26,6 +26,7 @@
     <module>workflow_db</module>
     <module>workflow_state</module>
     <module>workflow_ui</module>
+    <module>workflow_hadoop</module>
   </modules>
 
   <repositories>
