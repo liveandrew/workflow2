@@ -60,10 +60,12 @@ metadata:
   name: workflow2
   labels:
     run: workflow2
+#  annotations:
+#    cloud.google.com/load-balancer-type: "Internal"
 spec:
-  type: LoadBalancer
-  loadBalancerSourceRanges:
-  - 10.0.0.0/8
+#  type: LoadBalancer
+#  loadBalancerSourceRanges:
+#  - 10.0.0.0/8
   selector:
     run: workflow2
   ports:
@@ -92,3 +94,27 @@ spec:
         backend:
           serviceName: workflow2
           servicePort: 80
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ingress-nginx
+  namespace: ingress-nginx
+  labels:
+    app: ingress-nginx
+  annotations:
+    cloud.google.com/load-balancer-type: "Internal"
+spec:
+  externalTrafficPolicy: Local
+  loadBalancerSourceRanges:
+  - 10.0.0.0/8  # defaults to 0.0.0.0/0
+  type: LoadBalancer
+  selector:
+    app: ingress-nginx
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+  - name: https
+    port: 443
+    targetPort: https
