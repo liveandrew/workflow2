@@ -61,6 +61,9 @@ metadata:
   labels:
     run: workflow2
 spec:
+  type: LoadBalancer
+  loadBalancerSourceRanges:
+  - 10.0.0.0/8
   selector:
     run: workflow2
   ports:
