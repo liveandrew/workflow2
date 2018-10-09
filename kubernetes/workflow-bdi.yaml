@@ -17,6 +17,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 60
       containers:
+      # the container with the actual workflow db and ui binaries
       - image: gcr.io/liveramp-eng-bdi/workflow2
         name: workflow2
         imagePullPolicy: "Always"
@@ -30,6 +31,7 @@ spec:
         - name: workflowui-creds
           mountPath: /apps/secrets/workflow_ui
           readOnly: true
+      # proxy with access to the cloud sql instance
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.11
         command: ["/cloud_sql_proxy",
@@ -42,6 +44,7 @@ spec:
         - name: cloudsql-credentials
           mountPath: /apps/secrets/cloudsql
           readOnly: true
+      # nginx can do reverse proxying handles the ssl
       - image: nginx:1.15
         name: nginx
         imagePullPolicy: IfNotPresent
@@ -54,18 +57,23 @@ spec:
         - mountPath: /apps/secrets/liveramp-net
           name: liveramp-net-certs
       volumes:
+      # DB credentials for the migration user -- eg, database.yml
       - name: workflowdb-creds
         secret:
           secretName: workflow2-workflowdb-config
+      # DB credentials for the ui for the jetty and prod dbs -- environment.yml and database.yml
       - name: workflowui-creds
         secret:
           secretName: workflow2-workflowui-config
+      # service account key so the sql proxy can connect
       - name: cloudsql-credentials
         secret:
           secretName: workflow2-cloudsql-proxy-credentials
+      # certs for *.liveramp.net
       - name: liveramp-net-certs
         secret:
           secretName: tls-secret-liveramp-net
+      # simple nginx config
       - name: nginx-conf
         configMap:
           name: workflow-nginx-conf
@@ -94,3 +102,41 @@ spec:
     targetPort: 443
     protocol: TCP
     name: https
+---
+apiVersion: v1
+metadata:
+  name: workflow-nginx-conf
+data:
+  workflow.conf: |
+    
+    upstream workflows {
+        server 0.0.0.0:8080;
+        keepalive 64;
+    }
+
+    server {
+        listen       8081;
+        server_name  _;
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443;
+        server_name _;
+
+        ssl on;
+        ssl_certificate /apps/secrets/liveramp-net/tls.crt;
+        ssl_certificate_key /apps/secrets/liveramp-net/tls.key;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS;
+        ssl_session_timeout 5m;
+        ssl_protocols TLSv1.2 TLSv1.1 TLSv1;
+
+        location / {
+            proxy_pass http://workflows;
+            proxy_http_version     1.1;
+        }
+
+    }
+
+kind: ConfigMap
