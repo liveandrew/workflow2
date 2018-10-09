@@ -101,7 +101,7 @@ metadata:
   name: ingress-nginx
   namespace: ingress-nginx
   labels:
-    app: ingress-nginx
+    run: ingress-nginx
   annotations:
     cloud.google.com/load-balancer-type: "Internal"
 spec:
@@ -110,7 +110,7 @@ spec:
   - 10.0.0.0/8  # defaults to 0.0.0.0/0
   type: LoadBalancer
   selector:
-    app: ingress-nginx
+    run: ingress-nginx
   ports:
   - name: http
     port: 80
