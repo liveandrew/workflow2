@@ -110,7 +110,7 @@ spec:
   - 10.0.0.0/8  # defaults to 0.0.0.0/0
   type: LoadBalancer
   selector:
-    app: nginx-ingress
+    app: ingress-nginx
   ports:
   - name: http
     port: 80
