@@ -58,10 +58,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: workflow2
-#  annotations:
-#    cloud.google.com/load-balancer-type: "Internal"
   labels:
-    app: workflow2
+    run: workflow2
 spec:
   selector:
     run: workflow2
@@ -71,6 +69,7 @@ spec:
     protocol: TCP
     name: http
 ---
+# Ingress
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -88,6 +87,5 @@ spec:
       paths:
       - path: /
         backend:
-          # This assumes http-svc exists and routes to healthy endpoints
           serviceName: workflow2
           servicePort: 80
