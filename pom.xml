@@ -24,6 +24,7 @@
   <modules>
     <module>workflow_core</module>
     <module>workflow_db</module>
+    <module>workflow_state</module>
     <module>workflow_ui</module>
   </modules>
 
