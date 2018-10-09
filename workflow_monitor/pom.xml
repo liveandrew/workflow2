@@ -1,0 +1,40 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.liveramp.workflow2</groupId>
+  <artifactId>workflow_monitor</artifactId>
+  <version>${snapshot.version}</version>
+
+  <properties>
+    <jobjar.descriptor>com/liveramp/build_tools/assembly/jobjar-flat.xml</jobjar.descriptor>
+    <skip.jobjar>false</skip.jobjar>
+    <skip.deploy.bundle>false</skip.deploy.bundle>
+  </properties>
+
+  <parent>
+    <groupId>com.liveramp</groupId>
+    <artifactId>pom-ant-structure</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.liveramp</groupId>
+      <artifactId>workflow_state</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <id>all-snapshots</id>
+      <url>http://library.liveramp.net/artifactory/all-snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
+  </repositories>
+
+</project>
