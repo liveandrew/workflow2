@@ -42,6 +42,17 @@ spec:
         - name: cloudsql-credentials
           mountPath: /apps/secrets/cloudsql
           readOnly: true
+      - image: nginx:1.15
+        name: nginx
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 443
+        - containerPort: 8081
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: nginx-conf
+        - mountPath: /apps/secrets/liveramp-net
+          name: liveramp-net-certs
       volumes:
       - name: workflowdb-creds
         secret:
@@ -52,6 +63,12 @@ spec:
       - name: cloudsql-credentials
         secret:
           secretName: workflow2-cloudsql-proxy-credentials
+      - name: liveramp-net-certs
+        secret:
+          secretName: tls-secret-liveramp-net
+      - name: nginx-conf
+        configMap:
+          name: workflow-nginx-conf
 ---
 # The service itself
 kind: Service
@@ -60,61 +77,20 @@ metadata:
   name: workflow2
   labels:
     run: workflow2
-#  annotations:
-#    cloud.google.com/load-balancer-type: "Internal"
+  annotations:
+    cloud.google.com/load-balancer-type: "Internal"
 spec:
-#  type: LoadBalancer
-#  loadBalancerSourceRanges:
-#  - 10.0.0.0/8
+  type: LoadBalancer
+  loadBalancerSourceRanges:
+  - 10.0.0.0/8
   selector:
     run: workflow2
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: 8081
     protocol: TCP
     name: http
----
-# Ingress
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: ingress-nginx
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-spec:
-  tls:
-  - hosts:
-    - workflows.bdi.liveramp.net
-    secretName: tls-secret-liveramp-net
-  rules:
-  - host: workflows.bdi.liveramp.net
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: workflow2
-          servicePort: 80
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: ingress-nginx
-  namespace: ingress-nginx
-  labels:
-    run: ingress-nginx
-  annotations:
-    cloud.google.com/load-balancer-type: "Internal"
-spec:
-  externalTrafficPolicy: Local
-  loadBalancerSourceRanges:
-  - 10.0.0.0/8  # defaults to 0.0.0.0/0
-  type: LoadBalancer
-  selector:
-    run: ingress-nginx
-  ports:
-  - name: http
-    port: 80
-    targetPort: http
-  - name: https
-    port: 443
-    targetPort: https
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
