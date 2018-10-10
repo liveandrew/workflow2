@@ -7,6 +7,13 @@ require 'thrift'
 require "rapleaf_types/enums_constants"
 require "rapleaf_types/new_person_data_constants"
 
+module Liveramp
+  module Types
+    module Workflow
+    end
+  end
+end
+
 require 'rap_support'
 require 'rap_support/core_ext/active_record_extension' # Support for 'enum' and 'enum_from_thrift'
 
