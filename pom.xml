@@ -22,6 +22,7 @@
   </properties>
 
   <modules>
+    <module>workflow_types</module>
     <module>workflow_core</module>
     <module>workflow_db</module>
     <module>workflow_state</module>
