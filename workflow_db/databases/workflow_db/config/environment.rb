@@ -7,7 +7,7 @@ require 'thrift'
 require "rapleaf_types/enums_constants"
 require "rapleaf_types/new_person_data_constants"
 require "rapleaf_types/liveramp_importer_types"
-require 'workflow2_types/workflow_constants'
+require 'gen-rb/workflow2_types/workflow_constants'
 
 require 'rap_support'
 require 'rap_support/core_ext/active_record_extension' # Support for 'enum' and 'enum_from_thrift'

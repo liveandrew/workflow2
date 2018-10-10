@@ -1,0 +1,1 @@
+require_relative '../gen-rb/workflow_constants'
