@@ -6,6 +6,7 @@ gem 'thrift', '0.9.3.0'
 gem 'db_support'
 gem 'rap_support'
 gem 'rapleaf_types'
+gem 'workflow_types'
 
 group :test do
   gem 'rspec-rails', '2.6.1'

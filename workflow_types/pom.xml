@@ -9,7 +9,6 @@
     <maven.javadoc.skip>true</maven.javadoc.skip>
     <skip.db.init>true</skip.db.init>
     <skip.autocommit>false</skip.autocommit>
-    <skip.patch.datapartner>false</skip.patch.datapartner>
   </properties>
 
   <parent>
