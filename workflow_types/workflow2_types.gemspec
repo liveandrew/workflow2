@@ -7,5 +7,5 @@ Gem::Specification.new do |s|
   s.has_rdoc    = false,
       s.summary     = 'Workflow2 Types'
   s.description = s.summary
-  s.files       = Dir.glob("{gen-rb}/**/*") + Dir.glob("{lib}/**/*")
+  s.files       = Dir.glob("{lib}/**/*")
 end
