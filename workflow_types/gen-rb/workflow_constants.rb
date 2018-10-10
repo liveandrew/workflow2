@@ -5,7 +5,7 @@
 #
 
 require 'thrift'
-require_relative 'workflow_types'
+require 'workflow_types'
 
 module Liveramp
   module Types
