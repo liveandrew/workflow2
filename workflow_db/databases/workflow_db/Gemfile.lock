@@ -116,7 +116,7 @@ GEM
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.7.5)
-    workflow2_types (1.0.2)
+    workflow2_types (1.0.3)
 
 PLATFORMS
   ruby
@@ -132,7 +132,7 @@ DEPENDENCIES
   rspec-rails (= 2.6.1)
   shoulda (>= 2.11.0)
   thrift (= 0.9.3.0)
-  workflow2_types (= 1.0.2)
+  workflow2_types (= 1.0.3)
 
 BUNDLED WITH
    1.16.4
