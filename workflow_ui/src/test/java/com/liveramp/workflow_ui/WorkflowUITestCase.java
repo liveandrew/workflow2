@@ -3,7 +3,6 @@ package com.liveramp.workflow_ui;
 import org.apache.log4j.Level;
 import org.junit.Before;
 
-import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.java_support.CommonJUnit4TestCase;
 
 /**
