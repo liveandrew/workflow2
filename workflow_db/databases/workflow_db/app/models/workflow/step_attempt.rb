@@ -1,3 +1,5 @@
+require 'workflow_constants'
+
 class Workflow::StepAttempt < Workflow::BaseModel
   belongs_to :workflow_attempt
   has_many :step_dependencies, :class_name => "StepDependency", :dependent => :destroy

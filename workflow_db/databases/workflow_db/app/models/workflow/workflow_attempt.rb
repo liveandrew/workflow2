@@ -1,3 +1,5 @@
+require 'workflow_constants'
+
 class Workflow::WorkflowAttempt < Workflow::BaseModel
   include Rapleaf::Types::PersonData
 

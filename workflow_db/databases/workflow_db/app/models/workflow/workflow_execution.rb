@@ -1,3 +1,5 @@
+require 'workflow_constants'
+
 class Workflow::WorkflowExecution < Workflow::BaseModel
   belongs_to :application
   has_many :workflow_attempt, :dependent => :restrict_with_exception
