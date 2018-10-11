@@ -6,10 +6,10 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.log4j.Level;
 import org.junit.Before;
 
+import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.BucketDataStoreImpl;
 import com.rapleaf.cascading_ext.workflow2.test.BaseWorkflowTestCase;
-import com.rapleaf.db_schemas.DatabasesImpl;
 import com.rapleaf.formats.bucket.Bucket;
 import com.rapleaf.formats.stream.RecordOutputStream;
 import com.rapleaf.support.Strings;
@@ -21,7 +21,7 @@ public class WorkflowTestCase extends BaseWorkflowTestCase {
 
   @Before
   public void deleteFixtures() throws Exception {
-    new DatabasesImpl().getRlDb().deleteAll();
+    new DatabasesImpl().getWorkflowDb().deleteAll();
     new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb().deleteAll();
   }
 

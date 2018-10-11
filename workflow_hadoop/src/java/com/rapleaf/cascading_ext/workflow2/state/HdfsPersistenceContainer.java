@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -21,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.cascading_ext.resource.CheckpointUtil;
 import com.liveramp.commons.collections.nested_map.ThreeNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
@@ -31,6 +29,7 @@ import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow2.workflow_hadoop.CheckpointUtil;
 import com.liveramp.workflow_state.ExecutionState;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;

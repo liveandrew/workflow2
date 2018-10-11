@@ -20,7 +20,7 @@ import com.liveramp.commons.test.WaitUntil;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.datadog_client.statsd.DogClient;
-import com.liveramp.resource_db_manager.DbResourceManager;
+import com.liveramp.workflow2.workflow_state.resources.DbResourceManager;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow_core.CoreWorkflowOptions;

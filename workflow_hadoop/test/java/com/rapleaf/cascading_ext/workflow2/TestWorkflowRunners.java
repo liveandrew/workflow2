@@ -1,7 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.collect.Sets;
@@ -9,9 +8,9 @@ import org.junit.Test;
 
 import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_ext.resource.ResourceManager;
-import com.liveramp.cascading_ext.resource.ResourceManagers;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
+import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
 
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 

@@ -9,15 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
-import com.liveramp.cascading_ext.resource.ResourceManagers;
+import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
-import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.InMemoryContext;
 import com.liveramp.workflow_core.runner.BaseAction;
-import com.liveramp.workflow_core.runner.BaseStep;
-import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.test.HadoopCommonJunit4TestCase;
 import com.rapleaf.cascading_ext.workflow2.FailingAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -25,8 +22,6 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
-import com.rapleaf.db_schemas.DatabasesImpl;
-import com.rapleaf.db_schemas.rldb.IRlDb;
 
 import static org.junit.Assert.fail;
 
@@ -49,6 +44,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   public void deleteWorkflowDbFixtures() throws IOException {
     new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb().deleteAll();
 
+    //  TODO sweep as soon as old db resource managers aren't used in tests
     IRlDb rldb = new DatabasesImpl().getRlDb();
     rldb.resourceRecords().deleteAll();
     rldb.resourceRoots().deleteAll();
@@ -166,7 +162,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public DbHadoopWorkflow initializeWorkflow() throws IOException {
-    return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getRlDb()));
+    return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getWorkflowDb()));
   }
 
   public DbHadoopWorkflow initializeWorkflow(String workflowName,

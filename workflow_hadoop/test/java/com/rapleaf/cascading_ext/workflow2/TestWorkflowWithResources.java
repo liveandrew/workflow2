@@ -4,34 +4,32 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.cedarsoftware.util.io.JsonReader;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.apache.hadoop.fs.Path;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import com.liveramp.cascading_ext.resource.HdfsStorage;
-import com.liveramp.cascading_ext.resource.HdfsStorageRootDeterminer;
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerContainer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.ResourceManagerContainer;
-import com.liveramp.cascading_ext.resource.ResourceStorages;
 import com.liveramp.cascading_ext.resource.RootManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
-import com.liveramp.resource_db_manager.DbResourceManager;
-import com.liveramp.resource_db_manager.DbStorage;
-import com.liveramp.resource_db_manager.DbStorageRootDeterminer;
+import com.liveramp.databases.workflow_db.DatabasesImpl;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
+import com.liveramp.databases.workflow_db.models.ResourceRoot;
+import com.liveramp.workflow2.workflow_hadoop.HdfsStorage;
+import com.liveramp.workflow2.workflow_hadoop.HdfsStorageRootDeterminer;
+import com.liveramp.workflow2.workflow_hadoop.ResourceStorages;
+import com.liveramp.workflow2.workflow_state.resources.DbResourceManager;
+import com.liveramp.workflow2.workflow_state.resources.DbStorage;
+import com.liveramp.workflow2.workflow_state.resources.DbStorageRootDeterminer;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
-import com.rapleaf.db_schemas.DatabasesImpl;
-import com.rapleaf.db_schemas.rldb.IRlDb;
-import com.rapleaf.db_schemas.rldb.models.ResourceRoot;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -55,7 +53,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   }
 
 
-  private ResourceDeclarer getDeclarer(IRlDb rldb, DbStorage.Factory storage) throws IOException {
+  private ResourceDeclarer getDeclarer(IWorkflowDb rldb, DbStorage.Factory storage) throws IOException {
 
     ResourceDeclarerContainer<ResourceRoot> declarer = new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
@@ -68,7 +66,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   }
 
   @NotNull
-  private DbStorage.Factory getStorage(IRlDb rldb) {
+  private DbStorage.Factory getStorage(IWorkflowDb rldb) {
     return DbResourceManager.dbStorage(rldb);
   }
 
@@ -76,7 +74,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
     return ResourceStorages.hdfsStorage();
   }
 
-  private ResourceDeclarer getDeclarer(IRlDb rldb, HdfsStorage.Factory storage, String workflowRoot) throws IOException {
+  private ResourceDeclarer getDeclarer(IWorkflowDb rldb, HdfsStorage.Factory storage, String workflowRoot) throws IOException {
 
     ResourceDeclarerContainer<String> declarer = new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
@@ -94,7 +92,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
 
     String tmpRoot = getTestRoot() + "/workflow";
 
-    IRlDb rldb = new DatabasesImpl().getRlDb();
+    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
     HdfsStorage.Factory factory = getHdfsStorage();
 
     ResourceDeclarer declarer = getDeclarer(rldb, factory, tmpRoot);
@@ -202,7 +200,7 @@ public class TestWorkflowWithResources extends WorkflowTestCase {
   @Test
   public void testDbResourceVersions() throws IOException {
 
-    IRlDb rldb = new DatabasesImpl().getRlDb();
+    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
 
     Step step = new Step(new NoOpAction("step-1"));
     Step step2 = new Step(new FailingAction("step-2"), step);
