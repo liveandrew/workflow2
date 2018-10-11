@@ -49,7 +49,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb().deleteAll();
 
     //  TODO sweep as soon as old db resource managers aren't used in tests
-    IRlDb rldb = new DatabaseImpl().getRlDb();
+    IRlDb rldb = new DatabasesImpl().getRlDb();
     rldb.resourceRecords().deleteAll();
     rldb.resourceRoots().deleteAll();
   }
