@@ -20,6 +20,8 @@ import com.liveramp.databases.workflow_db.iface.IDashboardPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceCounterPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceJobTaskExceptionPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceJobPersistence;
+import com.liveramp.databases.workflow_db.iface.IResourceRecordPersistence;
+import com.liveramp.databases.workflow_db.iface.IResourceRootPersistence;
 import com.liveramp.databases.workflow_db.iface.IStepAttemptDatastorePersistence;
 import com.liveramp.databases.workflow_db.iface.IStepAttemptPersistence;
 import com.liveramp.databases.workflow_db.iface.IStepDependencyPersistence;
@@ -50,6 +52,8 @@ public interface IWorkflowDb extends IDb {
   IMapreduceCounterPersistence mapreduceCounters();
   IMapreduceJobTaskExceptionPersistence mapreduceJobTaskExceptions();
   IMapreduceJobPersistence mapreduceJobs();
+  IResourceRecordPersistence resourceRecords();
+  IResourceRootPersistence resourceRoots();
   IStepAttemptDatastorePersistence stepAttemptDatastores();
   IStepAttemptPersistence stepAttempts();
   IStepDependencyPersistence stepDependencies();

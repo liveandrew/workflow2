@@ -35,6 +35,8 @@ import com.liveramp.databases.workflow_db.iface.IDashboardPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceCounterPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceJobTaskExceptionPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceJobPersistence;
+import com.liveramp.databases.workflow_db.iface.IResourceRecordPersistence;
+import com.liveramp.databases.workflow_db.iface.IResourceRootPersistence;
 import com.liveramp.databases.workflow_db.iface.IStepAttemptDatastorePersistence;
 import com.liveramp.databases.workflow_db.iface.IStepAttemptPersistence;
 import com.liveramp.databases.workflow_db.iface.IStepDependencyPersistence;
@@ -70,6 +72,8 @@ public class WorkflowDbImpl implements IWorkflowDb {
   private final LazyLoadPersistence<IMapreduceCounterPersistence, IDatabases> mapreduce_counters;
   private final LazyLoadPersistence<IMapreduceJobTaskExceptionPersistence, IDatabases> mapreduce_job_task_exceptions;
   private final LazyLoadPersistence<IMapreduceJobPersistence, IDatabases> mapreduce_jobs;
+  private final LazyLoadPersistence<IResourceRecordPersistence, IDatabases> resource_records;
+  private final LazyLoadPersistence<IResourceRootPersistence, IDatabases> resource_roots;
   private final LazyLoadPersistence<IStepAttemptDatastorePersistence, IDatabases> step_attempt_datastores;
   private final LazyLoadPersistence<IStepAttemptPersistence, IDatabases> step_attempts;
   private final LazyLoadPersistence<IStepDependencyPersistence, IDatabases> step_dependencies;
@@ -103,6 +107,8 @@ public class WorkflowDbImpl implements IWorkflowDb {
     this.mapreduce_counters = new LazyLoadPersistence<>(conn, databases, BaseMapreduceCounterPersistenceImpl::new);
     this.mapreduce_job_task_exceptions = new LazyLoadPersistence<>(conn, databases, BaseMapreduceJobTaskExceptionPersistenceImpl::new);
     this.mapreduce_jobs = new LazyLoadPersistence<>(conn, databases, BaseMapreduceJobPersistenceImpl::new);
+    this.resource_records = new LazyLoadPersistence<>(conn, databases, BaseResourceRecordPersistenceImpl::new);
+    this.resource_roots = new LazyLoadPersistence<>(conn, databases, BaseResourceRootPersistenceImpl::new);
     this.step_attempt_datastores = new LazyLoadPersistence<>(conn, databases, BaseStepAttemptDatastorePersistenceImpl::new);
     this.step_attempts = new LazyLoadPersistence<>(conn, databases, BaseStepAttemptPersistenceImpl::new);
     this.step_dependencies = new LazyLoadPersistence<>(conn, databases, BaseStepDependencyPersistenceImpl::new);
@@ -200,6 +206,14 @@ public class WorkflowDbImpl implements IWorkflowDb {
     return mapreduce_jobs.get();
   }
 
+  public IResourceRecordPersistence resourceRecords(){
+    return resource_records.get();
+  }
+
+  public IResourceRootPersistence resourceRoots(){
+    return resource_roots.get();
+  }
+
   public IStepAttemptDatastorePersistence stepAttemptDatastores(){
     return step_attempt_datastores.get();
   }
@@ -270,6 +284,8 @@ public class WorkflowDbImpl implements IWorkflowDb {
     success &= mapreduceCounters().isEmpty() || mapreduceCounters().deleteAll();
     success &= mapreduceJobTaskExceptions().isEmpty() || mapreduceJobTaskExceptions().deleteAll();
     success &= mapreduceJobs().isEmpty() || mapreduceJobs().deleteAll();
+    success &= resourceRecords().isEmpty() || resourceRecords().deleteAll();
+    success &= resourceRoots().isEmpty() || resourceRoots().deleteAll();
     success &= stepAttemptDatastores().isEmpty() || stepAttemptDatastores().deleteAll();
     success &= stepAttempts().isEmpty() || stepAttempts().deleteAll();
     success &= stepDependencies().isEmpty() || stepDependencies().deleteAll();
@@ -300,6 +316,8 @@ public class WorkflowDbImpl implements IWorkflowDb {
     mapreduce_counters.disableCaching();
     mapreduce_job_task_exceptions.disableCaching();
     mapreduce_jobs.disableCaching();
+    resource_records.disableCaching();
+    resource_roots.disableCaching();
     step_attempt_datastores.disableCaching();
     step_attempts.disableCaching();
     step_dependencies.disableCaching();

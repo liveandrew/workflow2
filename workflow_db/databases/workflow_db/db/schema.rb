@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20180715052845) do
+ActiveRecord::Schema.define(:version => 20181011034633) do
 
   create_table "application_configured_notifications", :force => true do |t|
     t.integer "application_id",             :limit => 8, :null => false
@@ -128,6 +128,28 @@ ActiveRecord::Schema.define(:version => 20180715052845) do
   end
 
   add_index "mapreduce_jobs", ["step_attempt_id"], :name => "step_attempt_id_index"
+
+  create_table "resource_records", :force => true do |t|
+    t.string   "name",                                 :null => false
+    t.integer  "resource_root_id",                     :null => false
+    t.text     "json",             :limit => 16777215, :null => false
+    t.datetime "created_at"
+    t.string   "class_path"
+  end
+
+  add_index "resource_records", ["resource_root_id", "name"], :name => "index_resource_records_on_resource_root_id_and_name"
+
+  create_table "resource_roots", :force => true do |t|
+    t.string   "name"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "scope_identifier"
+    t.integer  "version",          :limit => 8
+    t.string   "version_type"
+  end
+
+  add_index "resource_roots", ["name"], :name => "name_index"
+  add_index "resource_roots", ["version_type", "version"], :name => "resource_root_version_type_idx", :unique => true
 
   create_table "step_attempt_datastores", :force => true do |t|
     t.integer "step_attempt_id",               :limit => 8, :null => false
