@@ -12,6 +12,7 @@ import org.junit.Before;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
+import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.InMemoryContext;
 import com.liveramp.workflow_core.runner.BaseAction;
@@ -24,7 +25,6 @@ import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.db_schemas.rldb.IRlDb;
 import com.rapleaf.db_schemas.DatabasesImpl;
-import com.rapleaf.db_schemas.rldb.IRlDb;
 
 
 import static org.junit.Assert.fail;
@@ -166,7 +166,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public DbHadoopWorkflow initializeWorkflow() throws IOException {
-    return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new DatabasesImpl().getWorkflowDb()));
+    return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb()));
   }
 
   public DbHadoopWorkflow initializeWorkflow(String workflowName,
