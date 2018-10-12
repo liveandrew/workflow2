@@ -7,11 +7,12 @@ import com.liveramp.workflow_core.runner.BaseStep;
 
 public final class Step extends BaseStep<WorkflowRunner.ExecuteConfig> {
 
-  public Step(BaseAction<WorkflowRunner.ExecuteConfig> action, Step... dependencies) {
+  @SafeVarargs
+  public Step(BaseAction<WorkflowRunner.ExecuteConfig> action, BaseStep<WorkflowRunner.ExecuteConfig>... dependencies) {
     super(action, dependencies);
   }
 
-  public Step(BaseAction<WorkflowRunner.ExecuteConfig> action, Collection<Step> dependencies) {
+  public Step(BaseAction<WorkflowRunner.ExecuteConfig> action, Collection<? extends BaseStep<WorkflowRunner.ExecuteConfig>> dependencies) {
     super(action, dependencies);
   }
 }
