@@ -2,6 +2,7 @@ package com.liveramp.workflow_state.background_workflow;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -21,7 +22,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
-import javafx.util.Duration;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -64,8 +64,8 @@ import com.rapleaf.jack.queries.Updates;
 public class BackgroundWorkflowExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(BackgroundWorkflowExecutor.class);
 
-  private static final long DEFAULT_HEARTBEAT_TIMEOUT = (long)Duration.minutes(15).toMillis();
-  private static final long DEFAULT_HEARTBEAT_INTERVAL = (long)Duration.seconds(15).toMillis();
+  private static final long DEFAULT_HEARTBEAT_TIMEOUT = Duration.ofMinutes(15).toMillis();
+  private static final long DEFAULT_HEARTBEAT_INTERVAL = Duration.ofSeconds(15).toMillis();
 
   private final List<String> runnableWorkflowNames;
 
