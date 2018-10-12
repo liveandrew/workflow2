@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import com.sleepycat.je.dbi.DatabaseImpl;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
+import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
@@ -23,8 +23,6 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
-import com.rapleaf.db_schemas.rldb.IRlDb;
-import com.rapleaf.db_schemas.DatabasesImpl;
 
 
 import static org.junit.Assert.fail;
@@ -47,11 +45,6 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   @Before
   public void deleteWorkflowDbFixtures() throws IOException {
     new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb().deleteAll();
-
-    //  TODO sweep as soon as old db resource managers aren't used in tests
-    IRlDb rldb = new DatabasesImpl().getRlDb();
-    rldb.resourceRecords().deleteAll();
-    rldb.resourceRoots().deleteAll();
   }
 
   /*
@@ -166,7 +159,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public DbHadoopWorkflow initializeWorkflow() throws IOException {
-    return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager(TEST_WORKFLOW_NAME, null, new com.liveramp.databases.workflow_db.DatabasesImpl().getWorkflowDb()));
+    return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager());
   }
 
   public DbHadoopWorkflow initializeWorkflow(String workflowName,
