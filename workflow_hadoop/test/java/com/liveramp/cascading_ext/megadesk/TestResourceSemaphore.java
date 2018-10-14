@@ -26,7 +26,6 @@ import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.CleanUpOlderVersions;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -99,7 +98,7 @@ public class TestResourceSemaphore extends WorkflowTestCase {
         return new CuratorStoreLocker(Lists.newArrayList(framework));
       }
     };
-    HadoopWorkflowOptions options = new TestWorkflowOptions().setLockProvider(lockProvider);
+    HadoopWorkflowOptions options = HadoopWorkflowOptions.test().setLockProvider(lockProvider);
 
 
     Step action = new Step(new LongRunningAction("action", keepGoing, barrier, versionedStore));

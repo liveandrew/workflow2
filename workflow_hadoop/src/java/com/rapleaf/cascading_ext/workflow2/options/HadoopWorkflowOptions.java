@@ -26,14 +26,17 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
   private StoreReaderLockProvider lockProvider;
   private FlowSubmissionController flowSubmissionController;
 
-  protected HadoopWorkflowOptions() {
+  public HadoopWorkflowOptions() {
     super(CascadingHelper.get().getDefaultHadoopProperties(), toProperties(CascadingHelper.get().getJobConf()));
     flowSubmissionController = new FlowSubmissionController.SubmitImmediately();
   }
 
   protected HadoopWorkflowOptions(OverridableProperties defaultProperties,
-                                  Map<Object, Object> systemProperties) {
+                            Map<Object, Object> systemProperties) {
     super(defaultProperties, systemProperties);
+
+    flowSubmissionController = new FlowSubmissionController.SubmitImmediately();
+
   }
 
   public static Map<Object, Object> toProperties(JobConf conf) {

@@ -14,7 +14,7 @@ import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
-import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.liveramp.workflow.test.FailingPersistenceFactory;
 import com.liveramp.workflow.test.StepNameBuilder;
 
@@ -40,7 +40,7 @@ public class TestFailingPersistence extends WorkflowTestCase {
       new WorkflowRunner(
           TestWorkflow.class,
           new FailingPersistenceFactory(new WorkflowDbPersistenceFactory(), new StepNameBuilder(WORKFLOW_CHKPT_TOKEN, SHOULD_FAIL_CHKPT_TOKEN)),
-          new TestWorkflowOptions(),
+          HadoopWorkflowOptions.test(),
           new Step(new TestWorkflow(
               WORKFLOW_CHKPT_TOKEN,
               getTestRoot(),

@@ -26,7 +26,7 @@ import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
-import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.types.spruce.LogApp;
 
 import static org.junit.Assert.assertEquals;
@@ -38,7 +38,7 @@ public class TestCompressLogsAction extends WorkflowTestCase {
   private void execute(String inputPath, String tmpRoot, String backupRoot, String inputCodec, String outputCodec) throws IOException {
     new WorkflowRunner(
         CompressLogsAction.class,
-        new TestWorkflowOptions(),
+        HadoopWorkflowOptions.test(),
         new Step(new CompressLogsAction(inputPath, tmpRoot, backupRoot, inputCodec, outputCodec, LogApp.S2S_DATA_SYNCER, DateTime.now(), Maps.<String, Object>newHashMap()))
     ).run();
   }
