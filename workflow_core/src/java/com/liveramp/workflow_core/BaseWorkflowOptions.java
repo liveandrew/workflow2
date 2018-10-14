@@ -24,8 +24,6 @@ import com.rapleaf.cascading_ext.workflow2.rollback.SuccessCallback;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
-  public static final String WORKFLOW_UI_URL = "http://workflows.liveramp.net";
-
   private final OverridableProperties defaultProperties;
   private final Map<Object, Object> systemProperties; //  not for putting in conf, but for visibility into config
 

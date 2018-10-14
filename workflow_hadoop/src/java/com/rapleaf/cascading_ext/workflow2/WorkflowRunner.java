@@ -104,6 +104,7 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
       W extends InitializedWorkflow<Step, K, HadoopWorkflowOptions>> WorkflowRunner(
       String workflowName,
       WorkflowPersistenceFactory<Step, K, HadoopWorkflowOptions, W> persistence, Step tail) throws IOException {
+
     this(workflowName, persistence, Sets.newHashSet(tail));
   }
 
