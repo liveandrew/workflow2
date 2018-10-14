@@ -14,7 +14,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.util.generated.StringOrNone;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
@@ -26,8 +25,8 @@ import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.CleanUpOlderVersions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -100,7 +99,7 @@ public class TestResourceSemaphore extends WorkflowTestCase {
         return new CuratorStoreLocker(Lists.newArrayList(framework));
       }
     };
-    WorkflowOptions options = new TestWorkflowOptions().setLockProvider(lockProvider);
+    HadoopWorkflowOptions options = new TestWorkflowOptions().setLockProvider(lockProvider);
 
 
     Step action = new Step(new LongRunningAction("action", keepGoing, barrier, versionedStore));
@@ -146,7 +145,7 @@ public class TestResourceSemaphore extends WorkflowTestCase {
     System.out.println("Done");
   }
 
-  private void attemptToClean(VersionedBucketDataStore<StringOrNone> versionedStore, WorkflowOptions options) throws IOException {
+  private void attemptToClean(VersionedBucketDataStore<StringOrNone> versionedStore, HadoopWorkflowOptions options) throws IOException {
     new WorkflowRunner("Test Workflow",
         new WorkflowDbPersistenceFactory(),
         options,

@@ -7,11 +7,9 @@ import java.util.function.Function;
 
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
-import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.InitializedPersistence;
-import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.HadoopWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsInitializedPersistence;
@@ -23,7 +21,7 @@ public class WorkflowRunners {
 
   public static void dbRun(
       String workflowName,
-      WorkflowOptions options,
+      HadoopWorkflowOptions options,
       WorkflowBuilder<InitializedDbPersistence, DbHadoopWorkflow> constructor
   ) throws IOException {
     WorkflowRunners.run(new WorkflowDbPersistenceFactory(), workflowName, options, constructor, new NoOp<>());
@@ -32,17 +30,17 @@ public class WorkflowRunners {
   public static void hdfsRun(
       String workflowName,
       String hdfsPath,
-      WorkflowOptions options,
+      HadoopWorkflowOptions options,
       WorkflowBuilder<HdfsInitializedPersistence, HadoopWorkflow> constructor
   ) throws IOException {
     WorkflowRunners.run(new HdfsCheckpointPersistence(hdfsPath), workflowName, options, constructor, new NoOp<>());
   }
 
 
-  public static <INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, WorkflowOptions>> void run(
-      WorkflowPersistenceFactory<Step, INITIALIZED, WorkflowOptions, WORKFLOW> persistenceFactory,
+  public static <INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, HadoopWorkflowOptions>> void run(
+      WorkflowPersistenceFactory<Step, INITIALIZED, HadoopWorkflowOptions, WORKFLOW> persistenceFactory,
       String workflowName,
-      WorkflowOptions options,
+      HadoopWorkflowOptions options,
       WorkflowBuilder<INITIALIZED, WORKFLOW> constructor,
       PostRunCallback<INITIALIZED, WORKFLOW> callback
   ) throws IOException {
@@ -71,13 +69,13 @@ public class WorkflowRunners {
 
   }
 
-  public interface WorkflowBuilder<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, WorkflowOptions>>
+  public interface WorkflowBuilder<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, HadoopWorkflowOptions>>
       extends Function<WORKFLOW, Set<Step>> {}
 
-  public interface PostRunCallback<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, WorkflowOptions>>
+  public interface PostRunCallback<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, HadoopWorkflowOptions>>
       extends Consumer<WORKFLOW> {}
 
-  public static class NoOp<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, WorkflowOptions>> implements PostRunCallback<INITIALIZED, WORKFLOW>{
+  public static class NoOp<INITIALIZED extends InitializedPersistence, WORKFLOW extends InitializedWorkflow<Step, INITIALIZED, HadoopWorkflowOptions>> implements PostRunCallback<INITIALIZED, WORKFLOW>{
     @Override
     public void accept(WORKFLOW initialized) {
       //  nope

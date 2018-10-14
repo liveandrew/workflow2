@@ -5,41 +5,35 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.hp.gagawa.java.elements.S;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import com.liveramp.cascading_ext.resource.ResourceDeclarerContainer;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.JVMState;
-import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
-import com.liveramp.workflow_state.IStep;
-import com.liveramp.workflow_state.InitializedPersistence;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class MonitoredPersistenceFactory extends WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> {
+public class MonitoredPersistenceFactory extends WorkflowPersistenceFactory<Step, InitializedDbPersistence, HadoopWorkflowOptions, DbHadoopWorkflow> {
 
-  private final WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate;
+  private final WorkflowPersistenceFactory<Step, InitializedDbPersistence, HadoopWorkflowOptions, DbHadoopWorkflow> delegate;
 
-  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate) {
+  public MonitoredPersistenceFactory(WorkflowPersistenceFactory<Step, InitializedDbPersistence, HadoopWorkflowOptions, DbHadoopWorkflow> delegate) {
     super(new JVMState());
     this.delegate = delegate;
   }
 
   @Override
-  public DbHadoopWorkflow construct(String workflowName, WorkflowOptions options, InitializedDbPersistence initialized, ResourceManager manager, MultiShutdownHook hook) {
+  public DbHadoopWorkflow construct(String workflowName, HadoopWorkflowOptions options, InitializedDbPersistence initialized, ResourceManager manager, MultiShutdownHook hook) {
     return new DbHadoopWorkflow(workflowName, options, initialized, this, manager, hook);
   }
 

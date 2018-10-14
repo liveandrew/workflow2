@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
-import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
@@ -21,7 +20,7 @@ import com.rapleaf.cascading_ext.workflow2.FailingAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunnable;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 
 
@@ -70,24 +69,24 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     return execute(steps, context);
   }
 
-  public WorkflowRunner execute(Set<Step> steps, WorkflowOptions options) throws IOException {
+  public WorkflowRunner execute(Set<Step> steps, HadoopWorkflowOptions options) throws IOException {
     return execute(steps, options, context, ResourceManagers.inMemoryResourceManager());
   }
 
-  public WorkflowRunner execute(BaseAction action, WorkflowOptions options) throws IOException {
+  public WorkflowRunner execute(BaseAction action, HadoopWorkflowOptions options) throws IOException {
     return execute(Sets.newHashSet(new Step(action)), options, context, ResourceManagers.inMemoryResourceManager());
   }
 
-  public WorkflowRunner execute(Step step, WorkflowOptions options) throws IOException {
+  public WorkflowRunner execute(Step step, HadoopWorkflowOptions options) throws IOException {
     return execute(Sets.newHashSet(step), options, context, ResourceManagers.inMemoryResourceManager());
   }
 
   public WorkflowRunner execute(Set<Step> steps, ContextStorage storage) throws IOException {
-    return execute(steps, WorkflowOptions.test(), storage, ResourceManagers.inMemoryResourceManager());
+    return execute(steps, HadoopWorkflowOptions.test(), storage, ResourceManagers.inMemoryResourceManager());
   }
 
   public WorkflowRunner execute(Set<Step> steps,
-                                WorkflowOptions options,
+                                HadoopWorkflowOptions options,
                                 ContextStorage storage,
                                 ResourceDeclarer manager) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
@@ -126,7 +125,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
     Step terminalFail = new Step(new FailingAction("terminal-fail"), steps);
 
     WorkflowRunner runner = buildWorkflowRunner(Sets.newHashSet(terminalFail),
-        WorkflowOptions.test().setRollBackOnFailure(true),
+        HadoopWorkflowOptions.test().setRollBackOnFailure(true),
         declarer
     );
 
@@ -141,14 +140,14 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
   }
 
   public WorkflowRunner execute(Set<Step> steps, ResourceDeclarer resourceManager) throws IOException {
-    WorkflowRunner workflowRunner = buildWorkflowRunner(steps, WorkflowOptions.test(), resourceManager);
+    WorkflowRunner workflowRunner = buildWorkflowRunner(steps, HadoopWorkflowOptions.test(), resourceManager);
     workflowRunner.run();
     return workflowRunner;
   }
 
   @NotNull
   private WorkflowRunner buildWorkflowRunner(Set<Step> steps,
-                                             WorkflowOptions options,
+                                             HadoopWorkflowOptions options,
                                              ResourceDeclarer resourceManager) throws IOException {
     return new WorkflowRunner(TEST_WORKFLOW_NAME,
         new WorkflowDbPersistenceFactory(),
@@ -166,7 +165,7 @@ public class BaseWorkflowTestCase extends HadoopCommonJunit4TestCase {
                                              ResourceDeclarer declarer) throws IOException {
     return new WorkflowDbPersistenceFactory().initialize(
         workflowName,
-        WorkflowOptions.test()
+        HadoopWorkflowOptions.test()
             .setResourceManager(declarer));
   }
 

@@ -12,7 +12,7 @@ import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
 
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
 import static org.junit.Assert.*;
 
@@ -27,7 +27,7 @@ public class TestWorkflowRunners extends WorkflowTestCase {
     WorkflowRunners.run(
         new WorkflowDbPersistenceFactory(),
         TestWorkflowRunners.class.getName(),
-        WorkflowOptions.test().setResourceManager(ResourceManagers.defaultResourceManager()),
+        HadoopWorkflowOptions.test().setResourceManager(ResourceManagers.defaultResourceManager()),
         initialized -> {
 
           ResourceManager manager = initialized.getManager();

@@ -2,12 +2,10 @@ package com.rapleaf.cascading_ext.workflow2;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.thrift.TException;
 import org.junit.Before;
@@ -32,7 +30,6 @@ import com.rapleaf.cascading_ext.assembly.FastSum;
 import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.CategoryBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.SplitBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
 import com.rapleaf.cascading_ext.datastore.VersionedThriftBucketDataStoreHelper;
@@ -45,8 +42,8 @@ import com.rapleaf.cascading_ext.tap.TapFactory;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
@@ -368,7 +365,7 @@ public class TestCascadingWorkflowBuilder extends WorkflowTestCase {
     pipe1 = new Increment(pipe1, "DIES", "COUNT");
 
     WorkflowRunner output1 = execute(builder.buildNullTail(pipe1),
-        WorkflowOptions.test());
+        HadoopWorkflowOptions.test());
 
     TwoNestedMap<String, String, Long> counters = output1.getPersistence().getFlatCounters();
     assertEquals(new Long(2), counters.get("DIES").get("COUNT"));

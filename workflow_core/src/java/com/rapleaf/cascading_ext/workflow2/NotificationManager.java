@@ -6,12 +6,16 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
+import com.liveramp.java_support.alerts_handler.configs.AlertsHandlerConfig;
+import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
+import com.liveramp.java_support.alerts_handler.recipients.AddRecipientContext;
+import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.WorkflowConstants;
@@ -133,6 +137,24 @@ public class NotificationManager {
     mail(subject, "", notification);
   }
 
+
+  private static AlertRecipient engineering(final AlertSeverity severity) {
+    return new AlertRecipient() {
+      @Override
+      public void addRecipient(RecipientListBuilder recipientListBuilder, AlertsHandlerConfig alertsHandlerConfig, AddRecipientContext context) {
+        final AlertRecipient engineeringRecipient = alertsHandlerConfig.getEngineeringRecipient();
+        final AddRecipientContext contextWithSeverity = new AddRecipientContext(Optional.of(severity));
+
+        engineeringRecipient.addRecipient(recipientListBuilder, alertsHandlerConfig, contextWithSeverity);
+      }
+
+      @Override
+      public String toString() {
+        return "Engineering{" + severity.toString() + "}";
+      }
+    };
+  }
+
   private void mail(String subject, String body, WorkflowRunnerNotification notification) throws IOException {
     for (AlertsHandler handler : persistence.getRecipients(notification)) {
 
@@ -152,7 +174,7 @@ public class NotificationManager {
 
         handler.sendAlert(
             builder.build(),
-            AlertRecipients.engineering(notification.serverity())
+            engineering(notification.serverity())
         );
 
       } catch (Exception e) {

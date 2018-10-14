@@ -25,7 +25,7 @@ import com.rapleaf.cascading_ext.workflow2.FlowBuilder;
 import com.rapleaf.cascading_ext.workflow2.ProductionWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
 public class ApplyFunctionToFile {
 
@@ -46,7 +46,7 @@ public class ApplyFunctionToFile {
 
     Step copyToNFS = new Step(new CopyToNfs("copy-to-nfs", hdfsOutputPath, nfsOutputPath), transform);
 
-    WorkflowOptions options = new ProductionWorkflowOptions().setAlertsHandler(alertsHandler).configureTeam(teamForPool, "default");
+    HadoopWorkflowOptions options = new ProductionWorkflowOptions().setAlertsHandler(alertsHandler).configureTeam(teamForPool, "default");
 
     WorkflowRunner runner = new WorkflowRunner(workflowName, new WorkflowDbPersistenceFactory(), options, copyToNFS);
     runner.run();

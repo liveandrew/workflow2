@@ -29,10 +29,10 @@ import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.support.Rap;
 
-public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, HdfsInitializedPersistence, WorkflowOptions, HadoopWorkflow> {
+public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, HdfsInitializedPersistence, HadoopWorkflowOptions, HadoopWorkflow> {
 
   private static final Logger LOG = LoggerFactory.getLogger(HdfsPersistenceContainer.class);
 
@@ -50,7 +50,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, 
   }
 
   @Override
-  public HadoopWorkflow construct(String workflowName, WorkflowOptions options, HdfsInitializedPersistence hdfsInitializedPersistence, ResourceManager manager, MultiShutdownHook hook) {
+  public HadoopWorkflow construct(String workflowName, HadoopWorkflowOptions options, HdfsInitializedPersistence hdfsInitializedPersistence, ResourceManager manager, MultiShutdownHook hook) {
     return new HadoopWorkflow(workflowName, options, hdfsInitializedPersistence, this, manager, hook);
   }
 

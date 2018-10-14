@@ -23,7 +23,7 @@ import com.liveramp.datadog_client.statsd.DogClient;
 import com.liveramp.workflow2.workflow_state.resources.DbResourceManager;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
-import com.liveramp.workflow_core.CoreWorkflowOptions;
+import com.liveramp.workflow_core.CoreOptions;
 import com.liveramp.workflow_core.background_workflow.AlwaysStart;
 import com.liveramp.workflow_core.background_workflow.BackgroundAction;
 import com.liveramp.workflow_core.background_workflow.BackgroundStep;
@@ -76,7 +76,7 @@ public class TestBackgroundWorkflow extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
     );
 
     InitializedWorkflow.ScopedContext rootScope = initialized.getRootScope();
@@ -132,7 +132,7 @@ public class TestBackgroundWorkflow extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
     );
 
     TestWorkflowContext context = new TestWorkflowContext("1");
@@ -237,7 +237,7 @@ public class TestBackgroundWorkflow extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
     );
 
     InitializedWorkflow.ScopedContext rootScope = initialized.getRootScope();
@@ -302,7 +302,7 @@ public class TestBackgroundWorkflow extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
     );
 
     InitializedWorkflow.ScopedContext rootScope = initialized.getRootScope();
@@ -350,7 +350,7 @@ public class TestBackgroundWorkflow extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
             .setResourceManagerFactory(DbResourceManager.Factory.class)
     );
 

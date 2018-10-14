@@ -12,25 +12,15 @@ import com.google.common.collect.Sets;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
-import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.java_support.alerts_handler.AlertsHandlers;
-import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
-import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow_core.info.WorkflowInfoConsumer;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
-import com.rapleaf.cascading_ext.workflow2.DbTrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
-import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
-import com.rapleaf.cascading_ext.workflow2.options.DefaultHostnameProvider;
-import com.rapleaf.cascading_ext.workflow2.options.FixedHostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.options.HostnameProvider;
 import com.rapleaf.cascading_ext.workflow2.rollback.RollbackBehavior;
 import com.rapleaf.cascading_ext.workflow2.rollback.SuccessCallback;
-import com.rapleaf.support.Rap;
 
 public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
@@ -303,31 +293,5 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     return this.infoConsumerList;
   }
 
-  //  static helpers
-
-  protected static void configureProduction(BaseWorkflowOptions opts) {
-    Rap.assertProduction();
-    opts
-        .setMaxConcurrentSteps(Integer.MAX_VALUE)
-        .setAlertsHandler(new LoggingAlertsHandler())
-        .setNotificationLevel(WorkflowNotificationLevel.ERROR)
-        .setStorage(new ContextStorage.None())
-        .setStepPollInterval(6000)  // be nice to production DB
-        .setUrlBuilder(new DbTrackerURLBuilder(WORKFLOW_UI_URL))
-        .setHostnameProvider(new DefaultHostnameProvider())
-        .setResourceManagerFactory(ResourceManager.NotImplementedFactory.class)
-        .addSuccessCallback(DataDogDurationPusher.production());
-  }
-
-  protected static void configureTest(BaseWorkflowOptions opts) {
-    opts.setMaxConcurrentSteps(1)
-        .setAlertsHandler(new LoggingAlertsHandler())
-        .setNotificationLevel(WorkflowNotificationLevel.DEBUG)
-        .setStorage(new ContextStorage.None())
-        .setStepPollInterval(100)
-        .setUrlBuilder(new TrackerURLBuilder.None())
-        .setHostnameProvider(new FixedHostnameProvider())
-        .setResourceManagerFactory(ResourceManager.NotImplementedFactory.class);
-  }
 
 }

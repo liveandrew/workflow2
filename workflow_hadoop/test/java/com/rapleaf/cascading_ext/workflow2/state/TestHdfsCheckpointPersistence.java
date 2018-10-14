@@ -14,7 +14,7 @@ import com.rapleaf.cascading_ext.workflow2.IncrementAction2;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -37,7 +37,7 @@ public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
     try {
       new WorkflowRunner("test",
           new HdfsCheckpointPersistence(checkpointDir),
-          WorkflowOptions.test(),
+          HadoopWorkflowOptions.test(),
           second).run();
       fail("should have failed!");
     } catch (Exception e) {
@@ -58,7 +58,7 @@ public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
     try {
       new WorkflowRunner("test",
           new HdfsCheckpointPersistence(localCheckpointDir),
-          WorkflowOptions.test(),
+          HadoopWorkflowOptions.test(),
           second).run();
       fail("should have failed!");
     } catch (Exception e) {
@@ -83,7 +83,7 @@ public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
 
     WorkflowRunner runner1 = new WorkflowRunner("test",
         persistenceFactory,
-        WorkflowOptions.test(),
+        HadoopWorkflowOptions.test(),
         Sets.newHashSet(second)
     );
 
@@ -105,7 +105,7 @@ public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
 
     InitializedWorkflow initialized = persistenceFactory.initialize(
         "test",
-        WorkflowOptions.test()
+        HadoopWorkflowOptions.test()
     );
 
     assertEquals(1L, initialized.getInitializedPersistence().getExecutionId());
@@ -127,7 +127,7 @@ public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
 
     WorkflowRunner runner2 = new WorkflowRunner("test",
         persistenceFactory,
-        WorkflowOptions.test(),
+        HadoopWorkflowOptions.test(),
         Sets.newHashSet(second)
     );
     runner2.run();
