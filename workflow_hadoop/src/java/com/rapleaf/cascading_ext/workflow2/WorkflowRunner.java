@@ -23,17 +23,8 @@ import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.ExecuteConfig> {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowRunner.class);
 
-
-  public WorkflowRunner(Class klass, Step tail) throws IOException {
-    this(klass, new WorkflowDbPersistenceFactory(), tail);
-  }
-
   public WorkflowRunner(Class klass, WorkflowOptions options, Step tail) throws IOException {
     this(klass, new WorkflowDbPersistenceFactory(), options, tail);
-  }
-
-  public WorkflowRunner(Class klass, Set<Step> tailSteps) throws IOException {
-    this(klass, new WorkflowDbPersistenceFactory(), tailSteps);
   }
 
   public WorkflowRunner(Class klass, WorkflowOptions options, Set<Step> tailSteps) throws IOException {
@@ -54,10 +45,6 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     this(workflowName, persistence, options, Sets.newHashSet(tail));
   }
 
-  public <K extends InitializedPersistence, W extends InitializedWorkflow<Step, K, WorkflowOptions>> WorkflowRunner(Class klass, WorkflowPersistenceFactory<Step, K, WorkflowOptions, W> persistence, Step tail) throws IOException {
-    this(klass.getName(), persistence, tail);
-  }
-
   public <K extends InitializedPersistence, W extends InitializedWorkflow<Step, K, WorkflowOptions>> WorkflowRunner(Class klass, WorkflowPersistenceFactory<Step, K, WorkflowOptions, W> persistence, WorkflowOptions options, final Step first, Step... rest) throws IOException {
     this(klass.getName(), persistence, options, combine(first, rest));
   }
@@ -76,13 +63,6 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     this(klass.getName(), persistence, options, tailSteps);
   }
 
-  public <K extends InitializedPersistence, W extends InitializedWorkflow<Step, K, WorkflowOptions>> WorkflowRunner(
-      Class klass,
-      WorkflowPersistenceFactory<Step, K, WorkflowOptions, W> persistence,
-      Set<Step> tailSteps) throws IOException {
-    this(klass, persistence, new ProductionWorkflowOptions(), tailSteps);
-  }
-
   // This constructor requires that the given options contain an AppType for generating the workflow name
   public <K extends InitializedPersistence,
       W extends InitializedWorkflow<Step, K, WorkflowOptions>> WorkflowRunner(
@@ -99,21 +79,7 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
       Step tail) throws IOException {
     this(persistence, options, Sets.newHashSet(tail));
   }
-
-  public <K extends InitializedPersistence,
-      W extends InitializedWorkflow<Step, K, WorkflowOptions>> WorkflowRunner(
-      String workflowName,
-      WorkflowPersistenceFactory<Step, K, WorkflowOptions, W> persistence, Step tail) throws IOException {
-    this(workflowName, persistence, Sets.newHashSet(tail));
-  }
-
-  public <K extends InitializedPersistence, W extends InitializedWorkflow<Step, K, WorkflowOptions>> WorkflowRunner(
-      String workflowName,
-      WorkflowPersistenceFactory<Step, K, WorkflowOptions, W> persistence,
-      Set<Step> tail) throws IOException {
-    this(workflowName, persistence, new ProductionWorkflowOptions(), Sets.newHashSet(tail));
-  }
-
+  
   public <
       K extends InitializedPersistence,
       W extends InitializedWorkflow<Step, K, WorkflowOptions>> WorkflowRunner(

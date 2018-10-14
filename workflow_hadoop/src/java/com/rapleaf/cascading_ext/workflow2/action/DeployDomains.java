@@ -89,20 +89,4 @@ public class DeployDomains extends Action {
     return relevantGroups;
   }
 
-  public static void main(String[] args) throws IOException, InvalidConfigurationException {
-    String domainName = args[0];
-    CoordinatorConfigurator configurator = new YamlClientConfigurator("config/hank.yml");
-    DeployDomains deployAction = new DeployDomains(
-        "deploy",
-        configurator.createCoordinator(),
-        domainName
-    );
-
-    Step step = new Step(deployAction);
-    new WorkflowRunner(
-        DeployDomains.class,
-        new WorkflowDbPersistenceFactory(),
-        step
-    ).run();
-  }
 }
