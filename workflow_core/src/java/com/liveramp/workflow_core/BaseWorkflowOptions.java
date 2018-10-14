@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -14,6 +13,7 @@ import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
+import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.info.WorkflowInfoConsumer;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
@@ -148,18 +148,6 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public AlertsHandler getAlertsHandler() {
     return alertsHandler;
-  }
-
-  public T setAlertsHandler(TeamList team) {
-    return setAlertsHandler(team, Optional.<Class<?>>absent());
-  }
-
-  public T setAlertsHandler(TeamList team, Class<?> project) {
-    return setAlertsHandler(team, Optional.<Class<?>>of(project));
-  }
-
-  public T setAlertsHandler(TeamList team, Optional<Class<?>> project) {
-    return setAlertsHandler(AlertsHandlers.buildHandlerForTeam(team, project));
   }
 
   public T setAlertsHandler(AlertsHandler alertsHandler) {

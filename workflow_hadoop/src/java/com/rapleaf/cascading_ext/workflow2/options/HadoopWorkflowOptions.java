@@ -1,5 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.options;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -16,6 +17,7 @@ import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow.backpressure.RMJMXFlowSubmissionController;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
+import com.liveramp.workflow_core.CoreOptions;
 import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.support.Rap;
 
@@ -56,8 +58,6 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
     return this;
   }
 
-
-
   public HadoopWorkflowOptions setFlowSubmissionController(FlowSubmissionController flowSubmissionController) {
     this.flowSubmissionController = flowSubmissionController;
     return this;
@@ -66,4 +66,25 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
   public FlowSubmissionController getFlowSubmissionController() {
     return flowSubmissionController;
   }
+
+
+  protected static void configureTest(HadoopWorkflowOptions options) {
+    Rap.assertTest();
+
+    CoreOptions.configureTest(options);
+
+    options
+        .setLockProvider(new MockStoreReaderLockProvider())
+        .addWorkflowProperties(Collections.<Object, Object>singletonMap(MRJobConfig.QUEUE_NAME, "test"))
+        .setFlowSubmissionController(new FlowSubmissionController.SubmitImmediately());
+
+  }
+
+  public static HadoopWorkflowOptions test() {
+    HadoopWorkflowOptions opts = new HadoopWorkflowOptions();
+    configureTest(opts);
+    return opts;
+  }
+
+
 }
