@@ -17,11 +17,17 @@
 
   <dependencies>
 
-    <!--<dependency>-->
-      <!--<groupId>com.liveramp</groupId>-->
-      <!--<artifactId>java_support</artifactId>-->
-      <!--<version>1.0-SNAPSHOT</version>-->
-    <!--</dependency>-->
+    <dependency>
+      <groupId>com.liveramp</groupId>
+      <artifactId>liveramp_types</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.liveramp</groupId>
+      <artifactId>commons</artifactId>
+      <version>1.1-SNAPSHOT</version>
+    </dependency>
 
     <dependency>
       <groupId>cglib</groupId>
@@ -45,12 +51,6 @@
       <groupId>net.sf.jgrapht</groupId>
       <artifactId>jgrapht</artifactId>
       <version>0.8.3</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.liveramp</groupId>
-      <artifactId>datadog_client</artifactId>
-      <version>1.0-SNAPSHOT</version>
     </dependency>
 
   </dependencies>

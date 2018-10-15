@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
 public class Example {
   
@@ -71,7 +72,7 @@ public class Example {
     new WorkflowRunner(
         Example.class,
         new WorkflowDbPersistenceFactory(),
-        new ProductionWorkflowOptions().setMaxConcurrentSteps(1),
+        new HadoopWorkflowOptions().setMaxConcurrentSteps(1),
         new HashSet<Step>(Arrays.asList(s))
     ).run();
   }

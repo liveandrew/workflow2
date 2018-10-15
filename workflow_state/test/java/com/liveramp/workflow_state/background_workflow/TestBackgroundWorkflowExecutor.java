@@ -8,19 +8,16 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientException;
 import java.time.Duration;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.liveramp.commons.Accessors;
-import com.liveramp.commons.test.Condition;
 import com.liveramp.commons.test.WaitUntil;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
@@ -36,7 +33,7 @@ import com.liveramp.workflow.types.ExecutorStatus;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
-import com.liveramp.workflow_core.CoreWorkflowOptions;
+import com.liveramp.workflow_core.CoreOptions;
 import com.liveramp.workflow_core.background_workflow.AlwaysStart;
 import com.liveramp.workflow_core.background_workflow.BackgroundAction;
 import com.liveramp.workflow_core.background_workflow.BackgroundStep;
@@ -216,7 +213,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
     );
 
 
@@ -288,7 +285,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
     );
 
 
@@ -384,7 +381,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
     );
 
     VoidContext context = new VoidContext();
@@ -457,7 +454,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
     BackgroundWorkflow initialized = BackgroundWorkflowPreparer.initialize(
         "test",
         new BackgroundPersistenceFactory(),
-        CoreWorkflowOptions.test()
+        CoreOptions.test()
     );
 
     VoidContext context = new VoidContext();

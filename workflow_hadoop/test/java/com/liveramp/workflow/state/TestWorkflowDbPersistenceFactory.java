@@ -21,7 +21,7 @@ import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -67,7 +67,7 @@ public class TestWorkflowDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowRunner workflowRunner = new WorkflowRunner("Workflow",
         new WorkflowDbPersistenceFactory(),
-        WorkflowOptions.test(),
+        HadoopWorkflowOptions.test(),
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
     workflowRunner.run();
 
@@ -89,7 +89,7 @@ public class TestWorkflowDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowRunner workflowRunner = new WorkflowRunner("Workflow",
         new WorkflowDbPersistenceFactory(),
-        WorkflowOptions.test(),
+        HadoopWorkflowOptions.test(),
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
     workflowRunner.run();
 
@@ -97,7 +97,7 @@ public class TestWorkflowDbPersistenceFactory extends WorkflowTestCase {
 
     WorkflowRunner workflowRunner2 = new WorkflowRunner("Workflow",
         new WorkflowDbPersistenceFactory(),
-        WorkflowOptions.test(),
+        HadoopWorkflowOptions.test(),
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
     workflowRunner2.run();
 
@@ -144,7 +144,7 @@ public class TestWorkflowDbPersistenceFactory extends WorkflowTestCase {
       public void run() throws Exception {
         new WorkflowRunner("Workflow",
             new WorkflowDbPersistenceFactory(),
-            WorkflowOptions.test(),
+            HadoopWorkflowOptions.test(),
             Sets.newHashSet(new Step(new NoOpAction("step1"))));
       }
     });
@@ -179,7 +179,7 @@ public class TestWorkflowDbPersistenceFactory extends WorkflowTestCase {
 
     new WorkflowRunner("Workflow",
         new WorkflowDbPersistenceFactory(),
-        WorkflowOptions.test(),
+        HadoopWorkflowOptions.test(),
         Sets.newHashSet(new Step(new NoOpAction("step1"))));
 
   }

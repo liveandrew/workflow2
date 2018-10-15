@@ -17,7 +17,7 @@ import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
-import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 
 import static org.junit.Assert.fail;
@@ -61,7 +61,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
   private <T> void testStorage(RMFactory manager) throws IOException {
 
     InitializedWorkflow workflow = new WorkflowDbPersistenceFactory().initialize(name,
-        new TestWorkflowOptions().setResourceManager(manager.make())
+        HadoopWorkflowOptions.test().setResourceManager(manager.make())
     );
     execute(workflow, getSteps(workflow.getManager(), previousNumbers));
 
@@ -69,7 +69,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
     shouldFail = true;
 
     workflow = new WorkflowDbPersistenceFactory().initialize(name,
-        new TestWorkflowOptions().setResourceManager(manager.make())
+        HadoopWorkflowOptions.test().setResourceManager(manager.make())
     );
 
     try {
@@ -82,7 +82,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
     shouldFail = false;
 
     workflow = new WorkflowDbPersistenceFactory().initialize(name,
-        new TestWorkflowOptions().setResourceManager(manager.make())
+        HadoopWorkflowOptions.test().setResourceManager(manager.make())
     );
 
     execute(workflow, getSteps(workflow.getManager(), expectedNumbers));

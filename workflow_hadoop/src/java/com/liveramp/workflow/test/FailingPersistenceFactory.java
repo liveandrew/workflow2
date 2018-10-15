@@ -20,12 +20,12 @@ import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 
-public class FailingPersistenceFactory extends WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> {
+public class FailingPersistenceFactory extends WorkflowPersistenceFactory<Step, InitializedDbPersistence, HadoopWorkflowOptions, DbHadoopWorkflow> {
 
-  protected final WorkflowPersistenceFactory<Step, InitializedDbPersistence, WorkflowOptions, DbHadoopWorkflow> delegate;
+  protected final WorkflowPersistenceFactory<Step, InitializedDbPersistence, HadoopWorkflowOptions, DbHadoopWorkflow> delegate;
   private final Set<String> stepsToFailFullNames;
 
   public FailingPersistenceFactory(WorkflowPersistenceFactory delegate, StepNameBuilder stepNameBuilder) {
@@ -52,7 +52,7 @@ public class FailingPersistenceFactory extends WorkflowPersistenceFactory<Step, 
   }
 
   @Override
-  public DbHadoopWorkflow construct(String workflowName, WorkflowOptions options, InitializedDbPersistence initialized, ResourceManager manager, MultiShutdownHook hook) {
+  public DbHadoopWorkflow construct(String workflowName, HadoopWorkflowOptions options, InitializedDbPersistence initialized, ResourceManager manager, MultiShutdownHook hook) {
     return new DbHadoopWorkflow(workflowName, options, initialized, this, manager, hook);
   }
 

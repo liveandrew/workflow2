@@ -8,9 +8,6 @@ import com.google.common.collect.Maps;
 import com.liveramp.commons.util.serialization.JavaObjectSerializationHandler;
 import com.liveramp.commons.util.serialization.SerializationHandler;
 import com.liveramp.java_support.workflow.ActionId;
-import com.liveramp.workflow_core.ContextStorage;
-import com.liveramp.workflow_core.OldResource;
-import com.rapleaf.support.Rap;
 
 public class InMemoryContext extends ContextStorage {
 
@@ -18,7 +15,6 @@ public class InMemoryContext extends ContextStorage {
   private final SerializationHandler handler;
 
   public InMemoryContext() {
-    Rap.assertTest();
     this.handler = new JavaObjectSerializationHandler();
   }
 

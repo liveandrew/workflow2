@@ -36,8 +36,7 @@ import com.rapleaf.cascading_ext.tap.bucket2.BucketTap2;
 import com.rapleaf.cascading_ext.tap.bucket2.ThriftBucketScheme;
 import com.rapleaf.cascading_ext.test.TExtractorComparator;
 import com.rapleaf.cascading_ext.workflow2.SinkBinding.DSSink;
-import com.rapleaf.cascading_ext.workflow2.options.TestWorkflowOptions;
-import com.rapleaf.cascading_ext.workflow2.options.WorkflowOptions;
+import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.formats.test.ThriftBucketHelper;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.types.new_person_data.DustinInternalEquiv;
@@ -132,7 +131,7 @@ public class TestCascadingAction2 extends WorkflowTestCase {
     TupleDataStoreHelper.writeToStore(input, data);
 
     execute(new SimpleExampleAction("token", getTestRoot() + "/tmp", input, output),
-        WorkflowOptions.test());
+        HadoopWorkflowOptions.test());
 
     assertCollectionEquivalent(data, HRap.getAllTuples(input.getTap()));
     assertCollectionEquivalent(data, HRap.getAllTuples(output.getTap()));
@@ -149,7 +148,7 @@ public class TestCascadingAction2 extends WorkflowTestCase {
     TupleDataStoreHelper.writeToStore(input, data);
 
     WorkflowRunner token = execute(new SimpleTwoSinkAction("token", getTestRoot() + "/tmp", input, output, output1),
-        WorkflowOptions.test());
+        HadoopWorkflowOptions.test());
 
     //  make sure counter only got incremented once
     assertEquals(Collections.singletonMap("Counter", 1l), token.getPersistence().getFlatCounters().get("Group"));

@@ -17,13 +17,14 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.Storage;
 import com.liveramp.commons.collections.map.MapBuilder;
+import com.liveramp.commons.test.TestUtils;
 import com.liveramp.resource_core.FileSystemManager;
 import com.liveramp.resource_core.ResourceCoreTestCase;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestFileSystemStorage extends ResourceCoreTestCase{
+public class TestFileSystemStorage extends ResourceCoreTestCase {
 
   private final static PIN email1 = PIN.email("thomas@kielbus.com");
   private final static PIN email2 = PIN.email("alice@kielbus.com");
@@ -34,7 +35,7 @@ public class TestFileSystemStorage extends ResourceCoreTestCase{
   private FileSystemStorage.Factory factory;
 
 
-  private final String TEST_ROOT = "/tmp/tests/" + ResourceCoreTestCase.class.getName() + "/" + this.getName() + "_AUTOGEN/";
+  private final String TEST_ROOT = "/tmp/tests/" + ResourceCoreTestCase.class.getName() + "_AUTOGEN/";
 
   protected FileSystemStorage.Factory createStorage() {
     return new FileSystemStorage.Factory();
@@ -63,7 +64,7 @@ public class TestFileSystemStorage extends ResourceCoreTestCase{
     Storage storage = factory.forResourceRoot(TEST_ROOT);
     storage.store(MAP_NAME, map);
     Map<String, Integer> retrievedMap = storage.retrieve(MAP_NAME);
-    assertCollectionEquivalent(map.entrySet(), retrievedMap.entrySet());
+    TestUtils.assertCollectionEquivalent(map.entrySet(), retrievedMap.entrySet());
   }
 
   @Test
@@ -71,7 +72,7 @@ public class TestFileSystemStorage extends ResourceCoreTestCase{
     Storage storage = factory.forResourceRoot(TEST_ROOT);
     storage.store(SET_NAME, set);
     Set<Long> retrievedSet = storage.retrieve(SET_NAME);
-    assertCollectionEquivalent(retrievedSet, set);
+    TestUtils.assertCollectionEquivalent(retrievedSet, set);
   }
 
   @Test
@@ -79,9 +80,9 @@ public class TestFileSystemStorage extends ResourceCoreTestCase{
     Storage storage = factory.forResourceRoot(TEST_ROOT);
     storage.store(SET_NAME, set);
     createStorage();
-    assert(storage.isStored(SET_NAME));
+    assert (storage.isStored(SET_NAME));
     Set<Long> retrievedSet = storage.retrieve(SET_NAME);
-    assertCollectionEquivalent(retrievedSet, set);
+    TestUtils.assertCollectionEquivalent(retrievedSet, set);
   }
 
 
@@ -114,9 +115,9 @@ public class TestFileSystemStorage extends ResourceCoreTestCase{
         .create(0L, "Test");
 
     Resource<List<Integer>> listOfIntegersResource = resourceManager.resource(listOfIntegers, "list-of-integers");
-    assertCollectionEquivalent(listOfIntegers, resourceManager.read(resourceManager.getReadPermission(listOfIntegersResource)));
+    TestUtils.assertCollectionEquivalent(listOfIntegers, resourceManager.read(resourceManager.getReadPermission(listOfIntegersResource)));
 
     Resource<List<Long>> listOfLongsResource = resourceManager.resource(listOfLongs, "list-of-longs");
-    assertCollectionEquivalent(listOfLongs, resourceManager.read(resourceManager.getReadPermission(listOfLongsResource)));
+    TestUtils.assertCollectionEquivalent(listOfLongs, resourceManager.read(resourceManager.getReadPermission(listOfLongsResource)));
   }
 }

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.Sets;
 import org.junit.Test;
 
 import com.liveramp.commons.Accessors;
@@ -12,16 +11,12 @@ import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
-import com.liveramp.workflow_core.BaseWorkflowOptions;
-import com.liveramp.workflow_core.CoreWorkflowOptions;
+import com.liveramp.workflow_core.CoreOptions;
 import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_core.step.NoOp;
 import com.liveramp.workflow_db_state.runner.WorkflowDbRunners;
-import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 import com.rapleaf.cascading_ext.workflow2.BaseWorkflowRunner;
-import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
-import com.rapleaf.jack.MysqlDatabaseConnection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -33,7 +28,7 @@ public class TestDbPersistence extends WorkflowDbStateTestCase {
   public void testShutdownPostInit() throws IOException {
 
     DbWorkflow initialized = new BaseWorkflowDbPersistenceFactory()
-        .initialize("test", CoreWorkflowOptions.test());
+        .initialize("test", CoreOptions.test());
 
     initialized.getInitializedPersistence().markWorkflowStopped();
 
@@ -58,7 +53,7 @@ public class TestDbPersistence extends WorkflowDbStateTestCase {
 
 
     DbWorkflow initialized = new BaseWorkflowDbPersistenceFactory()
-        .initialize("test", CoreWorkflowOptions.test());
+        .initialize("test", CoreOptions.test());
 
 
     BaseStep<Void> step = new BaseStep<>(new NoOp<>("step"));
