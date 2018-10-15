@@ -87,7 +87,7 @@ GEM
       rmail
       simpleidn
       thrift
-    rapleaf_types (1.0.5362)
+    rapleaf_types (1.0.5364)
     rdoc (3.12)
       json (~> 1.4)
     rmail (1.1.3)
