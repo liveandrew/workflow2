@@ -200,6 +200,13 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     return (T)this;
   }
 
+  public String getAppName(){
+    if(this.appType != null){
+      return this.appType.name();
+    }
+    return null;
+  }
+
   public String getSandboxDir() {
     return sandboxDir;
   }
