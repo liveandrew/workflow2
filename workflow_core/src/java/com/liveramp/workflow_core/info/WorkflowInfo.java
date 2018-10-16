@@ -11,7 +11,7 @@ public interface WorkflowInfo {
 
   long getAttemptId();
 
-  Optional<AppType> getAppType();
+  Optional<String> getAppName();
 
   Optional<String> getScopeIdentifier();
 

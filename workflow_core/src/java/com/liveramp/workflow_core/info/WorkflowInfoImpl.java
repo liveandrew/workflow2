@@ -15,7 +15,7 @@ public class WorkflowInfoImpl implements WorkflowInfo {
 
   private final long executionId;
   private final long attemptId;
-  private final Optional<AppType> appType;
+  private final Optional<String> appName;
   private final Optional<String> scopeId;
   private final Optional<String> description;
   private final Optional<String> hostname;
@@ -31,7 +31,8 @@ public class WorkflowInfoImpl implements WorkflowInfo {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    this.appType = Optional.ofNullable(options.getAppType());
+
+    this.appName = Optional.ofNullable(options.getAppName());
     this.scopeId = Optional.ofNullable(options.getScopeIdentifier());
     this.description = Optional.ofNullable(options.getDescription());
     this.hostname = options.getHostnameProvider() != null ?
@@ -52,8 +53,8 @@ public class WorkflowInfoImpl implements WorkflowInfo {
   }
 
   @Override
-  public Optional<AppType> getAppType() {
-    return this.appType;
+  public Optional<String> getAppName() {
+    return this.appName;
   }
 
   @Override
