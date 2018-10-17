@@ -32,7 +32,7 @@ GEM
     arel (2.0.10)
     backports (3.11.3)
     builder (2.1.2)
-    cookie_types (1.0.760)
+    cookie_types (1.0.761)
       rapleaf_types
     db_support (1.0.733)
     diff-lcs (1.1.3)
