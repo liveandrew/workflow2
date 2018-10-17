@@ -54,7 +54,6 @@ import com.liveramp.importer.generated.AppType;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.WorkflowEnums;
-import com.liveramp.workflow_core.background_workflow.BackgroundStep;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.jack.queries.AbstractTable;
@@ -121,7 +120,7 @@ public class WorkflowQueries {
     return Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases());
   }
 
-  public static Optional<WorkflowExecution> getLatestExecution(IWorkflowDb db, AppType type, String scopeIdentifier) throws IOException {
+  public static java.util.Optional<WorkflowExecution> getLatestExecution(IWorkflowDb db, AppType type, String scopeIdentifier) throws IOException {
     Records records = db.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
@@ -134,10 +133,10 @@ public class WorkflowQueries {
         .fetch();
 
     if (records.isEmpty()) {
-      return Optional.absent();
+      return java.util.Optional.empty();
     }
 
-    return Optional.of(Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases()));
+    return java.util.Optional.of(Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases()));
   }
 
   public static List<String> getCompleteSteps(IWorkflowDb workflowDb, Long executionId) throws IOException {

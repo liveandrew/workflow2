@@ -5,14 +5,13 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.hp.gagawa.java.elements.S;
 
 import com.liveramp.commons.Accessors;
 import com.liveramp.databases.workflow_db.IDatabases;
@@ -26,8 +25,8 @@ import com.liveramp.importer.generated.AppType;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_db_state.DbPersistence;
-import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_db_state.ProcessStatus;
+import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
@@ -98,6 +97,13 @@ public class ApplicationController {
     }
   }
 
+  public static void cancelIfIncompleteExecution(IWorkflowDb db, String appType, String scopeIdentifier) throws IOException {
+    WorkflowExecution latestExecution = WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier);
+    if (isIncomplete(Optional.ofNullable(latestExecution))) {
+      ExecutionController.cancelExecution(db, latestExecution);
+    }
+  }
+
   public static void cancelIfIncompleteExecution(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
     Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier);
     if (isIncomplete(latestExecution)) {
@@ -122,6 +128,11 @@ public class ApplicationController {
       return false;
     }
   }
+
+  public static boolean isLatestExecutionIncomplete(IWorkflowDb db, String appName, String scopeIdentifier) throws IOException {
+    return isIncomplete(Optional.ofNullable(WorkflowQueries.getLatestExecution(db, appName, scopeIdentifier)));
+  }
+
 
   public static boolean isLatestExecutionIncomplete(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
     return isIncomplete(WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier));
