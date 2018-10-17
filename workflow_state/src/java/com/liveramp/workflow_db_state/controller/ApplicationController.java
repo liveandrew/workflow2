@@ -21,7 +21,6 @@ import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotificati
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_db_state.DbPersistence;
@@ -33,9 +32,9 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 //  TODO not liking all the staticness of this.  figure out later
 public class ApplicationController {
 
-  public static void revertStep(IWorkflowDb db, AppType app, String scopeIdentifier, String stepToken) throws IOException {
+  public static void revertStep(IWorkflowDb db, String appName, String scopeIdentifier, String stepToken) throws IOException {
 
-    Optional<WorkflowExecution> execution = WorkflowQueries.getLatestExecution(db, app, scopeIdentifier);
+    Optional<WorkflowExecution> execution = Optional.ofNullable(WorkflowQueries.getLatestExecution(db, appName, scopeIdentifier));
 
     if(execution.isPresent()){
 
@@ -47,6 +46,7 @@ public class ApplicationController {
     }
 
   }
+
 
   public static void manuallyCompleteStep(IWorkflowDb db, String app, String scopeIdentifier, String stepToken) throws IOException {
 
@@ -63,9 +63,9 @@ public class ApplicationController {
 
   }
 
-  public static Map<String, StepState> getLatestStepStates(IWorkflowDb db, AppType app, String scopeIdentifier) throws IOException {
+  public static Map<String, StepState> getLatestStepStates(IWorkflowDb db, String appName, String scopeIdentifier) throws IOException {
 
-    Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(db, app, scopeIdentifier);
+    Optional<WorkflowExecution> latestExecution = Optional.ofNullable(WorkflowQueries.getLatestExecution(db, appName, scopeIdentifier));
     Map<String, StepState> latestStatus = Maps.newHashMap();
 
     if(latestExecution.isPresent()){
@@ -90,24 +90,10 @@ public class ApplicationController {
     ExecutionController.cancelExecution(db, WorkflowQueries.getLatestExecution(db, workflowName, scopeIdentifier));
   }
 
-  public static void cancelLatestExecution(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
-    Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier);
-    if (latestExecution.isPresent()) {
-      ExecutionController.cancelExecution(db, latestExecution.get());
-    }
-  }
-
   public static void cancelIfIncompleteExecution(IWorkflowDb db, String appType, String scopeIdentifier) throws IOException {
     WorkflowExecution latestExecution = WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier);
     if (isIncomplete(Optional.ofNullable(latestExecution))) {
       ExecutionController.cancelExecution(db, latestExecution);
-    }
-  }
-
-  public static void cancelIfIncompleteExecution(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
-    Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier);
-    if (isIncomplete(latestExecution)) {
-      ExecutionController.cancelExecution(db, latestExecution.get());
     }
   }
 
@@ -120,26 +106,12 @@ public class ApplicationController {
     }
   }
 
-  public static boolean isRunning(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
-    Optional<WorkflowExecution> latestExecution = WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier);
-    if (latestExecution.isPresent()) {
-      return ExecutionController.isRunning(latestExecution.get());
-    } else {
-      return false;
-    }
-  }
-
   public static boolean isLatestExecutionIncomplete(IWorkflowDb db, String appName, String scopeIdentifier) throws IOException {
     return isIncomplete(Optional.ofNullable(WorkflowQueries.getLatestExecution(db, appName, scopeIdentifier)));
   }
 
-
-  public static boolean isLatestExecutionIncomplete(IWorkflowDb db, AppType appType, String scopeIdentifier) throws IOException {
-    return isIncomplete(WorkflowQueries.getLatestExecution(db, appType, scopeIdentifier));
-  }
-
-  public static int numRunningInstances(IDatabases db, AppType appType) throws IOException {
-    Multimap<WorkflowExecution, WorkflowAttempt> incomplete = WorkflowQueries.getExecutionsToAttempts(db, appType, WorkflowExecutionStatus.INCOMPLETE);
+  public static int numRunningInstances(IDatabases db, String appName) throws IOException {
+    Multimap<WorkflowExecution, WorkflowAttempt> incomplete = WorkflowQueries.getExecutionsToAttempts(db, appName, WorkflowExecutionStatus.INCOMPLETE);
 
     int runningInstances = 0;
     for (Map.Entry<WorkflowExecution, WorkflowAttempt> entry : incomplete.entries()) {
@@ -150,7 +122,6 @@ public class ApplicationController {
 
     return runningInstances;
   }
-
 
   public static void addConfiguredNotifications(IWorkflowDb db, String workflowName, String email, Set<WorkflowRunnerNotification> notifications) throws IOException {
     Application application = Accessors.only(db.applications().findByName(workflowName));

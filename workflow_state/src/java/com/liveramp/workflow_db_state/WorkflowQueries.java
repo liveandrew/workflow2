@@ -50,7 +50,6 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.databases.workflow_db.models.WorkflowExecutionConfiguredNotification;
 import com.liveramp.databases.workflow_db.query.ApplicationCounterSummaryQueryBuilder;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.WorkflowEnums;
@@ -118,25 +117,6 @@ public class WorkflowQueries {
 
 
     return Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases());
-  }
-
-  public static java.util.Optional<WorkflowExecution> getLatestExecution(IWorkflowDb db, AppType type, String scopeIdentifier) throws IOException {
-    Records records = db.createQuery()
-        .from(Application.TBL)
-        .innerJoin(WorkflowExecution.TBL)
-        .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))
-        .where(Application.APP_TYPE.equalTo(type.getValue()))
-        .where(WorkflowExecution.SCOPE_IDENTIFIER.equalTo(scopeIdentifier))
-        .orderBy(WorkflowExecution.ID, QueryOrder.DESC)
-        .select(WorkflowExecution.TBL.getAllColumns())
-        .limit(1)
-        .fetch();
-
-    if (records.isEmpty()) {
-      return java.util.Optional.empty();
-    }
-
-    return java.util.Optional.of(Accessors.only(records).getModel(WorkflowExecution.TBL, db.getDatabases()));
   }
 
   public static List<String> getCompleteSteps(IWorkflowDb workflowDb, Long executionId) throws IOException {
@@ -554,12 +534,13 @@ public class WorkflowQueries {
   }
 
   public static Multimap<WorkflowExecution, WorkflowAttempt> getExecutionsToAttempts(IDatabases databases,
-                                                                                     AppType appType,
+                                                                                     String appName,
                                                                                      WorkflowExecutionStatus status) throws IOException {
 
-    return getExecutionsToAttempts(databases, null, null, null, appType.getValue(), null, null, status, null);
+    return getExecutionsToAttempts(databases, null, appName, null, null, null, null, status, null);
 
   }
+
 
   public static Multimap<WorkflowExecution, WorkflowAttempt> getExecutionsToAttempts(IDatabases databases,
                                                                                      Long id,

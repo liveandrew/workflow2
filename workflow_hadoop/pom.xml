@@ -165,6 +165,11 @@
       <version>2.5.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.liveramp</groupId>
+      <artifactId>liveramp_types</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>

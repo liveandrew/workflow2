@@ -38,11 +38,6 @@
       <artifactId>json-io</artifactId>
       <version>4.0.0</version>
     </dependency>
-    <dependency>
-      <groupId>com.liveramp</groupId>
-      <artifactId>liveramp_types</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
   </dependencies>
 
   <repositories>
