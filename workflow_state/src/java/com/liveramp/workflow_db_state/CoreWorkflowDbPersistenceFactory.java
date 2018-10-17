@@ -30,7 +30,6 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttemptConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
@@ -61,7 +60,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
   public synchronized InitializedDbPersistence initializeInternal(String name,
                                                                   String scopeId,
                                                                   String description,
-                                                                  AppType appType,
+                                                                  Integer appType,
                                                                   String host,
                                                                   String username,
                                                                   String pool,
@@ -198,7 +197,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
 
   }
 
-  private Application getApplication(IWorkflowDb rldb, String name, AppType appType) throws IOException {
+  private Application getApplication(IWorkflowDb rldb, String name, Integer appType) throws IOException {
 
     Optional<Application> application = WorkflowQueries.getApplication(rldb, name);
 
@@ -211,7 +210,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
 
       Application app = rldb.applications().create(name);
       if (appType != null) {
-        app.setAppType(appType.getValue());
+        app.setAppType(appType);
       }
       rldb.applications().save(app);
 
@@ -407,7 +406,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     return StepStatus.WAITING;
   }
 
-  private WorkflowExecution.Attributes getExecution(IWorkflowDb rldb, Application app, String name, AppType appType, String scopeId) throws IOException {
+  private WorkflowExecution.Attributes getExecution(IWorkflowDb rldb, Application app, String name, Integer appType, String scopeId) throws IOException {
 
     Set<WorkflowExecution.Attributes> incompleteExecutions = WorkflowQueries.getIncompleteExecutions(rldb, name, scopeId);
 
@@ -421,7 +420,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
           .setApplicationId(app.getIntId());
 
       if (appType != null) {
-        ex.setAppType(appType.getValue());
+        ex.setAppType(appType);
       }
 
       ex.save();

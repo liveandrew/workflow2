@@ -43,7 +43,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
     testStorage(new RMFactory() {
       @Override
       public ResourceDeclarer make() throws IOException {
-        return ResourceManagers.hdfsResourceManager(getTestRoot() + "/" + name, name, null, rlDb);
+        return ResourceManagers.hdfsResourceManager(getTestRoot() + "/" + name);
       }
     });
   }
@@ -53,7 +53,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
     testStorage(new RMFactory() {
       @Override
       public ResourceDeclarer make() throws IOException {
-        return ResourceManagers.dbResourceManager(name, null, rlDb);
+        return ResourceManagers.dbResourceManager();
       }
     });
   }
