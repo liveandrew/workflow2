@@ -9,11 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
-import com.liveramp.cascading_ext.resource.ResourceDeclarerContainer;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.java_support.RunJarUtil;
@@ -45,17 +43,24 @@ public abstract class WorkflowPersistenceFactory<
   }
 
   public synchronized WORKFLOW initialize(OPTS options) throws IOException {
-    return initialize(getName(options), options);
+    return initialize(options.getAppName(), options);
   }
 
 
-  public WORKFLOW initialize(String workflowName, OPTS options) throws IOException {
-    verifyName(workflowName, options);
+  public WORKFLOW initialize(String appName, OPTS options) throws IOException {
+
+    if(appName == null){
+      throw new IllegalArgumentException();
+    }
+
+    if(options.getAppName() != null && !appName.equals(options.getAppName())){
+      throw new IllegalArgumentException("Provided name "+appName+"conflicts with options name "+options.getAppName());
+    }
 
     RunJarUtil.ScmInfo scmInfo = RunJarUtil.getRemoteAndCommit();
 
     final INITIALIZED initialized = initializeInternal(
-        workflowName,
+        appName,
         options.getScopeIdentifier(),
         options.getDescription(),
         options.getAppType(),
@@ -72,7 +77,7 @@ public abstract class WorkflowPersistenceFactory<
         scmInfo.getRevision()
     );
 
-    MultiShutdownHook hook = new MultiShutdownHook(workflowName);
+    MultiShutdownHook hook = new MultiShutdownHook(appName);
 
     if(manager.isLive()) {
       hook.add(new MultiShutdownHook.Hook() {
@@ -98,7 +103,7 @@ public abstract class WorkflowPersistenceFactory<
 
     Runtime.getRuntime().addShutdownHook(hook);
 
-    return construct(workflowName, options, initialized, resourceManager, hook);
+    return construct(appName, options, initialized, resourceManager, hook);
   }
 
   //  force implementers to override to avoid generics overload
@@ -125,7 +130,7 @@ public abstract class WorkflowPersistenceFactory<
   public abstract INITIALIZED initializeInternal(String name,
                                                  String scopeId,
                                                  String description,
-                                                 AppType appType,
+                                                 Integer appType,
                                                  String host,
                                                  String username,
                                                  String pool,
@@ -137,29 +142,6 @@ public abstract class WorkflowPersistenceFactory<
                                                  Class<? extends ResourceDeclarerFactory> resourceFactory,
                                                  String remote,
                                                  String implementationBuild) throws IOException;
-
-  private void verifyName(String name, BaseWorkflowOptions options) {
-    AppType appType = options.getAppType();
-    if (appType != null) {
-      if (!appType.name().equals(name)) {
-        throw new RuntimeException("Workflow name cannot conflict with AppType name!");
-      }
-    } else {
-      for (AppType a : AppType.values()) {
-        if (a.name().equals(name)) {
-          throw new RuntimeException("Provided workflow name " + name + " is already an AppType");
-        }
-      }
-    }
-  }
-
-  private static String getName(BaseWorkflowOptions options) {
-    AppType appType = options.getAppType();
-    if (appType == null) {
-      throw new RuntimeException("AppType must be set in WorkflowOptions!");
-    }
-    return appType.name();
-  }
 
   public abstract WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<S, DefaultEdge> flatSteps);
 

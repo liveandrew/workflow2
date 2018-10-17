@@ -20,7 +20,6 @@ import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.JVMState;
@@ -58,7 +57,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, 
   public HdfsInitializedPersistence initializeInternal(String name,
                                                        String scopeId,
                                                        String description,
-                                                       AppType appType,
+                                                       Integer appType,
                                                        String host,
                                                        String username,
                                                        String pool,

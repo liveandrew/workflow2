@@ -47,7 +47,6 @@ import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.StepDependency;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertMessage;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
@@ -1212,15 +1211,15 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     Step step1 = new Step(new NoOpAction("step1"));
 
-    WorkflowRunner restartedWorkflow = new WorkflowRunner("HUMAN_INTERVENTION",
+    WorkflowRunner restartedWorkflow = new WorkflowRunner("test",
         dbPersistenceFactory,
-        HadoopWorkflowOptions.test().setAppType(AppType.HUMAN_INTERVENTION),
+        HadoopWorkflowOptions.test().setAppName("test"),
         newHashSet(step1)
     );
 
     restartedWorkflow.run();
 
-    ApplicationController.cancelLatestExecution(rldb, AppType.HUMAN_INTERVENTION, null);
+    ApplicationController.cancelLatestExecution(rldb, "test", null);
   }
 
   @Test
@@ -1523,11 +1522,11 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     InitializedWorkflow workflow = new WorkflowDbPersistenceFactory().initialize(
         HadoopWorkflowOptions.test()
             .setUniqueIdentifier("1")
-            .setAppType(AppType.HUMAN_INTERVENTION)
+            .setAppName("name")
     );
 
     //  verify that it shows up as running after initialization
-    assertTrue(ApplicationController.isRunning(new DatabasesImpl().getWorkflowDb(), AppType.HUMAN_INTERVENTION, "1"));
+    assertTrue(ApplicationController.isRunning(new DatabasesImpl().getWorkflowDb(), "name", "1"));
 
     //  prove we can use it to do stuff when creating steps
     Step step = new Step(new SetStep(

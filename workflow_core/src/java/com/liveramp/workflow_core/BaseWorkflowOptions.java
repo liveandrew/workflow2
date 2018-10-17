@@ -13,7 +13,6 @@ import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.info.WorkflowInfoConsumer;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
@@ -32,7 +31,8 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private Set<WorkflowRunnerNotification> enabledNotifications;
   private Set<WorkflowRunnerNotification> disabledNotifications = Sets.newHashSet();
   private String uniqueIdentifier;
-  private AppType appType;
+  private String appName;
+  private Integer appType;
   private Integer stepPollInterval;
   private String sandboxDir;
   private String description;
@@ -191,20 +191,28 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     return (T)this;
   }
 
-  public AppType getAppType() {
+  public String getAppName(){
+    return appName;
+  }
+
+  public T setAppType(Integer appType){
+    this.appType = appType;
+    return (T) this;
+  }
+
+  public Integer getAppType() {
     return appType;
   }
 
-  public T setAppType(AppType appType) {
-    this.appType = appType;
-    return (T)this;
-  }
+  public T setAppName(String appName){
 
-  public String getAppName(){
-    if(this.appType != null){
-      return this.appType.name();
+    //  prevent confusion with conflicting apptype/appnames
+    if(this.appName != null){
+      throw new IllegalStateException("Cannot change app name from "+this.appName+" to "+appName+"!");
     }
-    return null;
+
+    this.appName = appName;
+    return (T) this;
   }
 
   public String getSandboxDir() {

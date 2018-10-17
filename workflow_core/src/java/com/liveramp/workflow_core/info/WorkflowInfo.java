@@ -2,7 +2,6 @@ package com.liveramp.workflow_core.info;
 
 import java.util.Optional;
 
-import com.liveramp.importer.generated.AppType;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 
 public interface WorkflowInfo {
