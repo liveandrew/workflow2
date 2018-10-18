@@ -21,16 +21,17 @@ import com.liveramp.commons.collections.map.MapBuilder;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.ResourceRoot;
+import com.liveramp.workflow.test.types.Email;
 import com.liveramp.workflow2.workflow_state.resources.DbResourceManager;
 import com.liveramp.workflow2.workflow_state.resources.DbStorage;
-import com.rapleaf.types.new_person_data.PIN;
 
+import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static org.junit.Assert.assertEquals;
 
 public class TestDbStorage extends ResourceDbManagerTestCase {
-  private final static PIN email1 = PIN.email("thomas@kielbus.com");
-  private final static PIN email2 = PIN.email("alice@kielbus.com");
-  private final static PIN email3 = PIN.email("alice2@gmail.com");
+  private final static Email email1 = new Email("thomas@kielbus.com");
+  private final static Email email2 = new Email("alice@kielbus.com");
+  private final static Email email3 = new Email("alice2@gmail.com");
   private final static List<Integer> listOfIntegers = Lists.newArrayList(1, 2, 3, 4);
   private final static List<Long> listOfLongs = Lists.newArrayList(1L, 2L, 3L, 4L);
 
@@ -109,18 +110,18 @@ public class TestDbStorage extends ResourceDbManagerTestCase {
     final StorageSerializer javaSerializer = new JavaObjectStorageSerializer();
     rlDb.resourceRecords().create("email2", resourceRoot.getIntId(), javaSerializer.serialize(email2));
 
-    Resource<PIN> resource1 = resourceManager.resource(email1, "email1");
-    Resource<PIN> resource2 = resourceManager.resource(email2, "email2");
+    Resource<Email> resource1 = resourceManager.resource(email1, "email1");
+    Resource<Email> resource2 = resourceManager.resource(email2, "email2");
 
-    ReadResource<PIN> readResource1 = resourceManager.getReadPermission(resource1);
-    ReadResource<PIN> readResource2 = resourceManager.getReadPermission(resource2);
+    ReadResource<Email> readResource1 = resourceManager.getReadPermission(resource1);
+    ReadResource<Email> readResource2 = resourceManager.getReadPermission(resource2);
 
-    PIN readEmail1 = resourceManager.read(readResource1);
-    PIN readEmail2 = resourceManager.read(readResource2);
+    Email readEmail1 = resourceManager.read(readResource1);
+    Email readEmail2 = resourceManager.read(readResource2);
 
     resourceManager.write(resourceManager.getWritePermission(resource2), email3);
 
-    PIN readEmail3 = resourceManager.read(readResource2);
+    Email readEmail3 = resourceManager.read(readResource2);
 
     assertEquals(email1, readEmail1);
     assertEquals(email2, readEmail2);

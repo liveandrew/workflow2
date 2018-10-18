@@ -22,10 +22,10 @@ import com.liveramp.databases.workflow_db.models.MapreduceCounter;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_db_state.WorkflowQueries;
+import com.liveramp.workflow_db_state.jack.JackUtil;
 
 import static com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator.JOB_COUNTER_GROUP;
 import static com.liveramp.workflow_monitor.alerts.execution.MapreduceJobAlertGenerator.LAUNCHED_MAPS;
@@ -52,7 +52,7 @@ public class AppsByShortTasks {
 
     DatabasesImpl db = new DatabasesImpl();
 
-    Map<Long, MapreduceJob> jobs = BaseJackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
+    Map<Long, MapreduceJob> jobs = JackUtil.byId(WorkflowQueries.getCompleteMapreduceJobs(db,
         jobWindow,
         endTime
     ));
@@ -60,7 +60,7 @@ public class AppsByShortTasks {
 
     Set<Long> stepAttemptIds = stepAttemptIds(jobs.values());
 
-    Multimap<Integer, MapreduceCounter> countersByJob = BaseJackUtil.by(WorkflowQueries.getAllJobCounters(db,
+    Multimap<Integer, MapreduceCounter> countersByJob = JackUtil.by(WorkflowQueries.getAllJobCounters(db,
         jobWindow,
         endTime,
         COUNTERS.keySet(),
@@ -69,9 +69,9 @@ public class AppsByShortTasks {
     );
 
     Map<Long, Long> stepAttemptToExecution = WorkflowQueries.getStepAttemptIdtoWorkflowExecutionId(db, stepAttemptIds);
-    Map<Long, StepAttempt> stepsById = BaseJackUtil.byId(db.getWorkflowDb().stepAttempts().query().idIn(stepAttemptIds).find());
+    Map<Long, StepAttempt> stepsById = JackUtil.byId(db.getWorkflowDb().stepAttempts().query().idIn(stepAttemptIds).find());
 
-    Map<Long, WorkflowExecution> relevantExecutions = BaseJackUtil.byId(WorkflowQueries.getExecutionsForStepAttempts(db, stepAttemptIds));
+    Map<Long, WorkflowExecution> relevantExecutions = JackUtil.byId(WorkflowQueries.getExecutionsForStepAttempts(db, stepAttemptIds));
 
 
     CountingMap<String> shortTasksByApp = new CountingMap<>();

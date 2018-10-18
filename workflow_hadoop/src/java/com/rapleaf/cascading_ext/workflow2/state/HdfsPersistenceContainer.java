@@ -30,6 +30,7 @@ import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow2.workflow_hadoop.CheckpointUtil;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_state.ExecutionState;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
@@ -195,7 +196,7 @@ public class HdfsPersistenceContainer implements WorkflowStatePersistence {
   }
 
   @Override
-  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException {
+  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification, AlertsHandlerFactory factory) throws IOException {
     if (initializedPersistence.getConfiguredNotifications().contains(notification)) {
       return Lists.newArrayList(initializedPersistence.getHandler());
     }

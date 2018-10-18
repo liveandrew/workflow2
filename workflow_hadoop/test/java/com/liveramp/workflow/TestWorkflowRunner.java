@@ -50,6 +50,7 @@ import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.java_support.alerts_handler.AlertMessage;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
+import com.liveramp.java_support.alerts_handler.BufferingAlertsHandler;
 import com.liveramp.java_support.alerts_handler.InMemoryAlertsHandler;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.java_support.alerts_handler.MailOptions;
@@ -67,6 +68,8 @@ import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.OldResource;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
+import com.liveramp.workflow_core.alerting.BufferingAlertsHandlerFactory;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_core.step.NoOp;
 import com.liveramp.workflow_db_state.DbPersistence;
@@ -232,13 +235,14 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
     rldb.disableCaching();
 
-    MailBuffer providedBuffer = new MailBuffer.ListBuffer();
+    BufferingAlertsHandlerFactory factory = new BufferingAlertsHandlerFactory();
 
     Step one = new Step(new FailingAction("fail"));
 
     WorkflowRunner wr = new WorkflowRunner("test", new WorkflowDbPersistenceFactory(), HadoopWorkflowOptions.test()
         .setNotificationLevel(WorkflowNotificationLevel.ERROR)
-        .setAlertsHandler(AlertsHandlers.builder(TeamList.DEV_TOOLS).setTestMailBuffer(providedBuffer).build()),
+        .setAlertsHandlerFactory(factory)
+        .setAlertsHandler(factory.buildHandler(Sets.newHashSet("supplied-handler@example.com"), new MailBuffer.ListBuffer())),
         one);
 
     ApplicationController.addConfiguredNotifications(rldb,
@@ -263,29 +267,24 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     DbPersistence origPersistence = (DbPersistence)wr.getPersistence();
     DbPersistence newPersistence = DbPersistence.queryPersistence(origPersistence.getAttemptId(), rldb);
 
-    for (AlertsHandler alertsHandler : newPersistence.getRecipients(WorkflowRunnerNotification.DIED_UNCLEAN)) {
+
+    for (AlertsHandler alertsHandler : newPersistence.getRecipients(WorkflowRunnerNotification.DIED_UNCLEAN, factory)) {
       alertsHandler.sendAlert("Died Unclean", "Test", AlertRecipients.engineering(AlertSeverity.ERROR));
     }
 
     Multimap<String, String> recipientToSubjects = HashMultimap.create();
 
-    for (MailOptions mailOptions : newPersistence.getTestMailBuffer().get()) {
-      for (String to : mailOptions.getToEmails()) {
-        recipientToSubjects.put(to, mailOptions.getSubject());
-      }
-    }
+    DefaultAlertMessageConfig config = new DefaultAlertMessageConfig(true, Lists.newArrayList());
 
-    for (MailOptions mailOptions : Iterables.concat(providedBuffer.get(), origPersistence.getTestMailBuffer().get())) {
-      for (String to : mailOptions.getToEmails()) {
-        recipientToSubjects.put(to, mailOptions.getSubject());
-      }
+    for (Map.Entry<String, AlertMessage> entry : factory.getBuffer().getSentEmails().entries()) {
+      recipientToSubjects.put(entry.getKey(), entry.getValue().getSubject(config));
     }
 
     assertEquals(3, recipientToSubjects.keySet().size());
 
-    assertCollectionEquivalent(recipientToSubjects.get("ben@gmail.com"), Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"));
-    assertCollectionEquivalent(recipientToSubjects.get("test@gmail.com"), Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"));
-    assertCollectionEquivalent(recipientToSubjects.get("dev-tools+error@liveramp.com"), Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"));
+    assertCollectionEquivalent(Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"), recipientToSubjects.get("ben@gmail.com"));
+    assertCollectionEquivalent(Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"), recipientToSubjects.get("test@gmail.com"));
+    assertCollectionEquivalent(Lists.newArrayList("Died Unclean", "[ERROR] [WORKFLOW] Failed: test"), recipientToSubjects.get("supplied-handler@example.com"));
 
   }
 

@@ -8,8 +8,8 @@ import org.json.JSONObject;
 
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.Application;
-import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.workflow_db_state.WorkflowQueries;
+import com.liveramp.workflow_db_state.jack.JackUtil;
 
 public class ApplicationListServlet implements JSONServlet.Processor{
   @Override
@@ -17,7 +17,7 @@ public class ApplicationListServlet implements JSONServlet.Processor{
 
     JSONArray array = new JSONArray();
     for (Application application : WorkflowQueries.getAllApplications(rldb)) {
-      array.put(BaseJackUtil.toJSON(application.getAttributes(), Maps.<Enum, Class<? extends Enum>>newHashMap(), ""));
+      array.put(JackUtil.toJSON(application.getAttributes(), Maps.<Enum, Class<? extends Enum>>newHashMap(), ""));
     }
 
     return new JSONObject().put("applications", array);

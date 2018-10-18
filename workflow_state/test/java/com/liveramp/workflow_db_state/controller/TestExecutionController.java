@@ -15,6 +15,7 @@ import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
+import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static com.liveramp.workflow_db_state.controller.ExecutionController.addConfiguredNotifications;
 import static com.liveramp.workflow_db_state.controller.ExecutionController.removeConfiguredNotifications;
 

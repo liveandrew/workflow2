@@ -19,7 +19,6 @@ import com.liveramp.commons.Accessors;
 import com.liveramp.commons.test.WaitUntil;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
-import com.liveramp.datadog_client.statsd.DogClient;
 import com.liveramp.workflow2.workflow_state.resources.DbResourceManager;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
@@ -34,6 +33,7 @@ import com.liveramp.workflow_core.background_workflow.PreconditionFunction;
 import com.liveramp.workflow_db_state.WorkflowDbStateTestCase;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_state.background_workflow.BackgroundWorkflowExecutor;
+import com.liveramp.workflow_state.background_workflow.ErrorReporter;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 
 import static org.junit.Assert.assertEquals;
@@ -174,7 +174,7 @@ public class TestBackgroundWorkflow extends WorkflowDbStateTestCase {
         Lists.newArrayList(workflowName),
         1000,
         10,
-        DogClient.getTest(),
+        new ErrorReporter.InMemoryReporter(),
         executorName
     );
 
@@ -328,7 +328,7 @@ public class TestBackgroundWorkflow extends WorkflowDbStateTestCase {
         Lists.newArrayList("test"),
         1000,
         10,
-        DogClient.getTest(),
+        new ErrorReporter.InMemoryReporter(),
         "test-worker"
     );
 

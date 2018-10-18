@@ -11,11 +11,11 @@ import com.liveramp.cascading_ext.resource.InMemoryStorage;
 import com.liveramp.cascading_ext.resource.JavaObjectStorageSerializer;
 import com.liveramp.cascading_ext.resource.StorageSerializer;
 import com.liveramp.commons.Accessors;
+import com.liveramp.commons.util.NumberUtil;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.ResourceRecord;
 import com.liveramp.databases.workflow_db.models.ResourceRoot;
 import com.rapleaf.jack.queries.QueryOrder;
-import com.rapleaf.support.Rap;
 
 public class BaseDbStorage {
 
@@ -55,10 +55,10 @@ public class BaseDbStorage {
     try {
       switch (type) {
         case JAVA:
-          rlDb.resourceRecords().create(name, Rap.safeLongToInt(root.getId()), serialized, System.currentTimeMillis(), null);
+          rlDb.resourceRecords().create(name, NumberUtil.safeLongToInt(root.getId()), serialized, System.currentTimeMillis(), null);
           break;
         case JSON:
-          rlDb.resourceRecords().create(name, Rap.safeLongToInt(root.getId()), serialized, System.currentTimeMillis(), object.getClass().getCanonicalName());
+          rlDb.resourceRecords().create(name, NumberUtil.safeLongToInt(root.getId()), serialized, System.currentTimeMillis(), object.getClass().getCanonicalName());
           break;
         default:
           throw new RuntimeException("Only Java and Json serialization supported.");
@@ -86,7 +86,7 @@ public class BaseDbStorage {
 
   public static ResourceRecord getResource(IWorkflowDb rlDb, String name, ResourceRoot root) throws IOException {
     return Accessors.first(rlDb.resourceRecords().query()
-        .resourceRootId(Rap.safeLongToInt(root.getId()))
+        .resourceRootId(NumberUtil.safeLongToInt(root.getId()))
         .name(name)
         .orderById(QueryOrder.DESC)
         .limit(1)
@@ -96,7 +96,7 @@ public class BaseDbStorage {
 
   public static boolean hasResource(IWorkflowDb rlDb, String name, ResourceRoot root) throws IOException {
     return !rlDb.resourceRecords().query()
-        .resourceRootId(Rap.safeLongToInt(root.getId()))
+        .resourceRootId(NumberUtil.safeLongToInt(root.getId()))
         .name(name)
         .orderById(QueryOrder.DESC)
         .limit(1)

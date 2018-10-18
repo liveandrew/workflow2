@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import javafx.scene.control.Alert;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -38,16 +40,13 @@ import com.liveramp.databases.workflow_db.models.StepDependency;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.db_utils.BaseJackUtil;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.java_support.alerts_handler.AlertsHandlers;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
-import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
-import com.liveramp.java_support.alerts_handler.recipients.TeamList;
 import com.liveramp.java_support.web.LRHttpUtils;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.ExecutionState;
@@ -57,6 +56,7 @@ import com.liveramp.workflow_core.WorkflowEnums;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.liveramp.workflow_db_state.json.WorkflowJSON;
+import com.rapleaf.jack.AttributesWithId;
 import com.rapleaf.jack.queries.where_operators.EqualTo;
 
 public class DbPersistence implements WorkflowStatePersistence {
@@ -529,6 +529,14 @@ public class DbPersistence implements WorkflowStatePersistence {
     return WorkflowQueries.getStepStatuses(init.getDb(), init.getAttemptId(), null);
   }
 
+  private static <T extends AttributesWithId> Map<Long, T> attributesById(Collection<T> attributes){
+    Map<Long, T> byId = Maps.newHashMap();
+    for (T attribute : attributes) {
+      byId.put(attribute.getId(), attribute);
+    }
+    return byId;
+  }
+
   private Map<String, StepState> getStates() throws IOException {
     synchronized (lock) {
 
@@ -573,7 +581,7 @@ public class DbPersistence implements WorkflowStatePersistence {
         allStores.add((long)storeUsage.getWorkflowAttemptDatastoreId());
       }
 
-      Map<Long, WorkflowAttemptDatastore.Attributes> storesById = BaseJackUtil.attributesById(WorkflowQueries.getWorkflowAttemptDatastores(conn, allStores, null));
+      Map<Long, WorkflowAttemptDatastore.Attributes> storesById = attributesById(WorkflowQueries.getWorkflowAttemptDatastores(conn, allStores, null));
       TwoNestedMap<String, DSAction, WorkflowAttemptDatastore.Attributes> stepToDatastoreUsages = new TwoNestedMap<>();
       for (StepAttemptDatastore.Attributes usage : storeUsages) {
         stepToDatastoreUsages.put(
@@ -728,7 +736,7 @@ public class DbPersistence implements WorkflowStatePersistence {
 
 
   @Override
-  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException {
+  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification, AlertsHandlerFactory factory) throws IOException {
     synchronized (lock) {
 
       List<ConfiguredNotification.Attributes> allNotifications = Lists.newArrayList();
@@ -772,22 +780,24 @@ public class DbPersistence implements WorkflowStatePersistence {
           throw new RuntimeException("Provided alerts handler not available for notification " + notification);
         }
 
+        System.out.println("using provided handler: "+providedHandler);
+
         handlers.add(providedHandler);
       }
 
       if (!emailsToAlert.isEmpty()) {
 
-        AlertsHandlers.Builder builder = AlertsHandlers.builder(TeamList.NULL)  // won't actually get used
-            .setTestMailBuffer(testMailBuffer)
-            .setEngineeringRecipient(AlertRecipients.of(emailsToAlert));
+        System.out.println("using emails to alert: "+emailsToAlert);
 
-        handlers.add(builder.build());
+        handlers.add(factory.buildHandler(emailsToAlert, testMailBuffer));
+
       }
 
       return handlers;
 
     }
   }
+
 
   @Override
   public ThreeNestedMap<String, String, String, Long> getCountersByStep() throws IOException {
@@ -819,9 +829,9 @@ public class DbPersistence implements WorkflowStatePersistence {
 
   //  for testing
 
-  public MailBuffer getTestMailBuffer() {
-    return testMailBuffer;
-  }
+//  public MailBuffer getTestMailBuffer() {
+//    return testMailBuffer;
+//  }
 
 
 }

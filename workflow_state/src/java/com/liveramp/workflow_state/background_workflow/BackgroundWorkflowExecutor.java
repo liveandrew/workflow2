@@ -20,8 +20,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.timgroup.statsd.Event;
-import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -84,7 +82,7 @@ public class BackgroundWorkflowExecutor {
 
   private final long pollDelay;
   private final int maxConcurrentSteps;
-  private final StatsDClient client;
+  private final ErrorReporter errorReporter;
   private final long heartbeatTimeoutMs;
   private final long heartbeatIntervalMs;
 
@@ -95,9 +93,9 @@ public class BackgroundWorkflowExecutor {
   public BackgroundWorkflowExecutor(List<String> runnableWorkflowNames,
                                     long pollDelayMs,
                                     int maxConcurrentSteps,
-                                    StatsDClient datadogClient,
+                                    ErrorReporter errorReporter,
                                     String hostName) {
-    this(workflowDbNonCaching(), runnableWorkflowNames, pollDelayMs, DEFAULT_HEARTBEAT_TIMEOUT, DEFAULT_HEARTBEAT_INTERVAL, maxConcurrentSteps, datadogClient, hostName);
+    this(workflowDbNonCaching(), runnableWorkflowNames, pollDelayMs, DEFAULT_HEARTBEAT_TIMEOUT, DEFAULT_HEARTBEAT_INTERVAL, maxConcurrentSteps, errorReporter, hostName);
   }
 
   public BackgroundWorkflowExecutor(IWorkflowDb db,
@@ -106,7 +104,7 @@ public class BackgroundWorkflowExecutor {
                                     long heartbeatTimeoutMs,
                                     long heartbeatIntervalMs,
                                     int maxConcurrentSteps,
-                                    StatsDClient datadogClient,
+                                    ErrorReporter errorReporter,
                                     String hostName) {
     this.runnableWorkflowNames = runnableWorkflowNames;
     this.pollDelay = pollDelayMs;
@@ -114,7 +112,7 @@ public class BackgroundWorkflowExecutor {
     this.heartbeatTimeoutMs = heartbeatTimeoutMs;
     this.heartbeatIntervalMs = heartbeatIntervalMs;
     this.hostName = hostName;
-    this.client = datadogClient;
+    this.errorReporter = errorReporter;
     this.pollerThread = new Thread(new Runner(db));
   }
 
@@ -226,19 +224,8 @@ public class BackgroundWorkflowExecutor {
   }
 
   private void sendError(String title, String message) {
-    LOG.error(title);
-    LOG.error(message);
-
-    client.recordEvent(Event.builder()
-
-            .withAlertType(Event.AlertType.ERROR)
-            .withDate(new Date(System.currentTimeMillis()))
-            .withHostname(hostName)
-            .withPriority(Event.Priority.NORMAL)
-            .withTitle(title)
-            .withText(message)
-            .build(),
-        "application:background_workflow_executor"
+    errorReporter.reportError(
+        title, message, hostName, "application:background_workflow_executor"
     );
   }
 

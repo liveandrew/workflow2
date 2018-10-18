@@ -19,6 +19,7 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.WorkflowConstants;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
@@ -30,14 +31,18 @@ public class NotificationManager {
 
   private final TrackerURLBuilder trackerURLBuilder;
 
+  private final AlertsHandlerFactory alertsHandlerFactory;
+
   private final String prefix;
 
   public NotificationManager(String prefix,
                              WorkflowStatePersistence persistence,
+                             AlertsHandlerFactory alertsHandlerFactory,
                              TrackerURLBuilder builder){
     this.persistence = persistence;
     this.trackerURLBuilder = builder;
     this.prefix = prefix;
+    this.alertsHandlerFactory = alertsHandlerFactory;
   }
 
   public void sendInternalErrorMessage(List<Exception> internalErrors) throws IOException {
@@ -156,7 +161,7 @@ public class NotificationManager {
   }
 
   private void mail(String subject, String body, WorkflowRunnerNotification notification) throws IOException {
-    for (AlertsHandler handler : persistence.getRecipients(notification)) {
+    for (AlertsHandler handler : persistence.getRecipients(notification, alertsHandlerFactory)) {
 
       try {
 

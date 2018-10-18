@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.timgroup.statsd.StatsDClient;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -27,8 +26,6 @@ import com.liveramp.databases.workflow_db.models.BackgroundWorkflowExecutorInfo;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.datadog_client.statsd.DogClient;
-import com.liveramp.datadog_client.statsd.FakeDatadogClient;
 import com.liveramp.workflow.types.ExecutorStatus;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
@@ -46,7 +43,6 @@ import com.liveramp.workflow_db_state.background_workflow.TestBackgroundWorkflow
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 import com.rapleaf.jack.MysqlDatabaseConnection;
-import com.rapleaf.support.Strings;
 
 import static com.liveramp.workflow_state.background_workflow.BackgroundWorkflowExecutor.workflowDbNonCaching;
 import static org.junit.Assert.*;
@@ -62,9 +58,9 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
     workflowDb.disableCaching();
 
     BackgroundStepAttemptInfo info = workflowDb.backgroundStepAttemptInfos()
-        .create(1, Strings.toBytes("1"), 0L, 5);
+        .create(1, new byte[]{0}, 0L, 5);
 
-    StatsDClient testClient = DogClient.getTest();
+    ErrorReporter.InMemoryReporter testClient = new ErrorReporter.InMemoryReporter();
 
     assertTrue(new BackgroundWorkflowExecutor(
             Lists.newArrayList(),
@@ -101,7 +97,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
   //  simple test that executors run heartbeats and update their status when shut down
   public void testHeartbeatSimple() throws UnknownHostException, InterruptedException {
 
-    FakeDatadogClient testClient = DogClient.getTest();
+    ErrorReporter.InMemoryReporter testClient = new ErrorReporter.InMemoryReporter();
 
     BackgroundWorkflowExecutor executor = new BackgroundWorkflowExecutor(
         workflowDbNonCaching(),
@@ -182,7 +178,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
         2000,
         1000,
         10,
-        DogClient.getTest(),
+        new ErrorReporter.InMemoryReporter(),
         InetAddress.getLocalHost().getHostName()
     );
     runner.start();
@@ -234,7 +230,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
         Lists.newArrayList(action1)
     );
 
-    FakeDatadogClient client = DogClient.getTest();
+    ErrorReporter.InMemoryReporter client = new ErrorReporter.InMemoryReporter();
 
     BackgroundWorkflowExecutor executor = new BackgroundWorkflowExecutor(
         Lists.newArrayList("test"),
@@ -326,7 +322,8 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
 
     IWorkflowDb mockedDb = new DatabasesImpl(conn).getWorkflowDb();
 
-    FakeDatadogClient testClient = DogClient.getTest();
+    ErrorReporter.InMemoryReporter testClient = new ErrorReporter.InMemoryReporter();
+
     BackgroundWorkflowExecutor executor = new BackgroundWorkflowExecutor(
         mockedDb,
         Lists.newArrayList("test"),
@@ -365,7 +362,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
       }
     });
 
-    assertTrue(Accessors.only(testClient.getSentEvents()).getText().contains("java.io.IOException: java.sql.SQLNonTransientException: Percona is on fire"));
+    assertTrue(Accessors.only(testClient.getSentEvents()).getMessage().contains("java.io.IOException: java.sql.SQLNonTransientException: Percona is on fire"));
 
     executor.shutdown();
 
@@ -403,7 +400,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
     IWorkflowDb db = new DatabasesImpl().getWorkflowDb();
     db.disableCaching();
 
-    FakeDatadogClient test = DogClient.getTest();
+    ErrorReporter.InMemoryReporter test = new ErrorReporter.InMemoryReporter();
 
     BackgroundWorkflowExecutor executor = new BackgroundWorkflowExecutor(
         db,
@@ -480,7 +477,8 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
         Lists.newArrayList(action1, action2)
     );
 
-    FakeDatadogClient test = DogClient.getTest();
+
+    ErrorReporter.InMemoryReporter test = new ErrorReporter.InMemoryReporter();
 
     BackgroundWorkflowExecutor executor1 = new BackgroundWorkflowExecutor(
         new DatabasesImpl().getWorkflowDb(),

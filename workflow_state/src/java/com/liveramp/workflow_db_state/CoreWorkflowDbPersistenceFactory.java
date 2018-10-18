@@ -32,8 +32,8 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttemptDatastore;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
-import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.java_support.alerts_handler.recipients.EngineeringAlertRecipient;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
@@ -298,8 +298,9 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
 
     Map<AlertSeverity, String> recipients = Maps.newHashMap();
     for (AlertSeverity severity : AlertSeverity.values()) {
-      recipients.put(severity, getEmail(providedHandler, AlertRecipients.engineering(severity)));
+      recipients.put(severity, getEmail(providedHandler, new EngineeringAlertRecipient(severity)));
     }
+    System.out.println("RESOLVED: "+recipients);
 
     StepStateManager<S> manager = getManager();
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
