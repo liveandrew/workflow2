@@ -13,7 +13,7 @@ import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.db_utils.BaseJackUtil;
+import com.liveramp.workflow_db_state.jack.JackUtil;
 import com.liveramp.workflow_db_state.json.WorkflowJSON;
 import com.liveramp.workflow_ui.util.QueryUtil;
 
@@ -37,7 +37,7 @@ public class ExecutionQueryServlet implements JSONServlet.Processor {
         queryLimit + 1
     );
 
-    for (WorkflowExecution execution : Iterables.limit(BaseJackUtil.sortDescending(results.keySet()), queryLimit)) {
+    for (WorkflowExecution execution : Iterables.limit(JackUtil.sortDescending(results.keySet()), queryLimit)) {
       JSONObject obj = WorkflowJSON.toJSON(rldb, details, processStatus, execution, results.get(execution));
       if (obj != null) {
         rows.put(obj);

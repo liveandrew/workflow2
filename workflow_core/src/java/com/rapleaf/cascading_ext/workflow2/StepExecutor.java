@@ -22,6 +22,7 @@ import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.workflow.types.StepStatus;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.rollback.SuccessCallback;
@@ -72,6 +73,8 @@ public class StepExecutor<Config> {
 
   private final List<SuccessCallback> successCallbacks;
 
+  private final AlertsHandlerFactory alertsHandlerFactory;
+
   public StepExecutor(WorkflowStrategy<Config> strategy,
                       WorkflowStatePersistence persistence,
                       int maxConcurrentSteps,
@@ -79,6 +82,7 @@ public class StepExecutor<Config> {
                       DirectedGraph<BaseStep<Config>, DefaultEdge> dependencyGraph,
                       OverridableProperties parentProperties,
                       MultiShutdownHook hook,
+                      AlertsHandlerFactory alertsHandlerFactory,
                       BaseWorkflowRunner.OnStepRunnerStart onStart,
                       List<SuccessCallback> successCallbacks,
                       NotificationManager notifications) {
@@ -95,6 +99,7 @@ public class StepExecutor<Config> {
     this.onStart = onStart;
     this.successCallbacks = successCallbacks;
     this.notifications = notifications;
+    this.alertsHandlerFactory = alertsHandlerFactory;
 
   }
 

@@ -11,6 +11,7 @@ import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_state.ExecutionState;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
@@ -150,8 +151,8 @@ public class ForwardingPersistence implements WorkflowStatePersistence {
   }
 
   @Override
-  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException {
-    return delegatePersistence.getRecipients(notification);
+  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification, AlertsHandlerFactory factory) throws IOException {
+    return delegatePersistence.getRecipients(notification, factory);
   }
 
   @Override

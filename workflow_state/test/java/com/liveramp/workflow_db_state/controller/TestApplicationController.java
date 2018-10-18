@@ -14,6 +14,8 @@ import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
+import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
+
 public class TestApplicationController extends WorkflowDbStateTestCase {
 
   @Test

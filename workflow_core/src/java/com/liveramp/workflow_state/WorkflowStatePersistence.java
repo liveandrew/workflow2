@@ -11,6 +11,7 @@ import com.liveramp.commons.state.TaskSummary;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 
 //  TODO somehow split up the interfaces here.  dunno how.
 public interface WorkflowStatePersistence extends InitializedPersistence{
@@ -56,8 +57,8 @@ public interface WorkflowStatePersistence extends InitializedPersistence{
   public String getId() throws IOException;
   public WorkflowAttemptStatus getStatus() throws IOException;
   public ExecutionState getExecutionState() throws IOException;
-  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification) throws IOException;
-
+  public List<AlertsHandler> getRecipients(WorkflowRunnerNotification notification, AlertsHandlerFactory factory) throws IOException;
+  
   //  should these belong somewhere else?  only really implemented in db-backed one
   public ThreeNestedMap<String, String, String, Long> getCountersByStep() throws IOException;
   public TwoNestedMap<String, String, Long> getFlatCounters() throws IOException;

@@ -14,6 +14,8 @@ import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
+import com.liveramp.workflow_core.alerting.BufferingAlertsHandlerFactory;
 import com.liveramp.workflow_core.info.WorkflowInfoConsumer;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
@@ -38,6 +40,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private String description;
   private ContextStorage storage;
   private RollbackBehavior rollBackOnFailure = new RollbackBehavior.Unconditional(false);
+  private AlertsHandlerFactory alertsHandlerFactory = new BufferingAlertsHandlerFactory();
 
   private TrackerURLBuilder urlBuilder;
 
@@ -76,6 +79,15 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public RollbackBehavior getRollBackBehavior() {
     return rollBackOnFailure;
+  }
+
+  public T setAlertsHandlerFactory(AlertsHandlerFactory alertsHandlerFactory) {
+    this.alertsHandlerFactory = alertsHandlerFactory;
+    return (T) this;
+  }
+
+  public AlertsHandlerFactory getAlertsHandlerFactory() {
+    return alertsHandlerFactory;
   }
 
   public T setRollBackOnFailure(boolean rollBackOnFailure) {

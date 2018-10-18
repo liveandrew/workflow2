@@ -19,6 +19,7 @@ import com.liveramp.workflow.formatting.TimeFormatting;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.WorkflowUtil;
+import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_core.runner.BaseStep;
 import com.liveramp.workflow_state.DSAction;
@@ -114,7 +115,9 @@ public class BaseWorkflowRunner<Config> {
 
     assertSandbox(options.getSandboxDir());
 
-    this.notifications = new NotificationManager(null, persistence, options.getUrlBuilder());
+    AlertsHandlerFactory handlerFactory = options.getAlertsHandlerFactory();
+
+    this.notifications = new NotificationManager(null, persistence, handlerFactory, options.getUrlBuilder());
 
     this.shutdownHook = initializedData.getShutdownHook();
 
@@ -126,6 +129,7 @@ public class BaseWorkflowRunner<Config> {
         dependencyGraph,
         options.getWorkflowJobProperties(),
         initializedData.getShutdownHook(),
+        handlerFactory,
         onStart,
         options.getSuccessCallbacks(),
         notifications
@@ -139,9 +143,10 @@ public class BaseWorkflowRunner<Config> {
         dependencyGraph,
         options.getWorkflowJobProperties(),
         initializedData.getShutdownHook(),
+        handlerFactory,
         onStart,
         options.getSuccessCallbacks(),
-        new NotificationManager("ROLLBACK", persistence, options.getUrlBuilder())
+        new NotificationManager("ROLLBACK", persistence, handlerFactory, options.getUrlBuilder())
     );
 
     // TODO: verify datasources satisfied

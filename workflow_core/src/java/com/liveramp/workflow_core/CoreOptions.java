@@ -8,6 +8,7 @@ import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.LoggingAlertsHandler;
+import com.liveramp.workflow_core.alerting.BufferingAlertsHandlerFactory;
 import com.rapleaf.cascading_ext.workflow2.TrackerURLBuilder;
 import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
 import com.rapleaf.cascading_ext.workflow2.options.FixedHostnameProvider;
@@ -31,6 +32,7 @@ public class CoreOptions extends BaseWorkflowOptions<CoreOptions> {
         .setStepPollInterval(100)
         .setUrlBuilder(new TrackerURLBuilder.None())
         .setHostnameProvider(new FixedHostnameProvider())
+        .setAlertsHandlerFactory(new BufferingAlertsHandlerFactory())
         .setResourceManagerFactory(ResourceManager.NotImplementedFactory.class);
   }
 
