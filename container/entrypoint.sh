@@ -25,5 +25,5 @@ HOST=$( cat config/database.yml | sed -n -e "/^$JETTY_ENV:/,\$p" | grep host | a
 # set up jetty session db if it doesn't exist already
 mysql -h $HOST -u$USERNAME -p$PASSWORD -e "create database if not exists $DB_NAME" || true
 
-java -Djava.io.tmpdir=/var/www/tmp -Xmx12000m  -Dlog4j.configuration=config/console.log4j.xml -Djava.net.preferIPv4Stack=true -cp workflow_ui.job.jar \
+java -Djava.io.tmpdir=/var/www/tmp -Xmx12000m  -Dlog4j.configuration=com/liveramp/workflow_ui/log4j/console.log4j.xml -Djava.net.preferIPv4Stack=true -cp workflow_ui.job.jar \
   com.liveramp.workflow_ui.WorkflowDbWebServer
