@@ -217,10 +217,6 @@ public class WorkflowDbWebServer implements Runnable {
   }
 
   public static void main(String[] args) throws InterruptedException {
-//    LoggingHelper.configureLoggers(LogOptions.name("workflow_ui")
-//        .addLogstash(TeamList.DEV_TOOLS)
-//        .addDRFA()
-//    );
 
     WorkflowDbWebServer server = new WorkflowDbWebServer();
     Thread thread1 = new Thread(server);

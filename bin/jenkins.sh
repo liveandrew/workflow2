@@ -22,6 +22,9 @@ docker tag workflow2_ui gcr.io/liveramp-eng-bdi/workflow2_ui
 docker push gcr.io/liveramp-eng-bdi/workflow2_ui
 popd
 
+# Workflow monitor container
 pushd workflow_monitor
-  # TODO impl
+docker build -t workflow2_monitor:latest -f Dockerfile .
+docker tag workflow2_monitor gcr.io/liveramp-eng-bdi/workflow2_monitor
+docker push gcr.io/liveramp-eng-bdi/workflow2_monitor
 popd
