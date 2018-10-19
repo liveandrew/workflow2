@@ -9,6 +9,7 @@
   <properties>
     <skip.jobjar>false</skip.jobjar>
     <skip.deploy.bundle>false</skip.deploy.bundle>
+    <skip.jenkins.artifact.clean>true</skip.jenkins.artifact.clean>
   </properties>
 
   <parent>
