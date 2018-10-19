@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.liveramp.commons.collections.list.ListBuilder;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
+import com.liveramp.commons.collections.set.SetBuilder;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.MapreduceJobTaskException;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
@@ -27,7 +28,6 @@ import com.rapleaf.jack.queries.Column;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
-import com.rapleaf.support.collections.SetBuilder;
 
 
 public class TaskExceptionServlet implements JSONServlet.Processor {

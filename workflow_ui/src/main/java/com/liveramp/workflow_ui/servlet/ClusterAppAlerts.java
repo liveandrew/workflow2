@@ -33,8 +33,6 @@ import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.Index;
 import com.rapleaf.jack.queries.IndexHints;
 import com.rapleaf.jack.queries.Record;
-import com.rapleaf.support.collections.CountingHashMap;
-import com.rapleaf.support.collections.CountingInteger;
 
 import static com.liveramp.workflow_ui.servlet.ClusterConstants.MR2_GROUP;
 import static com.rapleaf.jack.queries.AggregatedColumn.SUM;
@@ -71,18 +69,18 @@ public class ClusterAppAlerts implements JSONServlet.Processor {
       counters = counters.where(WorkflowAttempt.POOL.startsWith(pool));
     }
 
-    CountingHashMap<String> tasksPerApp = new CountingHashMap<>();
+    CountingMap<String> tasksPerApp = new CountingMap<>();
 
     for (Record record : counters.fetch()) {
 
       tasksPerApp.increment(
           record.getString(WorkflowExecution.NAME),
-          record.getLong(SUM(MapreduceCounter.VALUE)).intValue()
+          record.getLong(SUM(MapreduceCounter.VALUE))
       );
 
     }
 
-    LOG.info("Got counters for " + tasksPerApp.size() + " apps");
+    LOG.info("Got counters for " + tasksPerApp.get().size() + " apps");
 
     //  get counters for jobs with alerts
     GenericQuery alertJobCounters = windowMapreduceJobs(workflowDb, startWindow, endWindow)
@@ -164,8 +162,11 @@ public class ClusterAppAlerts implements JSONServlet.Processor {
     List<AppAlert> alertList = Lists.newArrayList();
 
     for (String app : alertsForApp.key1Set()) {
-      long totalAppTasks = tasksPerApp.getWithDefault(app).get();
+      Long totalAppTasks = tasksPerApp.get().get(app);
 
+      if(totalAppTasks == null){
+        totalAppTasks = 0L;
+      }
 
       for (String alertName : alertsForApp.get(app).key1Set()) {
 

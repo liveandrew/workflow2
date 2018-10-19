@@ -23,25 +23,18 @@
     <!--internal-->
 
     <dependency>
-      <groupId>com.liveramp</groupId>
-      <artifactId>liveramp_types</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
       <groupId>com.liveramp.workflow2</groupId>
       <artifactId>workflow_state</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
 
-    <!--TODO figure out and remove -->
-    <dependency>
-      <groupId>com.liveramp</groupId>
-      <artifactId>java_support</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-
     <!--other-->
+
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2.4</version>
+    </dependency>
 
     <dependency>
       <groupId>org.json</groupId>

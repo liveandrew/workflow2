@@ -2,6 +2,7 @@ package com.liveramp.workflow_ui.scripts;
 
 import java.io.IOException;
 
+import org.apache.log4j.xml.DOMConfigurator;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -15,7 +16,6 @@ import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.java_support.logging.LoggingHelper;
 
 import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.Record;
@@ -27,8 +27,7 @@ public class GetStepRuntimeHistorySummary {
   private static final Logger LOG = LoggerFactory.getLogger(GetStepRuntimeHistorySummary.class);
 
   public static void main(String[] args) throws IOException {
-
-    LoggingHelper.configureConsoleLogger();
+    DOMConfigurator.configure("config/console.log4j.xml");
 
     //  where application is
     String appName = args[0];
@@ -75,7 +74,7 @@ public class GetStepRuntimeHistorySummary {
         Long avgMapDurationSum = record.get(SUM(MapreduceJob.AVG_MAP_DURATION));
         Long avgReduceDurationSum = record.get(SUM(MapreduceJob.AVG_REDUCE_DURATION));
 
-        System.out.println(dtfOut.print(date)+"\t"+jobsRun+"\t"+(avgMapDurationSum/jobsRun)+"\t"+(avgReduceDurationSum/jobsRun));
+        System.out.println(dtfOut.print(date) + "\t" + jobsRun + "\t" + (avgMapDurationSum / jobsRun) + "\t" + (avgReduceDurationSum / jobsRun));
 
       }
 

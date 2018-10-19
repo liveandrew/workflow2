@@ -21,9 +21,6 @@ import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.java_support.alerts_handler.recipients.TeamList;
-import com.liveramp.java_support.logging.LogOptions;
-import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow_core.constants.YarnConstants;
 import com.liveramp.workflow_ui.servlet.ClusterConstants;
 import com.rapleaf.jack.queries.GenericQuery;
@@ -176,24 +173,6 @@ public class Summarizer {
       .put(YarnConstants.YARN_GROUP, YarnConstants.YARN_VCORE_SECONDS)
 
       .get();
-
-  public static void main(String[] args) throws IOException, SQLException {
-    LoggingHelper.configureLoggers(LogOptions.name("summarizer")
-        .addLogstash(TeamList.DEV_TOOLS)
-        .addDRFA()
-    );
-
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
-    int dayWindow = Integer.parseInt(args[0]);
-
-    Summarizer.summarizeApplicationCounters(
-        COUNTERS_TO_SUMMARIZE,
-        rldb,
-        dayWindow,
-        new LocalDate().minusDays(1)
-    );
-
-  }
 
 
 }

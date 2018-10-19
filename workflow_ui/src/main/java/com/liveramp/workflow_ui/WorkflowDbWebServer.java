@@ -31,9 +31,6 @@ import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
-import com.liveramp.java_support.alerts_handler.recipients.TeamList;
-import com.liveramp.java_support.logging.LogOptions;
-import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow_db_state.ThreadLocalWorkflowDb;
 import com.liveramp.workflow_ui.servlet.AlertServlet;
 import com.liveramp.workflow_ui.servlet.AppCostHistoryServlet;
@@ -220,10 +217,10 @@ public class WorkflowDbWebServer implements Runnable {
   }
 
   public static void main(String[] args) throws InterruptedException {
-    LoggingHelper.configureLoggers(LogOptions.name("workflow_ui")
-        .addLogstash(TeamList.DEV_TOOLS)
-        .addDRFA()
-    );
+//    LoggingHelper.configureLoggers(LogOptions.name("workflow_ui")
+//        .addLogstash(TeamList.DEV_TOOLS)
+//        .addDRFA()
+//    );
 
     WorkflowDbWebServer server = new WorkflowDbWebServer();
     Thread thread1 = new Thread(server);

@@ -1,5 +1,6 @@
 package com.liveramp.workflow_ui.servlet;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -7,6 +8,7 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,7 +27,6 @@ import com.liveramp.workflow_ui.util.CostUtil;
 import com.rapleaf.jack.queries.Column;
 import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.Record;
-import com.rapleaf.support.DayOfYear;
 
 import static com.liveramp.workflow_ui.servlet.RenderInfo.DEFAULT_EXPAND;
 import static com.liveramp.workflow_ui.servlet.RenderInfo.DERIVED_COUNTERS;
@@ -86,7 +87,7 @@ public class StatServlet implements JSONServlet.Processor {
           group, counterName, value
       );
 
-      countersPerDay.incrementAndGet(new DayOfYear(record.getLong(StepAttempt.START_TIME)).toMillis(),
+      countersPerDay.incrementAndGet(new DateTime(record.getLong(StepAttempt.START_TIME)).withTimeAtStartOfDay().getMillis(),
           group, counterName, value
       );
 

@@ -2,6 +2,7 @@ package com.liveramp.workflow_ui.scripts;
 
 import java.io.IOException;
 
+import org.apache.log4j.xml.DOMConfigurator;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -11,7 +12,6 @@ import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow.types.StepStatus;
 import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.Record;
@@ -22,7 +22,7 @@ import static com.rapleaf.jack.queries.AggregatedColumn.SUM;
 public class GetStepDurationHistorySummary {
 
   public static void main(String[] args) throws IOException {
-    LoggingHelper.configureConsoleLogger();
+    DOMConfigurator.configure("config/console.log4j.xml");
 
     //  where application is
     String appName = args[0];

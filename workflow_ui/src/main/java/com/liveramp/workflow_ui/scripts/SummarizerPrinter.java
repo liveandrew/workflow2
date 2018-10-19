@@ -2,6 +2,7 @@ package com.liveramp.workflow_ui.scripts;
 
 import java.io.IOException;
 
+import org.apache.log4j.xml.DOMConfigurator;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -12,7 +13,6 @@ import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.ApplicationCounterSummary;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
@@ -22,7 +22,7 @@ import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 public class SummarizerPrinter {
 
   public static void main(String[] args) throws IOException {
-    LoggingHelper.configureConsoleLogger();
+    DOMConfigurator.configure("config/console.log4j.xml");
 
     //  where application is
     String appName = args[0];

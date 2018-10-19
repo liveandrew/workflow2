@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -15,15 +16,13 @@ import org.joda.time.format.DateTimeFormatter;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.ApplicationCounterSummary;
-import com.liveramp.java_support.alerts_handler.recipients.TeamList;
-import com.liveramp.java_support.logging.LoggingHelper;
 
 import static com.liveramp.workflow_ui.util.QueryUtil.computeSummaries;
 
 public class GetCounterHistory {
 
   public static void main(String[] args) throws IOException, SQLException {
-    LoggingHelper.configureConsoleLogger();
+    DOMConfigurator.configure("config/console.log4j.xml");
 
     String app = args[0];
 

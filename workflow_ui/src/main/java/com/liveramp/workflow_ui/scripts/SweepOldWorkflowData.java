@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.xml.DOMConfigurator;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,21 +18,18 @@ import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.java_support.alerts_handler.recipients.TeamList;
-import com.liveramp.java_support.logging.LoggingHelper;
 import com.rapleaf.jack.queries.Deletions;
 import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.Index;
 import com.rapleaf.jack.queries.IndexHints;
 import com.rapleaf.jack.queries.QueryOrder;
-import com.rapleaf.jack.queries.Record;
 import com.rapleaf.jack.queries.Records;
 
 public class SweepOldWorkflowData {
   private static final Logger LOG = LoggerFactory.getLogger(SweepOldWorkflowData.class);
 
   public static void main(String[] args) throws IOException {
-    LoggingHelper.configureDefaultLoggers(TeamList.DEV_TOOLS, "sweep_old_workflow_data");
+    DOMConfigurator.configure("config/console.log4j.xml");
 
     DateTime window = DateTime.now().minusMonths(10);
     LOG.info("Sweeping counters from jobs which finished before: " + window);
