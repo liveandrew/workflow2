@@ -1,6 +1,9 @@
 package com.liveramp.workflow_monitor;
 
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
 import com.google.common.collect.Lists;
 import org.apache.log4j.Level;
 
@@ -24,10 +27,9 @@ import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGen
 
 public class WorkflowDbMonitorRunner {
 
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) throws InterruptedException, IOException, URISyntaxException {
 
     LoggingHelper.configureLoggers(LogOptions.name(WorkflowDbMonitorRunner.class.getSimpleName())
-        .addLogstashCustom(TeamList.DEV_TOOLS, Level.INFO)
         .addDRFA()
     );
 
@@ -73,15 +75,12 @@ public class WorkflowDbMonitorRunner {
         0
     );
 
-    WorkflowMonitor monitor = new WorkflowMonitor(
-        Lists.newArrayList(
-            spammyProduction,
-            filteredProduction,
-            quietProduction
+    WorkflowMonitor.monitor(Lists.newArrayList(
+        spammyProduction,
+        filteredProduction,
+        quietProduction
         )
     );
-
-    monitor.monitor();
 
   }
 

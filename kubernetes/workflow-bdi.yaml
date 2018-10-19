@@ -18,7 +18,7 @@ spec:
       containers:
       # the container with the actual workflow db and ui binaries
       - image: gcr.io/liveramp-eng-bdi/workflow2_ui
-        name: workflow2_ui
+        name: workflow2-ui
         imagePullPolicy: "Always"
         ports:
         - containerPort: 8080
@@ -58,7 +58,7 @@ spec:
       # run database migrations before starting the uis
       initContainers:
       - image: gcr.io/liveramp-eng-bdi/workflow2_db
-        name: workflow2_db
+        name: workflow2-db
       volumes:
       # DB credentials for the migration user -- eg, database.yml
       - name: workflowdb-creds
