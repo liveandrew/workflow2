@@ -2,17 +2,7 @@
 
 set -e
 
-# set up the rails db
-
-cd /apps/workflow_db/
-
-export RAILS_ENV=production
-
-bundle exec rake db:create
-bundle exec rake rapleaf:migrate
-
 # get the java app running
-
 cd /apps/workflow_ui/
 
 # not really a work of art, could be done as ruby or java

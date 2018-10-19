@@ -7,7 +7,6 @@
   <version>${snapshot.version}</version>
 
   <properties>
-    <jobjar.descriptor>com/liveramp/build_tools/assembly/jobjar-flat.xml</jobjar.descriptor>
     <skip.jobjar>false</skip.jobjar>
     <skip.deploy.bundle>false</skip.deploy.bundle>
   </properties>

@@ -17,8 +17,8 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
       # the container with the actual workflow db and ui binaries
-      - image: gcr.io/liveramp-eng-bdi/workflow2
-        name: workflow2
+      - image: gcr.io/liveramp-eng-bdi/workflow2_ui
+        name: workflow2_ui
         imagePullPolicy: "Always"
         ports:
         - containerPort: 8080
@@ -55,6 +55,10 @@ spec:
           name: nginx-conf
         - mountPath: /apps/secrets/liveramp-net
           name: liveramp-net-certs
+      # run database migrations before starting the uis
+      initContainers:
+      - image: gcr.io/liveramp-eng-bdi/workflow2_db
+        name: workflow2_db
       volumes:
       # DB credentials for the migration user -- eg, database.yml
       - name: workflowdb-creds
