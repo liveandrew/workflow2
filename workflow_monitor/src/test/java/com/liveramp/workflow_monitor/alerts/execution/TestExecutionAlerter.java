@@ -3,6 +3,7 @@ package com.liveramp.workflow_monitor.alerts.execution;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
@@ -17,13 +18,16 @@ import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.java_support.alerts_handler.InMemoryAlertsHandler;
+import com.liveramp.java_support.alerts_handler.BufferingAlertsHandler;
+import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfig;
+import com.liveramp.java_support.alerts_handler.recipients.RecipientUtils;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_monitor.alerts.execution.alert.AlertMessage;
 import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGenerator;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
+import static com.liveramp.commons.test.TestUtils.assertStringsContainSubstring;
 import static org.junit.Assert.assertEquals;
 
 public class TestExecutionAlerter extends WorkflowMonitorTestCase {
@@ -68,7 +72,8 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     mapreduceJob2.setStepAttemptId(step.getId()).save();
     db.mapreduceCounters().create(mapreduceJob2.getIntId(), "Group", "Name", 1);
 
-    InMemoryAlertsHandler handler = new InMemoryAlertsHandler();
+    BufferingAlertsHandler.MessageBuffer buffer = new BufferingAlertsHandler.MessageBuffer();
+    BufferingAlertsHandler handler = new BufferingAlertsHandler(buffer, RecipientUtils.of("test@test.com"));
 
     ExecutionAlerter alerter = new ExecutionAlerter(new TestRecipientGenerator(handler),
         Lists.newArrayList(new TestExecutionGenerator()),
@@ -79,9 +84,12 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
 
     alerter.generateAlerts();
 
-    List<String> alerts = handler.getAlerts();
-    assertEquals(4, alerts.size());
 
+    DefaultAlertMessageConfig config = new DefaultAlertMessageConfig(true, Lists.newArrayList());
+
+    List<String> alerts = buffer.getSentAlerts().stream().map(alertMessage -> alertMessage.getMessage(config)).collect(Collectors.toList());
+
+    assertEquals(4, alerts.size());
 
     assertStringsContainSubstring(mrJobAlertMessage, alerts);
     assertStringsContainSubstring(wfExecutionAlertMessage, alerts);

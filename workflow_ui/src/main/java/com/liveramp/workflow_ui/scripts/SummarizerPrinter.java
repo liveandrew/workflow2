@@ -22,7 +22,6 @@ import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 public class SummarizerPrinter {
 
   public static void main(String[] args) throws IOException {
-    DOMConfigurator.configure("config/console.log4j.xml");
 
     //  where application is
     String appName = args[0];

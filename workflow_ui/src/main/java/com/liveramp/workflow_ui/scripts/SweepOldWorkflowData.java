@@ -29,7 +29,6 @@ public class SweepOldWorkflowData {
   private static final Logger LOG = LoggerFactory.getLogger(SweepOldWorkflowData.class);
 
   public static void main(String[] args) throws IOException {
-    DOMConfigurator.configure("config/console.log4j.xml");
 
     DateTime window = DateTime.now().minusMonths(10);
     LOG.info("Sweeping counters from jobs which finished before: " + window);

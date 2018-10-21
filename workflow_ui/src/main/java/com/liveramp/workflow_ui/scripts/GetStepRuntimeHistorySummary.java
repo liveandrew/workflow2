@@ -27,7 +27,6 @@ public class GetStepRuntimeHistorySummary {
   private static final Logger LOG = LoggerFactory.getLogger(GetStepRuntimeHistorySummary.class);
 
   public static void main(String[] args) throws IOException {
-    DOMConfigurator.configure("config/console.log4j.xml");
 
     //  where application is
     String appName = args[0];

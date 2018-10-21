@@ -22,7 +22,6 @@ import static com.liveramp.workflow_ui.util.QueryUtil.computeSummaries;
 public class GetCounterHistory {
 
   public static void main(String[] args) throws IOException, SQLException {
-    DOMConfigurator.configure("config/console.log4j.xml");
 
     String app = args[0];
 

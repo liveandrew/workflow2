@@ -22,7 +22,6 @@ import com.liveramp.databases.workflow_db.models.MapreduceCounter;
 import com.liveramp.databases.workflow_db.models.MapreduceJob;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.java_support.logging.LoggingHelper;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_db_state.jack.JackUtil;
@@ -44,7 +43,6 @@ public class AppsByShortTasks {
 
   @SuppressWarnings("Duplicates")
   public static void main(String[] args) throws IOException {
-    LoggingHelper.configureConsoleLogger();
 
     //  finished in last hour
     long endTime = System.currentTimeMillis();

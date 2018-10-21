@@ -9,8 +9,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.HashMultimap;
@@ -30,8 +28,8 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.java_support.alerts_handler.recipients.EngineeringAlertRecipient;
 import com.liveramp.workflow_core.WorkflowConstants;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_db_state.jack.JackUtil;
@@ -191,7 +189,7 @@ public class ExecutionAlerter {
 
       handler.sendAlert(
           builder.build(),
-          AlertRecipients.engineering(notification.serverity())
+          new EngineeringAlertRecipient(notification.serverity())
       );
     }
   }
