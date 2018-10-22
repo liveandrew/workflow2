@@ -1,6 +1,7 @@
 package com.liveramp.workflow_core;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,7 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private ContextStorage storage;
   private RollbackBehavior rollBackOnFailure = new RollbackBehavior.Unconditional(false);
   private AlertsHandlerFactory alertsHandlerFactory = new BufferingAlertsHandlerFactory();
+  private Set<WorkflowTag> tags;
 
   private TrackerURLBuilder urlBuilder;
 
@@ -58,9 +60,11 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   }
 
   protected BaseWorkflowOptions(OverridableProperties defaultProperties,
-                                Map<Object, Object> systemProperties) {
+                                Map<Object, Object> systemProperties
+  ) {
     this.defaultProperties = defaultProperties;
     this.systemProperties = systemProperties;
+    this.tags = new HashSet<>();
   }
 
   public T addSuccessCallback(SuccessCallback callback) {
@@ -273,6 +277,15 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   public T addWorkflowHadoopProperties(OverridableProperties newProperties) {
     this.properties = newProperties.override(this.properties);
     return (T)this;
+  }
+
+  public T addTag(WorkflowTag tag) {
+    tags.add(tag);
+    return (T)this;
+  }
+
+  public Set<WorkflowTag> getTags() {
+    return tags;
   }
 
   public OverridableProperties getWorkflowJobProperties() {

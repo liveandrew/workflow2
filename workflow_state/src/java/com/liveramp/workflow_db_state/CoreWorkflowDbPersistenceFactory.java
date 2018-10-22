@@ -39,6 +39,7 @@ import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_core.StepStateManager;
+import com.liveramp.workflow_core.WorkflowTag;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.IStep;
@@ -77,7 +78,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     Application application = getApplication(workflowDb, name, options.getAppType());
     LOG.info("Using application: " + application);
 
-    WorkflowExecution.Attributes execution = getExecution(workflowDb, application, name, options.getAppType(), options.getScopeIdentifier());
+    WorkflowExecution.Attributes execution = getOrCreateExecution(workflowDb, application, name, options.getAppType(), options.getScopeIdentifier(), options.getTags());
     LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
     cleanUpRunningAttempts(databases, execution);
@@ -403,21 +404,25 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     return StepStatus.WAITING;
   }
 
-  private WorkflowExecution.Attributes getExecution(IWorkflowDb rldb, Application app, String name, Integer appType, String scopeId) throws IOException {
+  private WorkflowExecution.Attributes getOrCreateExecution(IWorkflowDb workflowDb, Application app, String name, Integer appType, String scopeId, Set<WorkflowTag> tags) throws IOException {
 
-    Set<WorkflowExecution.Attributes> incompleteExecutions = WorkflowQueries.getIncompleteExecutions(rldb, name, scopeId);
+    Set<WorkflowExecution.Attributes> incompleteExecutions = WorkflowQueries.getIncompleteExecutions(workflowDb, name, scopeId);
 
     if (incompleteExecutions.isEmpty()) {
       LOG.info("No incomplete execution found, creating new execution");
 
       //  new execution
-      WorkflowExecution ex = rldb.workflowExecutions().create(name, WorkflowExecutionStatus.INCOMPLETE.ordinal())
+      WorkflowExecution ex = workflowDb.workflowExecutions().create(name, WorkflowExecutionStatus.INCOMPLETE.ordinal())
           .setScopeIdentifier(scopeId)
           .setStartTime(System.currentTimeMillis())
           .setApplicationId(app.getIntId());
 
       if (appType != null) {
         ex.setAppType(appType);
+      }
+
+      for (WorkflowTag tag : tags) {
+        workflowDb.executionTags().create(ex.getId(), tag.getKey(), tag.getVal());
       }
 
       ex.save();
