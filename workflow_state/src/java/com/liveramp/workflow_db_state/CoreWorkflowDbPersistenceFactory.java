@@ -58,30 +58,26 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
 
   @Override
   public synchronized InitializedDbPersistence initializeInternal(String name,
-                                                                  String scopeId,
-                                                                  String description,
-                                                                  Integer appType,
+                                                                  OPTS options,
                                                                   String host,
                                                                   String username,
                                                                   String pool,
                                                                   String priority,
                                                                   String launchDir,
                                                                   String launchJar,
-                                                                  Set<WorkflowRunnerNotification> configuredNotifications,
-                                                                  AlertsHandler providedHandler,
-                                                                  Class<? extends ResourceDeclarerFactory> resourceFactory,
                                                                   String remote,
-                                                                  String implementationBuild) throws IOException {
+                                                                  String implementationBuild
+  ) throws IOException {
 
 
     DatabasesImpl databases = new DatabasesImpl();
     IWorkflowDb workflowDb = databases.getWorkflowDb();
     workflowDb.disableCaching();
 
-    Application application = getApplication(workflowDb, name, appType);
+    Application application = getApplication(workflowDb, name, options.getAppType());
     LOG.info("Using application: " + application);
 
-    WorkflowExecution.Attributes execution = getExecution(workflowDb, application, name, appType, scopeId);
+    WorkflowExecution.Attributes execution = getExecution(workflowDb, application, name, options.getAppType(), options.getScopeIdentifier());
     LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
     cleanUpRunningAttempts(databases, execution);
@@ -89,17 +85,17 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     WorkflowAttempt attempt = createAttempt(databases,
         host,
         username,
-        description,
+        options.getDescription(),
         pool,
         priority,
         launchDir,
         launchJar,
-        providedHandler,
-        configuredNotifications,
+        options.getAlertsHandler(),
+        options.getEnabledNotifications(),
         execution,
         remote,
         implementationBuild,
-        resourceFactory
+        options.getResourceManagerFactory()
     );
 
     assertOnlyLiveAttempt(workflowDb, execution, attempt);
@@ -107,7 +103,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     long workflowAttemptId = attempt.getId();
     LOG.info("Using new attempt: " + attempt + " id " + workflowAttemptId);
 
-    return new InitializedDbPersistence(attempt.getId(), workflowDb, getManager().isLive(), providedHandler);
+    return new InitializedDbPersistence(attempt.getId(), workflowDb, getManager().isLive(), options.getAlertsHandler());
   }
 
   @Override
