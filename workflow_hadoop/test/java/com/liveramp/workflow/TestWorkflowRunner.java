@@ -43,6 +43,7 @@ import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
+import com.liveramp.databases.workflow_db.models.ExecutionTag;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.StepDependency;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
@@ -50,7 +51,6 @@ import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.java_support.alerts_handler.AlertMessage;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.AlertsHandlers;
-import com.liveramp.java_support.alerts_handler.BufferingAlertsHandler;
 import com.liveramp.java_support.alerts_handler.InMemoryAlertsHandler;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.java_support.alerts_handler.MailOptions;
@@ -68,7 +68,7 @@ import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_core.OldResource;
-import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
+import com.liveramp.workflow_core.WorkflowTag;
 import com.liveramp.workflow_core.alerting.BufferingAlertsHandlerFactory;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_core.step.NoOp;
@@ -195,6 +195,22 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     assertEquals("description1", rldb.workflowAttempts().find(wr.getPersistence().getAttemptId()).getDescription());
   }
 
+  @Test
+  public void testTagsAreCreated() throws Exception {
+    String key = "k";
+    String val = "v";
+    WorkflowRunner wr = new WorkflowRunner("test",
+        new WorkflowDbPersistenceFactory(),
+        HadoopWorkflowOptions.test().addTag(WorkflowTag.of(key, val)),
+        new Step(new NoOpAction("no-op"))
+    );
+    wr.run();
+    IWorkflowDb db = new DatabasesImpl().getWorkflowDb();
+
+    ExecutionTag tag = Iterables.getOnlyElement(db.executionTags().findByTag(key));
+    assertEquals(key, tag.getTag());
+    assertEquals(val, tag.getValue());
+  }
 
   @Test
   public void testInitialStatus() throws IOException {

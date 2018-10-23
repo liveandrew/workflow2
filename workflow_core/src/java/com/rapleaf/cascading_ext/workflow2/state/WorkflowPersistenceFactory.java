@@ -1,7 +1,6 @@
 package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
-import java.util.Set;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -9,10 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
-import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
-import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.java_support.RunJarUtil;
 import com.liveramp.workflow_core.StepStateManager;
@@ -22,7 +19,6 @@ import com.liveramp.workflow_core.info.WorkflowInfoConsumer;
 import com.liveramp.workflow_core.info.WorkflowInfoImpl;
 import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.InitializedPersistence;
-import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 public abstract class WorkflowPersistenceFactory<
@@ -61,18 +57,13 @@ public abstract class WorkflowPersistenceFactory<
 
     final INITIALIZED initialized = initializeInternal(
         appName,
-        options.getScopeIdentifier(),
-        options.getDescription(),
-        options.getAppType(),
+        options,
         options.getHostnameProvider().getHostname(),
         System.getProperty("user.name"),
         findDefaultValue(options, WorkflowConstants.JOB_POOL_PARAM, "default"),
         findDefaultValue(options, WorkflowConstants.JOB_PRIORITY_PARAM, "NORMAL"),
         System.getProperty("user.dir"),
         RunJarUtil.getLaunchJarName(),
-        options.getEnabledNotifications(),
-        options.getAlertsHandler(),
-        options.getResourceManagerFactory(),
         scmInfo.getGitRemote(),
         scmInfo.getRevision()
     );
@@ -128,20 +119,16 @@ public abstract class WorkflowPersistenceFactory<
 
 
   public abstract INITIALIZED initializeInternal(String name,
-                                                 String scopeId,
-                                                 String description,
-                                                 Integer appType,
+                                                 OPTS options,
                                                  String host,
                                                  String username,
                                                  String pool,
                                                  String priority,
                                                  String launchDir,
                                                  String launchJar,
-                                                 Set<WorkflowRunnerNotification> configuredNotifications,
-                                                 AlertsHandler providedHandler,
-                                                 Class<? extends ResourceDeclarerFactory> resourceFactory,
                                                  String remote,
-                                                 String implementationBuild) throws IOException;
+                                                 String implementationBuild
+  ) throws IOException;
 
   public abstract WorkflowStatePersistence prepare(INITIALIZED persistence, DirectedGraph<S, DefaultEdge> flatSteps);
 

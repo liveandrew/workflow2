@@ -17,6 +17,7 @@ import com.liveramp.databases.workflow_db.iface.IBackgroundWorkflowExecutorInfoP
 import com.liveramp.databases.workflow_db.iface.IConfiguredNotificationPersistence;
 import com.liveramp.databases.workflow_db.iface.IDashboardApplicationPersistence;
 import com.liveramp.databases.workflow_db.iface.IDashboardPersistence;
+import com.liveramp.databases.workflow_db.iface.IExecutionTagPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceCounterPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceJobTaskExceptionPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceJobPersistence;
@@ -49,6 +50,7 @@ public interface IWorkflowDb extends IDb {
   IConfiguredNotificationPersistence configuredNotifications();
   IDashboardApplicationPersistence dashboardApplications();
   IDashboardPersistence dashboards();
+  IExecutionTagPersistence executionTags();
   IMapreduceCounterPersistence mapreduceCounters();
   IMapreduceJobTaskExceptionPersistence mapreduceJobTaskExceptions();
   IMapreduceJobPersistence mapreduceJobs();
