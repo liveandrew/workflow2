@@ -292,8 +292,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     DefaultAlertMessageConfig config = new DefaultAlertMessageConfig(true, Lists.newArrayList());
 
-    for (Map.Entry<String, AlertMessage> entry : factory.getBuffer().getSentEmails().entries()) {
-      recipientToSubjects.put(entry.getKey(), entry.getValue().getSubject(config));
+    for (Map.Entry<String, Set<AlertMessage>> entry : factory.getBuffer().getSentEmails().entrySet()) {
+      final List<String> subjects = entry.getValue().stream().map(s -> s.getSubject(config)).collect(Collectors.toList());
+      recipientToSubjects.putAll(entry.getKey(), subjects);
     }
 
     assertEquals(3, recipientToSubjects.keySet().size());
