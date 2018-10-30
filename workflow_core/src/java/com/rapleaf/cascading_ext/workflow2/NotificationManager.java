@@ -5,18 +5,18 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-import com.google.common.base.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.java_support.alerts_handler.AlertMessages;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.configs.AlertsHandlerConfig;
-import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.AddRecipientContext;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.WorkflowConstants;
 import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
