@@ -63,7 +63,7 @@ public class CreateEmptyBucket extends Action {
   }
 
   private static void createStore(int numPartitions, boolean immutable, String rootPath, Class recordType) throws IOException {
-    Bucket bucket = Bucket.create(FileSystemHelper.getFS(), rootPath, recordType);
+    Bucket bucket = Bucket.create(FileSystemHelper.getFileSystemForPath(rootPath), rootPath, recordType);
     String filenamePattern = "%s/part-%05d";
 
     for (int partNum = 0; partNum < numPartitions; partNum++) {
