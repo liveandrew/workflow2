@@ -140,11 +140,6 @@
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>com.liveramp</groupId>
-      <artifactId>cascading_tools</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
       <groupId>com.liveramp.workflow2</groupId>
       <artifactId>workflow_state</artifactId>
       <version>1.0-SNAPSHOT</version>
@@ -169,6 +164,11 @@
       <groupId>com.liveramp</groupId>
       <artifactId>liveramp_types</artifactId>
       <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.liveramp</groupId>
+      <artifactId>commons_alerts</artifactId>
+      <version>1.1-SNAPSHOT</version>
     </dependency>
   </dependencies>
 

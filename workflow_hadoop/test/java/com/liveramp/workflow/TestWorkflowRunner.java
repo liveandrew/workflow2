@@ -2,10 +2,12 @@ package com.liveramp.workflow;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,6 +35,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 
+import com.liveramp.cascading_ext.CascadingUtil;
 import com.liveramp.cascading_ext.flow.JobRecordListener;
 import com.liveramp.cascading_ext.tap.NullTap;
 import com.liveramp.cascading_tools.properties.PropertiesUtil;
@@ -87,6 +90,7 @@ import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
+import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.CascadingAction2;
 import com.rapleaf.cascading_ext.workflow2.DelayedFailingAction;
@@ -108,11 +112,14 @@ import com.rapleaf.cascading_ext.workflow2.rollback.UnlessStepsRun;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
+import com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils;
 import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
+import static com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils.execute;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -171,7 +178,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testRetainPool() throws IOException {
 
     assertEquals("root.infrastructure.some_pool", WorkflowPersistenceFactory
-        .findDefaultValue(HadoopWorkflowOptions.test().addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DEV_TOOLS, "some_pool")),
+        .findDefaultValue(HadoopWorkflowOptions.test().addWorkflowProperties(Collections.singletonMap("mapreduce.job.queuename", "root.some_team")),
             "mapreduce.job.queuename",
             "default"
         )
@@ -989,7 +996,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     Step step = new Step(new ParentResource("parent-step", tmpRoot));
 
-    HdfsContextStorage storage = new HdfsContextStorage(getTestRoot() + "/context");
+    HdfsContextStorage storage = new HdfsContextStorage(getTestRoot() + "/context", CascadingUtil.get());
 
     HadoopWorkflowOptions options = HadoopWorkflowOptions.test()
         .setStorage(storage);
@@ -1145,9 +1152,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     final WorkflowRunner testWorkflow = buildWfr(dbPersistenceFactory, step2);
 
-    getException(new Runnable2() {
+    getException(new Callable() {
       @Override
-      public void run() throws Exception {
+      public Void call() throws Exception {
         testWorkflow.run();
       }
     });
@@ -1192,9 +1199,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     restartedWorkflow = buildWfr(dbPersistenceFactory, step2);
     restartedWorkflow.run();
 
-    Exception cancelNonLatest = getException(new Runnable2() {
+    Exception cancelNonLatest = getException(new Callable() {
       @Override
-      public void run() throws Exception {
+      public Void call() throws Exception {
         ExecutionController.cancelExecution(rldb, ex2);
       }
     });
@@ -1441,6 +1448,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   @Test
   public void testDatastoreDeps() throws Exception {
+
+    //  TODO redo with tupledatastore
 
     BucketDataStore<PIN> store1 = builder().getBucketDataStore("store1", PIN.class);
     BucketDataStore<PIN> store2 = builder().getBucketDataStore("store2", PIN.class);
@@ -2168,7 +2177,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       this.res = res1;
       uses(res);
 
-      this.tupOut = builder().getTupleDataStore("tup_out", new Fields("string"));
+      this.tupOut = DataStoreBuilder.at(getTmpRoot()).getTupleDataStore("tup_out", new Fields("string"));
       this.resOut = resource("output");
       creates(resOut);
     }
