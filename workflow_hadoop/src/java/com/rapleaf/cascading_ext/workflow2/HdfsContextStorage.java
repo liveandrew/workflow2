@@ -14,13 +14,13 @@ import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
 
 import com.liveramp.cascading_ext.Bytes;
+import com.liveramp.cascading_ext.CascadingUtil;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.fs.TrashHelper;
 import com.liveramp.commons.util.serialization.JavaObjectSerializationHandler;
 import com.liveramp.commons.util.serialization.SerializationHandler;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.OldResource;
-import com.rapleaf.cascading_ext.CascadingHelper;
 
 //  TODO very proof-of-concept, should really have an in-memory cache.  could also stream directly to file
 public class HdfsContextStorage extends ContextStorage {
@@ -28,11 +28,18 @@ public class HdfsContextStorage extends ContextStorage {
   private final String root;
   private final org.apache.hadoop.fs.FileSystem fs;
   private final SerializationHandler handler;
+  private final CascadingUtil util;
+
 
   public HdfsContextStorage(String root) {
+    this(root, CascadingUtil.get());
+  }
+
+  public HdfsContextStorage(String root, CascadingUtil util) {
     this.fs = FileSystemHelper.getFS();
     this.handler = new JavaObjectSerializationHandler();
     this.root = root;
+    this.util = util;
   }
 
   private String getPath(OldResource ref) {
@@ -50,7 +57,7 @@ public class HdfsContextStorage extends ContextStorage {
     byte[] serialized = handler.serialize(value);
 
     Hfs hfs = new Hfs(new SequenceFile(new Fields("data")), path.toString());
-    TupleEntryCollector collector = hfs.openForWrite(CascadingHelper.get().getFlowProcess());
+    TupleEntryCollector collector = hfs.openForWrite(util.getFlowProcess());
     collector.add(new Tuple(new BytesWritable(serialized)));
     collector.close();
 
@@ -61,7 +68,7 @@ public class HdfsContextStorage extends ContextStorage {
     String path = getPath(ref);
     if (fs.exists(new Path(path))) {
       Hfs hfs = new Hfs(new SequenceFile(new Fields("data")), path);
-      TupleEntryIterator read = hfs.openForRead(CascadingHelper.get().getFlowProcess());
+      TupleEntryIterator read = hfs.openForRead(util.getFlowProcess());
       TupleEntry tup = read.next();
 
       return (T)handler.deserialize(Bytes.getBytes((BytesWritable)tup.getObject("data")));
