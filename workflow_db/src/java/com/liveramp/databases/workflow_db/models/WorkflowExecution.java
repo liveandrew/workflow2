@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases> implements Comparable<WorkflowExecution>{
   
-  public static final long serialVersionUID = -8850737520783071600L;
+  public static final long serialVersionUID = 7107245730139068186L;
 
   public static class Tbl extends AbstractTable<WorkflowExecution.Attributes, WorkflowExecution> {
     public final Column<Long> ID;
@@ -86,6 +86,7 @@ public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases
   private HasManyAssociation<WorkflowAttempt> __assoc_workflow_attempt;
   private HasManyAssociation<WorkflowExecutionConfiguredNotification> __assoc_workflow_execution_configured_notification;
   private HasManyAssociation<WorkflowAlertWorkflowExecution> __assoc_workflow_alert_workflow_execution;
+  private HasManyAssociation<ExecutionTag> __assoc_execution_tags;
 
   public enum _Fields {
     app_type,
@@ -113,6 +114,7 @@ public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases
     this.__assoc_workflow_attempt = new HasManyAssociation<>(databases.getWorkflowDb().workflowAttempts(), "workflow_execution_id", getId());
     this.__assoc_workflow_execution_configured_notification = new HasManyAssociation<>(databases.getWorkflowDb().workflowExecutionConfiguredNotifications(), "workflow_execution_id", getId());
     this.__assoc_workflow_alert_workflow_execution = new HasManyAssociation<>(databases.getWorkflowDb().workflowAlertWorkflowExecutions(), "workflow_execution_id", getId());
+    this.__assoc_execution_tags = new HasManyAssociation<>(databases.getWorkflowDb().executionTags(), "workflow_execution_id", getId());
   }
 
   public WorkflowExecution(long id, final Integer app_type, final String name, final String scope_identifier, final int status, final Long start_time, final Long end_time, final Integer application_id, final String pool_override) {
@@ -127,6 +129,7 @@ public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases
     this.__assoc_workflow_attempt = new HasManyAssociation<>(databases.getWorkflowDb().workflowAttempts(), "workflow_execution_id", getId());
     this.__assoc_workflow_execution_configured_notification = new HasManyAssociation<>(databases.getWorkflowDb().workflowExecutionConfiguredNotifications(), "workflow_execution_id", getId());
     this.__assoc_workflow_alert_workflow_execution = new HasManyAssociation<>(databases.getWorkflowDb().workflowAlertWorkflowExecutions(), "workflow_execution_id", getId());
+    this.__assoc_execution_tags = new HasManyAssociation<>(databases.getWorkflowDb().executionTags(), "workflow_execution_id", getId());
   }
 
   public WorkflowExecution(long id, final String name, final int status) {
@@ -147,6 +150,7 @@ public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases
       this.__assoc_workflow_attempt = new HasManyAssociation<>(databases.getWorkflowDb().workflowAttempts(), "workflow_execution_id", getId());
       this.__assoc_workflow_execution_configured_notification = new HasManyAssociation<>(databases.getWorkflowDb().workflowExecutionConfiguredNotifications(), "workflow_execution_id", getId());
       this.__assoc_workflow_alert_workflow_execution = new HasManyAssociation<>(databases.getWorkflowDb().workflowAlertWorkflowExecutions(), "workflow_execution_id", getId());
+      this.__assoc_execution_tags = new HasManyAssociation<>(databases.getWorkflowDb().executionTags(), "workflow_execution_id", getId());
     }
   }
 
@@ -172,6 +176,7 @@ public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases
       this.__assoc_workflow_attempt = new HasManyAssociation<>(databases.getWorkflowDb().workflowAttempts(), "workflow_execution_id", getId());
       this.__assoc_workflow_execution_configured_notification = new HasManyAssociation<>(databases.getWorkflowDb().workflowExecutionConfiguredNotifications(), "workflow_execution_id", getId());
       this.__assoc_workflow_alert_workflow_execution = new HasManyAssociation<>(databases.getWorkflowDb().workflowAlertWorkflowExecutions(), "workflow_execution_id", getId());
+      this.__assoc_execution_tags = new HasManyAssociation<>(databases.getWorkflowDb().executionTags(), "workflow_execution_id", getId());
     }
   }
 
@@ -396,6 +401,10 @@ public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases
     return __assoc_workflow_alert_workflow_execution.get();
   }
 
+  public List<ExecutionTag> getExecutionTags() throws IOException {
+    return __assoc_execution_tags.get();
+  }
+
   @Override
   public Object getField(String fieldName) {
     if (fieldName.equals("id")) {
@@ -571,6 +580,7 @@ public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases
     __assoc_workflow_attempt = null;
     __assoc_workflow_execution_configured_notification = null;
     __assoc_workflow_alert_workflow_execution = null;
+    __assoc_execution_tags = null;
   }
 
   public int compareTo(WorkflowExecution that) {
@@ -1028,6 +1038,7 @@ public class WorkflowExecution extends ModelWithId<WorkflowExecution, IDatabases
       meta.add(new DefaultAssociationMetadata(AssociationType.HAS_MANY, WorkflowExecution.class, WorkflowAttempt.class, "workflow_execution_id"));
       meta.add(new DefaultAssociationMetadata(AssociationType.HAS_MANY, WorkflowExecution.class, WorkflowExecutionConfiguredNotification.class, "workflow_execution_id"));
       meta.add(new DefaultAssociationMetadata(AssociationType.HAS_MANY, WorkflowExecution.class, WorkflowAlertWorkflowExecution.class, "workflow_execution_id"));
+      meta.add(new DefaultAssociationMetadata(AssociationType.HAS_MANY, WorkflowExecution.class, ExecutionTag.class, "workflow_execution_id"));
     }
 
     @Override

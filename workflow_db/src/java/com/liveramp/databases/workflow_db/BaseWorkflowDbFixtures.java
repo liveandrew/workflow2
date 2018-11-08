@@ -29,6 +29,7 @@ public class BaseWorkflowDbFixtures extends DbFixtures {
     databases.getWorkflowDb().configuredNotifications().deleteAll();
     databases.getWorkflowDb().dashboardApplications().deleteAll();
     databases.getWorkflowDb().dashboards().deleteAll();
+    databases.getWorkflowDb().executionTags().deleteAll();
     databases.getWorkflowDb().mapreduceCounters().deleteAll();
     databases.getWorkflowDb().mapreduceJobTaskExceptions().deleteAll();
     databases.getWorkflowDb().mapreduceJobs().deleteAll();

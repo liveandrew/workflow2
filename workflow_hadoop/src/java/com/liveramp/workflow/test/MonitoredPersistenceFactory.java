@@ -2,21 +2,17 @@ package com.liveramp.workflow.test;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
-import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow_core.JVMState;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow.types.StepStatus;
-import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
@@ -37,8 +33,8 @@ public class MonitoredPersistenceFactory extends WorkflowPersistenceFactory<Step
   }
 
   @Override
-  public InitializedDbPersistence initializeInternal(String name, String scopeId, String description, Integer appType, String host, String username, String pool, String priority, String launchDir, String launchJar, Set<WorkflowRunnerNotification> configuredNotifications, AlertsHandler providedHandler, Class<? extends ResourceDeclarerFactory> resourceFactory, String remote, String implementationBuild) throws IOException {
-    return delegate.initializeInternal(name, scopeId, description, appType, host, username, pool, priority, launchDir, launchJar, configuredNotifications, providedHandler, resourceFactory, remote, implementationBuild);
+  public InitializedDbPersistence initializeInternal(String name, HadoopWorkflowOptions options, String host, String username, String pool, String priority, String launchDir, String launchJar, String remote, String implementationBuild) throws IOException {
+    return delegate.initializeInternal(name, options, host, username, pool, priority, launchDir, launchJar, remote, implementationBuild);
   }
 
   @Override

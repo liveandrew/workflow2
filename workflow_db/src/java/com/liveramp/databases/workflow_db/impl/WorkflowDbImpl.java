@@ -32,6 +32,7 @@ import com.liveramp.databases.workflow_db.iface.IBackgroundWorkflowExecutorInfoP
 import com.liveramp.databases.workflow_db.iface.IConfiguredNotificationPersistence;
 import com.liveramp.databases.workflow_db.iface.IDashboardApplicationPersistence;
 import com.liveramp.databases.workflow_db.iface.IDashboardPersistence;
+import com.liveramp.databases.workflow_db.iface.IExecutionTagPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceCounterPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceJobTaskExceptionPersistence;
 import com.liveramp.databases.workflow_db.iface.IMapreduceJobPersistence;
@@ -69,6 +70,7 @@ public class WorkflowDbImpl implements IWorkflowDb {
   private final LazyLoadPersistence<IConfiguredNotificationPersistence, IDatabases> configured_notifications;
   private final LazyLoadPersistence<IDashboardApplicationPersistence, IDatabases> dashboard_applications;
   private final LazyLoadPersistence<IDashboardPersistence, IDatabases> dashboards;
+  private final LazyLoadPersistence<IExecutionTagPersistence, IDatabases> execution_tags;
   private final LazyLoadPersistence<IMapreduceCounterPersistence, IDatabases> mapreduce_counters;
   private final LazyLoadPersistence<IMapreduceJobTaskExceptionPersistence, IDatabases> mapreduce_job_task_exceptions;
   private final LazyLoadPersistence<IMapreduceJobPersistence, IDatabases> mapreduce_jobs;
@@ -104,6 +106,7 @@ public class WorkflowDbImpl implements IWorkflowDb {
     this.configured_notifications = new LazyLoadPersistence<>(conn, databases, BaseConfiguredNotificationPersistenceImpl::new);
     this.dashboard_applications = new LazyLoadPersistence<>(conn, databases, BaseDashboardApplicationPersistenceImpl::new);
     this.dashboards = new LazyLoadPersistence<>(conn, databases, BaseDashboardPersistenceImpl::new);
+    this.execution_tags = new LazyLoadPersistence<>(conn, databases, BaseExecutionTagPersistenceImpl::new);
     this.mapreduce_counters = new LazyLoadPersistence<>(conn, databases, BaseMapreduceCounterPersistenceImpl::new);
     this.mapreduce_job_task_exceptions = new LazyLoadPersistence<>(conn, databases, BaseMapreduceJobTaskExceptionPersistenceImpl::new);
     this.mapreduce_jobs = new LazyLoadPersistence<>(conn, databases, BaseMapreduceJobPersistenceImpl::new);
@@ -194,6 +197,10 @@ public class WorkflowDbImpl implements IWorkflowDb {
     return dashboards.get();
   }
 
+  public IExecutionTagPersistence executionTags(){
+    return execution_tags.get();
+  }
+
   public IMapreduceCounterPersistence mapreduceCounters(){
     return mapreduce_counters.get();
   }
@@ -281,6 +288,7 @@ public class WorkflowDbImpl implements IWorkflowDb {
     success &= configuredNotifications().isEmpty() || configuredNotifications().deleteAll();
     success &= dashboardApplications().isEmpty() || dashboardApplications().deleteAll();
     success &= dashboards().isEmpty() || dashboards().deleteAll();
+    success &= executionTags().isEmpty() || executionTags().deleteAll();
     success &= mapreduceCounters().isEmpty() || mapreduceCounters().deleteAll();
     success &= mapreduceJobTaskExceptions().isEmpty() || mapreduceJobTaskExceptions().deleteAll();
     success &= mapreduceJobs().isEmpty() || mapreduceJobs().deleteAll();
@@ -313,6 +321,7 @@ public class WorkflowDbImpl implements IWorkflowDb {
     configured_notifications.disableCaching();
     dashboard_applications.disableCaching();
     dashboards.disableCaching();
+    execution_tags.disableCaching();
     mapreduce_counters.disableCaching();
     mapreduce_job_task_exceptions.disableCaching();
     mapreduce_jobs.disableCaching();

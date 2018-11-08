@@ -17,15 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
-import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
-import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.JVMState;
 import com.liveramp.workflow2.workflow_hadoop.CheckpointUtil;
 import com.liveramp.workflow_state.StepState;
-import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
@@ -55,20 +52,16 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, 
 
   @Override
   public HdfsInitializedPersistence initializeInternal(String name,
-                                                       String scopeId,
-                                                       String description,
-                                                       Integer appType,
+                                                       HadoopWorkflowOptions options,
                                                        String host,
                                                        String username,
                                                        String pool,
                                                        String priority,
                                                        String launchDir,
                                                        String launchJar,
-                                                       Set<WorkflowRunnerNotification> configuredNotifications,
-                                                       AlertsHandler providedHandler,
-                                                       Class<? extends ResourceDeclarerFactory> resourceFactory,
                                                        String remote,
-                                                       String implementationBuild) throws IOException {
+                                                       String implementationBuild
+  ) throws IOException {
 
     FileSystem fs = FileSystemHelper.getFileSystemForPath(checkpointDir);
 
@@ -81,7 +74,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, 
 
     CheckpointUtil.writeExecutionId(currentExecution, fs, checkpointDirPath);
 
-    return new HdfsInitializedPersistence(currentExecution, name, priority, pool, host, username, providedHandler, configuredNotifications, fs);
+    return new HdfsInitializedPersistence(currentExecution, name, priority, pool, host, username, options.getAlertsHandler(), options.getEnabledNotifications(), fs);
   }
 
   private long getAttemptExecutionId(FileSystem fs, Path checkpointDirPath) throws IOException {

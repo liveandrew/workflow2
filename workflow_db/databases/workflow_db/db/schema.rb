@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20181011034633) do
+ActiveRecord::Schema.define(:version => 20181019184144) do
 
   create_table "application_configured_notifications", :force => true do |t|
     t.integer "application_id",             :limit => 8, :null => false
@@ -88,6 +88,15 @@ ActiveRecord::Schema.define(:version => 20181011034633) do
   end
 
   add_index "dashboards", ["name"], :name => "index_dashboards_on_name", :unique => true
+
+  create_table "execution_tags", :force => true do |t|
+    t.integer "workflow_execution_id", :limit => 8, :null => false
+    t.text    "tag",                                :null => false
+    t.text    "value",                              :null => false
+  end
+
+  add_index "execution_tags", ["tag", "value"], :name => "index_execution_tags_on_tag_and_value", :length => {"tag"=>32, "value"=>64}
+  add_index "execution_tags", ["workflow_execution_id"], :name => "index_execution_tags_on_workflow_execution_id"
 
   create_table "mapreduce_counters", :force => true do |t|
     t.integer "mapreduce_job_id",              :null => false
