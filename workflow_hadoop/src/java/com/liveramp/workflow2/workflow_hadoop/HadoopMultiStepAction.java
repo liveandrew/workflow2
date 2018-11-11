@@ -1,4 +1,4 @@
-package com.rapleaf.cascading_ext.workflow2;
+package com.liveramp.workflow2.workflow_hadoop;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -7,16 +7,18 @@ import org.apache.hadoop.fs.FileSystem;
 
 import com.liveramp.workflow_core.runner.BaseMultiStepAction;
 import com.liveramp.workflow_core.runner.BaseStep;
+import com.rapleaf.cascading_ext.workflow2.HdfsActionContext;
+import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 
-public class MultiStepAction extends BaseMultiStepAction<WorkflowRunner.ExecuteConfig> {
+public class HadoopMultiStepAction extends BaseMultiStepAction<WorkflowRunner.ExecuteConfig> {
 
   private final HdfsActionContext context;
 
-  public MultiStepAction(String checkpointToken, String tmpRoot) {
+  public HadoopMultiStepAction(String checkpointToken, String tmpRoot) {
     this(checkpointToken, tmpRoot, null);
   }
 
-  public MultiStepAction(String checkpointToken, String tmpRoot, Collection<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps) {
+  public HadoopMultiStepAction(String checkpointToken, String tmpRoot, Collection<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps) {
     super(checkpointToken, steps);
     this.context = new HdfsActionContext(tmpRoot, checkpointToken);
   }
@@ -24,11 +26,6 @@ public class MultiStepAction extends BaseMultiStepAction<WorkflowRunner.ExecuteC
   public final String getTmpRoot() {
     return context.getTmpRoot();
   }
-
-  //  TODO need to find and remove usages
-//  public DataStoreBuilder builder() {
-//    return context.getBuilder();
-//  }
 
   protected FileSystem getFS() throws IOException {
     return context.getFS();

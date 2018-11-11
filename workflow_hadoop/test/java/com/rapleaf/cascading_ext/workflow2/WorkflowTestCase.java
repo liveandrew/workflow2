@@ -9,7 +9,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.junit.Before;
 
+import cascading.tuple.Fields;
+
 import com.liveramp.databases.workflow_db.DatabasesImpl;
+
+import com.rapleaf.cascading_ext.datastore.TupleDataStore;
+import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 
 import static org.junit.Assert.fail;
 
@@ -39,6 +44,11 @@ public class WorkflowTestCase  {
     } catch (Exception e) {
       return e;
     }
+  }
+
+
+  public TupleDataStore tupleStore(String relPath, Fields fields) throws IOException {
+    return new TupleDataStoreImpl("test", getTestRoot(), relPath, fields);
   }
 
 }

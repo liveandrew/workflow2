@@ -38,7 +38,7 @@ import cascading.tuple.Tuple;
 import com.liveramp.cascading_ext.CascadingUtil;
 import com.liveramp.cascading_ext.flow.JobRecordListener;
 import com.liveramp.cascading_ext.tap.NullTap;
-import com.liveramp.cascading_tools.properties.PropertiesUtil;
+import com.liveramp.cascading_ext.util.DataStoreUtils;
 import com.liveramp.commons.Accessors;
 import com.liveramp.commons.collections.nested_map.ThreeNestedMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
@@ -67,9 +67,12 @@ import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow.test.MonitoredPersistenceFactory;
+import com.liveramp.workflow.test.types.TestType;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
+import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
+import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.WorkflowTag;
 import com.liveramp.workflow_core.alerting.BufferingAlertsHandlerFactory;
@@ -80,44 +83,39 @@ import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_db_state.controller.ApplicationController;
 import com.liveramp.workflow_db_state.controller.ExecutionController;
+import com.liveramp.workflow_state.DSAction;
+import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.MapReduceJob;
 import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-import com.rapleaf.cascading_ext.HRap;
-import com.rapleaf.cascading_ext.datastore.BucketDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
-import com.rapleaf.cascading_ext.datastore.VersionedBucketDataStore;
-import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.cascading_ext.workflow2.CascadingAction2;
 import com.rapleaf.cascading_ext.workflow2.DelayedFailingAction;
 import com.rapleaf.cascading_ext.workflow2.FailingAction;
 import com.rapleaf.cascading_ext.workflow2.FlipAction;
 import com.rapleaf.cascading_ext.workflow2.HdfsContextStorage;
 import com.rapleaf.cascading_ext.workflow2.IncrementAction2;
 import com.rapleaf.cascading_ext.workflow2.LockedAction;
-import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.UnlockWaitAction;
 import com.rapleaf.cascading_ext.workflow2.WorkflowNotificationLevel;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
-import com.rapleaf.cascading_ext.workflow2.action.PersistNewVersion;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.rollback.UnlessStepsRun;
 import com.rapleaf.cascading_ext.workflow2.state.HdfsCheckpointPersistence;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils;
-import com.rapleaf.formats.test.TupleDataStoreHelper;
 import com.rapleaf.jack.queries.QueryOrder;
 import com.rapleaf.types.new_person_data.PIN;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static com.liveramp.commons.test.TestUtils.assertCollectionContains;
 import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils.execute;
 import static org.junit.Assert.assertEquals;
@@ -375,7 +373,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   }
 
 
-  private static class EmptyMSA extends MultiStepAction {
+  private static class EmptyMSA extends HadoopMultiStepAction {
 
     public EmptyMSA(String checkpointToken, String tmpRoot) {
       super(checkpointToken, tmpRoot);
@@ -594,7 +592,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   public void testLoneMultiStepAction(WorkflowPersistenceFactory factory) throws Exception {
     // lone multi
-    Step s = new Step(new MultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(
+    Step s = new Step(new HadoopMultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(
         new IncrementAction("blah")))));
 
     buildWfr(factory, s).run();
@@ -614,7 +612,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   public void testMultiIntheMiddle(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
-    s = new Step(new MultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(new IncrementAction("blah")))),
+    s = new Step(new HadoopMultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
     s = new Step(new IncrementAction("last"), s);
 
@@ -636,7 +634,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   public void testMultiAtEnd(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
-    s = new Step(new MultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(new IncrementAction("blah")))),
+    s = new Step(new HadoopMultiStepAction("lone", getTestRoot(), Arrays.asList(new Step(new IncrementAction("blah")))),
         s);
 
     buildWfr(factory, s).run();
@@ -841,7 +839,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testMultiInMultiEnd(WorkflowPersistenceFactory factory) throws IOException {
     Step s = new Step(new IncrementAction("first"));
     // please, never do this in real code
-    s = new Step(new MultiStepAction("depth 1", getTestRoot(), Arrays.asList(new Step(new MultiStepAction(
+    s = new Step(new HadoopMultiStepAction("depth 1", getTestRoot(), Arrays.asList(new Step(new HadoopMultiStepAction(
         "depth 2", getTestRoot(), Arrays.asList(new Step(new IncrementAction("blah"))))))), s);
     s = new Step(new IncrementAction("last"), s);
 
@@ -862,13 +860,13 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   public void testMultiInMultiMiddle(WorkflowPersistenceFactory factory) throws IOException {
     Step b = new Step(new IncrementAction("b"));
-    Step innermost = new Step(new MultiStepAction("innermost", getTestRoot(), Arrays.asList(new Step(
+    Step innermost = new Step(new HadoopMultiStepAction("innermost", getTestRoot(), Arrays.asList(new Step(
         new IncrementAction("c")))), b);
     Step d = new Step(new IncrementAction("d"), b);
 
     Step a = new Step(new IncrementAction("a"));
 
-    Step outer = new Step(new MultiStepAction("outer", getTestRoot(), Arrays.asList(b, innermost, d)), a);
+    Step outer = new Step(new HadoopMultiStepAction("outer", getTestRoot(), Arrays.asList(b, innermost, d)), a);
 
     buildWfr(factory, outer).run();
 
@@ -1039,7 +1037,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Assert.assertEquals(StepStatus.COMPLETED, persistence.getStatus("parent-step__consume-resource"));
 
     TupleDataStore store = new TupleDataStoreImpl("store", tmpRoot + "/parent-step-tmp-stores/consume-resource-tmp-stores/", "tup_out", new Fields("string"));
-    List<Tuple> tups = HRap.getAllTuples(store.getTap());
+    List<Tuple> tups = DataStoreUtils.getAllTuples(store.getTap(), CascadingUtil.get());
 
     assertCollectionEquivalent(newHashSet(tups), Lists.<Tuple>newArrayList(new Tuple(1)));
 
@@ -1173,6 +1171,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       @Override
       public Void call() throws Exception {
         testWorkflow.run();
+        return null;
       }
     });
 
@@ -1220,6 +1219,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       @Override
       public Void call() throws Exception {
         ExecutionController.cancelExecution(rldb, ex2);
+        return null;
       }
     });
 
@@ -1304,7 +1304,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   }
 
-  public static class ParentResource extends MultiStepAction {
+  public static class ParentResource extends HadoopMultiStepAction {
 
     public ParentResource(String checkpointToken, String tmpRoot) throws IOException {
       super(checkpointToken, tmpRoot);
@@ -1332,15 +1332,17 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testCounters() throws IOException {
 
-    TupleDataStore input = builder().getTupleDataStore("input",
+    TupleDataStore input = tupleStore("input",
         new Fields("string")
     );
 
-    TupleDataStoreHelper.writeToStore(input,
+    DataStoreUtils.writeToStore(
+        CascadingUtil.get(),
+        input,
         new Tuple("1")
     );
 
-    TupleDataStore output = builder().getTupleDataStore("output",
+    TupleDataStore output = tupleStore("output",
         new Fields("string")
     );
 
@@ -1370,15 +1372,17 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testCountersOnRestart() throws IOException {
 
 
-    TupleDataStore input = builder().getTupleDataStore("input",
+    TupleDataStore input = tupleStore("input",
         new Fields("string")
     );
 
-    TupleDataStoreHelper.writeToStore(input,
+    DataStoreUtils.writeToStore(
+        CascadingUtil.get(),
+        input,
         new Tuple("1")
     );
 
-    TupleDataStore output = builder().getTupleDataStore("output",
+    TupleDataStore output = tupleStore("output",
         new Fields("string")
     );
 
@@ -1429,11 +1433,13 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testCurrentStepCounters() throws IOException {
 
-    TupleDataStore input = builder().getTupleDataStore("input",
+    TupleDataStore input = tupleStore("input",
         new Fields("string")
     );
 
-    TupleDataStoreHelper.writeToStore(input,
+    DataStoreUtils.writeToStore(
+        CascadingUtil.get(),
+        input,
         new Tuple("1")
     );
 
@@ -1466,36 +1472,43 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testDatastoreDeps() throws Exception {
 
-    //  TODO redo with tupledatastore
+    TupleDataStore store1 = tupleStore("store1", new Fields("test_type"));
+    DataStoreUtils.writeToStore(CascadingUtil.get(), store1, new Tuple(new TestType("test")));
 
-    BucketDataStore<PIN> store1 = builder().getBucketDataStore("store1", PIN.class);
-    BucketDataStore<PIN> store2 = builder().getBucketDataStore("store2", PIN.class);
-    VersionedBucketDataStore<PIN> store1P = builder().getVersionedBucketDataStore("stoer1p", PIN.class);
-    BucketDataStore<PIN> store3 = builder().getBucketDataStore("store3", PIN.class);
+    TupleDataStore store2 = tupleStore("store2", new Fields("test_type"));
+    TupleDataStore store3 = tupleStore("store3", new Fields("test_type"));
 
     Step step1 = new Step(new CopyStore("step1", store1, store2));
-    Step step2 = new Step(new PersistNewVersion<>("step2", store2, store1P), step1);
-    new WorkflowRunner("workflow1", new WorkflowDbPersistenceFactory(), HadoopWorkflowOptions.test()
-        .addWorkflowProperties(PropertiesUtil.teamPool(TeamList.DISTRIBUTION, "default")), step2).run();
+    new WorkflowRunner("workflow1", new WorkflowDbPersistenceFactory(), HadoopWorkflowOptions.test(), step1).run();
 
-    Step step3 = new Step(new CopyStore("step2", store1P.getLatestVersion(), store3));
-    new WorkflowRunner("workflow2", new WorkflowDbPersistenceFactory(), HadoopWorkflowOptions.test()
-        .addWorkflowProperties(PropertiesUtil.teamPool(TeamList.APEX, "default")), step3).run();
+    Step step3 = new Step(new CopyStore("step2", store1, store3));
+    WorkflowRunner runner = new WorkflowRunner("workflow2", new WorkflowDbPersistenceFactory(), HadoopWorkflowOptions.test(), step3);
+    runner.run();
+
+    WorkflowStatePersistence persistence = runner.getPersistence();
+
+    StepState step2 = persistence.getStepStates().get("step2");
+    Multimap<DSAction, DataStoreInfo> states = step2.getDatastores();
+
+    assertEquals(1, states.get(DSAction.CREATES).size());
+    assertEquals(1, states.get(DSAction.READS_FROM).size());
 
   }
 
   @Test
   public void testTaskStatistics() throws Exception {
 
-    TupleDataStore input = builder().getTupleDataStore("input",
+    TupleDataStore input = tupleStore("input",
         new Fields("string")
     );
 
-    TupleDataStoreHelper.writeToStore(input,
+    DataStoreUtils.writeToStore(
+        CascadingUtil.get(),
+        input,
         new Tuple("1")
     );
 
-    WorkflowRunner stat = execute(new StatAction("stat", input));
+    WorkflowRunner stat = execute(new Step(new StatAction("stat", input)));
 
     StepState state = stat.getPersistence().getStepStates().get("stat");
     MapReduceJob job = Accessors.only(state.getMrJobsByID().values());
@@ -1932,7 +1945,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step step1 = new Step(new ActionWithRollback("step1", rollbackList));
     Step step2 = new Step(new ActionWithRollback("step2", rollbackList), step1);
 
-    executeAndRollback(Sets.newHashSet(step2));
+    WorkflowTestUtils.executeAndRollback(Sets.newHashSet(step2), ResourceManagers.dbResourceManager());
 
     assertCollectionEquivalent(Lists.newArrayList("step1", "step2"), rollbackList);
 
@@ -2119,7 +2132,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       Pipe pipe = new Pipe("input");
       pipe = new Each(pipe, new Count());
 
-      Flow flow = flowConnector().connect(in.getTap(), out.getTap(), pipe);
+      Flow flow = CascadingUtil.get().getFlowConnector().connect(in.getTap(), out.getTap(), pipe);
       flow.addStepListener(new JobRecordListener(getPersister(), true));
       hideComplete(flow);
 
@@ -2139,16 +2152,27 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   }
 
 
-  public static class IncrementCounter extends CascadingAction2 {
+  public static class IncrementCounter extends Action {
+
+    private final TupleDataStore in;
+    private final TupleDataStore out;
 
     public IncrementCounter(String checkpointToken, String tmpRoot,
                             TupleDataStore in,
                             TupleDataStore out) {
       super(checkpointToken, tmpRoot);
 
-      Pipe pipe = bindSource("input", in);
+      this.in = in;
+      this.out = out;
+
+    }
+
+    @Override
+    protected void execute() throws Exception {
+
+      Pipe pipe = new Pipe("input");
       pipe = new Each(pipe, new Count());
-      complete("step", pipe, out);
+      completeWithProgress(buildFlow().connect(in.getTap(), out.getTap(), pipe));
 
     }
 
@@ -2194,7 +2218,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       this.res = res1;
       uses(res);
 
-      this.tupOut = DataStoreBuilder.at(getTmpRoot()).getTupleDataStore("tup_out", new Fields("string"));
+      this.tupOut = new TupleDataStoreImpl("test", getTmpRoot(), "tup_out", new Fields("string"));
       this.resOut = resource("output");
       creates(resOut);
     }
@@ -2204,7 +2228,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       Integer val = get(res);
       set(resOut, val);
 
-      TupleDataStoreHelper.writeToStore(tupOut,
+      DataStoreUtils.writeToStore(
+          CascadingUtil.get(),
+          tupOut,
           new Tuple(val)
       );
     }

@@ -13,12 +13,17 @@ import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
 import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.InMemoryContext;
 import com.liveramp.workflow_core.runner.BaseAction;
+import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.FailingAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
 public class WorkflowTestUtils {
+
+  public static WorkflowRunner execute(Action step) throws IOException {
+    return execute(Sets.newHashSet(new Step(step)));
+  }
 
   public static WorkflowRunner execute(Step step) throws IOException {
     return execute(Sets.newHashSet(step));
@@ -59,7 +64,7 @@ public class WorkflowTestUtils {
   }
 
   @NotNull
-  private static WorkflowRunner buildWorkflowRunner(Set<Step> steps,
+  public static WorkflowRunner buildWorkflowRunner(Set<Step> steps,
                                              HadoopWorkflowOptions options,
                                              ResourceDeclarer resourceManager) throws IOException {
     return new WorkflowRunner(WorkflowTestUtils.class.getName(),

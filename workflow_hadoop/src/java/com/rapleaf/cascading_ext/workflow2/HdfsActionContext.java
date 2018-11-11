@@ -28,7 +28,7 @@ public class HdfsActionContext {
     return tmpRoot;
   }
 
-  protected FileSystem getFS() throws IOException {
+  public FileSystem getFS() throws IOException {
     if (fs == null) {
       fs = FileSystemHelper.getFS();
     }
