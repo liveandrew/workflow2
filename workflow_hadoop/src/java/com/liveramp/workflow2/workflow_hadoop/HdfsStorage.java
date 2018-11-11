@@ -1,8 +1,12 @@
 package com.liveramp.workflow2.workflow_hadoop;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -14,10 +18,6 @@ import com.liveramp.cascading_ext.resource.InMemoryStorage;
 import com.liveramp.cascading_ext.resource.Storage;
 import com.liveramp.commons.util.serialization.JavaObjectSerializationHandler;
 import com.liveramp.commons.util.serialization.SerializationHandler;
-import com.rapleaf.formats.stream.RecordInputStream;
-import com.rapleaf.formats.stream.RecordOutputStream;
-import com.rapleaf.formats.stream.SequenceFileInputStream;
-import com.rapleaf.formats.stream.SequenceFileOutputStream;
 
 public class HdfsStorage implements Storage {
 
@@ -58,9 +58,9 @@ public class HdfsStorage implements Storage {
         throw new RuntimeException("Could not serialize resource '" + name + "' with value " + object);
       }
 
-      RecordOutputStream os = new SequenceFileOutputStream(fs, path);
-      os.write(serialized);
-      os.close();
+      FSDataOutputStream output = fs.create(path);
+      output.write(serialized);
+      output.close();
 
       LOG.info("Stored resource '" + name + "' to " + path.toString());
 
@@ -82,14 +82,12 @@ public class HdfsStorage implements Storage {
       Path path = getPath(name);
       if (fs.exists(path)) {
 
-        RecordInputStream is = new SequenceFileInputStream(fs, path);
-        byte[] data = is.readRecord();
+        FSDataInputStream input = fs.open(path);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        IOUtils.copy(input, baos);
+        byte[] data = baos.toByteArray();
 
-        if(is.readRecord() != null) {
-          throw new AssertionError("Resource should not contain more than a single record");
-        }
-
-        LOG.info("Retrieved resource '" + name + "' from path " + path.toString());
+        LOG.info("Retrieved resource '" + name + "' from path " + path.toString()+" size "+data.length);
 
         return (T)handler.deserialize(data);
 
