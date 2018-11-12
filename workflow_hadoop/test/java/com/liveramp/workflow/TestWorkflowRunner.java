@@ -175,7 +175,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testRetainPool() throws IOException {
 
-    assertEquals("root.infrastructure.some_pool", WorkflowPersistenceFactory
+    assertEquals("root.some_team", WorkflowPersistenceFactory
         .findDefaultValue(HadoopWorkflowOptions.test().addWorkflowProperties(Collections.singletonMap("mapreduce.job.queuename", "root.some_team")),
             "mapreduce.job.queuename",
             "default"
@@ -1332,7 +1332,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   @Test
   public void testCounters() throws IOException {
 
-    TupleDataStore input = tupleStore("input",
+    TupleDataStore input = tupleStore("/input",
         new Fields("string")
     );
 
@@ -1342,7 +1342,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         new Tuple("1")
     );
 
-    TupleDataStore output = tupleStore("output",
+    TupleDataStore output = tupleStore("/output",
         new Fields("string")
     );
 
@@ -1372,7 +1372,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
   public void testCountersOnRestart() throws IOException {
 
 
-    TupleDataStore input = tupleStore("input",
+    TupleDataStore input = tupleStore("/input",
         new Fields("string")
     );
 
@@ -1382,7 +1382,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         new Tuple("1")
     );
 
-    TupleDataStore output = tupleStore("output",
+    TupleDataStore output = tupleStore("/output",
         new Fields("string")
     );
 
@@ -1426,7 +1426,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     //  test by step
 
     ThreeNestedMap<String, String, String, Long> countersByStep = runner.getPersistence().getCountersByStep();
-    assertEquals(1L, countersByStep.get("step1__step", mapIn.getClass().getName(), mapIn.name()).longValue());
+    assertEquals(1L, countersByStep.get("step1", mapIn.getClass().getName(), mapIn.name()).longValue());
 
   }
 
@@ -1471,9 +1471,10 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
   @Test
   public void testDatastoreDeps() throws Exception {
+    CascadingUtil util = CascadingUtil.get();
 
     TupleDataStore store1 = tupleStore("store1", new Fields("test_type"));
-    DataStoreUtils.writeToStore(CascadingUtil.get(), store1, new Tuple(new TestType("test")));
+    DataStoreUtils.writeToStore(util, store1, new Tuple("test"));
 
     TupleDataStore store2 = tupleStore("store2", new Fields("test_type"));
     TupleDataStore store3 = tupleStore("store3", new Fields("test_type"));
@@ -1661,7 +1662,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     assertEquals(StepStatus.MANUALLY_COMPLETED, persistence.getStatus("fail"));
 
-    step = new Step(new NoOp("fail"));
+    step = new Step(new NoOp<>("fail"));
 
     MailBuffer providedBuffer = new MailBuffer.ListBuffer();
 
@@ -1684,6 +1685,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     assertEquals(StepStatus.SKIPPED, newPersistence.getStatus("fail"));
 
+    System.out.println(providedBuffer.get().stream().map(MailOptions::getSubject).collect(Collectors.toSet()));
     assertTrue(providedBuffer.get().stream().map(MailOptions::getSubject).collect(Collectors.toSet()).contains(
         "[WORKFLOW] Succeeded: com.liveramp.workflow.TestWorkflowRunner"
     ));
@@ -2165,6 +2167,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       this.in = in;
       this.out = out;
 
+      readsFrom(in);
+      creates(out);
     }
 
     @Override
@@ -2218,7 +2222,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       this.res = res1;
       uses(res);
 
-      this.tupOut = new TupleDataStoreImpl("test", getTmpRoot(), "tup_out", new Fields("string"));
+      this.tupOut = new TupleDataStoreImpl("test", getTmpRoot(), "/tup_out", new Fields("string"));
       this.resOut = resource("output");
       creates(resOut);
     }

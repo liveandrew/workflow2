@@ -6,8 +6,13 @@ import java.util.Arrays;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.datastore.BytesDataStore;
+import cascading.tuple.Fields;
+
+import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
+
+import static com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils.execute;
 
 @Ignore
 public class LongRunningWorkflow extends WorkflowTestCase {
@@ -20,7 +25,7 @@ public class LongRunningWorkflow extends WorkflowTestCase {
     }
   }
 
-  public static final class ExampleMultistepAction extends MultiStepAction {
+  public static final class ExampleMultistepAction extends HadoopMultiStepAction {
     public ExampleMultistepAction(String checkpointToken, String tmpRoot, Step[] steps) {
       super(checkpointToken, tmpRoot, Arrays.asList(steps));
     }
@@ -131,6 +136,6 @@ public class LongRunningWorkflow extends WorkflowTestCase {
   }
 
   private static DataStore getFakeDS(String name) throws IOException {
-    return new BytesDataStore(null, name, "/tmp/", name);
+    return new TupleDataStoreImpl("test", "/tmp/", name, new Fields());
   }
 }

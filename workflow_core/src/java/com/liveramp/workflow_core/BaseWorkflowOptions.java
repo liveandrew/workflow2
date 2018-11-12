@@ -15,6 +15,7 @@ import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
+import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_core.alerting.BufferingAlertsHandlerFactory;
 import com.liveramp.workflow_core.info.WorkflowInfoConsumer;

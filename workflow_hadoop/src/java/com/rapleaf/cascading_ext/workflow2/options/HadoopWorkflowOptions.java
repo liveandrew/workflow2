@@ -65,7 +65,6 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
 
 
   protected static void configureTest(HadoopWorkflowOptions options) {
-    Rap.assertTest();
 
     CoreOptions.configureTest(options);
 

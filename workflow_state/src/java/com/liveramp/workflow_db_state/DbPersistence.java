@@ -780,17 +780,11 @@ public class DbPersistence implements WorkflowStatePersistence {
           throw new RuntimeException("Provided alerts handler not available for notification " + notification);
         }
 
-        System.out.println("using provided handler: "+providedHandler);
-
         handlers.add(providedHandler);
       }
 
       if (!emailsToAlert.isEmpty()) {
-
-        System.out.println("using emails to alert: "+emailsToAlert);
-
         handlers.add(factory.buildHandler(emailsToAlert, testMailBuffer));
-
       }
 
       return handlers;

@@ -297,7 +297,6 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     for (AlertSeverity severity : AlertSeverity.values()) {
       recipients.put(severity, getEmail(providedHandler, new EngineeringAlertRecipient(severity)));
     }
-    System.out.println("RESOLVED: "+recipients);
 
     StepStateManager<S> manager = getManager();
     WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)

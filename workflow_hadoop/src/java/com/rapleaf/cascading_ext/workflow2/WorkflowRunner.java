@@ -104,7 +104,8 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     super(initializedData, tailSteps,
         new ExecuteConfig(
             initializedData.getOptions().getLockProvider().create(),
-            initializedData.getOptions().getFlowSubmissionController()
+            initializedData.getOptions().getFlowSubmissionController(),
+            initializedData.getOptions().getCascadingUtil()
         ),
         new OnShutdown<ExecuteConfig>() {
           @Override
@@ -128,14 +129,16 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     private FlowSubmissionController submissionController;
     private CascadingUtil cascadingUtil;
 
-    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController) {
+    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController, CascadingUtil cascadingUtil) {
       this.lockProvider = lockProvider;
       this.submissionController = submissionController;
+      this.cascadingUtil = cascadingUtil;
     }
 
-    public ExecuteConfig(IStoreReaderLocker lockProvider) {
+    public ExecuteConfig(IStoreReaderLocker lockProvider, CascadingUtil cascadingUtil) {
       this.lockProvider = lockProvider;
       this.submissionController = new FlowSubmissionController.SubmitImmediately();
+      this.cascadingUtil = cascadingUtil;
     }
 
     public IStoreReaderLocker getLockProvider() {

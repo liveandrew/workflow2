@@ -15,6 +15,7 @@ import com.liveramp.databases.workflow_db.DatabasesImpl;
 
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
+import com.rapleaf.support.Rap;
 
 import static org.junit.Assert.fail;
 
@@ -23,7 +24,12 @@ public class WorkflowTestCase  {
   protected final String TEST_ROOT;
 
   public WorkflowTestCase() {
-    TEST_ROOT = "/tmp/tests/" + "/" + this.getClass().getName() + "_AUTOGEN";
+    TEST_ROOT = "/tmp/tests/" + "/" + this.getClass().getName() + "_AUTOGEN/";
+    Rap.setTestMode(true);
+  }
+
+  public FileSystem getFS() throws IOException {
+    return new Path(TEST_ROOT).getFileSystem(new Configuration());
   }
 
   @Before
