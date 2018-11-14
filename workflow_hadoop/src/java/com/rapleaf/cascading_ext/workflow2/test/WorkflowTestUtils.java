@@ -115,14 +115,19 @@ public class WorkflowTestUtils {
   }
 
   public static DbHadoopWorkflow initializeWorkflow() throws IOException {
-    return initializeWorkflow(TEST_WORKFLOW_NAME, ResourceManagers.dbResourceManager());
+    return initializeWorkflow(TEST_WORKFLOW_NAME, HadoopWorkflowOptions.test(), ResourceManagers.dbResourceManager());
+  }
+
+  public static DbHadoopWorkflow initializeWorkflow(HadoopWorkflowOptions options) throws IOException {
+    return initializeWorkflow(TEST_WORKFLOW_NAME, options, ResourceManagers.dbResourceManager());
   }
 
   public static DbHadoopWorkflow initializeWorkflow(String workflowName,
+                                             HadoopWorkflowOptions options,
                                              ResourceDeclarer declarer) throws IOException {
     return new WorkflowDbPersistenceFactory().initialize(
         workflowName,
-        HadoopWorkflowOptions.test()
+        options
             .setResourceManager(declarer));
   }
 
