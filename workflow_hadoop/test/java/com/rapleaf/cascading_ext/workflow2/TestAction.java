@@ -5,8 +5,11 @@ import java.io.IOException;
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
-import com.rapleaf.cascading_ext.datastore.BytesDataStore;
+import cascading.tuple.Fields;
 
+import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
+
+import static com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils.execute;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -14,9 +17,9 @@ public class TestAction extends WorkflowTestCase {
   public class ExampleAction extends Action {
     public ExampleAction() throws IOException {
       super("example");
-      creates(new BytesDataStore(getFS(), "example dir 1", getTestRoot(), "/dir1"));
-      createsTemporary(new BytesDataStore(getFS(), "example dir 2", getTestRoot(), "/dir2"));
-      readsFrom(new BytesDataStore(getFS(), "example dir 3", getTestRoot(), "/dir3"));
+      creates(new TupleDataStoreImpl("example dir 1", getTestRoot(), "/dir1", new Fields()));
+      createsTemporary(new TupleDataStoreImpl("example dir 2", getTestRoot(), "/dir2", new Fields()));
+      readsFrom(new TupleDataStoreImpl("example dir 3",getTestRoot(),  "/dir3", new Fields()));
     }
 
     @Override

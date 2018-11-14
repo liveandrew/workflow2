@@ -7,11 +7,12 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
+import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
 public class Example {
   
-  public static class SlightlyLessComplex extends MultiStepAction {
+  public static class SlightlyLessComplex extends HadoopMultiStepAction {
     
     public SlightlyLessComplex(String checkpointToken, String tmpRoot) {
       super(checkpointToken, tmpRoot, steps());
@@ -26,7 +27,7 @@ public class Example {
     
   }
   
-  public static class ComplexAction extends MultiStepAction {
+  public static class ComplexAction extends HadoopMultiStepAction {
     public ComplexAction(String tmpRoot) {
       super("complex", tmpRoot);
 
@@ -72,7 +73,7 @@ public class Example {
     new WorkflowRunner(
         Example.class,
         new WorkflowDbPersistenceFactory(),
-        new HadoopWorkflowOptions().setMaxConcurrentSteps(1),
+        HadoopWorkflowOptions.test().setMaxConcurrentSteps(1),
         new HashSet<Step>(Arrays.asList(s))
     ).run();
   }

@@ -10,14 +10,15 @@ import org.junit.Test;
 import com.liveramp.java_support.functional.Fn;
 import com.liveramp.java_support.functional.Fns;
 import com.rapleaf.cascading_ext.workflow2.Action;
-import com.rapleaf.cascading_ext.workflow2.MultiStepAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.liveramp.workflow.test.FailingPersistenceFactory;
 import com.liveramp.workflow.test.StepNameBuilder;
+import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
 
+import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static org.junit.Assert.assertTrue;
 
 public class TestFailingPersistence extends WorkflowTestCase {
@@ -60,7 +61,7 @@ public class TestFailingPersistence extends WorkflowTestCase {
     }, STEPS_THAT_SHOULD_COMPLETE), stepsThatCompleted);
   }
 
-  private static class TestWorkflow extends MultiStepAction {
+  private static class TestWorkflow extends HadoopMultiStepAction {
 
     public TestWorkflow(String checkpointToken, String tmpRoot, Set<String> stepsThatSucceeded) {
       super(checkpointToken, tmpRoot);
@@ -89,7 +90,7 @@ public class TestFailingPersistence extends WorkflowTestCase {
     }
   }
 
-  private static class ShouldNotFailMultiStep extends MultiStepAction {
+  private static class ShouldNotFailMultiStep extends HadoopMultiStepAction {
 
     public ShouldNotFailMultiStep(String superStepsCheckPointTokens, String checkpointToken, String tmpRoot, Set<String> stepsThatSucceeded) {
       super(checkpointToken, tmpRoot);

@@ -5,22 +5,18 @@ import java.io.IOException;
 import org.apache.hadoop.fs.FileSystem;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
-import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 
 public class HdfsActionContext {
 
   private final String tmpRoot;
-  private final DataStoreBuilder builder;
   private FileSystem fs;
 
   public HdfsActionContext(String parentRoot, String checkpointToken) {
 
     if (parentRoot != null) {
       this.tmpRoot = parentRoot + "/" + checkpointToken + "-tmp-stores";
-      this.builder = new DataStoreBuilder(getTmpRoot());
     } else {
       this.tmpRoot = null;
-      this.builder = null;
     }
 
   }
@@ -32,7 +28,7 @@ public class HdfsActionContext {
     return tmpRoot;
   }
 
-  protected FileSystem getFS() throws IOException {
+  public FileSystem getFS() throws IOException {
     if (fs == null) {
       fs = FileSystemHelper.getFS();
     }
@@ -40,7 +36,4 @@ public class HdfsActionContext {
     return fs;
   }
 
-  public DataStoreBuilder getBuilder() {
-    return builder;
-  }
 }

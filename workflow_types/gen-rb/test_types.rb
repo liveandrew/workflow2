@@ -12,6 +12,8 @@ module Liveramp
       module Test
         class Email; end
 
+        class TestType; end
+
         class Email
           include ::Thrift::Struct, ::Thrift::Struct_Union
           EMAIL = 1
@@ -24,6 +26,23 @@ module Liveramp
 
           def validate
             raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field email is unset!') unless @email
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        class TestType
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          TEST = 1
+
+          FIELDS = {
+            TEST => {:type => ::Thrift::Types::STRING, :name => 'test'}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field test is unset!') unless @test
           end
 
           ::Thrift::Struct.generate_accessors self

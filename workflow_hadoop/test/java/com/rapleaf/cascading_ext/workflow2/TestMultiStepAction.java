@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 
+import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
 import com.liveramp.workflow_core.runner.BaseAction;
 
 import static org.junit.Assert.fail;
@@ -19,7 +20,7 @@ public class TestMultiStepAction extends WorkflowTestCase {
   private Step d;
   private Step f;
   
-  private MultiStepAction msa;
+  private HadoopMultiStepAction msa;
 
   public final class NullAction2 extends Action {
     public NullAction2(String checkpoint, String tmpRoot) {
@@ -33,7 +34,7 @@ public class TestMultiStepAction extends WorkflowTestCase {
   @Before
   public void prepare() throws Exception {
 
-    msa = new MultiStepAction("msa", getTestRoot());
+    msa = new HadoopMultiStepAction("msa", getTestRoot());
 
     b = new Step(new NullAction2("b", msa.getTmpRoot()));
     a = new Step(new NullAction2("a", msa.getTmpRoot()));
@@ -65,7 +66,7 @@ public class TestMultiStepAction extends WorkflowTestCase {
   @Test
   public void testNoDuplicateTokens() throws Exception {
     try {
-      new MultiStepAction("blah", getTestRoot(), Arrays.asList(a, a));
+      new HadoopMultiStepAction("blah", getTestRoot(), Arrays.asList(a, a));
       fail();
     } catch (Exception e) {
       // cool!

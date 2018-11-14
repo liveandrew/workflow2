@@ -30,11 +30,6 @@ public class HdfsContextStorage extends ContextStorage {
   private final SerializationHandler handler;
   private final CascadingUtil util;
 
-
-  public HdfsContextStorage(String root) {
-    this(root, CascadingUtil.get());
-  }
-
   public HdfsContextStorage(String root, CascadingUtil util) {
     this.fs = FileSystemHelper.getFS();
     this.handler = new JavaObjectSerializationHandler();

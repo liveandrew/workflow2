@@ -2,6 +2,7 @@ package com.liveramp.workflow.state;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import com.google.common.collect.Sets;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
@@ -139,14 +140,12 @@ public class TestWorkflowDbPersistenceFactory extends WorkflowTestCase {
 
     workflow_db.stepAttempts().create((int)workflowAttempt.getId(), "step1", StepStatus.RUNNING.ordinal(), Object.class.getName());
 
-    Exception exception = getException(new Runnable2() {
-      @Override
-      public void run() throws Exception {
-        new WorkflowRunner("Workflow",
-            new WorkflowDbPersistenceFactory(),
-            HadoopWorkflowOptions.test(),
-            Sets.newHashSet(new Step(new NoOpAction("step1"))));
-      }
+    Exception exception = getException(() -> {
+      new WorkflowRunner("Workflow",
+          new WorkflowDbPersistenceFactory(),
+          HadoopWorkflowOptions.test(),
+          Sets.newHashSet(new Step(new NoOpAction("step1"))));
+      return null;
     });
 
 

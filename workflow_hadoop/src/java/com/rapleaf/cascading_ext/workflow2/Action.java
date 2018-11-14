@@ -31,22 +31,20 @@ import com.liveramp.cascading_ext.CascadingUtil;
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.flow.JobPersister;
 import com.liveramp.cascading_ext.fs.TrashHelper;
-import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
+import com.liveramp.cascading_ext.megadesk.ILockManager;
+import com.liveramp.cascading_ext.megadesk.IStoreReaderLocker;
 import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
-import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
-import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.datastore.DataStore;
-import com.rapleaf.cascading_ext.datastore.internal.DataStoreBuilder;
 import com.rapleaf.cascading_ext.workflow2.counter.verifier.TemplateTapFiles;
 import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 
@@ -55,8 +53,9 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
   private final HdfsActionContext context;
 
-  private StoreReaderLocker.LockManager lockManager;
+  private ILockManager lockManager;
   private FlowSubmissionController controller;
+  private CascadingUtil cascadingUtil;
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
 
@@ -111,10 +110,6 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   private void mark(DSAction action, DataStore store) {
     Preconditions.checkNotNull(store, "Cannot mark a null datastore as used!");
     datastores.put(action, store);
-  }
-
-  public DataStoreBuilder builder() {
-    return context.getBuilder();
   }
 
   @Override
@@ -186,11 +181,11 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     this.lockManager = context.getLockProvider()
         .createManager(getDatastores(DSAction.READS_FROM))
         .lockProcessStart();
-
     this.controller = context.getSubmissionController();
+    this.cascadingUtil = context.getCascadingUtil();
   }
 
-  protected StoreReaderLocker getLockProvider() {
+  protected IStoreReaderLocker getLockProvider() {
     return getConfig().getLockProvider();
   }
 
@@ -211,19 +206,18 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
   protected FlowConnector buildFlowConnector() {
-    return CascadingHelper.get().getFlowConnector(getCombinedProperties().getPropertiesMap());
+    return cascadingUtil.getFlowConnector(getCombinedProperties().getPropertiesMap());
   }
 
   private FlowConnector buildFlowConnector(Map<Object, Object> properties) {
-    CascadingHelper ch = CascadingHelper.get();
 
     return CascadingUtil.buildFlowConnector(
         new JobConf(),
         getPersister(),
         properties,
-        ch.getIntermediateSchemeClass(),
-        ch.resolveFlowStepStrategies(),
-        ch.getInvalidPropertyValues()
+        cascadingUtil.getIntermediateSchemeClass(),
+        cascadingUtil.resolveFlowStepStrategies(),
+        cascadingUtil.getInvalidPropertyValues()
     );
   }
 

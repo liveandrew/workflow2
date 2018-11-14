@@ -14,10 +14,13 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.EdgeReversedGraph;
 import org.junit.Test;
 
+import cascading.tuple.Fields;
+
+import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
 import com.liveramp.workflow_core.WorkflowUtil;
 import com.liveramp.workflow_core.runner.BaseStep;
-import com.rapleaf.cascading_ext.datastore.BytesDataStore;
 import com.rapleaf.cascading_ext.datastore.DataStore;
+import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -48,7 +51,7 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
     }
   }
 
-  public static final class FakeMultistepAction extends MultiStepAction {
+  public static final class FakeMultistepAction extends HadoopMultiStepAction {
     public FakeMultistepAction(String checkpointToken, String tmpRoot, Step[] steps) {
       super(checkpointToken, tmpRoot, Arrays.asList(steps));
     }
@@ -205,7 +208,7 @@ public class TestWorkflowDiagram extends WorkflowTestCase {
   }
 
   private static DataStore getFakeDS(String name) throws Exception {
-    return new BytesDataStore(null, name, "/tmp/", name);
+    return new TupleDataStoreImpl(name, "/tmp/", name, new Fields());
   }
 
   private void populateNameToVertex(DirectedGraph<BaseStep<WorkflowRunner.ExecuteConfig>, DefaultEdge> graph) {

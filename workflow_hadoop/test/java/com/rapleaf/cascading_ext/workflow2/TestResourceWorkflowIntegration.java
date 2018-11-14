@@ -16,10 +16,13 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.cascading_ext.resource.WriteResource;
+import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
 import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
+import com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils;
 
+import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static org.junit.Assert.fail;
 
 public class TestResourceWorkflowIntegration extends WorkflowTestCase {
@@ -63,7 +66,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
     InitializedWorkflow workflow = new WorkflowDbPersistenceFactory().initialize(name,
         HadoopWorkflowOptions.test().setResourceManager(manager.make())
     );
-    execute(workflow, getSteps(workflow.getManager(), previousNumbers));
+    WorkflowTestUtils.execute(workflow, getSteps(workflow.getManager(), previousNumbers));
 
     // should fail the first time
     shouldFail = true;
@@ -73,7 +76,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
     );
 
     try {
-      execute(workflow, getSteps(workflow.getManager(), expectedNumbers));
+      WorkflowTestUtils.execute(workflow, getSteps(workflow.getManager(), expectedNumbers));
       fail();
     } catch (RuntimeException e) {
       //  expected
@@ -85,7 +88,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
         HadoopWorkflowOptions.test().setResourceManager(manager.make())
     );
 
-    execute(workflow, getSteps(workflow.getManager(), expectedNumbers));
+    WorkflowTestUtils.execute(workflow, getSteps(workflow.getManager(), expectedNumbers));
 
   }
 
@@ -93,7 +96,7 @@ public class TestResourceWorkflowIntegration extends WorkflowTestCase {
     return Sets.newHashSet(new Step(new ResourceTest(manager, getTestRoot(), numbersToWrite)));
   }
 
-  private static class ResourceTest extends MultiStepAction {
+  private static class ResourceTest extends HadoopMultiStepAction {
     private MyContext context;
 
     public ResourceTest(ResourceManager manager, String tmpRoot, Set<Long> numbersToWrite) {

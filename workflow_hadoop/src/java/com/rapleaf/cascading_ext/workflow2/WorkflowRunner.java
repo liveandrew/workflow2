@@ -7,15 +7,15 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+import com.liveramp.cascading_ext.CascadingUtil;
+import com.liveramp.cascading_ext.megadesk.IStoreReaderLocker;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.liveramp.cascading_ext.megadesk.StoreReaderLocker;
 import com.liveramp.workflow_state.InitializedPersistence;
-import com.rapleaf.cascading_ext.CascadingHelper;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
@@ -104,7 +104,8 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     super(initializedData, tailSteps,
         new ExecuteConfig(
             initializedData.getOptions().getLockProvider().create(),
-            initializedData.getOptions().getFlowSubmissionController()
+            initializedData.getOptions().getFlowSubmissionController(),
+            initializedData.getOptions().getCascadingUtil()
         ),
         new OnShutdown<ExecuteConfig>() {
           @Override
@@ -116,7 +117,7 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
         new OnStepRunnerStart() {
           @Override
           public void onStart() {
-            CascadingHelper.get().getJobConf();
+            initializedData.getOptions().getCascadingUtil().getJobConf();
           }
         }
     );
@@ -124,25 +125,32 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
   }
 
   public static class ExecuteConfig {
-    private StoreReaderLocker lockProvider;
+    private IStoreReaderLocker lockProvider;
     private FlowSubmissionController submissionController;
+    private CascadingUtil cascadingUtil;
 
-    public ExecuteConfig(StoreReaderLocker lockProvider, FlowSubmissionController submissionController) {
+    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController, CascadingUtil cascadingUtil) {
       this.lockProvider = lockProvider;
       this.submissionController = submissionController;
+      this.cascadingUtil = cascadingUtil;
     }
 
-    public ExecuteConfig(StoreReaderLocker lockProvider) {
+    public ExecuteConfig(IStoreReaderLocker lockProvider, CascadingUtil cascadingUtil) {
       this.lockProvider = lockProvider;
       this.submissionController = new FlowSubmissionController.SubmitImmediately();
+      this.cascadingUtil = cascadingUtil;
     }
 
-    public StoreReaderLocker getLockProvider() {
+    public IStoreReaderLocker getLockProvider() {
       return lockProvider;
     }
 
     public FlowSubmissionController getSubmissionController() {
       return submissionController;
+    }
+
+    public CascadingUtil getCascadingUtil() {
+      return cascadingUtil;
     }
   }
 
