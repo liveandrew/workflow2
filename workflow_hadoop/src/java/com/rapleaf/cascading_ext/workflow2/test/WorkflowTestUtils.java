@@ -123,6 +123,11 @@ public class WorkflowTestUtils {
   }
 
   public static DbHadoopWorkflow initializeWorkflow(String workflowName,
+                                                    ResourceDeclarer declarer) throws IOException {
+    return initializeWorkflow(workflowName, HadoopWorkflowOptions.test(), declarer);
+  }
+
+  public static DbHadoopWorkflow initializeWorkflow(String workflowName,
                                              HadoopWorkflowOptions options,
                                              ResourceDeclarer declarer) throws IOException {
     return new WorkflowDbPersistenceFactory().initialize(
