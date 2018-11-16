@@ -161,6 +161,7 @@ public class NotificationManager {
   }
 
   private void mail(String subject, String body, WorkflowRunnerNotification notification) throws IOException {
+
     for (AlertsHandler handler : persistence.getRecipients(notification, alertsHandlerFactory)) {
 
       try {

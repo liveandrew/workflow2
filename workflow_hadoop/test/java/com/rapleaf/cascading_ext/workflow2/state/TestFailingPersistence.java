@@ -2,13 +2,14 @@ package com.rapleaf.cascading_ext.workflow2.state;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import org.junit.Test;
 
 import com.liveramp.java_support.functional.Fn;
-import com.liveramp.java_support.functional.Fns;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
@@ -53,12 +54,8 @@ public class TestFailingPersistence extends WorkflowTestCase {
     }
     assertTrue(failedIntentionally);
 
-    assertCollectionEquivalent(Fns.map(new Fn<StepNameBuilder, String>() {
-      @Override
-      public String apply(StepNameBuilder input) {
-        return input.getCompositeStepName();
-      }
-    }, STEPS_THAT_SHOULD_COMPLETE), stepsThatCompleted);
+    assertCollectionEquivalent(
+        STEPS_THAT_SHOULD_COMPLETE.stream().map(StepNameBuilder::getCompositeStepName).collect(Collectors.toSet()), stepsThatCompleted);
   }
 
   private static class TestWorkflow extends HadoopMultiStepAction {

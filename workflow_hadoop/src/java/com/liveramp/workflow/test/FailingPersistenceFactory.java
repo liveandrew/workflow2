@@ -2,6 +2,7 @@ package com.liveramp.workflow.test;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 import org.jgrapht.DirectedGraph;
@@ -9,8 +10,6 @@ import org.jgrapht.graph.DefaultEdge;
 
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
-import com.liveramp.java_support.functional.Fn;
-import com.liveramp.java_support.functional.Fns;
 import com.liveramp.workflow_core.JVMState;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
@@ -34,12 +33,7 @@ public class FailingPersistenceFactory extends WorkflowPersistenceFactory<Step, 
   public FailingPersistenceFactory(WorkflowPersistenceFactory delegate, Set<StepNameBuilder> stepNameBuilders) {
     super(new JVMState());
     this.delegate = delegate;
-    this.stepsToFailFullNames = Sets.newHashSet(Fns.map(new Fn<StepNameBuilder, String>() {
-      @Override
-      public String apply(StepNameBuilder input) {
-        return input.getCompositeStepName();
-      }
-    }, stepNameBuilders));
+    this.stepsToFailFullNames = stepNameBuilders.stream().map(StepNameBuilder::getCompositeStepName).collect(Collectors.toSet());
   }
 
   @Override

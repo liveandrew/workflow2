@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.liveramp.cascading_ext.FileSystemHelper;
 import com.liveramp.cascading_ext.resource.ResourceManager;
+import com.liveramp.commons.util.BytesUtils;
 import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.JVMState;
@@ -26,7 +27,6 @@ import com.liveramp.workflow_state.StepState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
-import com.rapleaf.support.Rap;
 
 public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, HdfsInitializedPersistence, HadoopWorkflowOptions, HadoopWorkflow> {
 
@@ -137,7 +137,7 @@ public class HdfsCheckpointPersistence extends WorkflowPersistenceFactory<Step, 
       return new HdfsPersistenceContainer(
           checkpointDir,
           deleteOnSuccess,
-          Hex.encodeHexString(Rap.uuidToBytes(UUID.randomUUID())),
+          Hex.encodeHexString(BytesUtils.uuidToBytes(UUID.randomUUID())),
           statuses,
           persistence
       );
