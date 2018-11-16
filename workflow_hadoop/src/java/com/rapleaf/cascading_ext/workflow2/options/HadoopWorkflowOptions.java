@@ -2,7 +2,6 @@ package com.rapleaf.cascading_ext.workflow2.options;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapred.JobConf;
@@ -16,7 +15,6 @@ import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_core.CoreOptions;
-import com.rapleaf.support.Rap;
 
 public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOptions> {
 

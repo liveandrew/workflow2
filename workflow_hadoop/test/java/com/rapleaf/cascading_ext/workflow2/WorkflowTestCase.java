@@ -8,7 +8,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.BytesWritable;
 import org.junit.Before;
 
 import cascading.tuple.Fields;
@@ -18,7 +17,6 @@ import com.liveramp.databases.workflow_db.DatabasesImpl;
 
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
-import com.rapleaf.support.Rap;
 
 import static org.junit.Assert.fail;
 
@@ -28,7 +26,6 @@ public class WorkflowTestCase  {
 
   public WorkflowTestCase() {
     TEST_ROOT = "/tmp/tests/" + "/" + this.getClass().getName() + "_AUTOGEN/";
-    Rap.setTestMode(true);
   }
 
   public FileSystem getFS() throws IOException {

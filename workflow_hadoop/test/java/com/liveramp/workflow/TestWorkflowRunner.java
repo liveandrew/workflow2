@@ -53,21 +53,19 @@ import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.java_support.alerts_handler.AlertMessage;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
-import com.liveramp.java_support.alerts_handler.AlertsHandlers;
-import com.liveramp.java_support.alerts_handler.InMemoryAlertsHandler;
+import com.liveramp.java_support.alerts_handler.BufferingAlertsHandler;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
 import com.liveramp.java_support.alerts_handler.MailOptions;
 import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfig;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
-import com.liveramp.java_support.alerts_handler.recipients.AlertRecipients;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
+import com.liveramp.java_support.alerts_handler.recipients.EngineeringAlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
-import com.liveramp.java_support.alerts_handler.recipients.TeamList;
+import com.liveramp.java_support.alerts_handler.recipients.RecipientUtils;
 import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow.test.MonitoredPersistenceFactory;
-import com.liveramp.workflow.test.types.TestType;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
@@ -112,7 +110,6 @@ import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
 import com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils;
 import com.rapleaf.jack.queries.QueryOrder;
-import com.rapleaf.types.new_person_data.PIN;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static com.liveramp.commons.test.TestUtils.assertCollectionContains;
@@ -290,7 +287,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
 
     for (AlertsHandler alertsHandler : newPersistence.getRecipients(WorkflowRunnerNotification.DIED_UNCLEAN, factory)) {
-      alertsHandler.sendAlert("Died Unclean", "Test", AlertRecipients.engineering(AlertSeverity.ERROR));
+      alertsHandler.sendAlert("Died Unclean", "Test", new EngineeringAlertRecipient(AlertSeverity.ERROR));
     }
 
     Multimap<String, String> recipientToSubjects = HashMultimap.create();
@@ -1664,12 +1661,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     step = new Step(new NoOp<>("fail"));
 
-    MailBuffer providedBuffer = new MailBuffer.ListBuffer();
+    BufferingAlertsHandler.MessageBuffer buffer = new BufferingAlertsHandler.MessageBuffer();
+    BufferingAlertsHandler handler = new BufferingAlertsHandler(buffer, RecipientUtils.of("test@test.com"));
 
     WorkflowRunner newRunner = new WorkflowRunner(TestWorkflowRunner.class,
         HadoopWorkflowOptions.test()
-            .setAlertsHandler(AlertsHandlers.builder(TeamList.DEV_TOOLS)
-                .setTestMailBuffer(providedBuffer).build()),
+            .setAlertsHandler(handler),
         step
     );
 
@@ -1685,8 +1682,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     assertEquals(StepStatus.SKIPPED, newPersistence.getStatus("fail"));
 
-    System.out.println(providedBuffer.get().stream().map(MailOptions::getSubject).collect(Collectors.toSet()));
-    assertTrue(providedBuffer.get().stream().map(MailOptions::getSubject).collect(Collectors.toSet()).contains(
+    DefaultAlertMessageConfig config = new DefaultAlertMessageConfig(true, Lists.newArrayList());
+
+    assertTrue(buffer.getSentAlerts().stream().map(alertMessage -> alertMessage.getSubject(config)).collect(Collectors.toSet()).contains(
         "[WORKFLOW] Succeeded: com.liveramp.workflow.TestWorkflowRunner"
     ));
 
@@ -1713,11 +1711,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         step2
     );
 
-    InMemoryAlertsHandler alerts = new InMemoryAlertsHandler(TeamList.DEV_TOOLS);
+    BufferingAlertsHandler.MessageBuffer buffer = new BufferingAlertsHandler.MessageBuffer();
+    BufferingAlertsHandler handler = new BufferingAlertsHandler(buffer, RecipientUtils.of("test@test.com"));
 
     WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
         HadoopWorkflowOptions.test()
-            .setAlertsHandler(alerts)
+            .setAlertsHandler(handler)
             .setRollBackOnFailure(true),
         step3
     );
@@ -1746,10 +1745,11 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     WorkflowExecution execution = workflowDB.workflowExecutions().find(persistence.getExecutionId());
     assertEquals(WorkflowExecutionStatus.CANCELLED.getValue(), execution.getStatus());
 
-    Set<String> messages = Sets.newHashSet(alerts.getSubjects());
-    for (String message : messages) {
-      System.out.println(message);
-    }
+    DefaultAlertMessageConfig config = new DefaultAlertMessageConfig(true, Lists.newArrayList());
+
+    Set<String> messages = buffer.getSentAlerts().stream().map(alertMessage -> alertMessage.getSubject(config)).collect(Collectors.toSet());
+
+    System.out.println(messages);
 
     assertCollectionContains(messages, "[WORKFLOW] Started: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
     assertCollectionContains(messages, "[WORKFLOW] Succeeded: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
@@ -1776,12 +1776,9 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         step2
     );
 
-    InMemoryAlertsHandler alerts = new InMemoryAlertsHandler(TeamList.DEV_TOOLS);
-
     WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
         new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints"),
         HadoopWorkflowOptions.test()
-            .setAlertsHandler(alerts)
             .setRollBackOnFailure(true),
         step3
     );
@@ -1828,12 +1825,12 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         step1
     );
 
-    InMemoryAlertsHandler alertsHandler = new InMemoryAlertsHandler(TeamList.DEV_TOOLS);
-
+    BufferingAlertsHandler.MessageBuffer buffer = new BufferingAlertsHandler.MessageBuffer();
+    BufferingAlertsHandler handler = new BufferingAlertsHandler(buffer, RecipientUtils.of("test@test.com"));
 
     WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
         HadoopWorkflowOptions.test()
-            .setAlertsHandler(alertsHandler)
+            .setAlertsHandler(handler)
             .setRollBackOnFailure(true),
         step2
     );
@@ -1858,8 +1855,10 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     WorkflowExecution execution = workflowDB.workflowExecutions().find(persistence.getExecutionId());
     assertEquals(WorkflowExecutionStatus.CANCELLED.getValue(), execution.getStatus());
 
+    DefaultAlertMessageConfig config = new DefaultAlertMessageConfig(true, Lists.newArrayList());
+    Set<String> subjects = buffer.getSentAlerts().stream().map(alertMessage -> alertMessage.getSubject(config)).collect(Collectors.toSet());
+
     //  make sure we get notified about rollbacks
-    List<String> subjects = alertsHandler.getSubjects();
     assertCollectionContains(subjects, "[WORKFLOW] Started: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
     assertCollectionContains(subjects, "[ERROR] [WORKFLOW] Failed: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
 
