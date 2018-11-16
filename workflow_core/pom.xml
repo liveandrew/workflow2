@@ -6,14 +6,10 @@
   <version>1.0-SNAPSHOT</version>
 
   <parent>
-    <groupId>com.liveramp</groupId>
-    <artifactId>pom-ant-structure</artifactId>
+    <groupId>com.liveramp.workflow2</groupId>
+    <artifactId>workflow</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-
-  <properties>
-    <skip.db.init>true</skip.db.init>
-  </properties>
 
   <dependencies>
 
