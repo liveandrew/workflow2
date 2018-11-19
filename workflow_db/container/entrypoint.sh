@@ -15,7 +15,7 @@ function mysql_conn_error {
 
 # wait until mysql is running
 while
-    mysql_conn_error
+    [[ mysql_conn_error -ne "0" ]]
 do
     sleep 1
 done
@@ -24,4 +24,4 @@ done
 export RAILS_ENV=docker_env
 cd /apps/workflow_db/
 bundle exec rake db:create
-bundle exec rake rapleaf:migrate
+bundle exec rake db:migrate
