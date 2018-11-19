@@ -17,9 +17,10 @@ function mysql_conn_error {
 while true
 do
 
-  CONN=mysql_conn_error
-  echo "Got result: $CONN"
-  if [[ "$CONN" -ne "0" ]]; then
+  mysql_conn_error
+  RES=$?
+  echo "Got result: $RES"
+  if [[ "$RES" -ne "0" ]]; then
     echo "MySQL started"
     break
   fi
