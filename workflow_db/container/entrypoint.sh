@@ -20,7 +20,7 @@ do
   mysql_conn_error
   RES=$?
   echo "Got result: $RES"
-  if [[ "$RES" -ne "0" ]]; then
+  if [[ "$RES" -eq "0" ]]; then
     echo "MySQL started"
     break
   fi
