@@ -4,7 +4,7 @@
 sed -e "s/\${DB_USERNAME}/$DB_USERNAME/" \
   -e "s/\${DB_PASSWORD}/$DB_PASSWORD/" \
   -e "s/\${DB_HOSTNAME}/$DB_HOSTNAME/" \
-  -e "s/\${DB_ADDRESS}/$DB_PORT/" \
+  -e "s/\${DB_PORT}/$DB_PORT/" \
   /apps/workflow_db/config/database.yml.tpl \
   > /apps/workflow_db/config/database.yml
 
