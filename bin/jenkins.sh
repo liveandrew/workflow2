@@ -2,10 +2,6 @@
 
 set -euo pipefail
 
-mkdir -p .docker || echo ".docker directory exists"
-export DOCKER_CONFIG=`pwd`/.docker
-docker login -u _json_key --password-stdin https://gcr.io < "${KEYFILE}"
-
 docker pull centos:centos7
 
 # Workflow db migration container
