@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 # set up the database files from environment vars
-sed -e "s/\${db_username}/$DB_USERNAME/" \
-  -e "s/\${db_password}/$DB_PASSWORD/" \
-  -e "s/\${db_address}/$DB_HOSTNAME/" \
-  -e "s/\${db_address}/$DB_PORT/" \
+sed -e "s/\${DB_USERNAME}/$DB_USERNAME/" \
+  -e "s/\${DB_PASSWORD}/$DB_PASSWORD/" \
+  -e "s/\${DB_HOSTNAME}/$DB_HOSTNAME/" \
+  -e "s/\${DB_ADDRESS}/$DB_PORT/" \
   /apps/workflow_db/config/database.yml.tpl \
   > /apps/workflow_db/config/database.yml
 
