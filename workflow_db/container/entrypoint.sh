@@ -14,10 +14,19 @@ function mysql_conn_error {
 }
 
 # wait until mysql is running
-while
-    [[ mysql_conn_error -ne "0" ]]
+while true
 do
-    sleep 1
+
+  CONN=mysql_conn_error
+  echo "Got result: $CONN"
+  if [[ "$CONN" -ne "0" ]]; then
+    echo "MySQL started"
+    break
+  fi
+
+  echo "Waiting for MySQL to start"
+  sleep 1
+
 done
 
 # set up the rails db
