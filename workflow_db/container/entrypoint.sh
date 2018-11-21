@@ -31,7 +31,11 @@ do
 done
 
 # set up the rails db
-export RAILS_ENV=docker_env
+export RAILS_ENV=workflow_docker_env
 cd /apps/workflow_db/
+
+echo "Creating database..."
 bundle exec rake db:create
+
+echo "Running migrations..."
 bundle exec rake db:migrate

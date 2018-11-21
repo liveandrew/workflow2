@@ -1,4 +1,4 @@
-docker_env:
+workflow_docker_env:
   username: ${DB_USERNAME}
   adapter: mysql2
   database: workflow_db
