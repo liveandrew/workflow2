@@ -31,7 +31,7 @@ do
 done
 
 # set up the rails db
-export RAILS_ENV=workflow_docker_env
+export RAILS_ENV=docker_env
 cd /apps/workflow_db/
 
 echo "Creating database..."
