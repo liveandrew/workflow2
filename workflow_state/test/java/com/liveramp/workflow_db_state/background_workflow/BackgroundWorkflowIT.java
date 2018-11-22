@@ -38,8 +38,8 @@ import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestBackgroundWorkflow extends WorkflowDbStateTestCase {
-  private static final Logger LOG = LoggerFactory.getLogger(TestBackgroundWorkflow.class);
+public class BackgroundWorkflowIT extends WorkflowDbStateTestCase {
+  private static final Logger LOG = LoggerFactory.getLogger(BackgroundWorkflowIT.class);
 
   @Test
   public void testSimple() throws IOException, InterruptedException {

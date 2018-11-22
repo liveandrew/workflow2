@@ -15,7 +15,7 @@ import com.liveramp.workflow2.workflow_state.resources.DbStorage;
 
 import static org.junit.Assert.assertTrue;
 
-public class TestDbStorageSizeLimit extends ResourceDbManagerTestCase {
+public class DbStorageSizeLimitIT extends ResourceDbManagerTestCase {
 
   private final IWorkflowDb rlDb = new DatabasesImpl().getWorkflowDb();
   private Storage.Factory<ResourceRoot> dbStorage;

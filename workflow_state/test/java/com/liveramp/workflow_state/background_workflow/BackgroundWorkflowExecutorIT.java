@@ -39,7 +39,7 @@ import com.liveramp.workflow_core.background_workflow.BackgroundWorkflowSubmitte
 import com.liveramp.workflow_db_state.WorkflowDbStateTestCase;
 import com.liveramp.workflow_db_state.background_workflow.BackgroundPersistenceFactory;
 import com.liveramp.workflow_db_state.background_workflow.BackgroundWorkflow;
-import com.liveramp.workflow_db_state.background_workflow.TestBackgroundWorkflow;
+import com.liveramp.workflow_db_state.background_workflow.BackgroundWorkflowIT;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 
 import com.rapleaf.jack.MysqlDatabaseConnection;
@@ -48,7 +48,7 @@ import static com.liveramp.workflow_state.background_workflow.BackgroundWorkflow
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
 
-public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
+public class BackgroundWorkflowExecutorIT extends WorkflowDbStateTestCase {
 
   @Test
   //  test internal claiming logic in executor
@@ -165,7 +165,7 @@ public class TestBackgroundWorkflowExecutor extends WorkflowDbStateTestCase {
     db.backgroundAttemptInfos().create(attempt.getId(), null, null);
 
     //  step attempt
-    StepAttempt step = db.stepAttempts().create(attempt.getIntId(), "step", StepStatus.RUNNING.ordinal(), TestBackgroundWorkflow.NoOp.class.getName());
+    StepAttempt step = db.stepAttempts().create(attempt.getIntId(), "step", StepStatus.RUNNING.ordinal(), BackgroundWorkflowIT.NoOp.class.getName());
 
     BackgroundWorkflowExecutorInfo executor = db.backgroundWorkflowExecutorInfos().create("localhost", ExecutorStatus.RUNNING.ordinal(), DateTime.now().minusMinutes(5).getMillis());
 

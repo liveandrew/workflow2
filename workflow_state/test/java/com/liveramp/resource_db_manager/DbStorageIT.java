@@ -28,7 +28,7 @@ import com.liveramp.workflow2.workflow_state.resources.DbStorage;
 import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static org.junit.Assert.assertEquals;
 
-public class TestDbStorage extends ResourceDbManagerTestCase {
+public class DbStorageIT extends ResourceDbManagerTestCase {
   private final static Email email1 = new Email("thomas@kielbus.com");
   private final static Email email2 = new Email("alice@kielbus.com");
   private final static Email email3 = new Email("alice2@gmail.com");

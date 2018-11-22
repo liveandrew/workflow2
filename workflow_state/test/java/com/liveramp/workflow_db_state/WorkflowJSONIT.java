@@ -10,7 +10,7 @@ import com.liveramp.workflow_db_state.json.WorkflowJSON;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestWorkflowJSON extends WorkflowDbStateTestCase {
+public class WorkflowJSONIT extends WorkflowDbStateTestCase {
 
   @Test
   public void testToJSON() throws Exception {

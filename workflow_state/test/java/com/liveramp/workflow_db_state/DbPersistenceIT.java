@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public class TestDbPersistence extends WorkflowDbStateTestCase {
+public class DbPersistenceIT extends WorkflowDbStateTestCase {
 
   @Test
   public void testShutdownPostInit() throws IOException {
