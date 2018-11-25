@@ -38,7 +38,6 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
-import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow2.workflow_hadoop.TmpDirFilter;
