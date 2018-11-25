@@ -13,6 +13,7 @@ import com.liveramp.cascading_ext.megadesk.StoreReaderLockProvider;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
+import com.liveramp.workflow2.workflow_hadoop.TmpDirFilter;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_core.CoreOptions;
 
@@ -21,12 +22,14 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
   private StoreReaderLockProvider lockProvider;
   private FlowSubmissionController flowSubmissionController;
   private CascadingUtil cascadingUtil;
+  private TmpDirFilter tmpDirFilter;
 
   protected HadoopWorkflowOptions(OverridableProperties defaultProperties,
                                   Map<Object, Object> systemProperties,
                                   CascadingUtil cascadingUtil) {
     super(defaultProperties, systemProperties);
 
+    this.tmpDirFilter = new TmpDirFilter.Never();
     this.flowSubmissionController = new FlowSubmissionController.SubmitImmediately();
     this.cascadingUtil = cascadingUtil;
   }
@@ -41,6 +44,15 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
 
   public CascadingUtil getCascadingUtil() {
     return cascadingUtil;
+  }
+
+  public TmpDirFilter getTmpDirFilter() {
+    return tmpDirFilter;
+  }
+
+  public HadoopWorkflowOptions setTmpDirFilter(TmpDirFilter filter){
+    this.tmpDirFilter = filter;
+    return this;
   }
 
   public StoreReaderLockProvider getLockProvider() {

@@ -38,9 +38,9 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
-import com.liveramp.team_metadata.paths.hdfs.TeamTmpDir;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow_core.OldResource;
+import com.liveramp.workflow2.workflow_hadoop.TmpDirFilter;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
@@ -56,6 +56,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   private ILockManager lockManager;
   private FlowSubmissionController controller;
   private CascadingUtil cascadingUtil;
+  private TmpDirFilter tmpDirFilter;
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
 
@@ -163,7 +164,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
       if (fs.exists(path)) {
         // delete if tmp store, or if no trash is enabled
-        if (TeamTmpDir.pathIsInTmpDir(uri) || !trashEnabled) {
+        if (tmpDirFilter.isSkipTrash(path) || !trashEnabled) {
           LOG.info("Deleting " + uri);
           fs.delete(path, true);
           // otherwise, move to trash
@@ -183,6 +184,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
         .lockProcessStart();
     this.controller = context.getSubmissionController();
     this.cascadingUtil = context.getCascadingUtil();
+    this.tmpDirFilter = context.getTmpDirFilter();
   }
 
   protected IStoreReaderLocker getLockProvider() {
