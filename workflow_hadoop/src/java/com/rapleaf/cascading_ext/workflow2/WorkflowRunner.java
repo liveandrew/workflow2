@@ -15,6 +15,7 @@ import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liveramp.workflow2.workflow_hadoop.TmpDirFilter;
 import com.liveramp.workflow_state.InitializedPersistence;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
@@ -105,7 +106,8 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
         new ExecuteConfig(
             initializedData.getOptions().getLockProvider().create(),
             initializedData.getOptions().getFlowSubmissionController(),
-            initializedData.getOptions().getCascadingUtil()
+            initializedData.getOptions().getCascadingUtil(),
+            initializedData.getOptions().getTmpDirFilter()
         ),
         new OnShutdown<ExecuteConfig>() {
           @Override
@@ -128,11 +130,13 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     private IStoreReaderLocker lockProvider;
     private FlowSubmissionController submissionController;
     private CascadingUtil cascadingUtil;
+    private TmpDirFilter tmpDirFilter;
 
-    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController, CascadingUtil cascadingUtil) {
+    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController, CascadingUtil cascadingUtil, TmpDirFilter tmpDirFilter) {
       this.lockProvider = lockProvider;
       this.submissionController = submissionController;
       this.cascadingUtil = cascadingUtil;
+      this.tmpDirFilter = tmpDirFilter;
     }
 
     public ExecuteConfig(IStoreReaderLocker lockProvider, CascadingUtil cascadingUtil) {
@@ -151,6 +155,10 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
 
     public CascadingUtil getCascadingUtil() {
       return cascadingUtil;
+    }
+
+    public TmpDirFilter getTmpDirFilter(){
+      return tmpDirFilter;
     }
   }
 
