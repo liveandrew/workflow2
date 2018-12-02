@@ -10,6 +10,7 @@
 
   <properties>
     <db.target>workflow_db</db.target>
+    <rake.cmd>db:migrate</rake.cmd>
   </properties>
 
   <groupId>com.liveramp.workflow2</groupId>

@@ -18,6 +18,5 @@ Gem::Specification.new do |s|
   s.add_dependency('net-ldap')
   s.add_dependency('net-ssh', '~> 2.4')
   s.add_dependency('ancestry', '~> 2.0.0')
-  s.add_dependency('db_support')
   s.add_dependency('workflow2_types', '1.0.4')
 end
