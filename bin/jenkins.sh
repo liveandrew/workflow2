@@ -4,13 +4,6 @@ set -euo pipefail
 
 docker pull centos:centos7
 
-# Workflow db migration container
-pushd workflow_db
-docker build -t workflow2_db:latest -f Dockerfile .
-docker tag workflow2_db gcr.io/liveramp-eng/workflow2_db
-docker push gcr.io/liveramp-eng/workflow2_db
-popd
-
 # Workflow UI container
 pushd workflow_ui
 docker build -t workflow2_ui:latest -f Dockerfile .
