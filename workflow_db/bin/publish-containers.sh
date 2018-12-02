@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
 # Workflow db migration container
-docker build -t workflow2_db:latest -f Dockerfile .
-docker tag workflow2_db gcr.io/liveramp-eng/workflow2_db
-docker push gcr.io/liveramp-eng/workflow2_db
+docker build -t db_migrations:latest -f Dockerfile.migration .
+docker tag db_migrations gcr.io/liveramp-eng/workflow2/db_migrations
+docker push gcr.io/liveramp-eng/workflow2/db_migrations

@@ -62,7 +62,7 @@ spec:
           name: liveramp-net-certs
       # run database migrations before starting the uis
       initContainers:
-      - image: gcr.io/liveramp-eng/workflow2_db
+      - image: gcr.io/liveramp-eng/workflow2/db_migrations
         name: workflow2-db
         volumeMounts:
         - name: workflowdb-creds
