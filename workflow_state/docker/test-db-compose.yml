@@ -1,4 +1,5 @@
 version: '3'
+
 services:
   mysql:
     environment:
@@ -12,3 +13,5 @@ services:
     - DB_PORT=3306
     - DB_USERNAME=root
     - DB_HOSTNAME=mysql
+    tty: true
+    stdin_open: true

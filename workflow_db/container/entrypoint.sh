@@ -39,3 +39,5 @@ bundle exec rake db:create
 
 echo "Running migrations..."
 bundle exec rake db:migrate
+
+echo "Migrations complete"
