@@ -78,7 +78,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>-Djava.library.path=${env.HADOOP_LZO} ${surefire.arg.line}</argLine>
+          <argLine>-Djava.library.path=${env.HADOOP_LZO} -Xmx1024m</argLine>
           <additionalClasspathElements>
             <!--suppress MavenModelInspection -->
             <additionalClasspathElement>${env.HADOOP_CONF_DIR}</additionalClasspathElement>
