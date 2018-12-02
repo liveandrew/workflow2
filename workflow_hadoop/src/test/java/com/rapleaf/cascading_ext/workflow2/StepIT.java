@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.fail;
 
-public class TestStep extends WorkflowTestCase {
+public class StepIT extends WorkflowTestCase {
 
   @Test
   public void testDoesntAcceptNullDeps() {

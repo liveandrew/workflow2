@@ -13,7 +13,7 @@ import com.liveramp.workflow_core.runner.BaseAction;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
-public class TestMultiStepAction extends WorkflowTestCase {
+public class MultiStepActionIT extends WorkflowTestCase {
   private Step a;
   private Step b;
   private Step g;

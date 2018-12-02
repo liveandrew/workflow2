@@ -16,7 +16,7 @@ import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
 import static org.junit.Assert.*;
 
-public class TestWorkflowRunners extends WorkflowTestCase {
+public class WorkflowRunnersIT extends WorkflowTestCase {
 
 
   @Test
@@ -26,7 +26,7 @@ public class TestWorkflowRunners extends WorkflowTestCase {
 
     WorkflowRunners.run(
         new WorkflowDbPersistenceFactory(),
-        TestWorkflowRunners.class.getName(),
+        WorkflowRunnersIT.class.getName(),
         HadoopWorkflowOptions.test().setResourceManager(ResourceManagers.defaultResourceManager()),
         initialized -> {
 

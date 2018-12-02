@@ -55,7 +55,6 @@ import com.liveramp.java_support.alerts_handler.AlertMessage;
 import com.liveramp.java_support.alerts_handler.AlertsHandler;
 import com.liveramp.java_support.alerts_handler.BufferingAlertsHandler;
 import com.liveramp.java_support.alerts_handler.MailBuffer;
-import com.liveramp.java_support.alerts_handler.MailOptions;
 import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfig;
 import com.liveramp.java_support.alerts_handler.recipients.AlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
@@ -121,7 +120,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class TestWorkflowRunner extends WorkflowTestCase {
+public class WorkflowRunnerIT extends WorkflowTestCase {
 
   private WorkflowPersistenceFactory hdfsPersistenceFactory = new HdfsCheckpointPersistence(getTestRoot() + "/hdfs_root");
 
@@ -1631,7 +1630,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     Step step = new Step(new DelayedFailingAction("fail", failLock));
 
-    WorkflowRunner execute = new WorkflowRunner(TestWorkflowRunner.class, HadoopWorkflowOptions.test(), step);
+    WorkflowRunner execute = new WorkflowRunner(WorkflowRunnerIT.class, HadoopWorkflowOptions.test(), step);
 
     Wrapper<Exception> exception = new Wrapper<Exception>();
     Thread t = run(execute, exception);
@@ -1642,7 +1641,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     try {
 
       ApplicationController.manuallyCompleteStep(db,
-          TestWorkflowRunner.class.getName(),
+          WorkflowRunnerIT.class.getName(),
           null, "fail"
       );
 
@@ -1664,7 +1663,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     BufferingAlertsHandler.MessageBuffer buffer = new BufferingAlertsHandler.MessageBuffer();
     BufferingAlertsHandler handler = new BufferingAlertsHandler(buffer, RecipientUtils.of("test@test.com"));
 
-    WorkflowRunner newRunner = new WorkflowRunner(TestWorkflowRunner.class,
+    WorkflowRunner newRunner = new WorkflowRunner(WorkflowRunnerIT.class,
         HadoopWorkflowOptions.test()
             .setAlertsHandler(handler),
         step
@@ -1685,7 +1684,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     DefaultAlertMessageConfig config = new DefaultAlertMessageConfig(true, Lists.newArrayList());
 
     assertTrue(buffer.getSentAlerts().stream().map(alertMessage -> alertMessage.getSubject(config)).collect(Collectors.toSet()).contains(
-        "[WORKFLOW] Succeeded: com.liveramp.workflow.TestWorkflowRunner"
+        "[WORKFLOW] Succeeded: com.liveramp.workflow.WorkflowRunnerIT"
     ));
 
   }
@@ -1714,7 +1713,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     BufferingAlertsHandler.MessageBuffer buffer = new BufferingAlertsHandler.MessageBuffer();
     BufferingAlertsHandler handler = new BufferingAlertsHandler(buffer, RecipientUtils.of("test@test.com"));
 
-    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+    WorkflowRunner runner = new WorkflowRunner(WorkflowRunnerIT.class,
         HadoopWorkflowOptions.test()
             .setAlertsHandler(handler)
             .setRollBackOnFailure(true),
@@ -1726,7 +1725,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       fail();
     } catch (Exception e) {
       //  expected
-      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.TestWorkflowRunner"));
+      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.WorkflowRunnerIT"));
     }
 
     //  both step rollbacks happened, and in reverse order
@@ -1751,8 +1750,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     System.out.println(messages);
 
-    assertCollectionContains(messages, "[WORKFLOW] Started: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
-    assertCollectionContains(messages, "[WORKFLOW] Succeeded: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
+    assertCollectionContains(messages, "[WORKFLOW] Started: com.liveramp.workflow.WorkflowRunnerIT (ROLLBACK)");
+    assertCollectionContains(messages, "[WORKFLOW] Succeeded: com.liveramp.workflow.WorkflowRunnerIT (ROLLBACK)");
 
   }
 
@@ -1776,7 +1775,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
         step2
     );
 
-    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+    WorkflowRunner runner = new WorkflowRunner(WorkflowRunnerIT.class,
         new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints"),
         HadoopWorkflowOptions.test()
             .setRollBackOnFailure(true),
@@ -1788,7 +1787,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       fail();
     } catch (Exception e) {
       //  expected
-      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.TestWorkflowRunner"));
+      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.WorkflowRunnerIT"));
     }
 
     //  both step rollbacks happened, and in reverse order
@@ -1798,7 +1797,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
 
     step2 = new Step(new NoOp("step2"), step1);
 
-    runner = new WorkflowRunner(TestWorkflowRunner.class,
+    runner = new WorkflowRunner(WorkflowRunnerIT.class,
         new HdfsCheckpointPersistence(getTestRoot() + "/checkpoints"),
         HadoopWorkflowOptions.test()
             .setRollBackOnFailure(true),
@@ -1828,7 +1827,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     BufferingAlertsHandler.MessageBuffer buffer = new BufferingAlertsHandler.MessageBuffer();
     BufferingAlertsHandler handler = new BufferingAlertsHandler(buffer, RecipientUtils.of("test@test.com"));
 
-    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+    WorkflowRunner runner = new WorkflowRunner(WorkflowRunnerIT.class,
         HadoopWorkflowOptions.test()
             .setAlertsHandler(handler)
             .setRollBackOnFailure(true),
@@ -1840,7 +1839,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
       fail();
     } catch (Exception e) {
       //  expected
-      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.TestWorkflowRunner"));
+      assertTrue(e.getMessage().startsWith("Failed: com.liveramp.workflow.WorkflowRunnerIT"));
     }
 
     WorkflowStatePersistence persistence = runner.getPersistence();
@@ -1859,8 +1858,8 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Set<String> subjects = buffer.getSentAlerts().stream().map(alertMessage -> alertMessage.getSubject(config)).collect(Collectors.toSet());
 
     //  make sure we get notified about rollbacks
-    assertCollectionContains(subjects, "[WORKFLOW] Started: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
-    assertCollectionContains(subjects, "[ERROR] [WORKFLOW] Failed: com.liveramp.workflow.TestWorkflowRunner (ROLLBACK)");
+    assertCollectionContains(subjects, "[WORKFLOW] Started: com.liveramp.workflow.WorkflowRunnerIT (ROLLBACK)");
+    assertCollectionContains(subjects, "[ERROR] [WORKFLOW] Failed: com.liveramp.workflow.WorkflowRunnerIT (ROLLBACK)");
 
 
     //  even though the rollback failed, the next attempt will start from scratch and work
@@ -1870,7 +1869,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     step2 = new Step(new NoOp("step2"), step1);
 
 
-    runner = new WorkflowRunner(TestWorkflowRunner.class,
+    runner = new WorkflowRunner(WorkflowRunnerIT.class,
         HadoopWorkflowOptions.test()
             .setRollBackOnFailure(true),
         step2
@@ -1893,7 +1892,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step step2 = new Step(new FailingAction("step2"), step1);
     Step step3 = new Step(new NoOp("step3"), step2);
 
-    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+    WorkflowRunner runner = new WorkflowRunner(WorkflowRunnerIT.class,
         HadoopWorkflowOptions.test()
             .setRollBackBehavior(new UnlessStepsRun("step2")),
         step3
@@ -1919,7 +1918,7 @@ public class TestWorkflowRunner extends WorkflowTestCase {
     Step step2 = new Step(new FailingAction("step2"), step1);
     Step step3 = new Step(new NoOp("step3"), step2);
 
-    WorkflowRunner runner = new WorkflowRunner(TestWorkflowRunner.class,
+    WorkflowRunner runner = new WorkflowRunner(WorkflowRunnerIT.class,
         HadoopWorkflowOptions.test()
             .setRollBackBehavior(new UnlessStepsRun("step3")),
         step3

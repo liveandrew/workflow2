@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class TestWorkflowWithResources extends WorkflowTestCase {
+public class WorkflowWithResourcesIT extends WorkflowTestCase {
 
   //Context object with annotated methods. The context does not need
   // anything in particular except for an empty constructor

@@ -27,7 +27,7 @@ import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TestWorkflowDbPersistenceFactory extends WorkflowTestCase {
+public class WorkflowDbPersistenceFactoryIT extends WorkflowTestCase {
 
   @Before
   public void setUp() throws Exception {

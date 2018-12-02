@@ -26,7 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
-public class TestWorkflowDiagram extends WorkflowTestCase {
+public class WorkflowDiagramIT extends WorkflowTestCase {
 
   public static class FakeAction extends Action {
 

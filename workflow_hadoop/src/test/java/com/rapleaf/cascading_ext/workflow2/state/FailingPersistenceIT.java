@@ -22,7 +22,7 @@ import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
 import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static org.junit.Assert.assertTrue;
 
-public class TestFailingPersistence extends WorkflowTestCase {
+public class FailingPersistenceIT extends WorkflowTestCase {
 
   private static final String WORKFLOW_CHKPT_TOKEN = "test-workflow";
   private static final String SHOULD_FAIL_CHKPT_TOKEN = "should-fail-but-complete";

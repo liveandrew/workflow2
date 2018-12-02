@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class TestHdfsCheckpointPersistence extends WorkflowTestCase {
+public class HdfsCheckpointPersistenceIT extends WorkflowTestCase {
 
   private final String checkpointDir = getTestRoot() + "/checkpoints";
 

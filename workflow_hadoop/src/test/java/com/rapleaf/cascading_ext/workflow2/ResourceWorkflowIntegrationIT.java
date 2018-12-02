@@ -25,7 +25,7 @@ import com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils;
 import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static org.junit.Assert.fail;
 
-public class TestResourceWorkflowIntegration extends WorkflowTestCase {
+public class ResourceWorkflowIntegrationIT extends WorkflowTestCase {
 
   private static final String name = ResourceTest.class.getName();
   private static final Set<Long> contextNumbers = Sets.newHashSet(2L, 4L, 8L, 16L);

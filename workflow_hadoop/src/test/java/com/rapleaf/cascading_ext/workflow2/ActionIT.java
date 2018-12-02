@@ -13,7 +13,7 @@ import static com.rapleaf.cascading_ext.workflow2.test.WorkflowTestUtils.execute
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class TestAction extends WorkflowTestCase {
+public class ActionIT extends WorkflowTestCase {
   public class ExampleAction extends Action {
     public ExampleAction() throws IOException {
       super("example");

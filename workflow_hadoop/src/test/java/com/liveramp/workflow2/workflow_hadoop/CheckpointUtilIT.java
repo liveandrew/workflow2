@@ -13,7 +13,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class TestCheckpointUtil extends WorkflowTestCase {
+public class CheckpointUtilIT extends WorkflowTestCase {
 
   @Test
   public void exist() throws Exception {
