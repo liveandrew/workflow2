@@ -18,3 +18,4 @@ workflow_db_test:
   host: 127.0.0.1
   username: root
   password:
+  port: 31313
