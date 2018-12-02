@@ -7,11 +7,8 @@ services:
     image: "mysql:5.7.24"
     ports:
     - 31313:3306
-  migrate:
-    image: "gcr.io/liveramp-eng/workflow2_db:latest"
-    environment:
-    - DB_PORT=3306
-    - DB_USERNAME=root
-    - DB_HOSTNAME=mysql
-    tty: true
-    stdin_open: true
+    networks:
+    - shared
+networks:
+  shared:
+    driver: bridge
