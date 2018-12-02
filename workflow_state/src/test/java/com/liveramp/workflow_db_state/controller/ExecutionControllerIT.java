@@ -19,7 +19,7 @@ import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 import static com.liveramp.workflow_db_state.controller.ExecutionController.addConfiguredNotifications;
 import static com.liveramp.workflow_db_state.controller.ExecutionController.removeConfiguredNotifications;
 
-public class TestExecutionController extends WorkflowDbStateTestCase {
+public class ExecutionControllerIT extends WorkflowDbStateTestCase {
 
   @Test
   public void testNotificaions() throws Exception {

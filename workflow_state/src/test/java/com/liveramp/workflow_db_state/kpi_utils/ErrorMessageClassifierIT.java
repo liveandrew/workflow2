@@ -12,7 +12,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by lerickson on 7/27/16.
  */
-public class ErrorMessageClassifierTest {
+public class ErrorMessageClassifierIT {
 
   @Test
   public void testClassifyFailedStepAttempt() throws Exception {

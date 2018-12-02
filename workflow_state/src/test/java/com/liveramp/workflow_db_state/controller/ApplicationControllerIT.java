@@ -16,7 +16,7 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 import static com.liveramp.commons.test.TestUtils.assertCollectionEquivalent;
 
-public class TestApplicationController extends WorkflowDbStateTestCase {
+public class ApplicationControllerIT extends WorkflowDbStateTestCase {
 
   @Test
   public void testNotificaions() throws Exception {

@@ -3,19 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.liveramp.workflow2</groupId>
   <artifactId>workflow_state</artifactId>
   <version>${snapshot.version}</version>
 
   <parent>
-    <groupId>com.liveramp</groupId>
-    <artifactId>pom-ant-structure</artifactId>
+    <groupId>com.liveramp.workflow2</groupId>
+    <artifactId>workflow</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-
-  <properties>
-    <skip.db.init>false</skip.db.init>
-  </properties>
 
   <dependencies>
     <dependency>
@@ -39,6 +34,50 @@
       <version>20090211</version>
     </dependency>
   </dependencies>
+
+  <build>
+
+    <plugins>
+
+      <plugin>
+        <artifactId>exec-maven-plugin</artifactId>
+        <groupId>org.codehaus.mojo</groupId>
+        <executions>
+          <execution>
+            <id>start-db</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>${project.basedir}/docker/start-db.sh</executable>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>exec-maven-plugin</artifactId>
+        <groupId>org.codehaus.mojo</groupId>
+        <executions>
+          <execution>
+            <id>stop-db</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>${project.basedir}/docker/stop-db.sh</executable>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+
+    </plugins>
+
+  </build>
+
 
   <repositories>
     <repository>

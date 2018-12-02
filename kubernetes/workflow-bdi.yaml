@@ -17,7 +17,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
       # workflow ui
-      - image: gcr.io/liveramp-eng-bdi/workflow2_ui
+      - image: gcr.io/liveramp-eng/workflow2_ui
         name: workflow2-ui
         imagePullPolicy: "Always"
         ports:
@@ -28,7 +28,7 @@ spec:
           mountPath: /apps/secrets/workflow_svc
           readOnly: true
       # workflow monitor
-      - image: gcr.io/liveramp-eng-bdi/workflow2_monitor
+      - image: gcr.io/liveramp-eng/workflow2_monitor
         name: workflow2-monitor
         imagePullPolicy: "Always"
         volumeMounts:
@@ -39,7 +39,7 @@ spec:
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.11
         command: ["/cloud_sql_proxy",
-                  "-instances=liveramp-eng-bdi:us-central1:bdi-workflow-dbs=tcp:3306",
+                  "-instances=liveramp-eng:us-central1:bdi-workflow-dbs=tcp:3306",
                   "-credential_file=/apps/secrets/cloudsql/credentials.json"]
         securityContext:
           runAsUser: 2
@@ -62,7 +62,7 @@ spec:
           name: liveramp-net-certs
       # run database migrations before starting the uis
       initContainers:
-      - image: gcr.io/liveramp-eng-bdi/workflow2_db
+      - image: gcr.io/liveramp-eng/workflow2_db
         name: workflow2-db
         volumeMounts:
         - name: workflowdb-creds
