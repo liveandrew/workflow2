@@ -10,6 +10,8 @@ RUN mkdir -p /apps/workflow_db/config/
 
 RUN cd /apps/workflow_db && bundle install
 
-COPY container/entrypoint.sh /apps/
+COPY container/migration/entrypoint.sh /apps/
+
+COPY container/block-on-db.sh /apps/
 
 ENTRYPOINT /apps/entrypoint.sh
