@@ -51,15 +51,27 @@ spec:
       initContainers:
       - image: gcr.io/liveramp-eng/workflow2/db_migrations
         name: workflow2-db
-        volumeMounts:
-        - name: workflowdb-creds
-          mountPath: /apps/secrets/workflow_db
-          readOnly: true
-      volumes:
-      # DB credentials for the migration user -- eg, database.yml
-      - name: workflowdb-creds
-        secret:
-          secretName: workflow2-workflowdb-config
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: workflow2-workflowdb-config
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: workflow2-workflowdb-config
+              key: password
+        - name: DB_HOSTNAME
+          valueFrom:
+            secretKeyRef:
+              name: workflow2-workflowdb-config
+              key: hostname
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: workflow2-workflowdb-config
+              key: port
       # DB credentials for the ui for the jetty and prod dbs -- environment.yml and database.yml
       - name: workflowui-creds
         secret:
