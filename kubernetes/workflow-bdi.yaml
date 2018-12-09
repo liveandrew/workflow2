@@ -72,6 +72,7 @@ spec:
             secretKeyRef:
               name: workflow2-workflowdb-config
               key: port
+      volumes:
       # DB credentials for the ui for the jetty and prod dbs -- environment.yml and database.yml
       - name: workflowui-creds
         secret:
