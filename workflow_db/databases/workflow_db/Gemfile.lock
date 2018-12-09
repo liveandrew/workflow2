@@ -1,5 +1,6 @@
 GEM
-  remote: http://gemserver.liveramp.net/
+  remote: https://public-gems.liveramp.net/
+  remote: https://private-gems.liveramp.net/
   specs:
     abstract (1.0.0)
     actionmailer (3.0.20)
@@ -121,16 +122,16 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  factory_girl (= 2.0.1)
-  factory_girl_rails (= 1.1.0)
-  mysql2 (= 0.2.24)
-  rails (= 3.0.20)
-  rap_support
-  rapleaf_types
-  rspec-rails (= 2.6.1)
-  shoulda (>= 2.11.0)
-  thrift (= 0.9.3.0)
-  workflow2_types (= 1.0.4)
+  factory_girl (= 2.0.1)!
+  factory_girl_rails (= 1.1.0)!
+  mysql2 (= 0.2.24)!
+  rails (= 3.0.20)!
+  rap_support!
+  rapleaf_types!
+  rspec-rails (= 2.6.1)!
+  shoulda (>= 2.11.0)!
+  thrift (= 0.9.3.0)!
+  workflow2_types (= 1.0.4)!
 
 BUNDLED WITH
    1.17.1
