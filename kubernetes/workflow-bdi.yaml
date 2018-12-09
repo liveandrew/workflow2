@@ -35,19 +35,6 @@ spec:
         - name: workflowui-creds
           mountPath: /apps/secrets/workflow_svc
           readOnly: true
-      # proxy with access to the cloud sql instance
-      - name: cloudsql-proxy
-        image: gcr.io/cloudsql-docker/gce-proxy:1.11
-        command: ["/cloud_sql_proxy",
-                  "-instances=liveramp-eng:us-central1:bdi-workflow-dbs=tcp:3306",
-                  "-credential_file=/apps/secrets/cloudsql/credentials.json"]
-        securityContext:
-          runAsUser: 2
-          allowPrivilegeEscalation: false
-        volumeMounts:
-        - name: cloudsql-credentials
-          mountPath: /apps/secrets/cloudsql
-          readOnly: true
       # nginx can do reverse proxying handles the ssl
       - image: nginx:1.15
         name: nginx
@@ -77,10 +64,6 @@ spec:
       - name: workflowui-creds
         secret:
           secretName: workflow2-workflowui-config
-      # service account key so the sql proxy can connect
-      - name: cloudsql-credentials
-        secret:
-          secretName: workflow2-cloudsql-proxy-credentials
       # certs for *.liveramp.net
       - name: liveramp-net-certs
         secret:
