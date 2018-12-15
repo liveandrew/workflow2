@@ -165,8 +165,9 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
       if (fs.exists(path)) {
         // delete if tmp store, or if no trash is enabled
         if (tmpDirFilter.isSkipTrash(path) || !trashEnabled) {
-          LOG.info("Deleting " + uri);
-          fs.delete(path, true);
+          LOG.info("Deleting {}", uri);
+          boolean delete = fs.delete(path, true);
+          LOG.info("Deletion succeeded: {}", delete);
           // otherwise, move to trash
         } else {
           LOG.info("Moving to trash: " + uri);
