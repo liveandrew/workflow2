@@ -39,8 +39,8 @@ import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
-import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow2.workflow_hadoop.TmpDirFilter;
+import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
@@ -160,13 +160,13 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
       String uri = new URI(ds.getPath()).getPath();
       Path path = new Path(ds.getPath());
       FileSystem fs = FileSystemHelper.getFileSystemForPath(path);
-      Boolean trashEnabled = TrashHelper.isEnabled();
+      boolean trashEnabled = TrashHelper.isEnabled();
 
       if (fs.exists(path)) {
         // delete if tmp store, or if no trash is enabled
         if (tmpDirFilter.isSkipTrash(path) || !trashEnabled) {
-          LOG.info("Deleting " + uri);
-          fs.delete(path, true);
+          boolean delete = fs.delete(path, true);
+          LOG.info("Deleting {}: {}", uri, delete);
           // otherwise, move to trash
         } else {
           LOG.info("Moving to trash: " + uri);
@@ -175,7 +175,6 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
       }
     }
   }
-
 
   @Override
   protected void initialize(WorkflowRunner.ExecuteConfig context) {
@@ -236,10 +235,10 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     return conf;
   }
 
-  protected Map<Object, Object> asProperties(Configuration conf){
+  protected Map<Object, Object> asProperties(Configuration conf) {
     Map<Object, Object> properties = Maps.newHashMap();
     Iterator<Map.Entry<String, String>> iter = conf.iterator();
-    while(iter.hasNext()){
+    while (iter.hasNext()) {
       Map.Entry<String, String> entry = iter.next();
       properties.put(entry.getKey(), entry.getValue());
     }
