@@ -6,6 +6,10 @@
   <artifactId>workflow_state</artifactId>
   <version>1.0-SNAPSHOT</version>
 
+  <properties>
+    <skip.db>false</skip.db>
+  </properties>
+
   <parent>
     <groupId>com.liveramp.workflow2</groupId>
     <artifactId>workflow</artifactId>
@@ -36,45 +40,6 @@
   </dependencies>
 
   <build>
-
-    <plugins>
-
-      <plugin>
-        <artifactId>exec-maven-plugin</artifactId>
-        <groupId>org.codehaus.mojo</groupId>
-        <executions>
-          <execution>
-            <id>start-db</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>${project.basedir}/../test_docker/start-db.sh</executable>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <artifactId>exec-maven-plugin</artifactId>
-        <groupId>org.codehaus.mojo</groupId>
-        <executions>
-          <execution>
-            <id>stop-db</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>${project.basedir}/../test_docker/stop-db.sh</executable>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-
-    </plugins>
 
   </build>
 

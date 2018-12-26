@@ -10,12 +10,12 @@
   <version>1.0-SNAPSHOT</version>
 
   <properties>
+    <skip.db>true</skip.db>
     <skip.assembly>true</skip.assembly>
   </properties>
 
   <modules>
     <module>workflow_assemblies</module>
-    <module>workflow_dist</module>
     <module>workflow_types</module>
     <module>workflow_core</module>
     <module>workflow_db</module>
@@ -49,6 +49,95 @@
               <goal>integration-test</goal>
               <goal>verify</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.1.0</version>
+
+        <configuration>
+          <skipAssembly>${skip.assembly}</skipAssembly>
+          <tarLongFileMode>posix</tarLongFileMode>
+        </configuration>
+
+        <executions>
+
+          <execution>
+            <id>deploy</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <finalName>${project.artifactId}.job</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
+              <descriptorRefs>
+                <descriptorRef>workflow-uberjar</descriptorRef>
+              </descriptorRefs>
+              <attach>false</attach>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>deploy-bundle</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptorRefs>
+                <descriptorRef>workflow-deploy</descriptorRef>
+              </descriptorRefs>
+              <attach>true</attach>
+            </configuration>
+          </execution>
+
+        </executions>
+
+        <dependencies>
+          <dependency>
+            <groupId>com.liveramp.workflow2</groupId>
+            <artifactId>workflow_assemblies</artifactId>
+            <version>1.0-SNAPSHOT</version>
+          </dependency>
+        </dependencies>
+
+      </plugin>
+
+      <plugin>
+        <artifactId>exec-maven-plugin</artifactId>
+        <groupId>org.codehaus.mojo</groupId>
+        <executions>
+          <execution>
+            <id>start-db</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.db}</skip>
+              <executable>${project.basedir}/../test_docker/start-db.sh</executable>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>exec-maven-plugin</artifactId>
+        <groupId>org.codehaus.mojo</groupId>
+        <executions>
+          <execution>
+            <id>stop-db</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.db}</skip>
+              <executable>${project.basedir}/../test_docker/stop-db.sh</executable>
+            </configuration>
           </execution>
         </executions>
       </plugin>
