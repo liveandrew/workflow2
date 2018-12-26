@@ -87,6 +87,7 @@
               <goal>single</goal>
             </goals>
             <configuration>
+              <appendAssemblyId>false</appendAssemblyId>
               <descriptorRefs>
                 <descriptorRef>workflow-deploy</descriptorRef>
               </descriptorRefs>
