@@ -4,16 +4,16 @@
 
   <parent>
     <groupId>com.liveramp.workflow2</groupId>
-    <artifactId>workflow</artifactId>
+    <artifactId>workflow_dist</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
+
+  <artifactId>workflow_ui</artifactId>
+  <version>1.0-SNAPSHOT</version>
 
   <properties>
     <skip.assembly>false</skip.assembly>
   </properties>
-
-  <artifactId>workflow_ui</artifactId>
-  <version>1.0-SNAPSHOT</version>
 
   <dependencies>
 
@@ -24,6 +24,7 @@
       <artifactId>workflow_state</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
+
 
     <!--other-->
 
