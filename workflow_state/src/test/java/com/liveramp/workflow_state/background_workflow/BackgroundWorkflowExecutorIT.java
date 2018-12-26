@@ -424,17 +424,23 @@ public class BackgroundWorkflowExecutorIT extends WorkflowDbStateTestCase {
       }
     });
 
-    //  fake heartbeat out by setting executor heartbeat in the past
-    Accessors.only(db.backgroundWorkflowExecutorInfos().findAll()).setLastHeartbeat(0L).save();
-
     //  expect step to fail
     WaitUntil.orDie(() -> {
       try {
+
+        //  fake heartbeat out by setting executor heartbeat in the past
+        Accessors.only(db.backgroundWorkflowExecutorInfos().findAll()).setLastHeartbeat(0L).save();
+
+        Thread.sleep(1500);
+
         return persistence.getStatus("action1") == StepStatus.FAILED;
-      } catch (IOException e) {
+      } catch (Exception e) {
         return false;
       }
     });
+
+    System.out.println(persistence.getStatus("action1"));
+    System.out.println(test.getSentEvents());
 
     //  verify we got an alert that the executor committed sepuku
     assertEquals("Worker heartbeat encountered exception", Accessors.only(
