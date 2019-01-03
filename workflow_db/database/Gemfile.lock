@@ -27,7 +27,7 @@ GEM
       tzinfo (~> 0.3.23)
     activeresource (3.0.20)
       activemodel (= 3.0.20)
-      activesupport (= 3.0.20)WorkflowTestUti
+      activesupport (= 3.0.20)
     activesupport (3.0.20)
     american_date (1.1.1)
     arel (2.0.10)
