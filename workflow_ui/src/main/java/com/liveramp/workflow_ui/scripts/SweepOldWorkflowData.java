@@ -2,10 +2,7 @@ package com.liveramp.workflow_ui.scripts;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import org.apache.log4j.xml.DOMConfigurator;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

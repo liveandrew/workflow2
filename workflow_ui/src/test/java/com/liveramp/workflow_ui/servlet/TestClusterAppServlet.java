@@ -1,7 +1,5 @@
 package com.liveramp.workflow_ui.servlet;
 
-import java.io.IOException;
-
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.json.JSONArray;

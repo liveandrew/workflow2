@@ -3,7 +3,6 @@ package com.liveramp.workflow_monitor.alerts.execution.recipient;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 
 import com.google.common.collect.Lists;
 

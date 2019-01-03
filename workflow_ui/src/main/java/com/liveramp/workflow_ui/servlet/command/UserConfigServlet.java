@@ -6,10 +6,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -23,7 +21,6 @@ import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.iface.IUserPersistence;
 import com.liveramp.databases.workflow_db.models.User;
 import com.liveramp.workflow_db_state.WorkflowQueries;
-import com.liveramp.workflow_ui.servlet.JSONServlet;
 import com.liveramp.workflow_ui.util.QueryUtil;
 import com.rapleaf.jack.queries.where_operators.EqualTo;
 

@@ -1,6 +1,5 @@
 package com.liveramp.resource_db_manager;
 
-import org.apache.log4j.Level;
 import org.junit.Before;
 
 import com.liveramp.databases.workflow_db.DatabasesImpl;

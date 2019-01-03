@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.List;
 
 import org.joda.time.DateTime;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -23,7 +22,6 @@ import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.Dashboard;
 import com.liveramp.databases.workflow_db.models.DashboardApplication;
 import com.liveramp.workflow_db_state.WorkflowQueries;
-import com.liveramp.workflow_ui.util.JSONTypes;
 import com.liveramp.workflow_ui.util.QueryUtil;
 import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.where_operators.EqualTo;

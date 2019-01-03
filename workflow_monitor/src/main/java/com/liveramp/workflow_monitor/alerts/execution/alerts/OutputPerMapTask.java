@@ -1,7 +1,5 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
-import java.text.DecimalFormat;
-
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;

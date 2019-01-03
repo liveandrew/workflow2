@@ -136,7 +136,7 @@
             </goals>
             <configuration>
               <skip>${skip.db}</skip>
-              <executable>${project.basedir}/../test_docker/stop-db.sh</executable>
+              <executable>${project.basedir}/../test_docker/stop-mysql.sh</executable>
             </configuration>
           </execution>
         </executions>

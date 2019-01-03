@@ -1,6 +1,5 @@
 package com.liveramp.workflow_db_state;
 
-import org.apache.log4j.Level;
 import org.junit.Before;
 
 import com.liveramp.databases.workflow_db.DatabasesImpl;

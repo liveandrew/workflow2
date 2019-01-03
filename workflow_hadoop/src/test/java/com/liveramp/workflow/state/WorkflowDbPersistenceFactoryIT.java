@@ -2,7 +2,6 @@ package com.liveramp.workflow.state;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import com.google.common.collect.Sets;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
