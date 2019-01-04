@@ -1,4 +1,3 @@
-require 'workflow_constants'
 
 class Workflow::StepAttempt < Workflow::BaseModel
   belongs_to :workflow_attempt
@@ -9,6 +8,4 @@ class Workflow::StepAttempt < Workflow::BaseModel
   has_many :step_statistics, :dependent => :destroy
 
   has_one :background_step_attempt_info, :dependent => :destroy
-
-  enum_from_thrift :step_status, Liveramp::Types::Workflow::StepStatus
 end

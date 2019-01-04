@@ -9,9 +9,6 @@ require "rapleaf_types/new_person_data_constants"
 require "rapleaf_types/liveramp_importer_types"
 require 'workflow_constants'
 
-require 'rap_support'
-require 'rap_support/core_ext/active_record_extension' # Support for 'enum' and 'enum_from_thrift'
-
 # Initialize the rails application
 WorkflowDb::Application.initialize!
 
