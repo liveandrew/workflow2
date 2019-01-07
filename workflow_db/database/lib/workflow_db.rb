@@ -1,7 +1,5 @@
 require 'workflow_db/paths'
 
-require 'rap_support/core_ext/active_record_extension' # Support for 'enum'
-
 module DbSupport
   DB_PATH=File.dirname(__FILE__) + '/../db/'
 end
