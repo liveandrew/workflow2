@@ -1,5 +1,3 @@
-#require 'rapleaf_types/workflow_constants'
-
 module Workflow
   def self.table_name_prefix
     ''
