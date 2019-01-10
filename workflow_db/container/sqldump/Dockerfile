@@ -8,6 +8,6 @@ COPY container/sqldump/entrypoint.sh /apps/
 
 COPY container/block-on-db.sh /apps/
 
-COPY build/classes/workflow_db.dump /apps/workflow_db.sql
+COPY target/classes/workflow_db.dump /apps/workflow_db.sql
 
 ENTRYPOINT /apps/entrypoint.sh
