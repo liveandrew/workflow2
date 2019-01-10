@@ -1,19 +1,12 @@
 source 'https://public-gems.liveramp.net' do
   gem 'rails', '3.0.20'
-  gem 'mysql2', '0.2.24'
+  gem 'mysql2'
   gem 'thrift', '0.9.3.0'
-
-  group :test do
-    gem 'rspec-rails', '2.6.1'
-    gem 'factory_girl', '2.0.1'
-    gem 'factory_girl_rails', '1.1.0'
-    gem 'shoulda', '>= 2.11.0'
-  end
+  gem 'activerecord', '3.0.20'
+    # gem 'activerecord-native_db_types_override'
 end
 
 source 'https://private-gems.liveramp.net' do
-  gem 'rap_support'
-  gem 'rapleaf_types'
   gem 'workflow2_types', '1.0.4'
 end
 
