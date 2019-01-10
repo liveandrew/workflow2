@@ -13,7 +13,6 @@ Gem::Specification.new do |s|
   s.files       = Dir['lib/**/*', 'app/models/**/*', 'db/**/*']
 
   s.require_paths = WorkflowDb::PATHS
-  s.add_dependency('rap_support')
   s.add_dependency('auto_strip_attributes')
   s.add_dependency('net-ldap')
   s.add_dependency('net-ssh', '~> 2.4')
