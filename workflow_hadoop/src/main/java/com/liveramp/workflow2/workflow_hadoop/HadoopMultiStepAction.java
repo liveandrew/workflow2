@@ -7,12 +7,12 @@ import org.apache.hadoop.fs.FileSystem;
 
 import com.liveramp.workflow_core.runner.BaseMultiStepAction;
 import com.liveramp.workflow_core.runner.BaseStep;
-import com.rapleaf.cascading_ext.workflow2.HdfsActionContext;
+import com.rapleaf.cascading_ext.workflow2.FsActionContext;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 
 public class HadoopMultiStepAction extends BaseMultiStepAction<WorkflowRunner.ExecuteConfig> {
 
-  private final HdfsActionContext context;
+  private final FsActionContext context;
 
   public HadoopMultiStepAction(String checkpointToken, String tmpRoot) {
     this(checkpointToken, tmpRoot, null);
@@ -20,7 +20,7 @@ public class HadoopMultiStepAction extends BaseMultiStepAction<WorkflowRunner.Ex
 
   public HadoopMultiStepAction(String checkpointToken, String tmpRoot, Collection<? extends BaseStep<WorkflowRunner.ExecuteConfig>> steps) {
     super(checkpointToken, steps);
-    this.context = new HdfsActionContext(tmpRoot, checkpointToken);
+    this.context = new FsActionContext(tmpRoot, checkpointToken);
   }
 
   public final String getTmpRoot() {

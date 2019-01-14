@@ -51,7 +51,7 @@ import com.rapleaf.cascading_ext.workflow2.flow_closure.FlowRunner;
 public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   private static final Logger LOG = LoggerFactory.getLogger(Action.class);
 
-  private final HdfsActionContext context;
+  private final FsActionContext context;
 
   private ILockManager lockManager;
   private FlowSubmissionController controller;
@@ -75,7 +75,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
   public Action(String checkpointToken, String tmpRoot, Map<Object, Object> properties) {
     super(checkpointToken, properties);
-    this.context = new HdfsActionContext(tmpRoot, checkpointToken);
+    this.context = new FsActionContext(tmpRoot, checkpointToken);
   }
 
   protected FileSystem getFS() throws IOException {
