@@ -6,12 +6,12 @@ import org.apache.hadoop.fs.FileSystem;
 
 import java.io.IOException;
 
-public class HdfsActionContext {
+public class FsActionContext {
 
   private final String tmpRoot;
   private FileSystem fs;
 
-  public HdfsActionContext(String parentRoot, String checkpointToken) {
+  public FsActionContext(String parentRoot, String checkpointToken) {
 
     if (parentRoot != null) {
       this.tmpRoot = parentRoot + "/" + checkpointToken + "-tmp-stores";
