@@ -1,10 +1,10 @@
 package com.rapleaf.cascading_ext.workflow2;
 
-import java.io.IOException;
-
+import com.liveramp.cascading_ext.FileSystemHelper;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 
-import com.liveramp.cascading_ext.FileSystemHelper;
+import java.io.IOException;
 
 public class HdfsActionContext {
 
@@ -30,7 +30,7 @@ public class HdfsActionContext {
 
   public FileSystem getFS() throws IOException {
     if (fs == null) {
-      fs = FileSystemHelper.getFS();
+      fs = FileSystemHelper.getFileSystemForPath(tmpRoot, new Configuration());
     }
 
     return fs;
