@@ -11,6 +11,19 @@
   </parent>
 
   <repositories>
+
+    <!--disable maven central since we want to proxy that-->
+    <repository>
+      <id>central</id>
+      <url>http://repo1.maven.org/maven2</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
     <repository>
       <id>all-snapshots</id>
       <url>http://library.liveramp.net/artifactory/all-snapshots</url>
@@ -18,7 +31,88 @@
         <enabled>true</enabled>
         <updatePolicy>always</updatePolicy>
       </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
     </repository>
+
+    <repository>
+      <id>libs-release</id>
+      <url>http://library.liveramp.net/artifactory/libs-release</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
   </repositories>
+
+
+  <pluginRepositories>
+
+    <!--disable maven central so we can proxy it-->
+    <pluginRepository>
+      <id>central</id>
+      <url>http://repo1.maven.org/maven2</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+
+    <pluginRepository>
+      <id>plugins-snapshot</id>
+      <url>http://library.liveramp.net/artifactory/plugins-snapshot</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </pluginRepository>
+
+    <pluginRepository>
+      <id>all-snapshots</id>
+      <url>http://library.liveramp.net/artifactory/all-snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </pluginRepository>
+
+    <!--everything we want to pull from should be proxied via artifactory-->
+    <pluginRepository>
+      <id>plugins-release</id>
+      <url>http://library.liveramp.net/artifactory/plugins-release</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+
+  </pluginRepositories>
+
+  <distributionManagement>
+
+    <snapshotRepository>
+      <id>library.liveramp.net</id>
+      <name>library.liveramp.net-snapshots</name>
+      <url>http://library.liveramp.net/artifactory/libs-snapshot-local</url>
+    </snapshotRepository>
+
+    <repository>
+      <id>library.liveramp.net</id>
+      <name>library.liveramp.net-releases</name>
+      <url>http://library.liveramp.net/artifactory/libs-release-local</url>
+    </repository>
+
+  </distributionManagement>
+
+
+
 
 </project>
