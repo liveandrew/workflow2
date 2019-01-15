@@ -32,8 +32,9 @@ public class FsActionContext {
     if (fs == null) {
       if (tmpRoot == null) {
         fs = FileSystemHelper.getFS();
+      } else {
+        fs = FileSystemHelper.getFileSystemForPath(tmpRoot, new Configuration());
       }
-      fs = FileSystemHelper.getFileSystemForPath(tmpRoot, new Configuration());
     }
 
     return fs;
