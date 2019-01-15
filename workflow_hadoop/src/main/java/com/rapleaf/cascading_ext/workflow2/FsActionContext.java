@@ -30,6 +30,9 @@ public class FsActionContext {
 
   public FileSystem getFS() throws IOException {
     if (fs == null) {
+      if (tmpRoot == null) {
+        fs = FileSystemHelper.getFS();
+      }
       fs = FileSystemHelper.getFileSystemForPath(tmpRoot, new Configuration());
     }
 
