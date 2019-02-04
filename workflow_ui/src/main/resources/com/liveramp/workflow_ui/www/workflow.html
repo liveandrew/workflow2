@@ -264,7 +264,7 @@
     var visibleDs = {};
     datastores.forEach(function (e) {
       var ds = e.index;
-      if (Object.keys(dsSteps[ds]).length > 1 || dsStepsList[ds].length == 1) {
+      if ((ds in dsSteps && Object.keys(dsSteps[ds]).length > 1) || (ds in dsStepsList && dsStepsList[ds].length == 1)) {
         visibleDs[ds] = true;
       }
     });
