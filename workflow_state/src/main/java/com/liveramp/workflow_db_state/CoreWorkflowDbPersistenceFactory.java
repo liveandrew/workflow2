@@ -160,7 +160,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
           if(workflowAttemptDatastore.getId() <= Integer.MAX_VALUE) { //desperate hack to get things working again at 5 AM - need to migrate column
             rldb.stepAttemptDatastores().create(
                 stepAttempt.getId(),
-                (int) workflowAttemptDatastore.getId(),
+                0,
                 entry.getKey().ordinal()
             );
           }
