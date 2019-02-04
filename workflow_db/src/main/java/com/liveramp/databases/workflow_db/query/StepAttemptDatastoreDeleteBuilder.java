@@ -41,13 +41,13 @@ public class StepAttemptDatastoreDeleteBuilder extends AbstractDeleteBuilder<Ste
     return this;
   }
 
-  public StepAttemptDatastoreDeleteBuilder workflowAttemptDatastoreId(Integer value) {
-    addWhereConstraint(new WhereConstraint<Integer>(StepAttemptDatastore._Fields.workflow_attempt_datastore_id, JackMatchers.equalTo(value)));
+  public StepAttemptDatastoreDeleteBuilder workflowAttemptDatastoreId(Long value) {
+    addWhereConstraint(new WhereConstraint<Long>(StepAttemptDatastore._Fields.workflow_attempt_datastore_id, JackMatchers.equalTo(value)));
     return this;
   }
 
-  public StepAttemptDatastoreDeleteBuilder whereWorkflowAttemptDatastoreId(IWhereOperator<Integer> operator) {
-    addWhereConstraint(new WhereConstraint<Integer>(StepAttemptDatastore._Fields.workflow_attempt_datastore_id, operator));
+  public StepAttemptDatastoreDeleteBuilder whereWorkflowAttemptDatastoreId(IWhereOperator<Long> operator) {
+    addWhereConstraint(new WhereConstraint<Long>(StepAttemptDatastore._Fields.workflow_attempt_datastore_id, operator));
     return this;
   }
 

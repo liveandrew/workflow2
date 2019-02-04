@@ -16,6 +16,9 @@ regenerate:
   <<: *login
   database: workflow_db_regenerate
 
+development:
+  <<: *login
+  database: workflow_db_development
 test:
   <<: *login
   database: workflow_db_test
