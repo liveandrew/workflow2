@@ -17,12 +17,11 @@ import java.util.List;
 import com.rapleaf.jack.IModelPersistence;
 
 public interface IStepAttemptDatastorePersistence extends IModelPersistence<StepAttemptDatastore> {
-  StepAttemptDatastore create(final long step_attempt_id, final Long workflow_attempt_datastore_id, final int ds_action) throws IOException;
-  StepAttemptDatastore create(final long step_attempt_id, final int ds_action) throws IOException;
+  StepAttemptDatastore create(final long step_attempt_id, final long workflow_attempt_datastore_id, final int ds_action) throws IOException;
 
   StepAttemptDatastore createDefaultInstance() throws IOException;
   List<StepAttemptDatastore> findByStepAttemptId(long value)  throws IOException;
-  List<StepAttemptDatastore> findByWorkflowAttemptDatastoreId(Long value)  throws IOException;
+  List<StepAttemptDatastore> findByWorkflowAttemptDatastoreId(long value)  throws IOException;
   List<StepAttemptDatastore> findByDsAction(int value)  throws IOException;
 
   StepAttemptDatastoreQueryBuilder query();
