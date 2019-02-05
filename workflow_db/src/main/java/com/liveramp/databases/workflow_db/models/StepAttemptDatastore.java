@@ -34,19 +34,19 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDatabases> implements Comparable<StepAttemptDatastore>{
   
-  public static final long serialVersionUID = 913398659704732581L;
+  public static final long serialVersionUID = 6069089693520153804L;
 
   public static class Tbl extends AbstractTable<StepAttemptDatastore.Attributes, StepAttemptDatastore> {
     public final Column<Long> ID;
     public final Column<Long> STEP_ATTEMPT_ID;
-    public final Column<Integer> WORKFLOW_ATTEMPT_DATASTORE_ID;
+    public final Column<Long> WORKFLOW_ATTEMPT_DATASTORE_ID;
     public final Column<Integer> DS_ACTION;
 
     private Tbl(String alias) {
       super("step_attempt_datastores", alias, StepAttemptDatastore.Attributes.class, StepAttemptDatastore.class);
       this.ID = Column.fromId(alias);
       this.STEP_ATTEMPT_ID = Column.fromField(alias, _Fields.step_attempt_id, Long.class);
-      this.WORKFLOW_ATTEMPT_DATASTORE_ID = Column.fromField(alias, _Fields.workflow_attempt_datastore_id, Integer.class);
+      this.WORKFLOW_ATTEMPT_DATASTORE_ID = Column.fromField(alias, _Fields.workflow_attempt_datastore_id, Long.class);
       this.DS_ACTION = Column.fromField(alias, _Fields.ds_action, Integer.class);
       Collections.addAll(this.allColumns, ID, STEP_ATTEMPT_ID, WORKFLOW_ATTEMPT_DATASTORE_ID, DS_ACTION);
     }
@@ -59,7 +59,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
   public static final Tbl TBL = new Tbl("step_attempt_datastores");
   public static final Column<Long> ID = TBL.ID;
   public static final Column<Long> STEP_ATTEMPT_ID = TBL.STEP_ATTEMPT_ID;
-  public static final Column<Integer> WORKFLOW_ATTEMPT_DATASTORE_ID = TBL.WORKFLOW_ATTEMPT_DATASTORE_ID;
+  public static final Column<Long> WORKFLOW_ATTEMPT_DATASTORE_ID = TBL.WORKFLOW_ATTEMPT_DATASTORE_ID;
   public static final Column<Integer> DS_ACTION = TBL.DS_ACTION;
 
   private final Attributes attributes;
@@ -84,20 +84,20 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
     return cachedTypedId;
   }
 
-  public StepAttemptDatastore(long id, final long step_attempt_id, final int workflow_attempt_datastore_id, final int ds_action, IDatabases databases) {
+  public StepAttemptDatastore(long id, final long step_attempt_id, final long workflow_attempt_datastore_id, final int ds_action, IDatabases databases) {
     super(databases);
     attributes = new Attributes(id, step_attempt_id, workflow_attempt_datastore_id, ds_action);
     this.__assoc_step_attempt = new BelongsToAssociation<>(databases.getWorkflowDb().stepAttempts(), getStepAttemptId());
-    this.__assoc_workflow_attempt_datastore = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAttemptDatastores(), (long) getWorkflowAttemptDatastoreId());
+    this.__assoc_workflow_attempt_datastore = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAttemptDatastores(), getWorkflowAttemptDatastoreId());
   }
 
-  public StepAttemptDatastore(long id, final long step_attempt_id, final int workflow_attempt_datastore_id, final int ds_action) {
+  public StepAttemptDatastore(long id, final long step_attempt_id, final long workflow_attempt_datastore_id, final int ds_action) {
     super(null);
     attributes = new Attributes(id, step_attempt_id, workflow_attempt_datastore_id, ds_action);
   }
 
   public static StepAttemptDatastore newDefaultInstance(long id) {
-    return new StepAttemptDatastore(id, 0L, 0, 0);
+    return new StepAttemptDatastore(id, 0L, 0L, 0);
   }
 
   public StepAttemptDatastore(Attributes attributes, IDatabases databases) {
@@ -106,7 +106,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
 
     if (databases != null) {
       this.__assoc_step_attempt = new BelongsToAssociation<>(databases.getWorkflowDb().stepAttempts(), getStepAttemptId());
-      this.__assoc_workflow_attempt_datastore = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAttemptDatastores(), (long) getWorkflowAttemptDatastoreId());
+      this.__assoc_workflow_attempt_datastore = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAttemptDatastores(), getWorkflowAttemptDatastoreId());
     }
   }
 
@@ -129,7 +129,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
 
     if (databases != null) {
       this.__assoc_step_attempt = new BelongsToAssociation<>(databases.getWorkflowDb().stepAttempts(), getStepAttemptId());
-      this.__assoc_workflow_attempt_datastore = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAttemptDatastores(), (long) getWorkflowAttemptDatastoreId());
+      this.__assoc_workflow_attempt_datastore = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAttemptDatastores(), getWorkflowAttemptDatastoreId());
     }
   }
 
@@ -150,11 +150,11 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
     return this;
   }
 
-  public int getWorkflowAttemptDatastoreId() {
+  public long getWorkflowAttemptDatastoreId() {
     return attributes.getWorkflowAttemptDatastoreId();
   }
 
-  public StepAttemptDatastore setWorkflowAttemptDatastoreId(int newval) {
+  public StepAttemptDatastore setWorkflowAttemptDatastoreId(long newval) {
     attributes.setWorkflowAttemptDatastoreId(newval);
     if(__assoc_workflow_attempt_datastore != null){
       this.__assoc_workflow_attempt_datastore.setOwnerId(newval);
@@ -179,7 +179,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
         setStepAttemptId((Long)value);
         break;
       case workflow_attempt_datastore_id:
-        setWorkflowAttemptDatastoreId((Integer)value);
+        setWorkflowAttemptDatastoreId((Long)value);
         break;
       case ds_action:
         setDsAction((Integer)value);
@@ -195,7 +195,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
       return;
     }
     if (fieldName.equals("workflow_attempt_datastore_id")) {
-      setWorkflowAttemptDatastoreId((Integer)  value);
+      setWorkflowAttemptDatastoreId((Long)  value);
       return;
     }
     if (fieldName.equals("ds_action")) {
@@ -210,7 +210,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
       case step_attempt_id:
         return long.class;
       case workflow_attempt_datastore_id:
-        return int.class;
+        return long.class;
       case ds_action:
         return int.class;
       default:
@@ -223,7 +223,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
       return long.class;
     }
     if (fieldName.equals("workflow_attempt_datastore_id")) {
-      return int.class;
+      return long.class;
     }
     if (fieldName.equals("ds_action")) {
       return int.class;
@@ -347,7 +347,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
   public WorkflowAttemptDatastore createWorkflowAttemptDatastore(final int workflow_attempt_id, final String name, final String path, final String class_name) throws IOException {
  
     WorkflowAttemptDatastore newWorkflowAttemptDatastore = databases.getWorkflowDb().workflowAttemptDatastores().create(workflow_attempt_id, name, path, class_name);
-    setWorkflowAttemptDatastoreId(JackUtility.safeLongToInt(newWorkflowAttemptDatastore.getId()));
+    setWorkflowAttemptDatastoreId(newWorkflowAttemptDatastore.getId());
     save();
     __assoc_workflow_attempt_datastore.clearCache();
     return newWorkflowAttemptDatastore;
@@ -356,7 +356,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
   public WorkflowAttemptDatastore createWorkflowAttemptDatastore() throws IOException {
  
     WorkflowAttemptDatastore newWorkflowAttemptDatastore = databases.getWorkflowDb().workflowAttemptDatastores().create(0, "", "", "");
-    setWorkflowAttemptDatastoreId(JackUtility.safeLongToInt(newWorkflowAttemptDatastore.getId()));
+    setWorkflowAttemptDatastoreId(newWorkflowAttemptDatastore.getId());
     save();
     __assoc_workflow_attempt_datastore.clearCache();
     return newWorkflowAttemptDatastore;
@@ -384,18 +384,18 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = -4330153902670057112L;
+    public static final long serialVersionUID = -4876270912092984447L;
 
     // Fields
     private long __step_attempt_id;
-    private int __workflow_attempt_datastore_id;
+    private long __workflow_attempt_datastore_id;
     private int __ds_action;
 
     public Attributes(long id) {
       super(id);
     }
 
-    public Attributes(long id, final long step_attempt_id, final int workflow_attempt_datastore_id, final int ds_action) {
+    public Attributes(long id, final long step_attempt_id, final long workflow_attempt_datastore_id, final int ds_action) {
       super(id);
       this.__step_attempt_id = step_attempt_id;
       this.__workflow_attempt_datastore_id = workflow_attempt_datastore_id;
@@ -403,13 +403,13 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
     }
 
     public static Attributes newDefaultInstance(long id) {
-      return new Attributes(id, 0L, 0, 0);
+      return new Attributes(id, 0L, 0L, 0);
     }
 
     public Attributes(long id, Map<Enum, Object> fieldsMap) {
       super(id);
       long step_attempt_id = (Long)fieldsMap.get(StepAttemptDatastore._Fields.step_attempt_id);
-      int workflow_attempt_datastore_id = (Integer)fieldsMap.get(StepAttemptDatastore._Fields.workflow_attempt_datastore_id);
+      long workflow_attempt_datastore_id = (Long)fieldsMap.get(StepAttemptDatastore._Fields.workflow_attempt_datastore_id);
       int ds_action = (Integer)fieldsMap.get(StepAttemptDatastore._Fields.ds_action);
       this.__step_attempt_id = step_attempt_id;
       this.__workflow_attempt_datastore_id = workflow_attempt_datastore_id;
@@ -433,11 +433,11 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
       return this;
     }
 
-    public int getWorkflowAttemptDatastoreId() {
+    public long getWorkflowAttemptDatastoreId() {
       return __workflow_attempt_datastore_id;
     }
 
-    public Attributes setWorkflowAttemptDatastoreId(int newval) {
+    public Attributes setWorkflowAttemptDatastoreId(long newval) {
       this.__workflow_attempt_datastore_id = newval;
       cachedHashCode = 0;
       return this;
@@ -459,7 +459,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
           setStepAttemptId((Long)value);
           break;
         case workflow_attempt_datastore_id:
-          setWorkflowAttemptDatastoreId((Integer)value);
+          setWorkflowAttemptDatastoreId((Long)value);
           break;
         case ds_action:
           setDsAction((Integer)value);
@@ -475,7 +475,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
         return;
       }
       if (fieldName.equals("workflow_attempt_datastore_id")) {
-        setWorkflowAttemptDatastoreId((Integer)value);
+        setWorkflowAttemptDatastoreId((Long)value);
         return;
       }
       if (fieldName.equals("ds_action")) {
@@ -490,7 +490,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
         case step_attempt_id:
           return long.class;
         case workflow_attempt_datastore_id:
-          return int.class;
+          return long.class;
         case ds_action:
           return int.class;
         default:
@@ -503,7 +503,7 @@ public class StepAttemptDatastore extends ModelWithId<StepAttemptDatastore, IDat
         return long.class;
       }
       if (fieldName.equals("workflow_attempt_datastore_id")) {
-        return int.class;
+        return long.class;
       }
       if (fieldName.equals("ds_action")) {
         return int.class;

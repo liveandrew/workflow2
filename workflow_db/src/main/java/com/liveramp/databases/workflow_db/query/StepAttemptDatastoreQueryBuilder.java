@@ -108,12 +108,12 @@ public class StepAttemptDatastoreQueryBuilder extends AbstractQueryBuilder<StepA
     return this;
   }
 
-  public StepAttemptDatastoreQueryBuilder workflowAttemptDatastoreId(Integer value) {
+  public StepAttemptDatastoreQueryBuilder workflowAttemptDatastoreId(Long value) {
     addWhereConstraint(new WhereConstraint<>(StepAttemptDatastore._Fields.workflow_attempt_datastore_id, JackMatchers.equalTo(value)));
     return this;
   }
 
-  public StepAttemptDatastoreQueryBuilder whereWorkflowAttemptDatastoreId(IWhereOperator<Integer> operator) {
+  public StepAttemptDatastoreQueryBuilder whereWorkflowAttemptDatastoreId(IWhereOperator<Long> operator) {
     addWhereConstraint(new WhereConstraint<>(StepAttemptDatastore._Fields.workflow_attempt_datastore_id, operator));
     return this;
   }

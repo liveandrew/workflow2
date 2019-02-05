@@ -44,12 +44,12 @@ public class BaseStepAttemptDatastorePersistenceImpl extends AbstractDatabaseMod
   @Override
   public StepAttemptDatastore create(Map<Enum, Object> fieldsMap) throws IOException {
     long step_attempt_id = (Long) fieldsMap.get(StepAttemptDatastore._Fields.step_attempt_id);
-    int workflow_attempt_datastore_id = (Integer) fieldsMap.get(StepAttemptDatastore._Fields.workflow_attempt_datastore_id);
+    long workflow_attempt_datastore_id = (Long) fieldsMap.get(StepAttemptDatastore._Fields.workflow_attempt_datastore_id);
     int ds_action = (Integer) fieldsMap.get(StepAttemptDatastore._Fields.ds_action);
     return create(step_attempt_id, workflow_attempt_datastore_id, ds_action);
   }
 
-  public StepAttemptDatastore create(final long step_attempt_id, final int workflow_attempt_datastore_id, final int ds_action) throws IOException {
+  public StepAttemptDatastore create(final long step_attempt_id, final long workflow_attempt_datastore_id, final int ds_action) throws IOException {
     StatementCreator statementCreator = new StatementCreator() {
       private final List<String> nonNullFields = new ArrayList<>();
       private final List<AttrSetter> statementSetters = new ArrayList<>();
@@ -63,7 +63,7 @@ public class BaseStepAttemptDatastorePersistenceImpl extends AbstractDatabaseMod
 
         nonNullFields.add("workflow_attempt_datastore_id");
         int fieldIndex1 = index++;
-        statementSetters.add(stmt -> stmt.setInt(fieldIndex1, workflow_attempt_datastore_id));
+        statementSetters.add(stmt -> stmt.setLong(fieldIndex1, workflow_attempt_datastore_id));
 
         nonNullFields.add("ds_action");
         int fieldIndex2 = index++;
@@ -92,7 +92,7 @@ public class BaseStepAttemptDatastorePersistenceImpl extends AbstractDatabaseMod
   }
 
   public StepAttemptDatastore createDefaultInstance() throws IOException {
-    return create(0L, 0, 0);
+    return create(0L, 0L, 0);
   }
 
   public List<StepAttemptDatastore> find(Map<Enum, Object> fieldsMap) throws IOException {
@@ -145,7 +145,7 @@ public class BaseStepAttemptDatastorePersistenceImpl extends AbstractDatabaseMod
               preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
               break;
             case workflow_attempt_datastore_id:
-              preparedStatement.setInt(i+1, (Integer) nonNullValues.get(i));
+              preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
               break;
             case ds_action:
               preparedStatement.setInt(i+1, (Integer) nonNullValues.get(i));
@@ -187,7 +187,7 @@ public class BaseStepAttemptDatastorePersistenceImpl extends AbstractDatabaseMod
                 preparedStatement.setLong(++index, (Long) parameter);
                 break;
               case workflow_attempt_datastore_id:
-                preparedStatement.setInt(++index, (Integer) parameter);
+                preparedStatement.setLong(++index, (Long) parameter);
                 break;
               case ds_action:
                 preparedStatement.setInt(++index, (Integer) parameter);
@@ -208,7 +208,7 @@ public class BaseStepAttemptDatastorePersistenceImpl extends AbstractDatabaseMod
       stmt.setLong(index++, model.getStepAttemptId());
     }
     {
-      stmt.setInt(index++, model.getWorkflowAttemptDatastoreId());
+      stmt.setLong(index++, model.getWorkflowAttemptDatastoreId());
     }
     {
       stmt.setInt(index++, model.getDsAction());
@@ -222,7 +222,7 @@ public class BaseStepAttemptDatastorePersistenceImpl extends AbstractDatabaseMod
     long id = rs.getLong("id");
     return new StepAttemptDatastore(id,
       allFields || selectedFields.contains(StepAttemptDatastore._Fields.step_attempt_id) ? getLongOrNull(rs, "step_attempt_id") : 0L,
-      allFields || selectedFields.contains(StepAttemptDatastore._Fields.workflow_attempt_datastore_id) ? getIntOrNull(rs, "workflow_attempt_datastore_id") : 0,
+      allFields || selectedFields.contains(StepAttemptDatastore._Fields.workflow_attempt_datastore_id) ? getLongOrNull(rs, "workflow_attempt_datastore_id") : 0L,
       allFields || selectedFields.contains(StepAttemptDatastore._Fields.ds_action) ? getIntOrNull(rs, "ds_action") : 0,
       databases
     );
@@ -232,7 +232,7 @@ public class BaseStepAttemptDatastorePersistenceImpl extends AbstractDatabaseMod
     return find(Collections.<Enum, Object>singletonMap(StepAttemptDatastore._Fields.step_attempt_id, value));
   }
 
-  public List<StepAttemptDatastore> findByWorkflowAttemptDatastoreId(final int value) throws IOException {
+  public List<StepAttemptDatastore> findByWorkflowAttemptDatastoreId(final long value) throws IOException {
     return find(Collections.<Enum, Object>singletonMap(StepAttemptDatastore._Fields.workflow_attempt_datastore_id, value));
   }
 

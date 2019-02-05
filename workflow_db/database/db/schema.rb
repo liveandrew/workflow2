@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20181019184144) do
+ActiveRecord::Schema.define(:version => 20190204201620) do
 
   create_table "application_configured_notifications", :force => true do |t|
     t.integer "application_id",             :limit => 8, :null => false
@@ -162,7 +162,7 @@ ActiveRecord::Schema.define(:version => 20181019184144) do
 
   create_table "step_attempt_datastores", :force => true do |t|
     t.integer "step_attempt_id",               :limit => 8, :null => false
-    t.integer "workflow_attempt_datastore_id",              :null => false
+    t.integer "workflow_attempt_datastore_id", :limit => 8, :null => false
     t.integer "ds_action",                                  :null => false
   end
 
