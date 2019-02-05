@@ -507,29 +507,32 @@ public class WorkflowQueries {
                                                                                                                      Long startedAfter,
                                                                                                                      Long startedBefore) throws IOException {
 
-    Set<Column> columns = Sets.newHashSet(WorkflowAttemptDatastore.TBL.getAllColumns());
-    columns.add(WorkflowExecution.APPLICATION_ID);
-    columns.add(StepAttemptDatastore.DS_ACTION);
+    //  TODO re-enable after foreign id migration
+    return new NestedMultimap<>();
 
-    GenericQuery on = joinStepAttempts(workflowExecutionQuery(databases.getWorkflowDb(), null, null, startedAfter, startedBefore))
-        .innerJoin(StepAttemptDatastore.TBL)
-        .on(StepAttempt.ID.equalTo(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class)))
-        .innerJoin(WorkflowAttemptDatastore.TBL)
-        .on(StepAttemptDatastore.WORKFLOW_ATTEMPT_DATASTORE_ID.equalTo(WorkflowAttemptDatastore.ID.as(Integer.class)))
-        .select(columns);
-
-    NestedMultimap<Long, DSAction, WorkflowAttemptDatastore> stores = new NestedMultimap<>();
-    for (Record record : on.fetch()) {
-
-      Integer appId = record.getInt(WorkflowExecution.APPLICATION_ID);
-      Integer dsAction = record.getInt(StepAttemptDatastore.DS_ACTION);
-      WorkflowAttemptDatastore model = record.getModel(WorkflowAttemptDatastore.TBL, databases);
-
-      stores.put(appId.longValue(), DSAction.findByValue(dsAction), model);
-
-    }
-
-    return stores;
+    //    Set<Column> columns = Sets.newHashSet(WorkflowAttemptDatastore.TBL.getAllColumns());
+    //    columns.add(WorkflowExecution.APPLICATION_ID);
+    //    columns.add(StepAttemptDatastore.DS_ACTION);
+    //
+    //    GenericQuery on = joinStepAttempts(workflowExecutionQuery(databases.getWorkflowDb(), null, null, startedAfter, startedBefore))
+    //        .innerJoin(StepAttemptDatastore.TBL)
+    //        .on(StepAttempt.ID.equalTo(StepAttemptDatastore.STEP_ATTEMPT_ID.as(Long.class)))
+    //        .innerJoin(WorkflowAttemptDatastore.TBL)
+    //        .on(StepAttemptDatastore.WORKFLOW_ATTEMPT_DATASTORE_ID.equalTo(WorkflowAttemptDatastore.ID.as(Integer.class)))
+    //        .select(columns);
+    //
+    //    NestedMultimap<Long, DSAction, WorkflowAttemptDatastore> stores = new NestedMultimap<>();
+    //    for (Record record : on.fetch()) {
+    //
+    //      Integer appId = record.getInt(WorkflowExecution.APPLICATION_ID);
+    //      Integer dsAction = record.getInt(StepAttemptDatastore.DS_ACTION);
+    //      WorkflowAttemptDatastore model = record.getModel(WorkflowAttemptDatastore.TBL, databases);
+    //
+    //      stores.put(appId.longValue(), DSAction.findByValue(dsAction), model);
+    //
+    //    }
+    //
+    //    return stores;
 
   }
 
