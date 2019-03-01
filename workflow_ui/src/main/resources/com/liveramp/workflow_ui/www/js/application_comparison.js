@@ -196,6 +196,9 @@ function renderComparison(currentStats, targetServlet){
           }
         })
     ).done(function (period1, period2) {
+          console.log("Trends:");
+          console.log(period1);
+          console.log(period2);
           refreshTrendsSuccess(period1[0], period2[0]);
         });
   }
@@ -260,6 +263,8 @@ function renderComparison(currentStats, targetServlet){
         started_before: moment(absoluteEnd.datepicker('getDate')).toDate().getTime()
       },
       success: function (dataStr) {
+        console.log("Absolute:");
+        console.log(dataStr);
         refreshAbsoluteSuccess(dataStr)
       }
     });
