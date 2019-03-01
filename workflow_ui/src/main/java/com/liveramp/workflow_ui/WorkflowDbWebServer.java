@@ -47,6 +47,7 @@ import com.liveramp.workflow_ui.servlet.ExecutionQueryServlet;
 import com.liveramp.workflow_ui.servlet.JSONServlet;
 import com.liveramp.workflow_ui.servlet.NameNodeUsageServlet;
 import com.liveramp.workflow_ui.servlet.PipelineServlet;
+import com.liveramp.workflow_ui.servlet.ShuffleIOServlet;
 import com.liveramp.workflow_ui.servlet.StatServlet;
 import com.liveramp.workflow_ui.servlet.TaskExceptionServlet;
 import com.liveramp.workflow_ui.servlet.command.UserConfigServlet;
@@ -147,7 +148,7 @@ public class WorkflowDbWebServer implements Runnable {
       context.addServlet(new ServletHolder(new JSONServlet(new ClusterUsageServlet(), databases)), "/cluster_usage");
       context.addServlet(new ServletHolder(new JSONServlet(new NameNodeUsageServlet(), databases)), "/namenode_usage");
       context.addServlet(new ServletHolder(new JSONServlet(new HDFSIOServlet(), databases)), "/hdfs_io");
-      context.addServlet(new ServletHolder(new JSONServlet(new HDFSIOServlet(), databases)), "/shuffle_io");
+      context.addServlet(new ServletHolder(new JSONServlet(new ShuffleIOServlet(), databases)), "/shuffle_io");
       context.addServlet(new ServletHolder(new JSONServlet(new ApplicationListServlet(), databases)), "/applications");
       context.addServlet(new ServletHolder(new JSONServlet(new ApplicationQueryServlet(), databases)), "/application");
       context.addServlet(new ServletHolder(new JSONServlet(new ExecutionQueryServlet(), databases)), "/executions");
