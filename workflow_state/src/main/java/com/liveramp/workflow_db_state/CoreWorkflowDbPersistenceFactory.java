@@ -157,13 +157,11 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
         @SuppressWarnings("unchecked") Collection<Map.Entry<DSAction, DataStoreInfo>> entries = step.getDataStores().entries();
         for (Map.Entry<DSAction, DataStoreInfo> entry : entries) {
           WorkflowAttemptDatastore workflowAttemptDatastore = datastores.get(entry.getValue());
-          if(workflowAttemptDatastore.getId() <= Integer.MAX_VALUE) { //desperate hack to get things working again at 5 AM - need to migrate column
-            rldb.stepAttemptDatastores().create(
-                stepAttempt.getId(),
-                0,
-                entry.getKey().ordinal()
-            );
-          }
+          rldb.stepAttemptDatastores().create(
+              stepAttempt.getId(),
+              workflowAttemptDatastore.getId(),
+              entry.getKey().ordinal()
+          );
         }
 
       }
