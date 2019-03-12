@@ -4,7 +4,7 @@ MAIN_CLASS="com.liveramp.workflow_monitor.WorkflowDbMonitorRunner"
 
 if [[ -z "$(ps ax | grep $MAIN_CLASS | grep -v grep)" ]]; then
   cd /apps/workflow_monitor/current
-  nohup java -Xmx4096m -Dlog4j.configuration=com/liveramp/workflow2/workflow_monitor/log4j/drfa.log4j.xml -cp workflow_monitor.job.jar $MAIN_CLASS $* 2>&1 >> log/workflow_monitor.out &
+  nohup java -Xmx6000m -Dlog4j.configuration=com/liveramp/workflow2/workflow_monitor/log4j/drfa.log4j.xml -cp workflow_monitor.job.jar $MAIN_CLASS $* 2>&1 >> log/workflow_monitor.out &
 else
   echo "Workflow Monitor already running!"
   exit 1
