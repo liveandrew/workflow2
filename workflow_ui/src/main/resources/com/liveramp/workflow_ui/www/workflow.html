@@ -623,7 +623,7 @@
       var buttonBlock = $('<td></td>');
       if (displayRevert(e)) {
         buttonBlock.append(getRevertButton(e.id));
-      } else if (displayForceComplete(e)) {
+      } else if (displayForceComplete(e, currentData.process_status)) {
         buttonBlock.append(getManuallyCompleteButton(e.id));
       }
 
@@ -881,9 +881,10 @@
     return isStepMutable(step) && (step.status == "completed" || step.status == "manually_completed")
   }
 
-  function displayForceComplete(step) {
+  function displayForceComplete(step, status) {
     return isStepMutable(step) &&
-        (step.status == "waiting" || step.status == "failed" || step.status == "reverted")
+        (step.status == "waiting" || step.status == "failed" || step.status == "reverted" ||
+          (step.status == "running" && status == "TIMED_OUT"))
   }
 
   function getManuallyCompleteButton(stepId) {
