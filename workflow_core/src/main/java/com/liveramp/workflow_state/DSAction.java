@@ -11,8 +11,8 @@ public enum DSAction {
   CONSUMES,
 
   //  output
-  CREATES,
-  CREATES_TEMPORARY,
+  CREATES,           // auto sweep store
+  CREATES_TEMPORARY, // auto sweep store
   WRITES_TO;
 
   public static final Set<DSAction> INPUT = Sets.newHashSet(

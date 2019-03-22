@@ -92,14 +92,26 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     mark(DSAction.READS_FROM, store);
   }
 
+  /**
+   * The store will be automatically swept before data is written to it.
+   * The store path will be shown on the workflow UI.
+   */
   protected void creates(DataStore store) {
     mark(DSAction.CREATES, store);
   }
 
+  /**
+   * The store will be automatically swept before data is written to it.
+   * The store path will be shown on the workflow UI.
+   */
   protected void createsTemporary(DataStore store) {
     mark(DSAction.CREATES_TEMPORARY, store);
   }
 
+  /**
+   * The store will NOT be automatically swept before data is written to it.
+   * The store path will be shown on the workflow UI.
+   */
   protected void writesTo(DataStore store) {
     mark(DSAction.WRITES_TO, store);
   }
