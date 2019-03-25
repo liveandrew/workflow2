@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.jgrapht.DirectedGraph;
@@ -135,7 +136,7 @@ public class BaseWorkflowRunner<Config> {
         notifications
     );
 
-    this.rollbackExecutor = new StepExecutor<Config>(
+    this.rollbackExecutor = new StepExecutor<>(
         new RollbackStrategy<>(),
         persistence,
         options.getMaxConcurrentSteps(),
@@ -145,7 +146,7 @@ public class BaseWorkflowRunner<Config> {
         initializedData.getShutdownHook(),
         handlerFactory,
         onStart,
-        options.getSuccessCallbacks(),
+        Lists.newArrayList(), //  workflow success callbacks shouldn't be called when a rollback completes
         new NotificationManager("ROLLBACK", persistence, handlerFactory, options.getUrlBuilder())
     );
 

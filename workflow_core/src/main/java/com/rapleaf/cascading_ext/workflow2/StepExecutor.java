@@ -24,6 +24,7 @@ import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_core.runner.BaseStep;
+import com.liveramp.workflow_state.ExecutionState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.rollback.SuccessCallback;
 import com.rapleaf.cascading_ext.workflow2.strategy.WorkflowStrategy;
