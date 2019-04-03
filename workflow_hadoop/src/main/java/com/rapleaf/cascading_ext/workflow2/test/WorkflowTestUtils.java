@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -55,13 +56,27 @@ public class WorkflowTestUtils {
   public static WorkflowRunner execute(Set<Step> steps,
                                 HadoopWorkflowOptions options,
                                 ContextStorage storage,
-                                ResourceDeclarer manager) throws IOException {
+                                ResourceDeclarer manager, IWorkflowDb workflowDb) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
-        new WorkflowDbPersistenceFactory(),
+        new WorkflowDbPersistenceFactory(workflowDb),
         options
             .setStorage(storage)
             .setResourceManager(manager),
         steps);
+    workflowRunner.run();
+    return workflowRunner;
+  }
+
+  public static WorkflowRunner execute(Set<Step> steps,
+                                       HadoopWorkflowOptions options,
+                                       ContextStorage storage,
+                                       ResourceDeclarer manager) throws IOException {
+    WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
+            new WorkflowDbPersistenceFactory(),
+            options
+                    .setStorage(storage)
+                    .setResourceManager(manager),
+            steps);
     workflowRunner.run();
     return workflowRunner;
   }

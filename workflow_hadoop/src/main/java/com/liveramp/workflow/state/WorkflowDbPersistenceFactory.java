@@ -2,6 +2,7 @@ package com.liveramp.workflow.state;
 
 import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.workflow_core.JVMState;
 import com.liveramp.workflow_db_state.CoreWorkflowDbPersistenceFactory;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
@@ -12,6 +13,10 @@ public class WorkflowDbPersistenceFactory extends CoreWorkflowDbPersistenceFacto
     DbHadoopWorkflow> {
   public WorkflowDbPersistenceFactory() {
     super(new JVMState());
+  }
+
+  public WorkflowDbPersistenceFactory(IWorkflowDb workflowDb) {
+    super(new JVMState(), workflowDb);
   }
 
   @Override

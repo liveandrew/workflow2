@@ -1,22 +1,9 @@
 package com.liveramp.workflow_db_state;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.commons.lang.SerializationUtils;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IDatabases;
@@ -46,16 +33,33 @@ import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
+import org.apache.commons.lang.SerializationUtils;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     OPTS extends BaseWorkflowOptions<OPTS>,
     WORKFLOW extends InitializedWorkflow<S, InitializedDbPersistence, OPTS>> extends WorkflowPersistenceFactory<S, InitializedDbPersistence, OPTS, WORKFLOW> {
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
+  IWorkflowDb workflowDb;
 
   public CoreWorkflowDbPersistenceFactory(StepStateManager<S> manager) {
-    super(manager);
+    this(manager, new DatabasesImpl().getWorkflowDb());
   }
 
+  public CoreWorkflowDbPersistenceFactory(StepStateManager<S> manager, IWorkflowDb workflowDb) {
+    super(manager);
+    this.workflowDb = workflowDb;
+  }
 
   @Override
   public synchronized InitializedDbPersistence initializeInternal(String name,
@@ -70,9 +74,6 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
                                                                   String implementationBuild
   ) throws IOException {
 
-
-    DatabasesImpl databases = new DatabasesImpl();
-    IWorkflowDb workflowDb = databases.getWorkflowDb();
     workflowDb.disableCaching();
 
     Application application = getApplication(workflowDb, name, options.getAppType());
@@ -81,9 +82,9 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     WorkflowExecution.Attributes execution = getOrCreateExecution(workflowDb, application, name, options.getAppType(), options.getScopeIdentifier(), options.getTags());
     LOG.info("Using workflow execution: " + execution + " id " + execution.getId());
 
-    cleanUpRunningAttempts(databases, execution);
+    cleanUpRunningAttempts(workflowDb, execution);
 
-    WorkflowAttempt attempt = createAttempt(databases,
+    WorkflowAttempt attempt = createAttempt(workflowDb,
         host,
         username,
         options.getDescription(),
@@ -228,10 +229,9 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
 
   }
 
-  private void cleanUpRunningAttempts(IDatabases databases, WorkflowExecution.Attributes execution) throws IOException {
-    IWorkflowDb rldb = databases.getWorkflowDb();
+  private void cleanUpRunningAttempts(IWorkflowDb workflowDb, WorkflowExecution.Attributes execution) throws IOException {
 
-    List<WorkflowAttempt> prevAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
+    List<WorkflowAttempt> prevAttempts = WorkflowQueries.getLiveWorkflowAttempts(workflowDb, execution.getId());
     LOG.info("Found previous attempts: " + prevAttempts);
 
     for (WorkflowAttempt attempt : prevAttempts) {
@@ -291,8 +291,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     return str;
   }
 
-  private WorkflowAttempt createAttempt(IDatabases databases, String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution.Attributes execution, String remote, String implementationBuild, Class<? extends ResourceDeclarerFactory> resourceFactory) throws IOException {
-    IWorkflowDb rldb = databases.getWorkflowDb();
+  private WorkflowAttempt createAttempt(IWorkflowDb workflowDb, String host, String username, String description, String pool, String priority, String launchDir, String launchJar, AlertsHandler providedHandler, Set<WorkflowRunnerNotification> configuredNotifications, WorkflowExecution.Attributes execution, String remote, String implementationBuild, Class<? extends ResourceDeclarerFactory> resourceFactory) throws IOException {
 
     Map<AlertSeverity, String> recipients = Maps.newHashMap();
     for (AlertSeverity severity : AlertSeverity.values()) {
@@ -300,7 +299,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     }
 
     StepStateManager<S> manager = getManager();
-    WorkflowAttempt attempt = rldb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
+    WorkflowAttempt attempt = workflowDb.workflowAttempts().create((int)execution.getId(), username, priority, pool, host)
         .setStatus(WorkflowAttemptStatus.INITIALIZING.ordinal())
         .setDescription(truncateDescription(description))
         .setLaunchDir(launchDir)
@@ -319,7 +318,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     attempt.save();
 
     if(!manager.isLive()) {
-      BackgroundAttemptInfo backgroundInfo = rldb.backgroundAttemptInfos().create(attempt.getId());
+      BackgroundAttemptInfo backgroundInfo = workflowDb.backgroundAttemptInfos().create(attempt.getId());
 
       if(resourceFactory != null){
         backgroundInfo.setResourceManagerFactory(resourceFactory.getName());
@@ -333,11 +332,11 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
 
     for (WorkflowRunnerNotification notification : configuredNotifications) {
 
-      ConfiguredNotification configured = buildConfiguredNotification(rldb, notification, recipients.get(notification.serverity()));
+      ConfiguredNotification configured = buildConfiguredNotification(workflowDb, notification, recipients.get(notification.serverity()));
       if (configured != null) {
         configured.save();
 
-        WorkflowAttemptConfiguredNotification attemptConfigured = rldb.workflowAttemptConfiguredNotifications().create(attempt.getId(), configured.getId());
+        WorkflowAttemptConfiguredNotification attemptConfigured = workflowDb.workflowAttemptConfiguredNotifications().create(attempt.getId(), configured.getId());
         attemptConfigured.save();
 
       }
