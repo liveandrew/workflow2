@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -37,27 +38,46 @@ public class WorkflowTestUtils {
   }
 
   public static WorkflowRunner execute(Set<Step> steps, HadoopWorkflowOptions options) throws IOException {
-    return execute(steps, options, new InMemoryContext(), ResourceManagers.inMemoryResourceManager());
+    return execute(steps, options, new InMemoryContext(), ResourceManagers.inMemoryResourceManager(), new WorkflowDbPersistenceFactory());
   }
 
   public static WorkflowRunner execute(BaseAction action, HadoopWorkflowOptions options) throws IOException {
-    return execute(Sets.newHashSet(new Step(action)), options, new InMemoryContext(), ResourceManagers.inMemoryResourceManager());
+    return execute(
+            Sets.newHashSet(new Step(action)),
+            options,
+            new InMemoryContext(),
+            ResourceManagers.inMemoryResourceManager(),
+            new WorkflowDbPersistenceFactory()
+    );
   }
 
   public static WorkflowRunner execute(Step step, HadoopWorkflowOptions options) throws IOException {
-    return execute(Sets.newHashSet(step), options, new InMemoryContext(), ResourceManagers.inMemoryResourceManager());
+    return execute(
+            Sets.newHashSet(step),
+            options,
+            new InMemoryContext(),
+            ResourceManagers.inMemoryResourceManager(),
+            new WorkflowDbPersistenceFactory()
+    );
   }
 
   public static WorkflowRunner execute(Set<Step> steps, ContextStorage storage) throws IOException {
-    return execute(steps, HadoopWorkflowOptions.test(), storage, ResourceManagers.inMemoryResourceManager());
+    return execute(
+            steps,
+            HadoopWorkflowOptions.test(),
+            storage,
+            ResourceManagers.inMemoryResourceManager(),
+            new WorkflowDbPersistenceFactory()
+    );
   }
 
   public static WorkflowRunner execute(Set<Step> steps,
                                 HadoopWorkflowOptions options,
                                 ContextStorage storage,
-                                ResourceDeclarer manager) throws IOException {
+                                ResourceDeclarer manager,
+                                WorkflowDbPersistenceFactory persistenceFactory) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
-        new WorkflowDbPersistenceFactory(),
+        persistenceFactory,
         options
             .setStorage(storage)
             .setResourceManager(manager),
