@@ -9,14 +9,16 @@ import com.liveramp.workflow_db_state.InitializedDbPersistence;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 
+import java.util.function.Supplier;
+
 public class WorkflowDbPersistenceFactory extends CoreWorkflowDbPersistenceFactory<Step, HadoopWorkflowOptions,
     DbHadoopWorkflow> {
   public WorkflowDbPersistenceFactory() {
     super(new JVMState());
   }
 
-  public WorkflowDbPersistenceFactory(IWorkflowDb workflowDb) {
-    super(new JVMState(), workflowDb);
+  public WorkflowDbPersistenceFactory(Supplier<IWorkflowDb> supplier) {
+    super(new JVMState(), supplier);
   }
 
   @Override

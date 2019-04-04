@@ -45,20 +45,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     OPTS extends BaseWorkflowOptions<OPTS>,
     WORKFLOW extends InitializedWorkflow<S, InitializedDbPersistence, OPTS>> extends WorkflowPersistenceFactory<S, InitializedDbPersistence, OPTS, WORKFLOW> {
+
   private static final Logger LOG = LoggerFactory.getLogger(DbPersistence.class);
-  IWorkflowDb workflowDb;
+  Supplier<IWorkflowDb> workflowDbSupplier;
 
   public CoreWorkflowDbPersistenceFactory(StepStateManager<S> manager) {
-    this(manager, new DatabasesImpl().getWorkflowDb());
+    this(manager, () -> new DatabasesImpl().getWorkflowDb());
   }
 
-  public CoreWorkflowDbPersistenceFactory(StepStateManager<S> manager, IWorkflowDb workflowDb) {
+  public CoreWorkflowDbPersistenceFactory(StepStateManager<S> manager, Supplier<IWorkflowDb> supplier) {
     super(manager);
-    this.workflowDb = workflowDb;
+    this.workflowDbSupplier = supplier;
   }
 
   @Override
@@ -73,7 +75,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
                                                                   String remote,
                                                                   String implementationBuild
   ) throws IOException {
-
+    IWorkflowDb workflowDb = workflowDbSupplier.get();
     workflowDb.disableCaching();
 
     Application application = getApplication(workflowDb, name, options.getAppType());
