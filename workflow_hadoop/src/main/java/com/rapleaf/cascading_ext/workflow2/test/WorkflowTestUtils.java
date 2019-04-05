@@ -2,6 +2,7 @@ package com.rapleaf.cascading_ext.workflow2.test;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Sets;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
@@ -138,6 +139,10 @@ public class WorkflowTestUtils {
     return initializeWorkflow(TEST_WORKFLOW_NAME, HadoopWorkflowOptions.test(), ResourceManagers.dbResourceManager());
   }
 
+  public static DbHadoopWorkflow initializeWorkflow(Supplier<IWorkflowDb> supplier) throws IOException {
+    return initializeWorkflow(TEST_WORKFLOW_NAME, HadoopWorkflowOptions.test(), ResourceManagers.dbResourceManager(), supplier);
+  }
+
   public static DbHadoopWorkflow initializeWorkflow(HadoopWorkflowOptions options) throws IOException {
     return initializeWorkflow(TEST_WORKFLOW_NAME, options, ResourceManagers.dbResourceManager());
   }
@@ -156,5 +161,13 @@ public class WorkflowTestUtils {
             .setResourceManager(declarer));
   }
 
-
+  public static DbHadoopWorkflow initializeWorkflow(String workflowName,
+                                                    HadoopWorkflowOptions options,
+                                                    ResourceDeclarer declarer,
+                                                    Supplier<IWorkflowDb> workflowDbSupplier) throws IOException {
+    return new WorkflowDbPersistenceFactory(workflowDbSupplier).initialize(
+        workflowName,
+        options
+            .setResourceManager(declarer));
+  }
 }
