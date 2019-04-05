@@ -22,6 +22,7 @@ import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.options.HadoopWorkflowOptions;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
+import com.rapleaf.jack.transaction.ITransactor;
 
 public class WorkflowTestUtils {
   private static final String TEST_WORKFLOW_NAME = "Test workflow";
@@ -139,8 +140,8 @@ public class WorkflowTestUtils {
     return initializeWorkflow(TEST_WORKFLOW_NAME, HadoopWorkflowOptions.test(), ResourceManagers.dbResourceManager());
   }
 
-  public static DbHadoopWorkflow initializeWorkflow(Supplier<IWorkflowDb> supplier) throws IOException {
-    return initializeWorkflow(TEST_WORKFLOW_NAME, HadoopWorkflowOptions.test(), ResourceManagers.dbResourceManager(), supplier);
+  public static DbHadoopWorkflow initializeWorkflow(Supplier<IWorkflowDb> supplier, ITransactor<IWorkflowDb> transactor) throws IOException {
+    return initializeWorkflow(TEST_WORKFLOW_NAME, HadoopWorkflowOptions.test(), ResourceManagers.defaultResourceManager(transactor), supplier);
   }
 
   public static DbHadoopWorkflow initializeWorkflow(HadoopWorkflowOptions options) throws IOException {
