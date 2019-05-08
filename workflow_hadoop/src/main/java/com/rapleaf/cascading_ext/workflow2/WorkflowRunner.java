@@ -107,7 +107,8 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
             initializedData.getOptions().getLockProvider().create(),
             initializedData.getOptions().getFlowSubmissionController(),
             initializedData.getOptions().getCascadingUtil(),
-            initializedData.getOptions().getTmpDirFilter()
+            initializedData.getOptions().getTmpDirFilter(),
+            initializedData.getOptions().getRuntimePropertiesBuilder()
         ),
         new OnShutdown<ExecuteConfig>() {
           @Override
@@ -131,12 +132,14 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     private FlowSubmissionController submissionController;
     private CascadingUtil cascadingUtil;
     private TmpDirFilter tmpDirFilter;
+    private RuntimePropertiesBuilder runtimePropertiesBuilder;
 
-    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController, CascadingUtil cascadingUtil, TmpDirFilter tmpDirFilter) {
+    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController, CascadingUtil cascadingUtil, TmpDirFilter tmpDirFilter, RuntimePropertiesBuilder runtimePropertiesBuilder) {
       this.lockProvider = lockProvider;
       this.submissionController = submissionController;
       this.cascadingUtil = cascadingUtil;
       this.tmpDirFilter = tmpDirFilter;
+      this.runtimePropertiesBuilder = runtimePropertiesBuilder;
     }
 
     public ExecuteConfig(IStoreReaderLocker lockProvider, CascadingUtil cascadingUtil) {
@@ -159,6 +162,10 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
 
     public TmpDirFilter getTmpDirFilter(){
       return tmpDirFilter;
+    }
+
+    public RuntimePropertiesBuilder getRuntimePropertiesBuilder() {
+      return runtimePropertiesBuilder;
     }
   }
 

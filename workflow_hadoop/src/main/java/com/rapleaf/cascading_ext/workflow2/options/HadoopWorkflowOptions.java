@@ -16,6 +16,7 @@ import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow2.workflow_hadoop.TmpDirFilter;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
 import com.liveramp.workflow_core.CoreOptions;
+import com.rapleaf.cascading_ext.workflow2.RuntimePropertiesBuilder;
 
 public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOptions> {
 
@@ -23,6 +24,7 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
   private FlowSubmissionController flowSubmissionController;
   private CascadingUtil cascadingUtil;
   private TmpDirFilter tmpDirFilter;
+  private RuntimePropertiesBuilder runtimePropertiesBuilder;
 
   protected HadoopWorkflowOptions(OverridableProperties defaultProperties,
                                   Map<Object, Object> systemProperties,
@@ -31,6 +33,7 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
 
     this.tmpDirFilter = new TmpDirFilter.Never();
     this.flowSubmissionController = new FlowSubmissionController.SubmitImmediately();
+    this.runtimePropertiesBuilder = new RuntimePropertiesBuilder.None();
     this.cascadingUtil = cascadingUtil;
   }
 
@@ -64,9 +67,18 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
     return this;
   }
 
+  public HadoopWorkflowOptions setRuntimePropertiesBuilder(RuntimePropertiesBuilder builder){
+    this.runtimePropertiesBuilder = runtimePropertiesBuilder;
+    return this;
+  }
+
   public HadoopWorkflowOptions setFlowSubmissionController(FlowSubmissionController flowSubmissionController) {
     this.flowSubmissionController = flowSubmissionController;
     return this;
+  }
+
+  public RuntimePropertiesBuilder getRuntimePropertiesBuilder() {
+    return runtimePropertiesBuilder;
   }
 
   public FlowSubmissionController getFlowSubmissionController() {

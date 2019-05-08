@@ -21,6 +21,10 @@ public class FsActionContext {
 
   }
 
+  public final boolean hasTmpRoot(){
+    return tmpRoot != null;
+  }
+
   public final String getTmpRoot() {
     if (tmpRoot == null) {
       throw new RuntimeException("Temp root not set for action " + this.toString());

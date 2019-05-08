@@ -38,6 +38,8 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
+import com.liveramp.commons.collections.properties.OverridableProperties;
+import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow2.workflow_hadoop.TmpDirFilter;
 import com.liveramp.workflow_core.OldResource;
@@ -57,6 +59,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   private FlowSubmissionController controller;
   private CascadingUtil cascadingUtil;
   private TmpDirFilter tmpDirFilter;
+  private RuntimePropertiesBuilder runtimePropertiesBuilder;
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
 
@@ -77,6 +80,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     super(checkpointToken, properties);
     this.context = new FsActionContext(tmpRoot, checkpointToken);
   }
+
 
   protected FileSystem getFS() throws IOException {
     return context.getFS();
@@ -196,6 +200,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     this.controller = context.getSubmissionController();
     this.cascadingUtil = context.getCascadingUtil();
     this.tmpDirFilter = context.getTmpDirFilter();
+    this.runtimePropertiesBuilder = context.getRuntimePropertiesBuilder();
   }
 
   protected IStoreReaderLocker getLockProvider() {
@@ -211,7 +216,17 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
   protected Map<Object, Object> getInheritedProperties(Map<Object, Object> childProperties) {
-    return new NestedProperties(childProperties, false).override(getCombinedProperties()).getPropertiesMap();
+
+    //  precedence here:
+    //  1) properties directly provided at .complete
+    //  2) properties coming from the runtimePropertiesBuilder
+    //  3) properties in step constructor
+    //  4) properties provided to WorkflowOptions
+
+    return new NestedProperties(childProperties, false)
+        .override(runtimePropertiesBuilder.build(getActionId(), context)
+            .override(getCombinedProperties()))
+        .getPropertiesMap();
   }
 
   public FlowBuilder buildFlow() {
