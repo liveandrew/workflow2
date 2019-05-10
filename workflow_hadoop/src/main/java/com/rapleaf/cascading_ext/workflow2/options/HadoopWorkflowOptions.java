@@ -68,7 +68,7 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
   }
 
   public HadoopWorkflowOptions setRuntimePropertiesBuilder(RuntimePropertiesBuilder builder){
-    this.runtimePropertiesBuilder = runtimePropertiesBuilder;
+    this.runtimePropertiesBuilder = builder;
     return this;
   }
 
