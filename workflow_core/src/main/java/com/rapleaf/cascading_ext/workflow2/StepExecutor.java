@@ -24,7 +24,6 @@ import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_core.runner.BaseStep;
-import com.liveramp.workflow_state.ExecutionState;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.workflow2.rollback.SuccessCallback;
 import com.rapleaf.cascading_ext.workflow2.strategy.WorkflowStrategy;
@@ -191,7 +190,7 @@ public class StepExecutor<Config> {
   public boolean allDependenciesCompleted(Map<String, StepStatus> statuses, BaseStep<Config> step, DirectedGraph<BaseStep<Config>, DefaultEdge> dependencyGraph) throws IOException {
 
     for (BaseStep<Config> dep : strategy.getUpstreamSteps(dependencyGraph, step)) {
-      if(!strategy.getNonBlockingStatuses().contains(statuses.get(dep.getCheckpointToken()))){
+      if (!strategy.getNonBlockingStatuses().contains(statuses.get(dep.getCheckpointToken()))) {
         return false;
       }
     }
@@ -276,7 +275,8 @@ public class StepExecutor<Config> {
         }
       }
     } catch (InterruptedException e) {
-      LOG.debug("Interrupted waiting to acquire semaphore.", e);
+      LOG.warn("Interrupted waiting to acquire semaphore.", e);
+      runningSteps.forEach(StepRunner::stop);
     } finally {
       LOG.info("Removing shutdown hook");
       this.hook.remove(onShutdown);
@@ -287,6 +287,15 @@ public class StepExecutor<Config> {
     try {
       semaphore.acquire(maxConcurrentSteps);
     } catch (InterruptedException e) {
+      runningSteps.forEach(StepRunner::stop);
+      try {
+        // acquire all the permits on the semaphore. Again, this will guarantee that no
+        // step is running, which means that they exited after receiving the interrupt.
+        semaphore.acquire(maxConcurrentSteps);
+      } catch (InterruptedException ex) {
+        //should never happen; thread has already been interrupted
+        throw new RuntimeException("Interrupted waiting for running steps to finish", e);
+      }
       throw new RuntimeException("Interrupted waiting for running steps to complete!", e);
     }
 
@@ -324,9 +333,9 @@ public class StepExecutor<Config> {
     LOG.info(notifications.getSuccessSubject());
 
     for (SuccessCallback successCallback : successCallbacks) {
-      try{
+      try {
         successCallback.onSuccess(persistence);
-      }catch(Exception e){
+      } catch (Exception e) {
         LOG.error("Error calling success callback: ", e);
       }
     }
@@ -421,6 +430,10 @@ public class StepExecutor<Config> {
       };
       thread = new Thread(r, "Step Runner for " + step.getCheckpointToken());
       thread.start();
+    }
+
+    public void stop() {
+      thread.interrupt();
     }
 
     public BaseStep<Config> getStep() {
