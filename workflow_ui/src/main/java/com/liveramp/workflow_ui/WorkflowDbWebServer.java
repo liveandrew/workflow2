@@ -75,10 +75,12 @@ public class WorkflowDbWebServer implements Runnable {
   ThreadLocalWorkflowDb databases = new ThreadLocalWorkflowDb();
 
   private final Set<String> allowedDomains;
+  private final String emailDomain;
 
-  public WorkflowDbWebServer(Set<String> allowedDomains) {
+  public WorkflowDbWebServer(Set<String> allowedDomains, String emailDomain) {
     taskTimer = new Timer(true);
     this.allowedDomains = allowedDomains;
+    this.emailDomain = emailDomain;
   }
 
   public final void shutdown() {
@@ -149,7 +151,7 @@ public class WorkflowDbWebServer implements Runnable {
       context.addServlet(new ServletHolder(new ExecutionCommandServlet(databases)), "/execution_command");
       context.addServlet(new ServletHolder(new NotificationConfigurationServlet(databases)), "/notification_configuration");
       context.addServlet(new ServletHolder(new DashboardServlet(databases)), "/dashboards");
-      context.addServlet(new ServletHolder(new UserConfigServlet(databases)), "/user");
+      context.addServlet(new ServletHolder(new UserConfigServlet(databases, emailDomain)), "/user");
 
       context.addServlet(new ServletHolder(new JSONServlet(new AttemptStateServlet(), databases, allowedDomains)), "/attempt_state");
       context.addServlet(new ServletHolder(new JSONServlet(new ClusterUsageServlet(), databases, allowedDomains)), "/cluster_usage");
@@ -232,7 +234,8 @@ public class WorkflowDbWebServer implements Runnable {
     String[] authorizedDomains = properties.getProperty("ui.allowed_domains").split(",");
 
     WorkflowDbWebServer server = new WorkflowDbWebServer(
-        Sets.newHashSet(Arrays.asList(authorizedDomains))
+        Sets.newHashSet(Arrays.asList(authorizedDomains)),
+        properties.getProperty("ui.email_domain")
     );
 
     Thread thread1 = new Thread(server);

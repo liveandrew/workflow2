@@ -29,9 +29,11 @@ public class UserConfigServlet extends HttpServlet {
 
 
   private final ThreadLocal<IDatabases> rldb;
+  private final String domain;
 
-  public UserConfigServlet(ThreadLocal<IDatabases> rldb) {
+  public UserConfigServlet(ThreadLocal<IDatabases> rldb, String domain) {
     this.rldb = rldb;
+    this.domain = domain;
   }
 
 
@@ -101,7 +103,7 @@ public class UserConfigServlet extends HttpServlet {
 
     if (matches.isEmpty()) {
       LOG.info("Creating User for name: " + name);
-      return users.create(name, name + "@liveramp.net");
+      return users.create(name, name + "@"+domain);
     } else {
       return Accessors.only(matches);
     }
