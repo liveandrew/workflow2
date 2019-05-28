@@ -22,10 +22,10 @@ import org.springframework.session.web.http.HeaderHttpSessionStrategy;
 @Configuration
 @EnableWebSecurity
 @EnableSpringHttpSession
-@PropertySource("classpath:application.properties")
+@PropertySource("classpath:/application.properties")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-  @Resource
+  @Autowired
   Environment environment;
 
   @Override
