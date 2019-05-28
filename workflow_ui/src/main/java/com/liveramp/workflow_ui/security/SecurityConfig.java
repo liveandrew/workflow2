@@ -22,7 +22,7 @@ import org.springframework.session.web.http.HeaderHttpSessionStrategy;
 @Configuration
 @EnableWebSecurity
 @EnableSpringHttpSession
-@PropertySource(value = {"classpath:application.properties"})
+@PropertySource("classpath:/application.properties")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Resource
