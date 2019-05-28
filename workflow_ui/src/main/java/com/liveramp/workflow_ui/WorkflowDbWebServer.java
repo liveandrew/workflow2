@@ -227,7 +227,7 @@ public class WorkflowDbWebServer implements Runnable {
   public static void main(String[] args) throws InterruptedException, IOException {
 
     Properties properties = new Properties();
-    properties.load(WorkflowDbWebServer.class.getResourceAsStream("application.properties"));
+    properties.load(WorkflowDbWebServer.class.getResourceAsStream("/application.properties"));
 
     String[] authorizedDomains = properties.getProperty("ui.allowed_domains").split(",");
 
