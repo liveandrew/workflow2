@@ -48,6 +48,7 @@ public class ExecutionAlerter {
 
   private final RecipientGenerator generator;
   private final IDatabases db;
+  private final String workflowUIServer;
 
   private final int suppressEmailAppCountThreshold;
 
@@ -57,10 +58,12 @@ public class ExecutionAlerter {
                           List<ExecutionAlertGenerator> executionAlerts,
                           List<MapreduceJobAlertGenerator> jobAlerts,
                           IDatabases db,
+                          String workflowUIserver,
                           int suppressEmailAppCountThreshold) {
     this.executionAlerts = executionAlerts;
     this.jobAlerts = jobAlerts;
     this.generator = generator;
+    this.workflowUIServer = workflowUIserver;
     this.db = db;
     this.suppressEmailAppCountThreshold = suppressEmailAppCountThreshold;
 
@@ -218,7 +221,7 @@ public class ExecutionAlerter {
     A executionLink = new A()
         .setHref(new URIBuilder()
             .setScheme("http")
-            .setHost("workflows.liveramp.net")
+            .setHost(workflowUIServer)
             .setPath("/execution.html")
             .setParameter("id", Long.toString(execution.getId()))
             .build().toString())
@@ -227,7 +230,7 @@ public class ExecutionAlerter {
     A appLink = new A()
         .setHref(new URIBuilder()
             .setScheme("http")
-            .setHost("workflows.liveramp.net")
+            .setHost(workflowUIServer)
             .setPath("/application.html")
             .setParameter("name", URLEncoder.encode(execution.getName(), "UTF-8"))
             .build().toString())

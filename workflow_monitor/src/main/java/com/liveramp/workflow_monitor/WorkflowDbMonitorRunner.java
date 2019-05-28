@@ -40,6 +40,7 @@ public class WorkflowDbMonitorRunner {
     String alertSourceList = (String)config.get("alert_source_list");
     String alertSourceDomain = (String)config.get("alert_source_domain");
     String mailHost = (String)config.get("alert_mail_server");
+    String uiServer = (String) config.get("workflow_ui_server");
 
     ThreadLocal<IDatabases> db = new ThreadLocalWorkflowDb();
 
@@ -51,6 +52,7 @@ public class WorkflowDbMonitorRunner {
         ),
         Lists.newArrayList(),
         db.get(),
+        uiServer,
         Integer.MAX_VALUE
     );
 
@@ -65,6 +67,7 @@ public class WorkflowDbMonitorRunner {
             new OutputPerMapTask()
         ),
         db.get(),
+        uiServer,
         50
     );
 
@@ -80,6 +83,7 @@ public class WorkflowDbMonitorRunner {
             new InputPerReduceTask()
         ),
         db.get(),
+        uiServer,
         0
     );
 
