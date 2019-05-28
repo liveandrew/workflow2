@@ -1,16 +1,21 @@
 package com.liveramp.workflow_ui;
 
 import javax.servlet.DispatcherType;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.Properties;
+import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -69,9 +74,11 @@ public class WorkflowDbWebServer implements Runnable {
   private final Timer taskTimer;
   ThreadLocalWorkflowDb databases = new ThreadLocalWorkflowDb();
 
+  private final Set<String> allowedDomains;
 
-  public WorkflowDbWebServer() {
+  public WorkflowDbWebServer(Set<String> allowedDomains) {
     taskTimer = new Timer(true);
+    this.allowedDomains = allowedDomains;
   }
 
   public final void shutdown() {
@@ -144,22 +151,22 @@ public class WorkflowDbWebServer implements Runnable {
       context.addServlet(new ServletHolder(new DashboardServlet(databases)), "/dashboards");
       context.addServlet(new ServletHolder(new UserConfigServlet(databases)), "/user");
 
-      context.addServlet(new ServletHolder(new JSONServlet(new AttemptStateServlet(), databases)), "/attempt_state");
-      context.addServlet(new ServletHolder(new JSONServlet(new ClusterUsageServlet(), databases)), "/cluster_usage");
-      context.addServlet(new ServletHolder(new JSONServlet(new NameNodeUsageServlet(), databases)), "/namenode_usage");
-      context.addServlet(new ServletHolder(new JSONServlet(new HDFSIOServlet(), databases)), "/hdfs_io");
-      context.addServlet(new ServletHolder(new JSONServlet(new ShuffleIOServlet(), databases)), "/shuffle_io");
-      context.addServlet(new ServletHolder(new JSONServlet(new ApplicationListServlet(), databases)), "/applications");
-      context.addServlet(new ServletHolder(new JSONServlet(new ApplicationQueryServlet(), databases)), "/application");
-      context.addServlet(new ServletHolder(new JSONServlet(new ExecutionQueryServlet(), databases)), "/executions");
-      context.addServlet(new ServletHolder(new JSONServlet(new StatServlet(), databases)), "/statistics");
-      context.addServlet(new ServletHolder(new JSONServlet(new CostServlet(), databases)), "/cost");
-      context.addServlet(new ServletHolder(new JSONServlet(new AvailableNotificationServlet(), databases)), "/available_notifications");
-      context.addServlet(new ServletHolder(new JSONServlet(new PipelineServlet(), databases)), "/pipeline");
-      context.addServlet(new ServletHolder(new JSONServlet(new TaskExceptionServlet(), databases)), "/tasks");
-      context.addServlet(new ServletHolder(new JSONServlet(new AppCostHistoryServlet(), databases)), "/app_cost_history");
-      context.addServlet(new ServletHolder(new JSONServlet(new AlertServlet(), databases)), "/alerts");
-      context.addServlet(new ServletHolder(new JSONServlet(new ClusterAppAlerts(), databases)), "/app_alerts");
+      context.addServlet(new ServletHolder(new JSONServlet(new AttemptStateServlet(), databases, allowedDomains)), "/attempt_state");
+      context.addServlet(new ServletHolder(new JSONServlet(new ClusterUsageServlet(), databases, allowedDomains)), "/cluster_usage");
+      context.addServlet(new ServletHolder(new JSONServlet(new NameNodeUsageServlet(), databases, allowedDomains)), "/namenode_usage");
+      context.addServlet(new ServletHolder(new JSONServlet(new HDFSIOServlet(), databases, allowedDomains)), "/hdfs_io");
+      context.addServlet(new ServletHolder(new JSONServlet(new ShuffleIOServlet(), databases, allowedDomains)), "/shuffle_io");
+      context.addServlet(new ServletHolder(new JSONServlet(new ApplicationListServlet(), databases, allowedDomains)), "/applications");
+      context.addServlet(new ServletHolder(new JSONServlet(new ApplicationQueryServlet(), databases, allowedDomains)), "/application");
+      context.addServlet(new ServletHolder(new JSONServlet(new ExecutionQueryServlet(), databases, allowedDomains)), "/executions");
+      context.addServlet(new ServletHolder(new JSONServlet(new StatServlet(), databases, allowedDomains)), "/statistics");
+      context.addServlet(new ServletHolder(new JSONServlet(new CostServlet(), databases, allowedDomains)), "/cost");
+      context.addServlet(new ServletHolder(new JSONServlet(new AvailableNotificationServlet(), databases, allowedDomains)), "/available_notifications");
+      context.addServlet(new ServletHolder(new JSONServlet(new PipelineServlet(), databases, allowedDomains)), "/pipeline");
+      context.addServlet(new ServletHolder(new JSONServlet(new TaskExceptionServlet(), databases, allowedDomains)), "/tasks");
+      context.addServlet(new ServletHolder(new JSONServlet(new AppCostHistoryServlet(), databases, allowedDomains)), "/app_cost_history");
+      context.addServlet(new ServletHolder(new JSONServlet(new AlertServlet(), databases, allowedDomains)), "/alerts");
+      context.addServlet(new ServletHolder(new JSONServlet(new ClusterAppAlerts(), databases, allowedDomains)), "/app_alerts");
 
       AnnotationConfigWebApplicationContext annotation = new AnnotationConfigWebApplicationContext();
       annotation.setConfigLocation("com.liveramp.workflow_ui.security");
@@ -217,9 +224,17 @@ public class WorkflowDbWebServer implements Runnable {
         .toString();
   }
 
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) throws InterruptedException, IOException {
 
-    WorkflowDbWebServer server = new WorkflowDbWebServer();
+    Properties properties = new Properties();
+    properties.load(WorkflowDbWebServer.class.getResourceAsStream("application.properties"));
+
+    String[] authorizedDomains = properties.getProperty("ui.allowed_domains").split(",");
+
+    WorkflowDbWebServer server = new WorkflowDbWebServer(
+        Sets.newHashSet(Arrays.asList(authorizedDomains))
+    );
+
     Thread thread1 = new Thread(server);
 
     thread1.start();

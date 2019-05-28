@@ -1,32 +1,32 @@
 package com.liveramp.workflow_ui.security;
 
+import javax.annotation.Resource;
+
 import java.util.Arrays;
 
-import org.eclipse.jetty.server.session.JDBCSessionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.encoding.LdapShaPasswordEncoder;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.*;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.session.MapSessionRepository;
 import org.springframework.session.SessionRepository;
 import org.springframework.session.config.annotation.web.http.EnableSpringHttpSession;
-import org.springframework.session.jdbc.JdbcOperationsSessionRepository;
 import org.springframework.session.web.http.HeaderHttpSessionStrategy;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.ModelAndView;
 
 @Configuration
 @EnableWebSecurity
 @EnableSpringHttpSession
+@PropertySource(value = {"classpath:/application.properties"})
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+  @Resource
+  Environment environment;
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
@@ -48,18 +48,35 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Autowired
   public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-    auth
-                .ldapAuthentication()
-                .userSearchBase("ou=People")
-                .userSearchFilter("uid={0}")
-                .groupSearchBase("ou=Groups")
-                .groupSearchFilter("memberUid={1}")
-                .contextSource(contextSource());
+
+    String authMethod = environment.getProperty("ui.auth.method");
+
+    if(authMethod.equals("ldap")){
+      auth
+          .ldapAuthentication()
+          .userSearchBase(environment.getProperty("ui.auth.ldap.userSearchBase"))
+          .userSearchFilter(environment.getProperty("ui.auth.ldap.userSearchFilter"))
+          .groupSearchBase(environment.getProperty("ui.auth.ldap.groupSearchBase"))
+          .groupSearchFilter(environment.getProperty("ui.auth.ldap.groupSearchFilter"))
+          .contextSource(contextSource());
+    }
+
   }
 
   @Bean
   public DefaultSpringSecurityContextSource contextSource() {
-    return new DefaultSpringSecurityContextSource(Arrays.asList("ldaps://ldap.liveramp.net:636/"), "dc=rapleaf,dc=com");
+
+    String authMethod = environment.getProperty("ui.auth.method");
+
+    if(authMethod.equals("ldap")){
+
+      return new DefaultSpringSecurityContextSource(
+          Arrays.asList(environment.getProperty("ui.auth.ldap.providerURLs").split(",")),
+          environment.getProperty("ui.auth.ldap.baseDN")
+      );
+    }
+
+    throw new RuntimeException("No authentication configured");
   }
 
   @Bean

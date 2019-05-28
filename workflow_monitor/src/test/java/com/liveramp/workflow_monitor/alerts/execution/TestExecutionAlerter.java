@@ -79,6 +79,7 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
         Lists.newArrayList(new TestExecutionGenerator()),
         Lists.newArrayList(new TestJobGenerator()),
         databases,
+        "fake",
         Integer.MAX_VALUE
     );
 

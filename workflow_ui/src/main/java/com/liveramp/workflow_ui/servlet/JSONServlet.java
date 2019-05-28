@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.Maps;
 import org.json.JSONObject;
@@ -18,14 +19,15 @@ import com.liveramp.databases.workflow_db.IDatabases;
 
 public class JSONServlet extends HttpServlet {
   private static final Logger LOG = LoggerFactory.getLogger(JSONServlet.class);
-  private String ALLOWED_DOMAIN = "http://admin.liveramp.net";
 
   private final ThreadLocal<IDatabases> rldb;
   private final Processor processor;
+  private final Set<String> allowedDomains;
 
-  public JSONServlet(Processor processor, ThreadLocal<IDatabases> rldb) {
+  public JSONServlet(Processor processor, ThreadLocal<IDatabases> rldb, Set<String> allowedDomains) {
     this.processor = processor;
     this.rldb = rldb;
+    this.allowedDomains = allowedDomains;
   }
 
   @Override
@@ -46,8 +48,8 @@ public class JSONServlet extends HttpServlet {
 
       LOG.info("Request " + getRequestURL(req) + " processed in " + (System.currentTimeMillis() - start) + "ms");
       String originHeader = req.getHeader("Origin");
-      if (originHeader != null && originHeader.equals(ALLOWED_DOMAIN)) {
-        resp.setHeader("Access-Control-Allow-Origin", ALLOWED_DOMAIN);
+      if (originHeader != null && allowedDomains.contains(originHeader)) {
+        resp.setHeader("Access-Control-Allow-Origin", originHeader);
       }
       resp.getWriter().append(data.toString());
 
