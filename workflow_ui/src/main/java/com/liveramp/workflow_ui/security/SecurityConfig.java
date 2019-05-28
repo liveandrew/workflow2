@@ -67,6 +67,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   public DefaultSpringSecurityContextSource contextSource() {
 
     String authMethod = environment.getProperty("ui.auth.method");
+    System.out.println(authMethod);
 
     if(authMethod.equals("ldap")){
 
@@ -76,7 +77,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
       );
     }
 
-    throw new RuntimeException("No authentication configured");
+    throw new RuntimeException("No authentication configured: found "+authMethod);
   }
 
   @Bean
