@@ -56,7 +56,6 @@
               <th>RM Link</th>
               <th>Job Name</th>
               <th>Step Token</th>
-              <th>Cause</th>
             </tr>
             </thead>
             <tbody id="all-exceptions-table">
@@ -177,11 +176,11 @@
 
     populateException2Hosts(errorList.by_exception, $("#hosts-by-exception-table"));
 
-    populateHostToAggregateExceptions(errorList.by_host, $("#exceptions-by-host-table"));
+    populateHostToAggregateExceptions(errorList.by_host, $("#aggregate-by-host-table"));
 
     populateAppToAggregateExceptions(errorList.by_app, $("#aggregate-by-app-table"));
 
-    populateHost2Exceptions(errorList.by_host, $("#aggregate-by-host-table"));
+    populateHost2Exceptions(errorList.by_host, $("#exceptions-by-host-table"));
 
   }
 

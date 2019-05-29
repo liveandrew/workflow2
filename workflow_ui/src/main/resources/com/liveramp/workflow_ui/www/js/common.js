@@ -257,14 +257,9 @@ function populateException2Hosts(data, list) {
   });
 
   sorted.forEach(function (e) {
-    var row = $('<tr></tr>');
+    var row = $('<tr class="task_row"></tr>');
     row.append($('<td>' + e.exception + '</td>'));
     row.append($('<td>' + e.hosts.join("<br />") + '</td>'));
-    if (e.infrastructural === "INFRASTRUCTURAL") {
-      row.addClass('infra_row');
-    } else {
-      row.addClass('task_row');
-    }
     list.append(row);
   });
 
@@ -326,7 +321,7 @@ function populateTaskExceptions(data, list) {
   });
 
   sorted.reverse().forEach(function (e) {
-    var row = $('<tr></tr>');
+    var row = $('<tr class="task_row"></tr>');
     row.append($('<td>' + getPrettyDate(e.time) + '</td>'));
     row.append($('<td>' + e.exception + '</td>'));
     row.append($('<td>' + e.host_url + '</td>'));
