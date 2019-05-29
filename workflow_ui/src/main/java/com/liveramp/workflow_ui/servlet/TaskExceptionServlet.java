@@ -220,45 +220,11 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
     }
 
 
-    // adding column metadata
-    JSONObject columns = new JSONObject();
-    columns.put(
-        "all",
-        new JSONArray()
-            .put("Time")
-            .put("Exception")
-            .put("Host")
-            .put("Workflow Attempt ID")
-            .put("RM Link")
-            .put("Job Name")
-            .put("Step Token")
-            .put("Cause")
-    );
-    columns.put(
-        "exceptions",
-        new JSONArray()
-            .put("Exception")
-            .put("Hosts")
-    );
-    columns.put(
-        "hosts",
-        new JSONArray()
-            .put("Host")
-            .put("Exceptions")
-    );
-    columns.put(
-        "aggregateHosts",
-        new JSONArray()
-            .put("Host")
-            .put("Exception Count")
-    );
-
     return new JSONObject()
         .put("all", rawRows)
         .put("by_host", hostRows)
         .put("by_exception", exceptionRows)
         .put("by_app", appRows)
-        .put("columns", columns)
         .put("limit", queryLimit);
   }
 

@@ -67,7 +67,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   public DefaultSpringSecurityContextSource contextSource() {
 
     String authMethod = environment.getProperty("ui.auth.method");
-    System.out.println(authMethod);
 
     if(authMethod.equals("ldap")){
 

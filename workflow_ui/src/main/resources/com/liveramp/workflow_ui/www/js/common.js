@@ -334,12 +334,6 @@ function populateTaskExceptions(data, list) {
     row.append($('<td><a href="' + e.tracking_url + '">TRACK</a></td>'));
     row.append($('<td>' + e.job_name + '</td>'));
     row.append($('<td>' + e.step_token + '</td>'));
-    row.append($('<td>' + e.infrastructural + '</td>'));
-    if (e.infrastructural === "INFRASTRUCTURAL") {
-      row.addClass('infra_row');
-    } else {
-      row.addClass('task_row');
-    }
 
     list.append(row);
   });

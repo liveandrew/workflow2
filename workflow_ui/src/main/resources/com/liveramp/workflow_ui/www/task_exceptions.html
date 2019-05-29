@@ -29,127 +29,161 @@
   configureNavbar($("#navbar"))
 </script>
 
-<div class="container-fluid service-container">
-  <div class="row">
-    <div class="panel panel-default">
-      <div class="panel-heading"><h4>Task Exception Dashboard</h4></div>
-      <div class="input-append">
-        <div class="btn-group" id="exception-display-toggle" data-toggle="buttons">
-          <label class="btn btn-primary active">
-            <input type="radio" name="options" id="all"> All Exceptions
-          </label>
-          <label class="btn btn-primary">
-            <input type="radio" name="options" id="exception-hosts"> Hosts by Exception
-          </label>
-          <label class="btn btn-primary">
-            <input type="radio" name="options" id="host-exceptions"> Exceptions by Host
-          </label>
-          <label class="btn btn-primary">
-            <input type="radio" name="options" id="aggregate-app-exceptions"> Aggregate by App
-          </label>
-          <label class="btn btn-primary">
-            <input type="radio" name="options" id="aggregate-host-exceptions"> Aggregate by Host
-          </label>
+<h2 class="page-title">Task Exceptions</h2>
+
+<div class="service-container">
+
+  <div class="tabbable"> <!-- Only required for left/right tabs -->
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#all-exceptions" data-toggle="tab">All Exceptions</a></li>
+      <li><a href="#hosts-by-exception" data-toggle="tab">Hosts by Exception</a></li>
+      <li><a href="#exceptions-by-host" data-toggle="tab">Exceptions by Host</a></li>
+      <li><a href="#aggregate-by-app" data-toggle="tab">Aggregate by App</a></li>
+      <li><a href="#aggregate-by-host" data-toggle="tab">Aggregate by Host</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane active" id="all-exceptions">
+        <div class="table-responsive">
+          <table class="table">
+
+            <thead>
+            <tr>
+              <th>Time</th>
+              <th>Exception</th>
+              <th>Host</th>
+              <th>Workflow Attempt ID</th>
+              <th>RM Link</th>
+              <th>Job Name</th>
+              <th>Step Token</th>
+              <th>Cause</th>
+            </tr>
+            </thead>
+            <tbody id="all-exceptions-table">
+            </tbody>
+
+          </table>
         </div>
-        <div class="col-sm-3">
-          <div class="input-group" id="query-num">
-            <input class="form-control" type="number" step="100" placeholder="Num to Query" id="num-exceptions">
-                        <span class="input-group-btn">
-                            <button class="btn btn-secondary" type="button">Refresh</button>
-                        </span>
-          </div>
-        </div>
-        <div class="col-sm-2">
-            <label class="btn btn-primary">
-                <input type="checkbox" name="options" id="infra_only"> Hide Non-Infra
-            </label>
-        </div>
+
       </div>
-      <div class="table table-condensed">
-        <table class="table">
-          <thead id="task_columns">
-          </thead>
-          <tbody id="task_errors">
-          </tbody>
-        </table>
+
+      <div class="tab-pane" id="hosts-by-exception">
+
+        <div class="table-responsive">
+          <table class="table">
+
+            <thead>
+            <tr>
+              <th>Exception</th>
+              <th>Hosts</th>
+            </tr>
+            </thead>
+            <tbody id="hosts-by-exception-table">
+            </tbody>
+
+          </table>
+        </div>
+
       </div>
+
+      <div class="tab-pane" id="exceptions-by-host">
+
+        <div class="table-responsive">
+          <table class="table">
+
+            <thead>
+            <tr>
+              <th>Host</th>
+              <th>Exceptions</th>
+            </tr>
+            </thead>
+
+            <tbody id="exceptions-by-host-table">
+            </tbody>
+
+          </table>
+        </div>
+
+      </div>
+
+
+      <div class="tab-pane" id="aggregate-by-app">
+
+        <div class="table-responsive">
+          <table class="table">
+
+            <thead>
+            <tr>
+              <th>Application</th>
+              <th>Count</th>
+            </tr>
+            </thead>
+            <tbody id="aggregate-by-app-table">
+            </tbody>
+
+          </table>
+        </div>
+
+      </div>
+
+
+      <div class="tab-pane" id="aggregate-by-host">
+
+        <div class="table-responsive">
+          <table class="table">
+
+            <thead>
+            <tr>
+              <th>Host</th>
+              <th>Exception Count</th>
+            </tr>
+            </thead>
+            <tbody id="aggregate-by-host-table">
+            </tbody>
+
+          </table>
+        </div>
+
+      </div>
+
     </div>
   </div>
 </div>
 
+
 <script>
 
-  var errorList = [];
-  var columns = [];
   displayType = "all";
-  num_query = 1000;
-  infra_only_disp = 0;
 
   function refreshTable() {
-    if ($('#infra_only').prop('checked')) {
-      infra_only_disp = 1;
-    } else {
-      infra_only_disp = 0;
-    }
 
     $.ajax({
       type: 'GET',
       dataType: 'html',
       url: "tasks",
       data: {
-        limit: num_query,
-        infra: infra_only_disp
+        limit: 1000
       },
       success: function (dataStr) {
-        errorList = JSON.parse(dataStr);
-        redraw();
+        redraw(JSON.parse(dataStr));
       }
     });
 
   }
 
-  function redraw() {
-    if (displayType === "all") {
-      populateTaskExceptions(errorList.all, $("#task_errors"));
-      columns = errorList.columns.all;
-    }
-    else if (displayType === "exception-hosts") {
-      populateException2Hosts(errorList.by_exception, $("#task_errors"));
-      columns = errorList.columns.exceptions;
-    }
-    else if (displayType === "aggregate-host-exceptions"){
-      populateHostToAggregateExceptions(errorList.by_host, $("#task_errors"));
-      columns = errorList.columns.aggregateHosts;
-    }
-    else if(displayType === 'aggregate-app-exceptions'){
-      populateAppToAggregateExceptions(errorList.by_app, $("#task_errors"));
-      columns = errorList.columns.aggregateApps;
-    }
-    else {
-      populateHost2Exceptions(errorList.by_host, $("#task_errors"));
-      columns = errorList.columns.hosts;
-    }
-    populateTaskHeader(columns, $("#task_columns"));
+  function redraw(errorList) {
+
+    populateTaskExceptions(errorList.all, $("#all-exceptions-table"));
+
+    populateException2Hosts(errorList.by_exception, $("#hosts-by-exception-table"));
+
+    populateHostToAggregateExceptions(errorList.by_host, $("#exceptions-by-host-table"));
+
+    populateAppToAggregateExceptions(errorList.by_app, $("#aggregate-by-app-table"));
+
+    populateHost2Exceptions(errorList.by_host, $("#aggregate-by-host-table"));
+
   }
-
-  $("#exception-display-toggle").click(function (e) {
-    e.preventDefault();
-    displayType = $(e.target).find('input').attr('id');
-    redraw();
-  });
-
-  $('#infra_only').click(function (e) {
-    refreshTable();
-  });
-
-  $("#query-num").click(function (e) {
-    e.preventDefault();
-    val = document.getElementById('num-exceptions').value;
-    if (val != null && val == parseInt(val, 10)) {
-      num_query = val;
-      refreshTable();
-    }
-  });
 
   refreshTable();
   setInterval(refreshTable, 60000);

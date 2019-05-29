@@ -33,7 +33,7 @@ public class GetCounterHistory {
     for (String counter : counters) {
       int index = counter.lastIndexOf(".");
       String name = counter.substring(0, index);
-      String group = counter.substring(index + 1, counter.length());
+      String group = counter.substring(index + 1);
 
       countersToQuery.put(name, group);
 

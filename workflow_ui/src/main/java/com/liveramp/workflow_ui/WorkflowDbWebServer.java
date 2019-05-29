@@ -231,6 +231,8 @@ public class WorkflowDbWebServer implements Runnable {
     Properties properties = new Properties();
     properties.load(WorkflowDbWebServer.class.getResourceAsStream("/application.properties"));
 
+//    properties.put("ui.allowed_domains", "");
+
     String[] authorizedDomains = properties.getProperty("ui.allowed_domains").split(",");
 
     WorkflowDbWebServer server = new WorkflowDbWebServer(
