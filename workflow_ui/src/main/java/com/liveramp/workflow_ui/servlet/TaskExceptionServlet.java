@@ -12,7 +12,6 @@ import com.liveramp.databases.workflow_db.models.MapreduceJobTaskException;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
 import com.liveramp.databases.workflow_db.models.WorkflowExecution;
-import com.liveramp.workflow_db_state.kpi_utils.ErrorMessageClassifier;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -39,7 +38,6 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
   public JSONObject getData(IDatabases databases, Map<String, String> parameters) throws Exception {
     IWorkflowDb db = databases.getWorkflowDb();
     int queryLimit = getQueryLimit(parameters);
-    boolean infraParam = getInfraOnlyParam(parameters);
 
     JSONArray rawRows = new JSONArray();
     JSONArray hostRows = new JSONArray();
@@ -71,7 +69,6 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
     TwoNestedCountingMap<String, String> hostToExceptionToCount = new TwoNestedCountingMap<>(0L);
     TwoNestedCountingMap<String, String> appToExceptionToCount = new TwoNestedCountingMap<>(0L);
 
-    Map<String, String> exceptionInfrastuctureClassification = new HashMap<>();
     for (Record exception : all_exceptions) {
       if (exception != null) {
 
@@ -79,18 +76,11 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
         JSONObject exception_json = new JSONObject();
         long mr_id = (long)exception.getInt(MapreduceJobTaskException.MAPREDUCE_JOB_ID);
         String exception_text = exception.getString(MapreduceJobTaskException.EXCEPTION);
-        String infrastructure_classification = "NOT_INFRASTRUCTURAL";
-        if (ErrorMessageClassifier.classifyTaskFailure(exception_text)) {
-          infrastructure_classification = "INFRASTRUCTURAL";
-        } else if (infraParam) {
-          continue; //filtering if specified
-        }
 
         String shrunk_exception_text = shrink(
             exception_text,
             EXCEPTION_LENGTH_LIMIT
         );
-        exceptionInfrastuctureClassification.put(shrunk_exception_text, infrastructure_classification);
 
         String hostUrl = exception.getString(MapreduceJobTaskException.HOST_URL);
         String appName = exception.getString(WorkflowExecution.NAME);
@@ -106,7 +96,6 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
             .put("mr_job_id", mr_id)
             .put("task_attempt_id", exception.getString(MapreduceJobTaskException.TASK_ATTEMPT_ID))
             .put("exception", shrunk_exception_text)
-            .put("infrastructural", infrastructure_classification)
             .put("host_url", hostUrl);
 
         mrIdsToTasks.put(mr_id, exception_json);
@@ -117,7 +106,6 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
 
         //removing null host_urls is cleaner
         if (!hostUrl.equals("null")) {
-          exceptionInfrastuctureClassification.put(scrubbedException, infrastructure_classification);
 
           // the point of this is to build a map of 'scrubbed exceptions,' i.e., exceptions with numbers removed (to
           // un-unique the exceptions on attempt ids, for instance), to the number of times each has occurred on given
@@ -139,7 +127,6 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
         host_strings.put(host_map.get(host_key).toString());
       }
       exception_host_json.put("hosts", host_strings);
-      exception_host_json.put("infrastructural", exceptionInfrastuctureClassification.get(exception_key));
       exceptionRows.put(exception_host_json);
     }
 
@@ -147,7 +134,7 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
       Map<String, Long> exception_map = hostToExceptionToCount.get(host_key);
       JSONArray exceptionStrings = new JSONArray();
       for (String exceptionKey : exception_map.keySet()) {
-        exceptionStrings.put(colorize(exceptionKey, exceptionInfrastuctureClassification.get(exceptionKey))
+        exceptionStrings.put(exceptionKey
         );
       }
 
@@ -283,10 +270,6 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
     return QUERY_LIMIT;
   }
 
-  private static boolean getInfraOnlyParam(Map<String, String> parameters) {
-    String infra_only_disp = parameters.get("infra");
-    return infra_only_disp != null && infra_only_disp.equals("1");
-  }
 
   private static String shrink(String str, Integer len) {
     if (str.length() > len - 4) {
@@ -298,13 +281,6 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
   private static String scrub(String exception) {
     return exception
         .replaceAll("[0-9]", "i");
-  }
-
-  private static String colorize(String exception, String infrastructural) {
-    if (infrastructural.equals("INFRASTRUCTURAL")) {
-      return "<p class=\"infra\">" + exception + "</p>";
-    }
-    return "<p class=\"not_infra\">" + exception + "</p>";
   }
 
   private static String noPort(String url) {
