@@ -53,13 +53,10 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   private final FsActionContext context;
 
   private ILockManager lockManager;
-  private FlowSubmissionController controller;
-  private CascadingUtil cascadingUtil;
-  private TmpDirFilter tmpDirFilter;
-  private RuntimePropertiesBuilder runtimePropertiesBuilder;
+
+  private WorkflowRunner.ExecuteConfig executeConfig;
 
   private final Multimap<DSAction, DataStore> datastores = HashMultimap.create();
-
 
   public Action(String checkpointToken) {
     this(checkpointToken, Maps.newHashMap());
@@ -177,7 +174,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
       if (fs.exists(path)) {
         // delete if tmp store, or if no trash is enabled
-        if (tmpDirFilter.isSkipTrash(path) || !trashEnabled) {
+        if (executeConfig.getTmpDirFilter().isSkipTrash(path) || !trashEnabled) {
           boolean delete = fs.delete(path, true);
           LOG.info("Deleting {}: {}", uri, delete);
           // otherwise, move to trash
@@ -194,10 +191,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     this.lockManager = context.getLockProvider()
         .createManager(getDatastores(DSAction.READS_FROM))
         .lockProcessStart();
-    this.controller = context.getSubmissionController();
-    this.cascadingUtil = context.getCascadingUtil();
-    this.tmpDirFilter = context.getTmpDirFilter();
-    this.runtimePropertiesBuilder = context.getRuntimePropertiesBuilder();
+    this.executeConfig = context;
   }
 
   protected IStoreReaderLocker getLockProvider() {
@@ -221,7 +215,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     //  4) properties provided to WorkflowOptions
 
     return new NestedProperties(childProperties, false)
-        .override(runtimePropertiesBuilder.build(getActionId(), context)
+        .override(executeConfig.getRuntimePropertiesBuilder().build(getActionId(), context)
             .override(getCombinedProperties()))
         .getPropertiesMap();
   }
@@ -231,10 +225,12 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   }
 
   protected FlowConnector buildFlowConnector() {
-    return cascadingUtil.getFlowConnector(getCombinedProperties().getPropertiesMap());
+    return executeConfig.getCascadingUtil().getFlowConnector(getCombinedProperties().getPropertiesMap());
   }
 
   private FlowConnector buildFlowConnector(Map<Object, Object> properties) {
+
+    CascadingUtil cascadingUtil = executeConfig.getCascadingUtil();
 
     return CascadingUtil.buildFlowConnector(
         new JobConf(),
@@ -295,7 +291,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     Runnable cleanupCallback = () -> {
     };
     if (flow.getConfig() instanceof Configuration) {
-      cleanupCallback = controller.blockUntilSubmissionAllowed((Configuration)flow.getConfig());
+      cleanupCallback = executeConfig.getSubmissionController().blockUntilSubmissionAllowed((Configuration)flow.getConfig());
     } else {
       LOG.error("Config is not of type Configuration. Type is instead " + flow.getConfig().getClass().getCanonicalName());
     }
@@ -320,7 +316,7 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
     runningJobs.add(tracked);
     tracked.complete(
         persister,
-        isFailOnCounterFetch()
+        executeConfig.isFailOnCounterFetch()
     );
     runningJobs.remove(tracked);
   }

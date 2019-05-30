@@ -109,13 +109,6 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
   }
 
   @Override
-  public void setFailOnCounterFetch(boolean value) {
-    for (BaseStep<Config> step : getSubSteps()) {
-      step.getAction().setFailOnCounterFetch(value);
-    }
-  }
-
-  @Override
   public TwoNestedMap<String, String, Long> getCurrentStepCounters() throws IOException {
     TwoNestedCountingMap<String, String> map = new TwoNestedCountingMap<>(0L);
     for (BaseStep<Config> step : steps) {

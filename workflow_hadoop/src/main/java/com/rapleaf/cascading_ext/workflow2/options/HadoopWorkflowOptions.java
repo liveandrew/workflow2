@@ -25,6 +25,7 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
   private CascadingUtil cascadingUtil;
   private TmpDirFilter tmpDirFilter;
   private RuntimePropertiesBuilder runtimePropertiesBuilder;
+  private boolean failOnCounterFetch = true;
 
   protected HadoopWorkflowOptions(OverridableProperties defaultProperties,
                                   Map<Object, Object> systemProperties,
@@ -85,6 +86,15 @@ public class HadoopWorkflowOptions extends BaseWorkflowOptions<HadoopWorkflowOpt
     return flowSubmissionController;
   }
 
+
+  public HadoopWorkflowOptions setFailOnCounterFetch(boolean value){
+    this.failOnCounterFetch = value;
+    return this;
+  }
+
+  public boolean isFailOnCounterFetch() {
+    return failOnCounterFetch;
+  }
 
   protected static void configureTest(HadoopWorkflowOptions options) {
 

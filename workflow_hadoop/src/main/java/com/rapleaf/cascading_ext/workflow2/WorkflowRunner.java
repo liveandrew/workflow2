@@ -108,7 +108,8 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
             initializedData.getOptions().getFlowSubmissionController(),
             initializedData.getOptions().getCascadingUtil(),
             initializedData.getOptions().getTmpDirFilter(),
-            initializedData.getOptions().getRuntimePropertiesBuilder()
+            initializedData.getOptions().getRuntimePropertiesBuilder(),
+            initializedData.getOptions().isFailOnCounterFetch()
         ),
         new OnShutdown<ExecuteConfig>() {
           @Override
@@ -133,13 +134,15 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
     private CascadingUtil cascadingUtil;
     private TmpDirFilter tmpDirFilter;
     private RuntimePropertiesBuilder runtimePropertiesBuilder;
+    private boolean failOnCounterFetch;
 
-    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController, CascadingUtil cascadingUtil, TmpDirFilter tmpDirFilter, RuntimePropertiesBuilder runtimePropertiesBuilder) {
+    public ExecuteConfig(IStoreReaderLocker lockProvider, FlowSubmissionController submissionController, CascadingUtil cascadingUtil, TmpDirFilter tmpDirFilter, RuntimePropertiesBuilder runtimePropertiesBuilder, boolean failOnCounterFetch) {
       this.lockProvider = lockProvider;
       this.submissionController = submissionController;
       this.cascadingUtil = cascadingUtil;
       this.tmpDirFilter = tmpDirFilter;
       this.runtimePropertiesBuilder = runtimePropertiesBuilder;
+      this.failOnCounterFetch = failOnCounterFetch;
     }
 
     public ExecuteConfig(IStoreReaderLocker lockProvider, CascadingUtil cascadingUtil) {
@@ -166,6 +169,10 @@ public final class WorkflowRunner extends BaseWorkflowRunner<WorkflowRunner.Exec
 
     public RuntimePropertiesBuilder getRuntimePropertiesBuilder() {
       return runtimePropertiesBuilder;
+    }
+
+    public boolean isFailOnCounterFetch() {
+      return failOnCounterFetch;
     }
   }
 
