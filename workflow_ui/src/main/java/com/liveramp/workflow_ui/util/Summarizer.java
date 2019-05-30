@@ -36,8 +36,8 @@ import static com.rapleaf.jack.queries.AggregatedColumn.SUM;
 public class Summarizer {
   private static final Logger LOG = LoggerFactory.getLogger(Summarizer.class);
 
-  private static GenericQuery getSummarizationQuery(IWorkflowDb rldb, long start, long end, String group, String name) throws IOException {
-    return rldb.createQuery().from(WorkflowExecution.TBL)
+  private static GenericQuery getSummarizationQuery(IWorkflowDb workflowDb, long start, long end, String group, String name) throws IOException {
+    return workflowDb.createQuery().from(WorkflowExecution.TBL)
         .innerJoin(WorkflowAttempt.TBL)
         .on(WorkflowAttempt.WORKFLOW_EXECUTION_ID.equalTo(WorkflowExecution.ID.as(Integer.class)))
         .innerJoin(StepAttempt.TBL.with(IndexHints.force(Index.of("index_step_attempts_on_end_time"))))
@@ -57,7 +57,7 @@ public class Summarizer {
 
   public static void summarizeApplicationCounters(
       Multimap<String, String> countersToRecord,
-      IWorkflowDb rldb,
+      IWorkflowDb workflowDb,
       int dayWindow,
       LocalDate dateEnd) throws IOException, SQLException {
 
@@ -81,7 +81,7 @@ public class Summarizer {
       LOG.info("\n");
       LOG.info("Looking at summaries for " + group + "." + name);
 
-      List<ApplicationCounterSummary> summaries = rldb.applicationCounterSummaries().query()
+      List<ApplicationCounterSummary> summaries = workflowDb.applicationCounterSummaries().query()
           .whereDate(new Between<>(dateStart.toDate().getTime(), dateEnd.toDate().getTime()))
           .whereApplicationId(new IsNull<>())
           .whereGroup(new EqualTo<>(group))
@@ -100,7 +100,7 @@ public class Summarizer {
         if (!summarizedDates.contains(date)) {
           LOG.info("Did not find a summary for date, fetching.");
 
-          GenericQuery query = getSummarizationQuery(rldb, date.toDateTimeAtStartOfDay().toDate().getTime(),
+          GenericQuery query = getSummarizationQuery(workflowDb, date.toDateTimeAtStartOfDay().toDate().getTime(),
               date.plusDays(1).toDateTimeAtStartOfDay().toDate().getTime(),
               group,
               name
@@ -123,7 +123,7 @@ public class Summarizer {
             LOG.info("  sum: " + sum);
             LOG.info("  date: " + date.toDate());
 
-            rldb.applicationCounterSummaries().create(
+            workflowDb.applicationCounterSummaries().create(
                 appId,
                 group,
                 name,
@@ -136,7 +136,7 @@ public class Summarizer {
           LOG.info("Recording records for " + count + " applications.");
 
           //  application_id is null for cluster sum
-          ApplicationCounterSummary clusterSummary = rldb.applicationCounterSummaries().create(
+          ApplicationCounterSummary clusterSummary = workflowDb.applicationCounterSummaries().create(
               null,
               group,
               name,

@@ -113,10 +113,10 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
   @Override
   public synchronized DbPersistence prepare(InitializedDbPersistence persistence, DirectedGraph<S, DefaultEdge> flatSteps) {
 
-    IWorkflowDb rldb = persistence.getDb();
+    IWorkflowDb workflowDb = persistence.getDb();
 
     try {
-      rldb.setAutoCommit(false);
+      workflowDb.setAutoCommit(false);
 
       long workflowAttemptId = persistence.getAttemptId();
       Long executionId = persistence.getExecutionId();
@@ -129,7 +129,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
 
       Map<DataStoreInfo, WorkflowAttemptDatastore> datastores = Maps.newHashMap();
       for (DataStoreInfo store : allStores) {
-        datastores.put(store, rldb.workflowAttemptDatastores().create(
+        datastores.put(store, workflowDb.workflowAttemptDatastores().create(
             (int)workflowAttemptId,
             store.getName(),
             store.getPath(),
@@ -138,21 +138,21 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
       }
 
       //  save datastores
-      rldb.commit();
+      workflowDb.commit();
 
       Set<String> completeSteps = Sets.newHashSet();
       synchronized (persistence.getLock()) {
-        completeSteps.addAll(WorkflowQueries.getCompleteSteps(rldb, executionId));
+        completeSteps.addAll(WorkflowQueries.getCompleteSteps(workflowDb, executionId));
       }
 
       Map<String, StepAttempt> attempts = Maps.newHashMap();
       for (S step : flatSteps.vertexSet()) {
-        StepAttempt stepAttempt = createStepAttempt(rldb, step, workflowAttemptId, completeSteps);
+        StepAttempt stepAttempt = createStepAttempt(workflowDb, step, workflowAttemptId, completeSteps);
         attempts.put(stepAttempt.getStepToken(), stepAttempt);
       }
 
       //  save created steps
-      rldb.commit();
+      workflowDb.commit();
 
       for (S step : flatSteps.vertexSet()) {
         StepAttempt stepAttempt = attempts.get(step.getCheckpointToken());
@@ -160,7 +160,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
         @SuppressWarnings("unchecked") Collection<Map.Entry<DSAction, DataStoreInfo>> entries = step.getDataStores().entries();
         for (Map.Entry<DSAction, DataStoreInfo> entry : entries) {
           WorkflowAttemptDatastore workflowAttemptDatastore = datastores.get(entry.getValue());
-          rldb.stepAttemptDatastores().create(
+          workflowDb.stepAttemptDatastores().create(
               stepAttempt.getId(),
               workflowAttemptDatastore.getId(),
               entry.getKey().ordinal()
@@ -170,14 +170,14 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
       }
 
       //  save refs to steps
-      rldb.commit();
+      workflowDb.commit();
 
       for (DefaultEdge edge : flatSteps.edgeSet()) {
 
         IStep dep = flatSteps.getEdgeTarget(edge);
         IStep step = flatSteps.getEdgeSource(edge);
 
-        rldb.stepDependencies().create(
+        workflowDb.stepDependencies().create(
             attempts.get(step.getCheckpointToken()).getId(),
             attempts.get(dep.getCheckpointToken()).getId()
         );
@@ -185,22 +185,22 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
       }
 
       //  save step deps
-      rldb.commit();
+      workflowDb.commit();
 
       return new DbPersistence(persistence);
 
     } catch (Exception e) {
-      rldb.rollback();
+      workflowDb.rollback();
       throw new RuntimeException(e);
     } finally {
-      rldb.setAutoCommit(true);
+      workflowDb.setAutoCommit(true);
     }
 
   }
 
-  private Application getApplication(IWorkflowDb rldb, String name, Integer appType) throws IOException {
+  private Application getApplication(IWorkflowDb workflowDb, String name, Integer appType) throws IOException {
 
-    Optional<Application> application = WorkflowQueries.getApplication(rldb, name);
+    Optional<Application> application = WorkflowQueries.getApplication(workflowDb, name);
 
     if (application.isPresent()) {
       LOG.info("Using existing application");
@@ -209,20 +209,20 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     } else {
       LOG.info("Creating new application for name: " + name + ", app type " + appType);
 
-      Application app = rldb.applications().create(name);
+      Application app = workflowDb.applications().create(name);
       if (appType != null) {
         app.setAppType(appType);
       }
-      rldb.applications().save(app);
+      workflowDb.applications().save(app);
 
       //  add DT to the performance notifications for all new applications
 
-      ConfiguredNotification dtNotification = rldb.configuredNotifications()
+      ConfiguredNotification dtNotification = workflowDb.configuredNotifications()
           .create(WorkflowRunnerNotification.PERFORMANCE.ordinal())
           .setEmail("dt-workflow-alerts@liveramp.com");
       dtNotification.save();
 
-      ApplicationConfiguredNotification appNotif = rldb.applicationConfiguredNotifications()
+      ApplicationConfiguredNotification appNotif = workflowDb.applicationConfiguredNotifications()
           .create(app.getId(), dtNotification.getId());
       appNotif.save();
 
@@ -264,8 +264,8 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
 
   }
 
-  public void assertOnlyLiveAttempt(IWorkflowDb rldb, WorkflowExecution.Attributes execution, WorkflowAttempt attempt) throws IOException {
-    List<WorkflowAttempt> liveAttempts = WorkflowQueries.getLiveWorkflowAttempts(rldb, execution.getId());
+  public void assertOnlyLiveAttempt(IWorkflowDb workflowDb, WorkflowExecution.Attributes execution, WorkflowAttempt attempt) throws IOException {
+    List<WorkflowAttempt> liveAttempts = WorkflowQueries.getLiveWorkflowAttempts(workflowDb, execution.getId());
     if (liveAttempts.size() != 1) {
       attempt.setStatus(WorkflowAttemptStatus.FAILED.ordinal()).save();
       throw new RuntimeException("Multiple live attempts found for workflow execution! " + liveAttempts + " Not starting workflow.");
@@ -347,12 +347,12 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     return attempt;
   }
 
-  private ConfiguredNotification buildConfiguredNotification(IWorkflowDb rldb, WorkflowRunnerNotification notification, String emailForSeverity) throws IOException {
+  private ConfiguredNotification buildConfiguredNotification(IWorkflowDb workflowDb, WorkflowRunnerNotification notification, String emailForSeverity) throws IOException {
     if (PROVIDED_HANDLER_NOTIFICATIONS.contains(notification)) {
-      return rldb.configuredNotifications().create(notification.ordinal()).setProvidedAlertsHandler(true);
+      return workflowDb.configuredNotifications().create(notification.ordinal()).setProvidedAlertsHandler(true);
     } else {
       if (emailForSeverity != null) {
-        return rldb.configuredNotifications().create(notification.ordinal()).setEmail(emailForSeverity);
+        return workflowDb.configuredNotifications().create(notification.ordinal()).setEmail(emailForSeverity);
       }
     }
 
@@ -369,11 +369,11 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
   }
 
 
-  private StepAttempt createStepAttempt(IWorkflowDb rldb, S step, Long attemptId, Set<String> completeSteps) throws IOException {
+  private StepAttempt createStepAttempt(IWorkflowDb workflowDb, S step, Long attemptId, Set<String> completeSteps) throws IOException {
 
     String token = step.getCheckpointToken();
 
-    StepAttempt model = rldb.stepAttempts().create(attemptId.intValue(), token, null, null,
+    StepAttempt model = workflowDb.stepAttempts().create(attemptId.intValue(), token, null, null,
         getInitialStatus(token, completeSteps).ordinal(),
         null,
         null,
@@ -384,7 +384,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     StepStateManager<S> manager = getManager();
     Serializable context = manager.getStepContext(step);
     if (context != null) {
-      rldb.backgroundStepAttemptInfos().create(
+      workflowDb.backgroundStepAttemptInfos().create(
           model.getId(),
           SerializationUtils.serialize(context),
           System.currentTimeMillis(),

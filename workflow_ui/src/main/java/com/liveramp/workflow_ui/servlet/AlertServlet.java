@@ -26,7 +26,7 @@ public class AlertServlet implements JSONServlet.Processor {
   static int MAX_DURATION_IN_DAYS = 1;
 
   @Override
-  public JSONObject getData(IDatabases rldb, Map<String, String> parameters) throws Exception {
+  public JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception {
     Long startRange = Long.parseLong(parameters.get("started_after"));
     Long endRange = Long.parseLong(parameters.get("started_before"));
     String appName = parameters.get("name");
@@ -35,7 +35,7 @@ public class AlertServlet implements JSONServlet.Processor {
     }
     JSONObject data = new JSONObject();
 
-    GenericQuery getBadMrJobsQuery = rldb.getWorkflowDb().createQuery()
+    GenericQuery getBadMrJobsQuery = workflowDb.getWorkflowDb().createQuery()
         .from(MapreduceJob.TBL)
         .leftJoin(WorkflowAlertMapreduceJob.TBL)
         .on(WorkflowAlertMapreduceJob.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID))
@@ -55,7 +55,7 @@ public class AlertServlet implements JSONServlet.Processor {
         .get(0).get(COUNT(MapreduceJob.ID)).doubleValue();
 
     TwoNestedCountingMap<String, String> mapreduceAlertCounts = new TwoNestedCountingMap<>(0L);
-    GenericQuery q2 = rldb.getWorkflowDb().createQuery()
+    GenericQuery q2 = workflowDb.getWorkflowDb().createQuery()
         .from(MapreduceJob.TBL)
         .innerJoin(WorkflowAlertMapreduceJob.TBL)
         .on(WorkflowAlertMapreduceJob.MAPREDUCE_JOB_ID.equalTo(MapreduceJob.ID))

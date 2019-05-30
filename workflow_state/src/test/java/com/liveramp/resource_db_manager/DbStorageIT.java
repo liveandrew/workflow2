@@ -35,7 +35,7 @@ public class DbStorageIT extends ResourceDbManagerTestCase {
   private final static List<Integer> listOfIntegers = Lists.newArrayList(1, 2, 3, 4);
   private final static List<Long> listOfLongs = Lists.newArrayList(1L, 2L, 3L, 4L);
 
-  protected final IWorkflowDb rlDb = new DatabasesImpl().getWorkflowDb();
+  protected final IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
   private DbStorage.Factory factory;
 
   protected DbStorage.Factory createStorage() {
@@ -92,7 +92,7 @@ public class DbStorageIT extends ResourceDbManagerTestCase {
   }
 
   protected ResourceRoot createRoot() throws IOException {
-    ResourceRoot root = rlDb.resourceRoots().create()
+    ResourceRoot root = workflowDb.resourceRoots().create()
         .setName(NAME)
         .setCreatedAt(System.currentTimeMillis())
         .setUpdatedAt(System.currentTimeMillis());
@@ -102,13 +102,13 @@ public class DbStorageIT extends ResourceDbManagerTestCase {
 
   @Test
   public void testSwitchingBetweenJavaAndJsonSerialization() throws IOException {
-    ResourceManager resourceManager = DbResourceManager.create(rlDb)
+    ResourceManager resourceManager = DbResourceManager.create(workflowDb)
         .create(0L, "Test");
 
-    ResourceRoot resourceRoot = Accessors.first(rlDb.resourceRoots().findAll());
+    ResourceRoot resourceRoot = Accessors.first(workflowDb.resourceRoots().findAll());
 
     final StorageSerializer javaSerializer = new JavaObjectStorageSerializer();
-    rlDb.resourceRecords().create("email2", resourceRoot.getIntId(), javaSerializer.serialize(email2));
+    workflowDb.resourceRecords().create("email2", resourceRoot.getIntId(), javaSerializer.serialize(email2));
 
     Resource<Email> resource1 = resourceManager.resource(email1, "email1");
     Resource<Email> resource2 = resourceManager.resource(email2, "email2");
@@ -130,7 +130,7 @@ public class DbStorageIT extends ResourceDbManagerTestCase {
 
   @Test
   public void testJsonForListsOfNumbers() throws IOException {
-    ResourceManager resourceManager = DbResourceManager.create(rlDb)
+    ResourceManager resourceManager = DbResourceManager.create(workflowDb)
         .create(0L, "Test");
 
     Resource<List<Integer>> listOfIntegersResource = resourceManager.resource(listOfIntegers, "list-of-integers");

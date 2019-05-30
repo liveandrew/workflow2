@@ -19,8 +19,8 @@ public class NotificationConfigurationServlet extends HttpServlet {
 
   private final ThreadLocal<IDatabases> databases;
 
-  public NotificationConfigurationServlet(ThreadLocal<IDatabases> rldb) {
-    this.databases = rldb;
+  public NotificationConfigurationServlet(ThreadLocal<IDatabases> workflowDb) {
+    this.databases = workflowDb;
   }
 
   private String get(String param, HttpServletRequest req) {
@@ -40,7 +40,7 @@ public class NotificationConfigurationServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    IWorkflowDb rldb = databases.get().getWorkflowDb();
+    IWorkflowDb worflowDb = databases.get().getWorkflowDb();
 
     String command = get("command", req);
     String email = get("email", req);
@@ -54,18 +54,18 @@ public class NotificationConfigurationServlet extends HttpServlet {
         }
 
         if (contains(APP_NAME, req)) {
-          ApplicationController.addConfiguredNotifications(rldb, get(APP_NAME, req), email, notifications);
+          ApplicationController.addConfiguredNotifications(worflowDb, get(APP_NAME, req), email, notifications);
         } else if (contains(EX_ID, req)) {
-          ExecutionController.addConfiguredNotifications(rldb, Long.parseLong(get(EX_ID, req)), email, notifications);
+          ExecutionController.addConfiguredNotifications(worflowDb, Long.parseLong(get(EX_ID, req)), email, notifications);
         } else {
           throw new IllegalArgumentException();
         }
         break;
       case "remove":
         if (contains(APP_NAME, req)) {
-          ApplicationController.removeConfiguredNotifications(rldb, get(APP_NAME, req), email);
+          ApplicationController.removeConfiguredNotifications(worflowDb, get(APP_NAME, req), email);
         } else if (contains(EX_ID, req)) {
-          ExecutionController.removeConfiguredNotifications(rldb, Long.parseLong(get(EX_ID, req)), email);
+          ExecutionController.removeConfiguredNotifications(worflowDb, Long.parseLong(get(EX_ID, req)), email);
         } else {
           throw new IllegalArgumentException();
         }

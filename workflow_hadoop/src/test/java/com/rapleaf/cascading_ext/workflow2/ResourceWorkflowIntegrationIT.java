@@ -32,13 +32,13 @@ public class ResourceWorkflowIntegrationIT extends WorkflowTestCase {
   private static final Set<Long> previousNumbers = Sets.newHashSet(0L, 1L);
   private static final Set<Long> expectedNumbers = Sets.newHashSet(1L, 2L, 3L, 4L, 5L);
   private static boolean shouldFail;
-  private IWorkflowDb rlDb;
+  private IWorkflowDb workflowDb;
 
   @Before
   public void before() throws IOException {
     shouldFail = false;
-    rlDb = new DatabasesImpl().getWorkflowDb();
-    rlDb.deleteAll();
+    workflowDb = new DatabasesImpl().getWorkflowDb();
+    workflowDb.deleteAll();
   }
 
   @Test

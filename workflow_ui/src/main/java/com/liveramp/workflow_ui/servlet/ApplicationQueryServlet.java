@@ -18,11 +18,11 @@ public class ApplicationQueryServlet implements JSONServlet.Processor{
   public JSONObject getData(IDatabases databases, Map<String, String> parameters) throws Exception {
 
     String name = parameters.get("name");
-    IWorkflowDb rldb = databases.getWorkflowDb();
-    Application application = Accessors.only(rldb.applications().findByName(name));
+    IWorkflowDb workflowDb = databases.getWorkflowDb();
+    Application application = Accessors.only(workflowDb.applications().findByName(name));
 
     JSONArray notifications = new JSONArray();
-    for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getApplicationNotifications(rldb, application.getId())) {
+    for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getApplicationNotifications(workflowDb, application.getId())) {
       notifications.put(WorkflowJSON.toJSON(attributes));
     }
 

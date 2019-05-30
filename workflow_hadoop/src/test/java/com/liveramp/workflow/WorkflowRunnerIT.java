@@ -187,9 +187,9 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     );
     wr.run();
 
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
 
-    assertEquals("description1", rldb.workflowAttempts().find(wr.getPersistence().getAttemptId()).getDescription());
+    assertEquals("description1", workflowDb.workflowAttempts().find(wr.getPersistence().getAttemptId()).getDescription());
   }
 
   @Test
@@ -211,10 +211,10 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
 
   @Test
   public void testInitialStatus() throws IOException {
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
 
     Step first = new Step(new IncrementAction("first"));
-    WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(rldb.workflowExecutions().find(buildWfr(dbPersistenceFactory, first).getPersistence().getExecutionId()));
+    WorkflowAttempt attempt = WorkflowQueries.getLatestAttempt(workflowDb.workflowExecutions().find(buildWfr(dbPersistenceFactory, first).getPersistence().getExecutionId()));
     assertEquals(WorkflowAttemptStatus.INITIALIZING.ordinal(), attempt.getStatus().intValue());
 
   }
@@ -245,8 +245,8 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
 
   @Test
   public void testNotificationDestinations() throws IOException {
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
-    rldb.disableCaching();
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
+    workflowDb.disableCaching();
 
     BufferingAlertsHandlerFactory factory = new BufferingAlertsHandlerFactory();
 
@@ -258,13 +258,13 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
         .setAlertsHandler(factory.buildHandler(Sets.newHashSet("supplied-handler@example.com"), new MailBuffer.ListBuffer())),
         one);
 
-    ApplicationController.addConfiguredNotifications(rldb,
+    ApplicationController.addConfiguredNotifications(workflowDb,
         "test",
         "test@gmail.com",
         WorkflowNotificationLevel.ERROR
     );
 
-    ExecutionController.addConfiguredNotifications(rldb,
+    ExecutionController.addConfiguredNotifications(workflowDb,
         wr.getPersistence().getExecutionId(),
         "ben@gmail.com",
         WorkflowNotificationLevel.ERROR
@@ -278,7 +278,7 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     }
 
     DbPersistence origPersistence = (DbPersistence)wr.getPersistence();
-    DbPersistence newPersistence = DbPersistence.queryPersistence(origPersistence.getAttemptId(), rldb);
+    DbPersistence newPersistence = DbPersistence.queryPersistence(origPersistence.getAttemptId(), workflowDb);
 
 
     for (AlertsHandler alertsHandler : newPersistence.getRecipients(WorkflowRunnerNotification.DIED_UNCLEAN, factory)) {
@@ -989,7 +989,7 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
 
   @Test
   public void integrationTestCancelComplete() throws Exception {
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
 
     AtomicInteger step1Count = new AtomicInteger(0);
     AtomicInteger step2Count = new AtomicInteger(0);
@@ -1002,16 +1002,16 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
 
     WorkflowStatePersistence origPersistence = testWorkflow.getPersistence();
 
-    List<Application> applications = rldb.applications().query().name("Test Workflow").find();
+    List<Application> applications = workflowDb.applications().query().name("Test Workflow").find();
     assertEquals(1, applications.size());
 
-    assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(), rldb.workflowExecutions().query()
+    assertEquals(WorkflowExecutionStatus.COMPLETE.ordinal(), workflowDb.workflowExecutions().query()
         .applicationId(Accessors.only(applications).getIntId())
         .find().iterator().next().getStatus());
 
     origPersistence.markStepReverted("step1");
 
-    assertEquals(WorkflowExecutionStatus.INCOMPLETE.ordinal(), rldb.workflowExecutions().query()
+    assertEquals(WorkflowExecutionStatus.INCOMPLETE.ordinal(), workflowDb.workflowExecutions().query()
         .applicationId(Accessors.only(applications).getIntId())
         .find().iterator().next().getStatus());
 
@@ -1030,8 +1030,8 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
 
   @Test
   public void integrationTestCancelTwoDeep() throws Exception {
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
-    rldb.disableCaching();
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
+    workflowDb.disableCaching();
 
     //  complete, fail, wait
     //  skip, complete, fail
@@ -1069,12 +1069,12 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
       //  fine
     }
 
-    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, getExecutionStatus(rldb, pers2));
+    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, getExecutionStatus(workflowDb, pers2));
     assertEquals(WorkflowAttemptStatus.FINISHED, pers2.getStatus());
 
     pers1.markStepReverted("step1");
 
-    Assert.assertEquals(WorkflowExecutionStatus.INCOMPLETE, getExecutionStatus(rldb, pers2));
+    Assert.assertEquals(WorkflowExecutionStatus.INCOMPLETE, getExecutionStatus(workflowDb, pers2));
     assertEquals(WorkflowAttemptStatus.FINISHED, pers2.getStatus());
 
     step1 = new Step(new IncrementAction2("step1", step1Count));
@@ -1084,7 +1084,7 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     testWorkflow = buildWfr(dbPersistenceFactory, step3);
     testWorkflow.run();
 
-    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, getExecutionStatus(rldb, pers2));
+    Assert.assertEquals(WorkflowExecutionStatus.COMPLETE, getExecutionStatus(workflowDb, pers2));
     assertEquals(WorkflowAttemptStatus.FINISHED, pers2.getStatus());
 
     assertEquals(2, step1Count.get());
@@ -1093,15 +1093,15 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
 
   }
 
-  public static WorkflowExecutionStatus getExecutionStatus(IWorkflowDb rldb, WorkflowStatePersistence persistence) throws IOException {
-    return WorkflowExecutionStatus.findByValue(rldb.workflowExecutions().find(persistence.getExecutionId()).getStatus());
+  public static WorkflowExecutionStatus getExecutionStatus(IWorkflowDb workflowDb, WorkflowStatePersistence persistence) throws IOException {
+    return WorkflowExecutionStatus.findByValue(workflowDb.workflowExecutions().find(persistence.getExecutionId()).getStatus());
   }
 
   @Test
   public void testCancelWorkflow() throws IOException {
 
-    final IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
-    rldb.disableCaching();
+    final IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
+    workflowDb.disableCaching();
 
     AtomicInteger step1Count = new AtomicInteger(0);
     AtomicInteger step2Count = new AtomicInteger(0);
@@ -1121,8 +1121,8 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
 
     WorkflowStatePersistence persistence = testWorkflow.getPersistence();
 
-    ApplicationController.cancelLatestExecution(rldb, "Test Workflow", null);
-    WorkflowExecution ex = Accessors.first(rldb.workflowExecutions().findAll());
+    ApplicationController.cancelLatestExecution(workflowDb, "Test Workflow", null);
+    WorkflowExecution ex = Accessors.first(workflowDb.workflowExecutions().findAll());
 
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
     assertEquals(StepStatus.COMPLETED.ordinal(), persistence.getStatus("step1").ordinal());
@@ -1137,7 +1137,7 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     WorkflowStatePersistence newPeristence = restartedWorkflow.getPersistence();
 
     //  nothing changed for first execution
-    List<WorkflowExecution> executions = rldb.workflowExecutions().query().order(QueryOrder.ASC).find();
+    List<WorkflowExecution> executions = workflowDb.workflowExecutions().query().order(QueryOrder.ASC).find();
     ex = Accessors.first(executions);
     assertEquals(WorkflowExecutionStatus.CANCELLED.ordinal(), ex.getStatus());
     assertEquals(StepStatus.COMPLETED.ordinal(), persistence.getStatus("step1").ordinal());
@@ -1162,7 +1162,7 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     Exception cancelNonLatest = getException(new Callable() {
       @Override
       public Void call() throws Exception {
-        ExecutionController.cancelExecution(rldb, ex2);
+        ExecutionController.cancelExecution(workflowDb, ex2);
         return null;
       }
     });
@@ -1174,7 +1174,7 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
   @Test
   public void testCancelApplication() throws Exception {
 
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
 
     Step step1 = new Step(new NoOpAction("step1"));
 
@@ -1186,7 +1186,7 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
 
     restartedWorkflow.run();
 
-    ApplicationController.cancelLatestExecution(rldb, "test", null);
+    ApplicationController.cancelLatestExecution(workflowDb, "test", null);
   }
 
   @Test

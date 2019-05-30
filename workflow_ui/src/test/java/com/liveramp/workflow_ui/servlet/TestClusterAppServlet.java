@@ -31,10 +31,10 @@ public class TestClusterAppServlet extends WorkflowUITestCase {
     long date13 = FORMAT.parseMillis("2016-06-13 12:00:00");
 
     DatabasesImpl databases = new DatabasesImpl();
-    final IWorkflowDb rldb = databases.getWorkflowDb();
+    final IWorkflowDb workflowDb = databases.getWorkflowDb();
 
-    Application app = rldb.applications().create("Test Workflow");
-    WorkflowExecution execution = rldb.workflowExecutions().create(null,
+    Application app = workflowDb.applications().create("Test Workflow");
+    WorkflowExecution execution = workflowDb.workflowExecutions().create(null,
         "Test Workflow",
         null,
         WorkflowExecutionStatus.COMPLETE.ordinal(),
@@ -43,8 +43,8 @@ public class TestClusterAppServlet extends WorkflowUITestCase {
         app.getIntId(),
         null
     );
-    WorkflowAttempt attempt = rldb.workflowAttempts().create(execution.getIntId(), "user", "HIGH", "default", "localhost");
-    StepAttempt step = rldb.stepAttempts().create(attempt.getIntId(), "step",
+    WorkflowAttempt attempt = workflowDb.workflowAttempts().create(execution.getIntId(), "user", "HIGH", "default", "localhost");
+    StepAttempt step = workflowDb.stepAttempts().create(attempt.getIntId(), "step",
         date13,
         date14,
         StepStatus.COMPLETED.ordinal(),
@@ -53,14 +53,14 @@ public class TestClusterAppServlet extends WorkflowUITestCase {
         "class",
         null
     );
-    MapreduceJob mrJob = rldb.mapreduceJobs().create(step.getId(), "job1",
+    MapreduceJob mrJob = workflowDb.mapreduceJobs().create(step.getId(), "job1",
         "jobname", "url", null, null, null, null, null, null, null, null, null, null, null, null);
 
-    rldb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, "TOTAL_LAUNCHED_MAPS", 1);
-    rldb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, "TOTAL_LAUNCHED_REDUCES", 1);
+    workflowDb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, "TOTAL_LAUNCHED_MAPS", 1);
+    workflowDb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, "TOTAL_LAUNCHED_REDUCES", 1);
 
-    WorkflowAlert alert = rldb.workflowAlerts().create("alert_class", "some message");
-    rldb.workflowAlertMapreduceJobs().create(alert.getId(), mrJob.getId());
+    WorkflowAlert alert = workflowDb.workflowAlerts().create("alert_class", "some message");
+    workflowDb.workflowAlertMapreduceJobs().create(alert.getId(), mrJob.getId());
 
     JSONObject response = new ClusterAppAlerts().getData(databases, new MapBuilder<String, String>()
         .put("start_time", Long.toString(date13))

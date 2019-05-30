@@ -15,10 +15,10 @@ import com.liveramp.workflow_db_state.DbPersistence;
 public class AttemptCommandServlet extends HttpServlet {
   private static final Logger LOG = LoggerFactory.getLogger(AttemptCommandServlet.class);
 
-  private final ThreadLocal<IDatabases> rldb;
+  private final ThreadLocal<IDatabases> workflowDb;
 
-  public AttemptCommandServlet(ThreadLocal<IDatabases> rldb ) {
-    this.rldb = rldb;
+  public AttemptCommandServlet(ThreadLocal<IDatabases> workflowDb ) {
+    this.workflowDb = workflowDb;
   }
 
   @Override
@@ -29,7 +29,7 @@ public class AttemptCommandServlet extends HttpServlet {
     Integer id = Integer.parseInt(req.getParameter("id"));
     LOG.info("Processing command " + command + " for workflow attempt " + id);
 
-    DbPersistence persistence = DbPersistence.queryPersistence(id, rldb.get().getWorkflowDb());
+    DbPersistence persistence = DbPersistence.queryPersistence(id, workflowDb.get().getWorkflowDb());
 
     if (command.equals("shutdown")) {
       persistence.markShutdownRequested(req.getParameter("reason"));

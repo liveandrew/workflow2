@@ -72,13 +72,13 @@ import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 public class WorkflowQueries {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowQueries.class);
 
-  public static Optional<Application> getApplication(IWorkflowDb rldb, String name) throws IOException {
-    return Accessors.firstOrAbsent(rldb.applications().findByName(name));
+  public static Optional<Application> getApplication(IWorkflowDb workflowDb, String name) throws IOException {
+    return Accessors.firstOrAbsent(workflowDb.applications().findByName(name));
   }
 
-  public static Set<WorkflowExecution.Attributes> getIncompleteExecutions(IWorkflowDb rldb, String name, String scopeId) throws IOException {
+  public static Set<WorkflowExecution.Attributes> getIncompleteExecutions(IWorkflowDb workflowDb, String name, String scopeId) throws IOException {
     Set<WorkflowExecution.Attributes> incompleteExecutions = Sets.newHashSet();
-    Records records = rldb.createQuery()
+    Records records = workflowDb.createQuery()
         .from(Application.TBL)
         .innerJoin(WorkflowExecution.TBL)
         .on(Application.ID.equalTo(WorkflowExecution.APPLICATION_ID.as(Long.class)))

@@ -240,8 +240,8 @@ public class ClusterAppAlerts implements JSONServlet.Processor {
 
   }
 
-  private GenericQuery windowMapreduceJobs(IDatabases rldb, long startWindow, long endWindow) {
-    return rldb.getWorkflowDb().createQuery().from(StepAttempt.TBL.with(IndexHints.force(Index.of("index_step_attempts_on_end_time"))))
+  private GenericQuery windowMapreduceJobs(IDatabases workflowDb, long startWindow, long endWindow) {
+    return workflowDb.getWorkflowDb().createQuery().from(StepAttempt.TBL.with(IndexHints.force(Index.of("index_step_attempts_on_end_time"))))
         .where(StepAttempt.END_TIME.greaterThanOrEqualTo(startWindow), StepAttempt.END_TIME.lessThan(endWindow))
         .innerJoin(MapreduceJob.TBL)
         .on(MapreduceJob.STEP_ATTEMPT_ID.equalTo(StepAttempt.ID));

@@ -17,7 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 public class DbStorageSizeLimitIT extends ResourceDbManagerTestCase {
 
-  private final IWorkflowDb rlDb = new DatabasesImpl().getWorkflowDb();
+  private final IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
   private Storage.Factory<ResourceRoot> dbStorage;
 
   @Before
@@ -28,7 +28,7 @@ public class DbStorageSizeLimitIT extends ResourceDbManagerTestCase {
   @Test
   public void testUnderSizeLimit() throws IOException {
     DbStorage.Factory dbStorage = new DbStorage.Factory(new DbResourceManager.WorkflowDbFactory.Default());
-    ResourceRoot resourceRoot = rlDb.resourceRoots().create()
+    ResourceRoot resourceRoot = workflowDb.resourceRoots().create()
         .setName("resource_root")
         .setUpdatedAt(System.currentTimeMillis())
         .setCreatedAt(System.currentTimeMillis());
@@ -42,7 +42,7 @@ public class DbStorageSizeLimitIT extends ResourceDbManagerTestCase {
 
   @Test
   public void testOverSizeLimit() throws IOException {
-    ResourceRoot resourceRoot = rlDb.resourceRoots().create()
+    ResourceRoot resourceRoot = workflowDb.resourceRoots().create()
         .setName("resource_root")
         .setCreatedAt(System.currentTimeMillis())
         .setUpdatedAt(System.currentTimeMillis());

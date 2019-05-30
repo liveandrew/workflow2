@@ -51,10 +51,10 @@ import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 public class QueryUtil {
   private static final Logger LOG = LoggerFactory.getLogger(QueryUtil.class);
 
-  public static JSONObject getDashboardStatus(IWorkflowDb rldb, long endStartTime, String dashboardName) throws IOException, JSONException {
+  public static JSONObject getDashboardStatus(IWorkflowDb workflowDb, long endStartTime, String dashboardName) throws IOException, JSONException {
 
     //  query 1: anything NOT RUNNING.  workflow attempt end time greater than end time
-    JSONObject endedStatuses = getStatuses(rldb,
+    JSONObject endedStatuses = getStatuses(workflowDb,
         dashboardName,
         WorkflowExecution.TBL,
         WorkflowAttempt.TBL.with(IndexHints.force(Index.of("index_workflow_attempts_on_end_time"))),
@@ -63,7 +63,7 @@ public class QueryUtil {
     );
 
     //  query 2: anything RUNNING, workflow execution start time greater than end time
-    JSONObject statuses = getStatuses(rldb,
+    JSONObject statuses = getStatuses(workflowDb,
         dashboardName,
         WorkflowExecution.TBL.with(IndexHints.force(Index.of("start_time_idx"))),
         WorkflowAttempt.TBL,
@@ -89,7 +89,7 @@ public class QueryUtil {
 
   }
 
-  private static JSONObject getStatuses(IWorkflowDb rldb,
+  private static JSONObject getStatuses(IWorkflowDb workflowDb,
                                         String dashboardName,
                                         Table workflowExecutions,
                                         Table workflowAttempts,
@@ -97,7 +97,7 @@ public class QueryUtil {
                                         GenericConstraint... constraintList) throws IOException, JSONException {
 
     JSONObject statuses = new JSONObject();
-    for (Record record : rldb.createQuery().from(Dashboard.TBL)
+    for (Record record : workflowDb.createQuery().from(Dashboard.TBL)
         .where(Dashboard.NAME.equalTo(dashboardName))
         .innerJoin(DashboardApplication.TBL)
         .on(DashboardApplication.DASHBOARD_ID.equalTo(Dashboard.ID.as(Integer.class)))
@@ -137,14 +137,14 @@ public class QueryUtil {
   }
 
 
-  public static JSONObject getCountersForApp(IWorkflowDb rldb,
+  public static JSONObject getCountersForApp(IWorkflowDb workflowDb,
                                              String appName,
                                              Multimap<String, String> countersToQuery,
                                              LocalDate startDate,
                                              LocalDate endDate,
                                              ApplicationStatistic additionalStatistics) throws IOException, SQLException, JSONException {
 
-    List<ApplicationCounterSummary> summaries = computeSummaries(rldb, appName, countersToQuery, startDate, endDate);
+    List<ApplicationCounterSummary> summaries = computeSummaries(workflowDb, appName, countersToQuery, startDate, endDate);
 
 
     ThreeNestedMap<Long, String, String, Long> counterMap = new ThreeNestedCountingMap<>(0L);
@@ -181,16 +181,16 @@ public class QueryUtil {
   }
 
 
-  public static JSONObject getCountersPerApplication(IWorkflowDb rldb, Multimap<String, String> countersToQuery, ApplicationStatistic additionalStatistics, LocalDate startDate, LocalDate endDate) throws IOException, JSONException, SQLException {
+  public static JSONObject getCountersPerApplication(IWorkflowDb workflowDb, Multimap<String, String> countersToQuery, ApplicationStatistic additionalStatistics, LocalDate startDate, LocalDate endDate) throws IOException, JSONException, SQLException {
     ThreeNestedCountingMap<String, String, String> applicationCounters = new ThreeNestedCountingMap<String, String, String>(0l);
 
     //  get summaries from startedAfter ... startedBefore
 
-    List<ApplicationCounterSummary> summaries = computeSummaries(rldb, null, countersToQuery, startDate, endDate);
+    List<ApplicationCounterSummary> summaries = computeSummaries(workflowDb, null, countersToQuery, startDate, endDate);
 
     //  only ~1k right now, is fine
     Map<Long, String> appToName = Maps.newHashMap();
-    for (Application application : rldb.applications().findAll()) {
+    for (Application application : workflowDb.applications().findAll()) {
       appToName.put(application.getId(), application.getName());
     }
 
@@ -217,7 +217,7 @@ public class QueryUtil {
     Map<String, Long> appCounts = Maps.newHashMap();
     appCounts.put("CLUSTER_TOTAL", 0L);
 
-    for (Record record : WorkflowQueries.getExecutionsByEndQuery(rldb, startDate, endDate).fetch()) {
+    for (Record record : WorkflowQueries.getExecutionsByEndQuery(workflowDb, startDate, endDate).fetch()) {
       String workflowName = record.getString(WorkflowExecution.NAME);
 
       if (workflowName != null) {
@@ -260,21 +260,21 @@ public class QueryUtil {
 
   }
 
-  public static List<ApplicationCounterSummary> computeSummaries(IWorkflowDb rldb,
+  public static List<ApplicationCounterSummary> computeSummaries(IWorkflowDb workflowDb,
                                                                   String appName,
                                                                   Multimap<String, String> countersToQuery,
                                                                   LocalDate startDate, LocalDate endDate) throws IOException, SQLException {
     int days = Days.daysBetween(startDate, endDate).getDays();
-    Summarizer.summarizeApplicationCounters(countersToQuery, rldb, days, endDate);
-    return WorkflowQueries.getSummaries(rldb, appName, countersToQuery, startDate, endDate);
+    Summarizer.summarizeApplicationCounters(countersToQuery, workflowDb, days, endDate);
+    return WorkflowQueries.getSummaries(workflowDb, appName, countersToQuery, startDate, endDate);
 
   }
 
-  public static Multimap<WorkflowExecution, WorkflowAttempt> queryWorkflowExecutions(IDatabases rldb,
+  public static Multimap<WorkflowExecution, WorkflowAttempt> queryWorkflowExecutions(IDatabases workflowDb,
                                                                                      Map<String, String> parameters,
                                                                                      Integer limit) throws IOException {
 
-    return WorkflowQueries.getExecutionsToAttempts(rldb,
+    return WorkflowQueries.getExecutionsToAttempts(workflowDb,
         safeLong(parameters.get("id")),
         parameters.get("dashboard"),
         parameters.get("name"),

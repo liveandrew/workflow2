@@ -42,6 +42,7 @@ public abstract class BaseTestStorage<STORAGE extends Storage.Factory<ROOT>, ROO
     assertCollectionEquivalent(map.entrySet(), retrievedMap.entrySet());
   }
 
+  @SuppressWarnings("Duplicates")
   @Test
   public void testReinitialize() throws IOException {
     Storage storage = factory.forResourceRoot(createRoot());
@@ -61,6 +62,7 @@ public abstract class BaseTestStorage<STORAGE extends Storage.Factory<ROOT>, ROO
     assertCollectionEquivalent(retrievedSet, set);
   }
 
+  @SuppressWarnings("Duplicates")
   @Test
   public void testPersistence() throws IOException {
     Storage storage = factory.forResourceRoot(createRoot());

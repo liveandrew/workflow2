@@ -32,8 +32,8 @@ import static org.junit.Assert.assertEquals;
 
 public class TestExecutionAlerter extends WorkflowMonitorTestCase {
 
-  static String mrJobAlertMessage = "Alerting about job ";
-  static String wfExecutionAlertMessage = "Alerting about execution ";
+  private static final String MR_JOB_ALERT_MESSSAGE = "Alerting about job ";
+  private static final String WF_EXECUTION_ALERT_MESSAGE = "Alerting about execution ";
 
   @Test
   public void testQueries() throws Exception {
@@ -92,21 +92,21 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
 
     assertEquals(4, alerts.size());
 
-    assertStringsContainSubstring(mrJobAlertMessage, alerts);
-    assertStringsContainSubstring(wfExecutionAlertMessage, alerts);
+    assertStringsContainSubstring(MR_JOB_ALERT_MESSSAGE, alerts);
+    assertStringsContainSubstring(WF_EXECUTION_ALERT_MESSAGE, alerts);
 
     assertEquals(4, db.workflowAlerts().findAll().size());
 
     for (MapreduceJob mrJob : db.mapreduceJobs().findByJobName("JobName")) {
       assertEquals(
-          mrJobAlertMessage + mrJob.getId(),
+          MR_JOB_ALERT_MESSSAGE + mrJob.getId(),
           mrJob.getWorkflowAlertMapreduceJob().get(0).getWorkflowAlert().getMessage()
       );
     }
 
     for (WorkflowExecution wfExecution : db.workflowExecutions().findByAppType(1)) {
       assertEquals(
-          wfExecutionAlertMessage + wfExecution.getId(),
+          WF_EXECUTION_ALERT_MESSAGE + wfExecution.getId(),
           wfExecution.getWorkflowAlertWorkflowExecution().get(0).getWorkflowAlert().getMessage()
       );
     }
@@ -124,7 +124,7 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
     @Override
     public AlertMessage generateAlert(StepAttempt attempt, MapreduceJob job, TwoNestedMap<String, String, Long> counters, IDatabases db) throws IOException {
       if (counters.get("Group", "Name") == 1) {
-        return AlertMessage.createAlertMessage(this.getClass().getName(), mrJobAlertMessage + job.getId(), WorkflowRunnerNotification.PERFORMANCE, job, db);
+        return AlertMessage.createAlertMessage(this.getClass().getName(), MR_JOB_ALERT_MESSSAGE + job.getId(), WorkflowRunnerNotification.PERFORMANCE, job, db);
       }
       return null;
     }
@@ -134,7 +134,7 @@ public class TestExecutionAlerter extends WorkflowMonitorTestCase {
 
     @Override
     public AlertMessage generateAlert(long time, WorkflowExecution execution, Collection<WorkflowAttempt> attempts, IDatabases db) throws IOException {
-      return AlertMessage.createAlertMessage(this.getClass().getName(), wfExecutionAlertMessage + execution.getId(), WorkflowRunnerNotification.PERFORMANCE, execution, db);
+      return AlertMessage.createAlertMessage(this.getClass().getName(), WF_EXECUTION_ALERT_MESSAGE + execution.getId(), WorkflowRunnerNotification.PERFORMANCE, execution, db);
     }
   }
 }

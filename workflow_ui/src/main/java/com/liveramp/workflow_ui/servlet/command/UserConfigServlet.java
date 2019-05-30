@@ -28,11 +28,11 @@ public class UserConfigServlet extends HttpServlet {
   private static final Logger LOG = LoggerFactory.getLogger(UserConfigServlet.class);
 
 
-  private final ThreadLocal<IDatabases> rldb;
+  private final ThreadLocal<IDatabases> workflowDbLocal;
   private final String domain;
 
-  public UserConfigServlet(ThreadLocal<IDatabases> rldb, String domain) {
-    this.rldb = rldb;
+  public UserConfigServlet(ThreadLocal<IDatabases> workflowDb, String domain) {
+    this.workflowDbLocal = workflowDb;
     this.domain = domain;
   }
 
@@ -46,7 +46,7 @@ public class UserConfigServlet extends HttpServlet {
 
       String name = getUsername();
 
-      IWorkflowDb workflowDb = rldb.get().getWorkflowDb();
+      IWorkflowDb workflowDb = workflowDbLocal.get().getWorkflowDb();
       IUserPersistence users = workflowDb.users();
       User user = getOrCreate(name, users);
 
@@ -74,7 +74,7 @@ public class UserConfigServlet extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
     String cmd = req.getParameter("cmd");
-    IWorkflowDb db = rldb.get().getWorkflowDb();
+    IWorkflowDb db = workflowDbLocal.get().getWorkflowDb();
     String username = getUsername();
 
     if (cmd.equals("add_dashboard")) {

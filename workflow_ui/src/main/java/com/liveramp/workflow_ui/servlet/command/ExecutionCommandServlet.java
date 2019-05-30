@@ -13,10 +13,10 @@ import com.liveramp.workflow_db_state.controller.ExecutionController;
 
 public class ExecutionCommandServlet extends HttpServlet {
 
-  private final ThreadLocal<IDatabases> rldb;
+  private final ThreadLocal<IDatabases> workflowDb;
 
-  public ExecutionCommandServlet(ThreadLocal<IDatabases> rldb) {
-    this.rldb = rldb;
+  public ExecutionCommandServlet(ThreadLocal<IDatabases> workflowDb) {
+    this.workflowDb = workflowDb;
   }
 
   @Override
@@ -25,8 +25,8 @@ public class ExecutionCommandServlet extends HttpServlet {
     String id = req.getParameter("id");
     String command = req.getParameter("command");
 
-    IWorkflowDb iRlDb = rldb.get().getWorkflowDb();
-    WorkflowExecution execution = iRlDb.workflowExecutions().find(Long.parseLong(id));
+    IWorkflowDb workflowDb = this.workflowDb.get().getWorkflowDb();
+    WorkflowExecution execution = workflowDb.workflowExecutions().find(Long.parseLong(id));
 
     if (execution == null) {
       throw new RuntimeException("Cannot find execution: " + id);
@@ -34,7 +34,7 @@ public class ExecutionCommandServlet extends HttpServlet {
 
     if (command.equals("cancel")) {
       ExecutionController.cancelExecution(
-          iRlDb,
+          workflowDb,
           execution
       );
     }

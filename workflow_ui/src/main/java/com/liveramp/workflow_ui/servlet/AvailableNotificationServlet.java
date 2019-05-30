@@ -11,7 +11,7 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class AvailableNotificationServlet implements JSONServlet.Processor{
   @Override
-  public JSONObject getData(IDatabases rldb, Map<String, String> parameters) throws Exception {
+  public JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception {
     return new JSONObject().put("values", new JSONArray(Lists.newArrayList(WorkflowRunnerNotification.values())));
   }
 }

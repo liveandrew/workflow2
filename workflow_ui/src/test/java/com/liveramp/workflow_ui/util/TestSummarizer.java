@@ -41,10 +41,10 @@ public class TestSummarizer extends WorkflowUITestCase {
     final LocalDate localDate16 = FORMAT.parseLocalDate("2016-06-16 00:00:00");
     final LocalDate localDate17 = FORMAT.parseLocalDate("2016-06-17 00:00:00");
 
-    final IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
+    final IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
 
-    Application app = rldb.applications().create("Test Workflow");
-    WorkflowExecution execution = rldb.workflowExecutions().create(null,
+    Application app = workflowDb.applications().create("Test Workflow");
+    WorkflowExecution execution = workflowDb.workflowExecutions().create(null,
         "Test Workflow",
         null,
         WorkflowExecutionStatus.COMPLETE.ordinal(),
@@ -53,8 +53,8 @@ public class TestSummarizer extends WorkflowUITestCase {
         app.getIntId(),
         null
     );
-    WorkflowAttempt attempt = rldb.workflowAttempts().create(execution.getIntId(), "user", "HIGH", "default", "localhost");
-    StepAttempt step = rldb.stepAttempts().create(attempt.getIntId(), "step",
+    WorkflowAttempt attempt = workflowDb.workflowAttempts().create(execution.getIntId(), "user", "HIGH", "default", "localhost");
+    StepAttempt step = workflowDb.stepAttempts().create(attempt.getIntId(), "step",
         date13,
         date14,
         StepStatus.COMPLETED.ordinal(),
@@ -63,12 +63,12 @@ public class TestSummarizer extends WorkflowUITestCase {
         "class",
         null
     );
-    MapreduceJob mrJob = rldb.mapreduceJobs().create(step.getId(), "job1", "jobname", "url", null, null, null, null, null, null, null, null, null, null, null, null);
+    MapreduceJob mrJob = workflowDb.mapreduceJobs().create(step.getId(), "job1", "jobname", "url", null, null, null, null, null, null, null, null, null, null, null, null);
 
-    rldb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, ClusterConstants.VCORE_MAP, 1);
-    rldb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, ClusterConstants.VCORE_RED, 2);
-    rldb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, ClusterConstants.MB_MAP, 1);
-    rldb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, ClusterConstants.MB_RED, 1);
+    workflowDb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, ClusterConstants.VCORE_MAP, 1);
+    workflowDb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, ClusterConstants.VCORE_RED, 2);
+    workflowDb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, ClusterConstants.MB_MAP, 1);
+    workflowDb.mapreduceCounters().create(mrJob.getIntId(), ClusterConstants.MR2_GROUP, ClusterConstants.MB_RED, 1);
 
     final Multimap<String, String> countersToSummarize = HashMultimap.create();
     countersToSummarize.put(ClusterConstants.MR2_GROUP, ClusterConstants.VCORE_MAP);
@@ -76,12 +76,12 @@ public class TestSummarizer extends WorkflowUITestCase {
     countersToSummarize.put(ClusterConstants.MR2_GROUP, ClusterConstants.MB_MAP);
     countersToSummarize.put(ClusterConstants.MR2_GROUP, ClusterConstants.MB_RED);
 
-    Summarizer.summarizeApplicationCounters(countersToSummarize, rldb, 7, localDate14);
+    Summarizer.summarizeApplicationCounters(countersToSummarize, workflowDb, 7, localDate14);
 
     //  4 for this app, 4 counters * 7 cluster summaries
-    assertEquals(32, rldb.applicationCounterSummaries().findAll().size());
+    assertEquals(32, workflowDb.applicationCounterSummaries().findAll().size());
 
-    ApplicationCounterSummary summary = Accessors.only(rldb.applicationCounterSummaries().query()
+    ApplicationCounterSummary summary = Accessors.only(workflowDb.applicationCounterSummaries().query()
         .whereGroup(new EqualTo<>(ClusterConstants.MR2_GROUP))
         .whereName(new EqualTo<>(ClusterConstants.VCORE_MAP))
         .whereApplicationId(new EqualTo<>(app.getIntId()))
@@ -90,7 +90,7 @@ public class TestSummarizer extends WorkflowUITestCase {
 
     assertEquals(1L, summary.getValue().longValue());
 
-    ApplicationCounterSummary summary2 = Accessors.only(rldb.applicationCounterSummaries().query()
+    ApplicationCounterSummary summary2 = Accessors.only(workflowDb.applicationCounterSummaries().query()
         .whereGroup(new EqualTo<>(ClusterConstants.MR2_GROUP))
         .whereName(new EqualTo<>(ClusterConstants.VCORE_RED))
         .whereApplicationId(new EqualTo<>(app.getIntId()))
@@ -99,7 +99,7 @@ public class TestSummarizer extends WorkflowUITestCase {
 
     assertEquals(2L, summary2.getValue().longValue());
 
-    ApplicationCounterSummary clusterSummary = Accessors.only(rldb.applicationCounterSummaries().query()
+    ApplicationCounterSummary clusterSummary = Accessors.only(workflowDb.applicationCounterSummaries().query()
         .whereGroup(new EqualTo<>(ClusterConstants.MR2_GROUP))
         .whereName(new EqualTo<>(ClusterConstants.VCORE_MAP))
         .whereApplicationId(new IsNull<Integer>())
@@ -108,7 +108,7 @@ public class TestSummarizer extends WorkflowUITestCase {
 
     assertEquals(1L, clusterSummary.getValue().longValue());
 
-    ApplicationCounterSummary prevClusterSummary = Accessors.only(rldb.applicationCounterSummaries().query()
+    ApplicationCounterSummary prevClusterSummary = Accessors.only(workflowDb.applicationCounterSummaries().query()
         .whereGroup(new EqualTo<>(ClusterConstants.MR2_GROUP))
         .whereName(new EqualTo<>(ClusterConstants.VCORE_MAP))
         .whereApplicationId(new IsNull<Integer>())
@@ -118,12 +118,12 @@ public class TestSummarizer extends WorkflowUITestCase {
     assertEquals(0L, prevClusterSummary.getValue().longValue());
 
     //  run on same day (assert idempotent)
-    Summarizer.summarizeApplicationCounters(countersToSummarize, rldb, 7, localDate14);
+    Summarizer.summarizeApplicationCounters(countersToSummarize, workflowDb, 7, localDate14);
 
     //  run again for next day.  asert no records
-    Summarizer.summarizeApplicationCounters(countersToSummarize, rldb, 7, localDate15);
+    Summarizer.summarizeApplicationCounters(countersToSummarize, workflowDb, 7, localDate15);
 
-    ApplicationCounterSummary nextClusterSummary = Accessors.only(rldb.applicationCounterSummaries().query()
+    ApplicationCounterSummary nextClusterSummary = Accessors.only(workflowDb.applicationCounterSummaries().query()
         .whereGroup(new EqualTo<>(ClusterConstants.MR2_GROUP))
         .whereName(new EqualTo<>(ClusterConstants.VCORE_MAP))
         .whereApplicationId(new IsNull<Integer>())
@@ -133,23 +133,23 @@ public class TestSummarizer extends WorkflowUITestCase {
     assertEquals(0L, nextClusterSummary.getValue().longValue());
 
     //  same as before + 2 cluster summaries
-    assertEquals(32+4, rldb.applicationCounterSummaries().findAll().size());
+    assertEquals(32+4, workflowDb.applicationCounterSummaries().findAll().size());
 
 
     //  test query util using the summaries
 
-    JSONObject results2 = QueryUtil.getCountersPerApplication(rldb, countersToSummarize, CostUtil.DEFAULT_COST_ESTIMATE, localDate14, localDate15);
+    JSONObject results2 = QueryUtil.getCountersPerApplication(workflowDb, countersToSummarize, CostUtil.DEFAULT_COST_ESTIMATE, localDate14, localDate15);
     assertEquals(2L, results2.getJSONObject("CLUSTER_TOTAL").getJSONObject("counters").getInt("org.apache.hadoop.mapreduce.JobCounter.VCORES_MILLIS_REDUCES"));
     assertEquals(2L, results2.getJSONObject("Test Workflow").getJSONObject("counters").getInt("org.apache.hadoop.mapreduce.JobCounter.VCORES_MILLIS_REDUCES"));
 
-    JSONObject results3 = QueryUtil.getCountersPerApplication(rldb, countersToSummarize, CostUtil.DEFAULT_COST_ESTIMATE, localDate13, localDate14);
+    JSONObject results3 = QueryUtil.getCountersPerApplication(workflowDb, countersToSummarize, CostUtil.DEFAULT_COST_ESTIMATE, localDate13, localDate14);
     assertEquals(0L, results3.getJSONObject("CLUSTER_TOTAL").getJSONObject("counters").getInt("org.apache.hadoop.mapreduce.JobCounter.VCORES_MILLIS_REDUCES"));
 
     //  should be nothing in this window
-    JSONObject results4 = QueryUtil.getCountersPerApplication(rldb, countersToSummarize, CostUtil.DEFAULT_COST_ESTIMATE, localDate15, localDate16);
+    JSONObject results4 = QueryUtil.getCountersPerApplication(workflowDb, countersToSummarize, CostUtil.DEFAULT_COST_ESTIMATE, localDate15, localDate16);
     assertEquals(0L, results4.getJSONObject("CLUSTER_TOTAL").getJSONObject("counters").getInt("org.apache.hadoop.mapreduce.JobCounter.VCORES_MILLIS_REDUCES"));
 
-    JSONObject results5 = QueryUtil.getCountersPerApplication(rldb, countersToSummarize, CostUtil.DEFAULT_COST_ESTIMATE, localDate16, localDate17);
+    JSONObject results5 = QueryUtil.getCountersPerApplication(workflowDb, countersToSummarize, CostUtil.DEFAULT_COST_ESTIMATE, localDate16, localDate17);
     assertEquals(0L, results5.getJSONObject("CLUSTER_TOTAL").getJSONObject("counters").getInt("org.apache.hadoop.mapreduce.JobCounter.VCORES_MILLIS_REDUCES"));
     
   }

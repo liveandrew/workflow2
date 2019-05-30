@@ -11,9 +11,9 @@ import com.liveramp.workflow_ui.util.CostUtil;
 public class CostServlet implements JSONServlet.Processor {
 
   @Override
-  public JSONObject getData(IDatabases databases, Map<String, String> parameters) throws Exception {
+  public JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception {
     return CostUtil.DEFAULT_COST_ESTIMATE.deriveStats(WorkflowQueries.getFlatCounters(
-        databases.getWorkflowDb(),
+        workflowDb.getWorkflowDb(),
         Long.parseLong(parameters.get("id"))
     ));
   }

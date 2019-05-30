@@ -44,15 +44,15 @@ public class DbStorage implements Storage {
 
   public static class Factory implements Storage.Factory<ResourceRoot> {
 
-    private final DbResourceManager.WorkflowDbFactory rlDbFactory;
+    private final DbResourceManager.WorkflowDbFactory workflowDbFactory;
 
     public Factory(DbResourceManager.WorkflowDbFactory workflowDbFactory) {
-      this.rlDbFactory = workflowDbFactory;
+      this.workflowDbFactory = workflowDbFactory;
     }
 
     @Override
     public DbStorage forResourceRoot(ResourceRoot resourceRoot) throws IOException {
-      return new DbStorage(rlDbFactory.create(), resourceRoot);
+      return new DbStorage(workflowDbFactory.create(), resourceRoot);
 
     }
 

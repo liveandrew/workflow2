@@ -35,8 +35,8 @@ public class TaskExceptionServlet implements JSONServlet.Processor {
   private static final Integer EXCEPTION_LENGTH_LIMIT = 500;
 
   @Override
-  public JSONObject getData(IDatabases databases, Map<String, String> parameters) throws Exception {
-    IWorkflowDb db = databases.getWorkflowDb();
+  public JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception {
+    IWorkflowDb db = workflowDb.getWorkflowDb();
     int queryLimit = getQueryLimit(parameters);
 
     JSONArray rawRows = new JSONArray();

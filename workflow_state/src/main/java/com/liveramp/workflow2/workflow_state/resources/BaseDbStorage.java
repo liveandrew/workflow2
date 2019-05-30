@@ -37,13 +37,13 @@ public class BaseDbStorage {
     this.root = root;
   }
 
-  public synchronized <T> void store(String name, T object, IWorkflowDb rlDb) {
+  public synchronized <T> void store(String name, T object, IWorkflowDb workflowDb) {
 
     if (object == null) {
       throw new IllegalArgumentException("DbStore cannot store null objects!");
     }
 
-    SERIALIZATION_TYPE type = getSerializationType(name, rlDb);
+    SERIALIZATION_TYPE type = getSerializationType(name, workflowDb);
     String serialized = serialize(object, type);
 
     if (serialized.length() * CHAR_SIZE > MAX_OBJECT_SIZE) {
@@ -55,10 +55,10 @@ public class BaseDbStorage {
     try {
       switch (type) {
         case JAVA:
-          rlDb.resourceRecords().create(name, NumberUtil.safeLongToInt(root.getId()), serialized, System.currentTimeMillis(), null);
+          workflowDb.resourceRecords().create(name, NumberUtil.safeLongToInt(root.getId()), serialized, System.currentTimeMillis(), null);
           break;
         case JSON:
-          rlDb.resourceRecords().create(name, NumberUtil.safeLongToInt(root.getId()), serialized, System.currentTimeMillis(), object.getClass().getCanonicalName());
+          workflowDb.resourceRecords().create(name, NumberUtil.safeLongToInt(root.getId()), serialized, System.currentTimeMillis(), object.getClass().getCanonicalName());
           break;
         default:
           throw new RuntimeException("Only Java and Json serialization supported.");
@@ -84,8 +84,8 @@ public class BaseDbStorage {
   }
 
 
-  public static ResourceRecord getResource(IWorkflowDb rlDb, String name, ResourceRoot root) throws IOException {
-    return Accessors.first(rlDb.resourceRecords().query()
+  public static ResourceRecord getResource(IWorkflowDb workflowDb, String name, ResourceRoot root) throws IOException {
+    return Accessors.first(workflowDb.resourceRecords().query()
         .resourceRootId(NumberUtil.safeLongToInt(root.getId()))
         .name(name)
         .orderById(QueryOrder.DESC)
@@ -94,8 +94,8 @@ public class BaseDbStorage {
     );
   }
 
-  public static boolean hasResource(IWorkflowDb rlDb, String name, ResourceRoot root) throws IOException {
-    return !rlDb.resourceRecords().query()
+  public static boolean hasResource(IWorkflowDb worklfowDb, String name, ResourceRoot root) throws IOException {
+    return !worklfowDb.resourceRecords().query()
         .resourceRootId(NumberUtil.safeLongToInt(root.getId()))
         .name(name)
         .orderById(QueryOrder.DESC)
@@ -122,13 +122,13 @@ public class BaseDbStorage {
     }
   }
 
-  public synchronized boolean isStored(String name, IWorkflowDb rlDb) {
+  public synchronized boolean isStored(String name, IWorkflowDb workflowDb) {
     if (cache.isStored(name)) {
       return true;
     }
     try {
       if (root != null) {
-        return hasResource(rlDb, name, root);
+        return hasResource(workflowDb, name, root);
       } else {
         return false;
       }

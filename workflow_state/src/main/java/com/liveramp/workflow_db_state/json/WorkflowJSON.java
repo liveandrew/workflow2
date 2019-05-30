@@ -235,7 +235,7 @@ public class WorkflowJSON {
     return obj.toString();
   }
 
-  public static JSONObject toJSON(IWorkflowDb rldb, boolean details, String processStatusFilter, WorkflowExecution execution, Collection<WorkflowAttempt> atts) throws IOException, JSONException {
+  public static JSONObject toJSON(IWorkflowDb workflowDb, boolean details, String processStatusFilter, WorkflowExecution execution, Collection<WorkflowAttempt> atts) throws IOException, JSONException {
     List<WorkflowAttempt> attempts = JackUtil.sortDescending(atts);
 
     if (!attempts.isEmpty()) {
@@ -259,11 +259,11 @@ public class WorkflowJSON {
         if (details) {
 
           JSONArray notifications = new JSONArray();
-          for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(rldb, execution.getId())) {
+          for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(workflowDb, execution.getId())) {
             notifications.put(toJSON(attributes));
           }
 
-          data.put("can_cancel", WorkflowQueries.canManuallyModify(rldb, execution))
+          data.put("can_cancel", WorkflowQueries.canManuallyModify(workflowDb, execution))
               .put("configured_notifications", notifications);
 
         }

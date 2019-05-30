@@ -23,7 +23,7 @@ public class ExecutionQueryServlet implements JSONServlet.Processor {
 
   @Override
   public JSONObject getData(IDatabases databases, Map<String, String> parameters) throws Exception {
-    IWorkflowDb rldb = databases.getWorkflowDb();
+    IWorkflowDb workflowDb = databases.getWorkflowDb();
 
     boolean details = Boolean.parseBoolean(parameters.get("details"));
     String processStatus = parameters.get("process_status");
@@ -38,7 +38,7 @@ public class ExecutionQueryServlet implements JSONServlet.Processor {
     );
 
     for (WorkflowExecution execution : Iterables.limit(JackUtil.sortDescending(results.keySet()), queryLimit)) {
-      JSONObject obj = WorkflowJSON.toJSON(rldb, details, processStatus, execution, results.get(execution));
+      JSONObject obj = WorkflowJSON.toJSON(workflowDb, details, processStatus, execution, results.get(execution));
       if (obj != null) {
         rows.put(obj);
       }

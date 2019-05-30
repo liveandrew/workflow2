@@ -12,7 +12,7 @@ import com.liveramp.workflow_db_state.json.WorkflowJSON;
 public class AttemptStateServlet implements JSONServlet.Processor {
   @Override
   public JSONObject getData(IDatabases databases, Map<String, String> parameters) throws Exception {
-    IWorkflowDb rldb = databases.getWorkflowDb();
-    return WorkflowJSON.getDbJSONState(rldb, DbPersistence.queryPersistence(Long.parseLong(parameters.get("workflow_attempt_id")), rldb));
+    IWorkflowDb workflowDb = databases.getWorkflowDb();
+    return WorkflowJSON.getDbJSONState(workflowDb, DbPersistence.queryPersistence(Long.parseLong(parameters.get("workflow_attempt_id")), workflowDb));
   }
 }

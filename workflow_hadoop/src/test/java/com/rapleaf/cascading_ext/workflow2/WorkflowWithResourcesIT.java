@@ -55,12 +55,12 @@ public class WorkflowWithResourcesIT extends WorkflowTestCase {
   }
 
 
-  private ResourceDeclarer getDeclarer(IWorkflowDb rldb, DbStorage.Factory storage) throws IOException {
+  private ResourceDeclarer getDeclarer(IWorkflowDb workflowDb, DbStorage.Factory storage) throws IOException {
 
     ResourceDeclarerContainer<ResourceRoot> declarer = new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
         new RootManager<>(
-            new DbStorageRootDeterminer(rldb),
+            new DbStorageRootDeterminer(workflowDb),
             storage)
     );
 
@@ -68,15 +68,15 @@ public class WorkflowWithResourcesIT extends WorkflowTestCase {
   }
 
   @NotNull
-  private DbStorage.Factory getStorage(IWorkflowDb rldb) {
-    return DbResourceManager.dbStorage(rldb);
+  private DbStorage.Factory getStorage(IWorkflowDb workflowDb) {
+    return DbResourceManager.dbStorage(workflowDb);
   }
 
   private HdfsStorage.Factory getHdfsStorage() {
     return ResourceStorages.hdfsStorage();
   }
 
-  private ResourceDeclarer getDeclarer(IWorkflowDb rldb, HdfsStorage.Factory storage, String workflowRoot) throws IOException {
+  private ResourceDeclarer getDeclarer(HdfsStorage.Factory storage, String workflowRoot) throws IOException {
 
     ResourceDeclarerContainer<String> declarer = new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
@@ -94,10 +94,9 @@ public class WorkflowWithResourcesIT extends WorkflowTestCase {
 
     String tmpRoot = getTestRoot() + "/workflow";
 
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
     HdfsStorage.Factory factory = getHdfsStorage();
 
-    ResourceDeclarer declarer = getDeclarer(rldb, factory, tmpRoot);
+    ResourceDeclarer declarer = getDeclarer(factory, tmpRoot);
     Resource<Integer> resource = declarer.<Integer>emptyResource("resource");
     Step step = new Step(new SetResource("step-1", resource));
     Step step2 = new Step(new FailingAction("step-2"), step);
@@ -125,7 +124,7 @@ public class WorkflowWithResourcesIT extends WorkflowTestCase {
     assertEquals(Long.parseLong(rootPath.getName()), runner.getPersistence().getExecutionId());
     assertEquals(InitializedDbPersistence.class.getName(), rootPath.getParent().getName());
 
-    declarer = getDeclarer(rldb, factory, tmpRoot);
+    declarer = getDeclarer(factory, tmpRoot);
     resource = declarer.emptyResource("resource");
     step = new Step(new SetResource("step-1", resource));
     step2 = new Step(new ReadResouce("step-2", resource), step);
@@ -147,14 +146,14 @@ public class WorkflowWithResourcesIT extends WorkflowTestCase {
 
     assertEquals(rootRecord, origRoot);
 
-    declarer = getDeclarer(rldb, factory, tmpRoot);
+    declarer = getDeclarer(factory, tmpRoot);
     resource = declarer.emptyResource("resource");
     step = new Step(new SetResource("step-1", resource));
     step2 = new Step(new ReadResouce("step-2", resource), step);
 
     workflow = initializeWorkflow(
         "Test Workflow",
-        getDeclarer(rldb, factory, tmpRoot)
+        getDeclarer(factory, tmpRoot)
     );
 
     new WorkflowRunner(
@@ -202,14 +201,14 @@ public class WorkflowWithResourcesIT extends WorkflowTestCase {
   @Test
   public void testDbResourceVersions() throws IOException {
 
-    IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
 
     Step step = new Step(new NoOpAction("step-1"));
     Step step2 = new Step(new FailingAction("step-2"), step);
 
     InitializedWorkflow workflow = initializeWorkflow(
         "Test Workflow",
-        getDeclarer(rldb, getStorage(rldb))
+        getDeclarer(workflowDb, getStorage(workflowDb))
     );
 
     WorkflowRunner runner = new WorkflowRunner(
@@ -238,7 +237,7 @@ public class WorkflowWithResourcesIT extends WorkflowTestCase {
 
     workflow = initializeWorkflow(
         "Test Workflow",
-        getDeclarer(rldb, getStorage(rldb))
+        getDeclarer(workflowDb, getStorage(workflowDb))
     );
 
     new WorkflowRunner(
@@ -257,7 +256,7 @@ public class WorkflowWithResourcesIT extends WorkflowTestCase {
 
     workflow = initializeWorkflow(
         "Test Workflow",
-        getDeclarer(rldb, getStorage(rldb))
+        getDeclarer(workflowDb, getStorage(workflowDb))
     );
 
     new WorkflowRunner(workflow,

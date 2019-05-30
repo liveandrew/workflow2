@@ -22,32 +22,32 @@ import static com.liveramp.workflow_db_state.controller.ExecutionController.remo
 public class ExecutionControllerIT extends WorkflowDbStateTestCase {
 
   @Test
-  public void testNotificaions() throws Exception {
+  public void testNotifications() throws Exception {
 
-    IWorkflowDb rlDb = new DatabasesImpl().getWorkflowDb();
-    WorkflowExecution test = rlDb.workflowExecutions().create("test", WorkflowExecutionStatus.INCOMPLETE.ordinal());
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
+    WorkflowExecution test = workflowDb.workflowExecutions().create("test", WorkflowExecutionStatus.INCOMPLETE.ordinal());
     long exId = test.getId();
 
-    addConfiguredNotifications(rlDb, exId, "ben@gmail.com",
+    addConfiguredNotifications(workflowDb, exId, "ben@gmail.com",
         Sets.newHashSet(WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.FAILURE)
     );
 
-    addConfiguredNotifications(rlDb, exId, "ben@gmail.com",
+    addConfiguredNotifications(workflowDb, exId, "ben@gmail.com",
         Sets.newHashSet(WorkflowRunnerNotification.DIED_UNCLEAN)
     );
 
     assertCollectionEquivalent(
         Lists.newArrayList(WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.FAILURE),
-        getNotifications(WorkflowQueries.getExecutionNotifications(rlDb, exId, "ben@gmail.com"))
+        getNotifications(WorkflowQueries.getExecutionNotifications(workflowDb, exId, "ben@gmail.com"))
     );
 
-    removeConfiguredNotifications(rlDb, exId, "ben@gmail.com",
+    removeConfiguredNotifications(workflowDb, exId, "ben@gmail.com",
         Sets.newHashSet(WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.INTERNAL_ERROR)
     );
 
     assertCollectionEquivalent(
         Lists.newArrayList(WorkflowRunnerNotification.FAILURE),
-        getNotifications(WorkflowQueries.getExecutionNotifications(rlDb, exId, "ben@gmail.com")));
+        getNotifications(WorkflowQueries.getExecutionNotifications(workflowDb, exId, "ben@gmail.com")));
 
 
 

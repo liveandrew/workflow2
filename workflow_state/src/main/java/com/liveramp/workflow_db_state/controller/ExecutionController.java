@@ -36,40 +36,40 @@ public class ExecutionController {
 
   }
 
-  public static void addConfiguredNotifications(IWorkflowDb rlDb, Long workflowId, String email, Set<WorkflowRunnerNotification> notifications) throws IOException {
-    WorkflowExecution execution = rlDb.workflowExecutions().find(workflowId);
+  public static void addConfiguredNotifications(IWorkflowDb workflowDb, Long workflowId, String email, Set<WorkflowRunnerNotification> notifications) throws IOException {
+    WorkflowExecution execution = workflowDb.workflowExecutions().find(workflowId);
 
     Set<WorkflowRunnerNotification> existing = Sets.newHashSet();
-    for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(rlDb, execution.getId(), email)) {
+    for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(workflowDb, execution.getId(), email)) {
       existing.add(WorkflowRunnerNotification.findByValue(attributes.getWorkflowRunnerNotification()));
     }
 
     for (WorkflowRunnerNotification notification : notifications) {
       if (!existing.contains(notification)) {
-        ConfiguredNotification configured = rlDb.configuredNotifications().create(notification.ordinal(), email, false);
-        rlDb.workflowExecutionConfiguredNotifications().create(execution.getId(), configured.getId());
+        ConfiguredNotification configured = workflowDb.configuredNotifications().create(notification.ordinal(), email, false);
+        workflowDb.workflowExecutionConfiguredNotifications().create(execution.getId(), configured.getId());
       }
     }
 
   }
 
-  public static void removeConfiguredNotifications(IWorkflowDb rlDb, Long workflowId, String email) throws IOException {
-    removeConfiguredNotifications(rlDb, workflowId, email, EnumSet.allOf(WorkflowRunnerNotification.class));
+  public static void removeConfiguredNotifications(IWorkflowDb workflowDb, Long workflowId, String email) throws IOException {
+    removeConfiguredNotifications(workflowDb, workflowId, email, EnumSet.allOf(WorkflowRunnerNotification.class));
   }
 
-  public static void removeConfiguredNotifications(IWorkflowDb rlDb, Long workflowId, String email, Set<WorkflowRunnerNotification> notificaions) throws IOException {
-    WorkflowExecution execution = rlDb.workflowExecutions().find(workflowId);
+  public static void removeConfiguredNotifications(IWorkflowDb workflowDb, Long workflowId, String email, Set<WorkflowRunnerNotification> notificaions) throws IOException {
+    WorkflowExecution execution = workflowDb.workflowExecutions().find(workflowId);
     long id = execution.getId();
 
-    for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(rlDb, id, email)) {
+    for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(workflowDb, id, email)) {
       if (notificaions.contains(WorkflowRunnerNotification.findByValue(attributes.getWorkflowRunnerNotification()))) {
 
-        for (WorkflowExecutionConfiguredNotification appNotification : rlDb.workflowExecutionConfiguredNotifications().query()
+        for (WorkflowExecutionConfiguredNotification appNotification : workflowDb.workflowExecutionConfiguredNotifications().query()
             .workflowExecutionId(id)
             .configuredNotificationId(attributes.getId())
             .find()) {
 
-          rlDb.workflowExecutionConfiguredNotifications().delete(appNotification);
+          workflowDb.workflowExecutionConfiguredNotifications().delete(appNotification);
           //  TODO if a ConfiguredNotification has no App/Execution/Attempt ConfiguredNotifications referencing it, delete it
         }
       }

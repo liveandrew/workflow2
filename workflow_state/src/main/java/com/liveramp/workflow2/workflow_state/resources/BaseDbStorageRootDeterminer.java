@@ -11,9 +11,9 @@ import com.liveramp.databases.workflow_db.models.ResourceRoot;
 import com.rapleaf.jack.queries.QueryOrder;
 
 public class BaseDbStorageRootDeterminer {
-  public static synchronized ResourceRoot getResourceRoot(long version, String versionType, IWorkflowDb rlDb) throws IOException {
+  public static synchronized ResourceRoot getResourceRoot(long version, String versionType, IWorkflowDb workflowDb) throws IOException {
 
-    List<ResourceRoot> results = rlDb.resourceRoots().query()
+    List<ResourceRoot> results = workflowDb.resourceRoots().query()
         .version(version)
         .versionType(versionType)
         .orderById(QueryOrder.DESC)
@@ -26,7 +26,7 @@ public class BaseDbStorageRootDeterminer {
 
     //  we can start from scratch with a version
     long time = DateTime.now().getMillis();
-    ResourceRoot root = rlDb.resourceRoots().create()
+    ResourceRoot root = workflowDb.resourceRoots().create()
         .setVersion(version)
         .setVersionType(versionType)
         .setCreatedAt(time)

@@ -11,8 +11,8 @@ public class TransactorStorageRootDeterminer implements RootDeterminer<ResourceR
 
   private final ITransactor<IWorkflowDb> workflowDbTransactor;
 
-  public TransactorStorageRootDeterminer(ITransactor<IWorkflowDb> rlDbTransactor) {
-    this.workflowDbTransactor = rlDbTransactor;
+  public TransactorStorageRootDeterminer(ITransactor<IWorkflowDb> workflowDbTransactor) {
+    this.workflowDbTransactor = workflowDbTransactor;
   }
 
   @Override

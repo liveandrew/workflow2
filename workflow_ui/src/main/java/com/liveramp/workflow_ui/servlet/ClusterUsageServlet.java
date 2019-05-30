@@ -31,9 +31,9 @@ public class ClusterUsageServlet implements JSONServlet.Processor {
   }
 
   @Override
-  public JSONObject getData(IDatabases databases, Map<String, String> parameters) throws Exception {
+  public JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception {
     return QueryUtil.getCountersPerApplication(
-        databases.getWorkflowDb(),
+        workflowDb.getWorkflowDb(),
         COUNTERS_TO_RECORD,
         CostUtil.DEFAULT_COST_ESTIMATE,
         new LocalDate(Long.parseLong((parameters.get("started_after")))),

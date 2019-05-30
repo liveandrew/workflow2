@@ -20,13 +20,13 @@ import com.liveramp.databases.workflow_db.IDatabases;
 public class JSONServlet extends HttpServlet {
   private static final Logger LOG = LoggerFactory.getLogger(JSONServlet.class);
 
-  private final ThreadLocal<IDatabases> rldb;
+  private final ThreadLocal<IDatabases> workflowDb;
   private final Processor processor;
   private final Set<String> allowedDomains;
 
-  public JSONServlet(Processor processor, ThreadLocal<IDatabases> rldb, Set<String> allowedDomains) {
+  public JSONServlet(Processor processor, ThreadLocal<IDatabases> workflowDb, Set<String> allowedDomains) {
     this.processor = processor;
-    this.rldb = rldb;
+    this.workflowDb = workflowDb;
     this.allowedDomains = allowedDomains;
   }
 
@@ -44,7 +44,7 @@ public class JSONServlet extends HttpServlet {
     try {
 
       long start = System.currentTimeMillis();
-      JSONObject data = processor.getData(rldb.get(), entries);
+      JSONObject data = processor.getData(workflowDb.get(), entries);
 
       LOG.info("Request " + getRequestURL(req) + " processed in " + (System.currentTimeMillis() - start) + "ms");
       String originHeader = req.getHeader("Origin");
@@ -70,6 +70,6 @@ public class JSONServlet extends HttpServlet {
   }
 
   public interface Processor {
-    JSONObject getData(IDatabases rldb, Map<String, String> parameters) throws Exception;
+    JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception;
   }
 }

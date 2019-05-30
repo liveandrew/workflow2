@@ -21,29 +21,29 @@ public class ApplicationControllerIT extends WorkflowDbStateTestCase {
   @Test
   public void testNotificaions() throws Exception {
 
-    IWorkflowDb rlDb = new DatabasesImpl().getWorkflowDb();
-    Application test = rlDb.applications().create("test");
+    IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
+    Application test = workflowDb.applications().create("test");
 
-    ApplicationController.addConfiguredNotifications(rlDb, "test", "ben@gmail.com",
+    ApplicationController.addConfiguredNotifications(workflowDb, "test", "ben@gmail.com",
         Sets.newHashSet(WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.FAILURE)
     );
 
-    ApplicationController.addConfiguredNotifications(rlDb, "test", "ben@gmail.com",
+    ApplicationController.addConfiguredNotifications(workflowDb, "test", "ben@gmail.com",
         Sets.newHashSet(WorkflowRunnerNotification.DIED_UNCLEAN)
     );
 
     assertCollectionEquivalent(
         Lists.newArrayList(WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.FAILURE),
-        getNotifications(WorkflowQueries.getApplicationNotifications(rlDb, test.getId(), "ben@gmail.com"))
+        getNotifications(WorkflowQueries.getApplicationNotifications(workflowDb, test.getId(), "ben@gmail.com"))
     );
 
-    ApplicationController.removeConfiguredNotifications(rlDb, "test", "ben@gmail.com",
+    ApplicationController.removeConfiguredNotifications(workflowDb, "test", "ben@gmail.com",
         Sets.newHashSet(WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.INTERNAL_ERROR)
     );
 
     assertCollectionEquivalent(
         Lists.newArrayList(WorkflowRunnerNotification.FAILURE),
-        getNotifications(WorkflowQueries.getApplicationNotifications(rlDb, test.getId(), "ben@gmail.com")));
+        getNotifications(WorkflowQueries.getApplicationNotifications(workflowDb, test.getId(), "ben@gmail.com")));
 
 
   }

@@ -32,14 +32,14 @@ import static com.liveramp.workflow_ui.util.QueryUtil.safeLong;
 public class PipelineServlet implements JSONServlet.Processor {
 
   @Override
-  public JSONObject getData(IDatabases rldb, Map<String, String> parameters) throws Exception {
+  public JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception {
 
     //  get all workflow executions in the past 2 weeks + latest attempt
 
     Long after = safeLong(parameters.get("started_after"));
     Long before = safeLong(parameters.get("started_before"));
 
-    Multimap<WorkflowExecution, WorkflowAttempt> executionsToAttempts = WorkflowQueries.getExecutionsToAttempts(rldb, null, null, null, null, after, before, null, null);
+    Multimap<WorkflowExecution, WorkflowAttempt> executionsToAttempts = WorkflowQueries.getExecutionsToAttempts(workflowDb, null, null, null, null, after, before, null, null);
 
     Multimap<Long, WorkflowExecution> executionsByApp = HashMultimap.create();
     Map<Long, WorkflowAttempt> executionToMostRecentAttempt = Maps.newHashMap();
@@ -65,13 +65,13 @@ public class PipelineServlet implements JSONServlet.Processor {
     }
 
     Map<Long, Application> applicationById = Maps.newHashMap();
-    for (Application application : rldb.getWorkflowDb().applications().query()
+    for (Application application : workflowDb.getWorkflowDb().applications().query()
         .idIn(executionsByApp.keySet())
         .find()) {
       applicationById.put(application.getId(), application);
     }
 
-    NestedMultimap<Long, DSAction, WorkflowAttemptDatastore> stores = WorkflowQueries.getApplicationIdToWorkflowAttemptDatastores(rldb, after, before);
+    NestedMultimap<Long, DSAction, WorkflowAttemptDatastore> stores = WorkflowQueries.getApplicationIdToWorkflowAttemptDatastores(workflowDb, after, before);
 
     Multimap<String, Long> pathToProducers = HashMultimap.create();
     Multimap<String, Long> pathToConsumers = HashMultimap.create();

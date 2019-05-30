@@ -41,8 +41,8 @@ public class StatServlet implements JSONServlet.Processor {
   }
 
   @Override
-  public JSONObject getData(IDatabases databases, Map<String, String> parameters) throws Exception {
-    IWorkflowDb rldb = databases.getWorkflowDb();
+  public JSONObject getData(IDatabases workflowDatabases, Map<String, String> parameters) throws Exception {
+    IWorkflowDb workflowDb = workflowDatabases.getWorkflowDb();
 
     ThreeNestedCountingMap<Long, String, String> countersPerDay = new ThreeNestedCountingMap<>(0L);
     ThreeNestedCountingMap<Long, String, String> countersPerExecution = new ThreeNestedCountingMap<>(0L);
@@ -61,14 +61,14 @@ public class StatServlet implements JSONServlet.Processor {
       tokens = Sets.newHashSet(stepToken);
     }
 
-    List<WorkflowExecution> executions = WorkflowQueries.queryWorkflowExecutions(databases, name, scope, appType, startedAfter, startedBefore, limit);
+    List<WorkflowExecution> executions = WorkflowQueries.queryWorkflowExecutions(workflowDatabases, name, scope, appType, startedAfter, startedBefore, limit);
 
     Set<Long> executionIds = Sets.newHashSet();
     for (WorkflowExecution execution : executions) {
       executionIds.add(execution.getId());
     }
 
-    GenericQuery query = WorkflowQueries.getMapreduceCounters(rldb, tokens, executionIds, null, null)
+    GenericQuery query = WorkflowQueries.getMapreduceCounters(workflowDb, tokens, executionIds, null, null)
         .select(new ListBuilder<Column>()
             .addAll(MapreduceCounter.TBL.getAllColumns())
             .add(WorkflowAttempt.WORKFLOW_EXECUTION_ID)
@@ -95,7 +95,7 @@ public class StatServlet implements JSONServlet.Processor {
 
     }
 
-    for (Record record : WorkflowQueries.getStepAttempts(rldb, tokens, executionIds)
+    for (Record record : WorkflowQueries.getStepAttempts(workflowDb, tokens, executionIds)
         .select(StepAttempt.TBL.getAllColumns()).fetch()) {
 
       StepAttempt.Attributes model = record.getAttributes(StepAttempt.TBL);
@@ -137,7 +137,7 @@ public class StatServlet implements JSONServlet.Processor {
 
     } else {
 
-      for (Record record : WorkflowQueries.getStepAttempts(rldb, Sets.newHashSet(stepToken), executionIds)
+      for (Record record : WorkflowQueries.getStepAttempts(workflowDb, Sets.newHashSet(stepToken), executionIds)
           .select(new ListBuilder<Column>().add(WorkflowAttempt.WORKFLOW_EXECUTION_ID).addAll(StepAttempt.TBL.getAllColumns()).get())
           .fetch()) {
 

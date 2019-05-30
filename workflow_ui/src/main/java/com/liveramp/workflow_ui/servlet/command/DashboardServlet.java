@@ -18,21 +18,18 @@ import com.liveramp.commons.Accessors;
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.iface.IDashboardPersistence;
-import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.Dashboard;
-import com.liveramp.databases.workflow_db.models.DashboardApplication;
 import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_ui.util.QueryUtil;
-import com.rapleaf.jack.queries.GenericQuery;
 import com.rapleaf.jack.queries.where_operators.EqualTo;
 
 public class DashboardServlet extends HttpServlet {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardServlet.class);
 
-  private final ThreadLocal<IDatabases> rldb;
+  private final ThreadLocal<IDatabases> workflowDb;
 
-  public DashboardServlet(ThreadLocal<IDatabases> rldb) {
-    this.rldb = rldb;
+  public DashboardServlet(ThreadLocal<IDatabases> workflowDb) {
+    this.workflowDb = workflowDb;
   }
 
   @Override
@@ -48,7 +45,7 @@ public class DashboardServlet extends HttpServlet {
         resp.getWriter().write(new JSONObject().put(
             "dashboards",
             QueryUtil.getDashboardConfigurations(WorkflowQueries.getDashboardQuery(
-                rldb.get().getWorkflowDb(),
+                workflowDb.get().getWorkflowDb(),
                 dashName
             ))
         ).toString());
@@ -57,7 +54,7 @@ public class DashboardServlet extends HttpServlet {
 
         resp.getWriter().write(new JSONObject().put(
             "statuses",
-            QueryUtil.getDashboardStatus(rldb.get().getWorkflowDb(), DateTime.now().minusHours(1).getMillis(), dashName)
+            QueryUtil.getDashboardStatus(workflowDb.get().getWorkflowDb(), DateTime.now().minusHours(1).getMillis(), dashName)
         ).toString());
 
       }
@@ -89,7 +86,7 @@ public class DashboardServlet extends HttpServlet {
     String cmd = req.getParameter("cmd");
 
 
-    IWorkflowDb db = rldb.get().getWorkflowDb();
+    IWorkflowDb db = workflowDb.get().getWorkflowDb();
 
     if (name != null && !name.isEmpty()) {
       if (cmd.equals("create")) {
@@ -133,7 +130,7 @@ public class DashboardServlet extends HttpServlet {
     if (name != null) {
 
       if (!name.isEmpty()) {
-        IWorkflowDb db = rldb.get().getWorkflowDb();
+        IWorkflowDb db = workflowDb.get().getWorkflowDb();
         IDashboardPersistence dashboards = db.dashboards();
         List<Dashboard> matches = dashboards.findByName(name);
 

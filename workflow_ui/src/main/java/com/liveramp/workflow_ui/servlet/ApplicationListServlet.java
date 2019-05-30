@@ -13,10 +13,10 @@ import com.liveramp.workflow_db_state.jack.JackUtil;
 
 public class ApplicationListServlet implements JSONServlet.Processor{
   @Override
-  public JSONObject getData(IDatabases rldb, Map<String, String> parameters) throws Exception {
+  public JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception {
 
     JSONArray array = new JSONArray();
-    for (Application application : WorkflowQueries.getAllApplications(rldb)) {
+    for (Application application : WorkflowQueries.getAllApplications(workflowDb)) {
       array.put(JackUtil.toJSON(application.getAttributes(), Maps.<Enum, Class<? extends Enum>>newHashMap(), ""));
     }
 

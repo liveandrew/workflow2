@@ -10,8 +10,8 @@ import com.liveramp.workflow.types.StepStatus;
 
 public class Assertions {
 
-  public static void assertCanManuallyModify(IWorkflowDb rldb, WorkflowExecution execution) throws IOException {
-    if(!WorkflowQueries.canManuallyModify(rldb, execution)){
+  public static void assertCanManuallyModify(IWorkflowDb workflowDb, WorkflowExecution execution) throws IOException {
+    if(!WorkflowQueries.canManuallyModify(workflowDb, execution)){
       throw new RuntimeException("Cannot manually modify execution "+execution.getId()+".  Check status and other executions");
     }
   }

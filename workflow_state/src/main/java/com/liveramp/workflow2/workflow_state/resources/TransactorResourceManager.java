@@ -35,15 +35,15 @@ public class TransactorResourceManager {
     }
 
     public static class Static implements TransactorFactory {
-      private final ITransactor<IWorkflowDb> rldbTransactor;
+      private final ITransactor<IWorkflowDb> workflowDbTransactor;
 
-      public Static(ITransactor<IWorkflowDb> rldbTransactor) {
-        this.rldbTransactor = rldbTransactor;
+      public Static(ITransactor<IWorkflowDb> workflowDbTransactor) {
+        this.workflowDbTransactor = workflowDbTransactor;
       }
 
       @Override
       public ITransactor<IWorkflowDb> create() {
-        return rldbTransactor;
+        return workflowDbTransactor;
       }
     }
   }

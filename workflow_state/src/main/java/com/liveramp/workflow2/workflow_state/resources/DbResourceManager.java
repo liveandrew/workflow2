@@ -32,12 +32,12 @@ public class DbResourceManager {
   }
 
   @Deprecated
-  public static ResourceDeclarer create(IWorkflowDb rlDb) throws IOException {
+  public static ResourceDeclarer create(IWorkflowDb workflowDb) throws IOException {
     return new ResourceDeclarerContainer<>(
         new ResourceDeclarerContainer.MethodNameTagger(),
         new RootManager<>(
-            new DbStorageRootDeterminer(rlDb),
-            dbStorage(rlDb))
+            new DbStorageRootDeterminer(workflowDb),
+            dbStorage(workflowDb))
     );
   }
 
@@ -47,8 +47,8 @@ public class DbResourceManager {
 
 
   @Deprecated
-  public static DbStorage.Factory dbStorage(IWorkflowDb rlDb) {
-    return new DbStorage.Factory(new WorkflowDbFactory.Static(rlDb));
+  public static DbStorage.Factory dbStorage(IWorkflowDb workflowDb) {
+    return new DbStorage.Factory(new WorkflowDbFactory.Static(workflowDb));
   }
 
   public interface WorkflowDbFactory {
@@ -57,24 +57,24 @@ public class DbResourceManager {
     class Default implements WorkflowDbFactory {
       @Override
       public IWorkflowDb create() {
-        IWorkflowDb rldb = new DatabasesImpl().getWorkflowDb();
-        rldb.disableCaching();
-        return rldb;
+        IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
+        workflowDb.disableCaching();
+        return workflowDb;
       }
     }
 
     @Deprecated
     class Static implements WorkflowDbFactory {
 
-      private final IWorkflowDb rldb;
+      private final IWorkflowDb workflowDb;
 
-      public Static(IWorkflowDb rldb) {
-        this.rldb = rldb;
+      public Static(IWorkflowDb workflowDb) {
+        this.workflowDb = workflowDb;
       }
 
       @Override
       public IWorkflowDb create() {
-        return rldb;
+        return workflowDb;
       }
     }
 

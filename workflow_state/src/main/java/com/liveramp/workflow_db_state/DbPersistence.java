@@ -67,8 +67,8 @@ public class DbPersistence implements WorkflowStatePersistence {
   private final InitializedDbPersistence init;
   private final Object lock;
 
-  public static DbPersistence queryPersistence(long workflowAttemptId, IWorkflowDb rldb) {
-    return new DbPersistence(new InitializedDbPersistence(workflowAttemptId, rldb, false, null));
+  public static DbPersistence queryPersistence(long workflowAttemptId, IWorkflowDb workflowDb) {
+    return new DbPersistence(new InitializedDbPersistence(workflowAttemptId, workflowDb, false, null));
   }
 
   public DbPersistence(InitializedDbPersistence initialization) {
