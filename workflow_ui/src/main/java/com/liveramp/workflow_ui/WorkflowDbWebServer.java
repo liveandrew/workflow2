@@ -1,12 +1,14 @@
 package com.liveramp.workflow_ui;
 
 import javax.servlet.DispatcherType;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
@@ -45,21 +47,21 @@ import com.liveramp.workflow_ui.servlet.AttemptStateServlet;
 import com.liveramp.workflow_ui.servlet.AvailableNotificationServlet;
 import com.liveramp.workflow_ui.servlet.ClusterAppAlerts;
 import com.liveramp.workflow_ui.servlet.ClusterConstants;
-import com.liveramp.workflow_ui.servlet.HDFSIOServlet;
 import com.liveramp.workflow_ui.servlet.ClusterUsageServlet;
 import com.liveramp.workflow_ui.servlet.CostServlet;
 import com.liveramp.workflow_ui.servlet.ExecutionQueryServlet;
+import com.liveramp.workflow_ui.servlet.HDFSIOServlet;
 import com.liveramp.workflow_ui.servlet.JSONServlet;
 import com.liveramp.workflow_ui.servlet.NameNodeUsageServlet;
 import com.liveramp.workflow_ui.servlet.PipelineServlet;
 import com.liveramp.workflow_ui.servlet.ShuffleIOServlet;
 import com.liveramp.workflow_ui.servlet.StatServlet;
 import com.liveramp.workflow_ui.servlet.TaskExceptionServlet;
-import com.liveramp.workflow_ui.servlet.command.UserConfigServlet;
 import com.liveramp.workflow_ui.servlet.command.AttemptCommandServlet;
 import com.liveramp.workflow_ui.servlet.command.DashboardServlet;
 import com.liveramp.workflow_ui.servlet.command.ExecutionCommandServlet;
 import com.liveramp.workflow_ui.servlet.command.NotificationConfigurationServlet;
+import com.liveramp.workflow_ui.servlet.command.UserConfigServlet;
 import com.liveramp.workflow_ui.util.dashboards.SeedDashboardTask;
 import com.liveramp.workflow_ui.util.prime.Prime;
 import com.liveramp.workflow_ui.util.prime.RequestBuilder;
@@ -68,6 +70,7 @@ import com.rapleaf.jack.DatabaseConnectionConfiguration;
 
 public class WorkflowDbWebServer implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDbWebServer.class);
+  public static final String WORKFLOW_UI_PROPERTIES = "workflow.ui.properties";
 
   private final Semaphore shutdownLock = new Semaphore(0);
 
@@ -183,8 +186,8 @@ public class WorkflowDbWebServer implements Runnable {
 
       JDBCSessionIdManager idMgr = new JDBCSessionIdManager(uiServer);
       String hostname = InetAddress.getLocalHost().getHostName().split("\\.")[0];
-      LOG.info("Using hostname: "+hostname);
-      
+      LOG.info("Using hostname: " + hostname);
+
       idMgr.setWorkerName(hostname);
       idMgr.setDatasource(new DriverManagerDataSource(buildConnectURL(connInfo),
           connInfo.getUsername().get(),
@@ -226,12 +229,14 @@ public class WorkflowDbWebServer implements Runnable {
         .toString();
   }
 
-  public static void main(String[] args) throws InterruptedException, IOException {
-
+  private static void start() throws InterruptedException, IOException {
+    String configFile = Optional.ofNullable(System.getProperty(WORKFLOW_UI_PROPERTIES))
+        .orElseGet(() -> System.getenv(WORKFLOW_UI_PROPERTIES));
+    if (configFile == null) {
+      throw new IllegalArgumentException("Couldn't find workflow properties");
+    }
     Properties properties = new Properties();
-    properties.load(WorkflowDbWebServer.class.getResourceAsStream("/application.properties"));
-
-//    properties.put("ui.allowed_domains", "");
+    properties.load(new FileInputStream(configFile));
 
     String[] authorizedDomains = properties.getProperty("ui.allowed_domains").split(",");
 
@@ -244,5 +249,13 @@ public class WorkflowDbWebServer implements Runnable {
 
     thread1.start();
     thread1.join();
+  }
+
+  public static void main(String[] args)  {
+    try {
+      start();
+    } catch (Exception e) {
+      LOG.error("error", e);
+    }
   }
 }

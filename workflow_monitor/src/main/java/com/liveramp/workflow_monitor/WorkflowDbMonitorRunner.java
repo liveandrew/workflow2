@@ -1,11 +1,14 @@
 package com.liveramp.workflow_monitor;
 
 
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -27,20 +30,18 @@ import com.liveramp.workflow_monitor.alerts.execution.recipient.EmailFromPersist
 import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGenerator;
 
 public class WorkflowDbMonitorRunner {
+  private static final String WORKFLOW_MONITOR_PROPERTIES = "workflow.monitor.properties";
 
   public static void main(String[] args) throws InterruptedException, IOException, URISyntaxException {
+    String configFile = Optional.ofNullable(System.getProperty(WORKFLOW_MONITOR_PROPERTIES))
+        .orElseGet(() -> System.getenv(WORKFLOW_MONITOR_PROPERTIES));
+    Properties properties = new Properties();
+    properties.load(new FileInputStream(configFile));
 
-    String configFile = args[0];
-
-    Map<String, Object> config = new Gson().fromJson(
-        new FileReader(configFile), new TypeToken<HashMap<String, Object>>() {
-        }.getType()
-    );
-
-    String alertSourceList = (String)config.get("alert_source_list");
-    String alertSourceDomain = (String)config.get("alert_source_domain");
-    String mailHost = (String)config.get("alert_mail_server");
-    String uiServer = (String) config.get("workflow_ui_server");
+    String alertSourceList = properties.getProperty("alert_source_domain");
+    String alertSourceDomain = properties.getProperty("alert_source_domain");
+    String mailHost = properties.getProperty("alert_mail_server");
+    String uiServer = properties.getProperty("workflow_ui_server");
 
     ThreadLocal<IDatabases> db = new ThreadLocalWorkflowDb();
 
