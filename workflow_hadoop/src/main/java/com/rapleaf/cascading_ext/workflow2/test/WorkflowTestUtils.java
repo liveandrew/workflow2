@@ -13,8 +13,6 @@ import com.liveramp.cascading_ext.resource.ResourceDeclarer;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
-import com.liveramp.workflow_core.ContextStorage;
-import com.liveramp.workflow_core.InMemoryContext;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.FailingAction;
@@ -35,19 +33,23 @@ public class WorkflowTestUtils {
     return execute(Sets.newHashSet(step));
   }
 
-  public static WorkflowRunner execute(Set<Step> steps) throws IOException {
-    return execute(steps, new InMemoryContext());
+  public static WorkflowRunner execute(Set<Step> steps, HadoopWorkflowOptions options) throws IOException {
+    return execute(steps, options, ResourceManagers.inMemoryResourceManager(), new WorkflowDbPersistenceFactory());
   }
 
-  public static WorkflowRunner execute(Set<Step> steps, HadoopWorkflowOptions options) throws IOException {
-    return execute(steps, options, new InMemoryContext(), ResourceManagers.inMemoryResourceManager(), new WorkflowDbPersistenceFactory());
+  public static WorkflowRunner execute(Set<Step> steps) throws IOException {
+    return execute(
+        steps,
+        HadoopWorkflowOptions.test(),
+        ResourceManagers.inMemoryResourceManager(),
+        new WorkflowDbPersistenceFactory()
+    );
   }
 
   public static WorkflowRunner execute(BaseAction action, HadoopWorkflowOptions options) throws IOException {
     return execute(
             Sets.newHashSet(new Step(action)),
             options,
-            new InMemoryContext(),
             ResourceManagers.inMemoryResourceManager(),
             new WorkflowDbPersistenceFactory()
     );
@@ -57,17 +59,6 @@ public class WorkflowTestUtils {
     return execute(
             Sets.newHashSet(step),
             options,
-            new InMemoryContext(),
-            ResourceManagers.inMemoryResourceManager(),
-            new WorkflowDbPersistenceFactory()
-    );
-  }
-
-  public static WorkflowRunner execute(Set<Step> steps, ContextStorage storage) throws IOException {
-    return execute(
-            steps,
-            HadoopWorkflowOptions.test(),
-            storage,
             ResourceManagers.inMemoryResourceManager(),
             new WorkflowDbPersistenceFactory()
     );
@@ -75,13 +66,11 @@ public class WorkflowTestUtils {
 
   public static WorkflowRunner execute(Set<Step> steps,
                                 HadoopWorkflowOptions options,
-                                ContextStorage storage,
                                 ResourceDeclarer manager,
                                 WorkflowDbPersistenceFactory persistenceFactory) throws IOException {
     WorkflowRunner workflowRunner = new WorkflowRunner(TEST_WORKFLOW_NAME,
         persistenceFactory,
         options
-            .setStorage(storage)
             .setResourceManager(manager),
         steps);
     workflowRunner.run();

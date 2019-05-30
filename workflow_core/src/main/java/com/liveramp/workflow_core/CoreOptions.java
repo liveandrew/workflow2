@@ -28,7 +28,6 @@ public class CoreOptions extends BaseWorkflowOptions<CoreOptions> {
     opts.setMaxConcurrentSteps(1)
         .setAlertsHandler(new LoggingAlertsHandler())
         .setNotificationLevel(WorkflowNotificationLevel.DEBUG)
-        .setStorage(new ContextStorage.None())
         .setStepPollInterval(100)
         .setUrlBuilder(new TrackerURLBuilder.None())
         .setHostnameProvider(new FixedHostnameProvider())

@@ -16,7 +16,6 @@ import com.liveramp.cascading_ext.resource.ReadResource;
 import com.liveramp.cascading_ext.resource.WriteResource;
 import com.liveramp.commons.collections.nested_map.TwoNestedCountingMap;
 import com.liveramp.commons.collections.nested_map.TwoNestedMap;
-import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.step.NoOp;
 import com.liveramp.workflow_state.IStep;
 import com.rapleaf.cascading_ext.workflow2.WorkflowDiagram;
@@ -140,21 +139,11 @@ public class BaseMultiStepAction<Config> extends BaseAction<Config> {
     return new BaseAction.DurationInfo(minStart, maxEnd);
   }
 
-  @Deprecated
-  protected <T> T get(OldResource<T> resource) throws IOException {
-    throw new RuntimeException("Cannot get a resource in a multistep action!");
-  }
-
   protected <T> T get(ReadResource<T> resource) {
     throw new RuntimeException("Cannot get a resource in a multistep action!");
   }
 
   protected <T, R extends WriteResource<T>> void set(R resource, T value) {
-    throw new RuntimeException("Cannot set a resource in a multistep action!");
-  }
-
-  @Deprecated
-  protected <T> void set(OldResource<T> resource, T value) throws IOException {
     throw new RuntimeException("Cannot set a resource in a multistep action!");
   }
 

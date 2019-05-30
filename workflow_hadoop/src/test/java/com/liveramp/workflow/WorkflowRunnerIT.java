@@ -61,7 +61,6 @@ import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.java_support.alerts_handler.recipients.EngineeringAlertRecipient;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientListBuilder;
 import com.liveramp.java_support.alerts_handler.recipients.RecipientUtils;
-import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow.state.DbHadoopWorkflow;
 import com.liveramp.workflow.state.WorkflowDbPersistenceFactory;
 import com.liveramp.workflow.test.MonitoredPersistenceFactory;
@@ -70,7 +69,6 @@ import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow2.workflow_hadoop.HadoopMultiStepAction;
 import com.liveramp.workflow2.workflow_hadoop.ResourceManagers;
-import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.WorkflowTag;
 import com.liveramp.workflow_core.alerting.BufferingAlertsHandlerFactory;
 import com.liveramp.workflow_core.runner.BaseAction;
@@ -88,12 +86,10 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.cascading_ext.datastore.DataStore;
 import com.rapleaf.cascading_ext.datastore.TupleDataStore;
-import com.rapleaf.cascading_ext.datastore.TupleDataStoreImpl;
 import com.rapleaf.cascading_ext.workflow2.Action;
 import com.rapleaf.cascading_ext.workflow2.DelayedFailingAction;
 import com.rapleaf.cascading_ext.workflow2.FailingAction;
 import com.rapleaf.cascading_ext.workflow2.FlipAction;
-import com.rapleaf.cascading_ext.workflow2.HdfsContextStorage;
 import com.rapleaf.cascading_ext.workflow2.IncrementAction2;
 import com.rapleaf.cascading_ext.workflow2.LockedAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
@@ -977,16 +973,6 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     }
   }
 
-  @Test
-  public void testPathNesting1() throws IOException, ClassNotFoundException {
-    testPathNesting(hdfsPersistenceFactory);
-  }
-
-  @Test
-  public void testPathNesting2() throws IOException, ClassNotFoundException {
-    testPathNesting(dbPersistenceFactory);
-  }
-
   public static class IncrementAction extends Action {
     public IncrementAction(String checkpointToken) {
       super(checkpointToken);
@@ -1000,44 +986,6 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     }
   }
 
-
-  public void testPathNesting(WorkflowPersistenceFactory factory) throws IOException, ClassNotFoundException {
-
-    String tmpRoot = getTestRoot() + "/tmp-dir";
-
-    Step step = new Step(new ParentResource("parent-step", tmpRoot));
-
-    HdfsContextStorage storage = new HdfsContextStorage(getTestRoot() + "/context", CascadingUtil.get());
-
-    HadoopWorkflowOptions options = HadoopWorkflowOptions.test()
-        .setStorage(storage);
-
-    WorkflowRunner wfr = new WorkflowRunner(
-        "test workflow",
-        factory,
-        options,
-        newHashSet(step)
-    );
-    wfr.run();
-    WorkflowStatePersistence persistence = wfr.getPersistence();
-
-    OldResource<Integer> resMock1 = new OldResource<Integer>("resource", new ActionId("parent-step")
-        .setParentPrefix(""));
-    OldResource<Integer> resMock2 = new OldResource<Integer>("output", new ActionId("consume-resource")
-        .setParentPrefix("parent-step__"));
-
-    assertEquals(1, storage.get(resMock1).intValue());
-    assertEquals(1, storage.get(resMock2).intValue());
-
-    Assert.assertEquals(StepStatus.COMPLETED, persistence.getStatus("parent-step__set-resource"));
-    Assert.assertEquals(StepStatus.COMPLETED, persistence.getStatus("parent-step__consume-resource"));
-
-    TupleDataStore store = new TupleDataStoreImpl("store", tmpRoot + "/parent-step-tmp-stores/consume-resource-tmp-stores/", "tup_out", new Fields("string"));
-    List<Tuple> tups = DataStoreUtils.getAllTuples(store.getTap(), CascadingUtil.get());
-
-    assertCollectionEquivalent(newHashSet(tups), Lists.<Tuple>newArrayList(new Tuple(1)));
-
-  }
 
   @Test
   public void integrationTestCancelComplete() throws Exception {
@@ -1296,31 +1244,6 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     } catch (Exception e) {
       System.out.println(e.getMessage());
       assertTrue(e.getMessage().startsWith("Cannot manually modify execution"));
-    }
-
-  }
-
-  public static class ParentResource extends HadoopMultiStepAction {
-
-    public ParentResource(String checkpointToken, String tmpRoot) throws IOException {
-      super(checkpointToken, tmpRoot);
-
-      OldResource<Integer> res = resource("resource");
-
-      Step set = new Step(new SetResource(
-          "set-resource",
-          res
-      ));
-
-      Step get = new Step(new ConsumeResource(
-          "consume-resource",
-          getTmpRoot(),
-          res),
-          set
-      );
-
-      setSubStepsFromTail(get);
-
     }
 
   }
@@ -2189,54 +2112,6 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
   }
 
 
-  public static class SetResource extends Action {
-
-    private final OldResource<Integer> res;
-
-    public SetResource(String checkpointToken,
-                       OldResource<Integer> res1) {
-      super(checkpointToken);
-      this.res = res1;
-      creates(res1);
-    }
-
-    @Override
-    protected void execute() throws Exception {
-      set(res, 1);
-    }
-  }
-
-  public static class ConsumeResource extends Action {
-
-    private final OldResource<Integer> res;
-
-    private final OldResource<Integer> resOut;
-    private final TupleDataStore tupOut;
-
-    public ConsumeResource(String checkpointToken,
-                           String tmpRoot,
-                           OldResource<Integer> res1) throws IOException {
-      super(checkpointToken, tmpRoot);
-      this.res = res1;
-      uses(res);
-
-      this.tupOut = new TupleDataStoreImpl("test", getTmpRoot(), "/tup_out", new Fields("string"));
-      this.resOut = resource("output");
-      creates(resOut);
-    }
-
-    @Override
-    protected void execute() throws Exception {
-      Integer val = get(res);
-      set(resOut, val);
-
-      DataStoreUtils.writeToStore(
-          CascadingUtil.get(),
-          tupOut,
-          new Tuple(val)
-      );
-    }
-  }
 
 
 }

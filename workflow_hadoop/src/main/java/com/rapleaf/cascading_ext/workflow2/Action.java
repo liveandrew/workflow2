@@ -38,11 +38,8 @@ import com.liveramp.cascading_ext.resource.Resource;
 import com.liveramp.cascading_tools.jobs.TrackedFlow;
 import com.liveramp.cascading_tools.jobs.TrackedOperation;
 import com.liveramp.commons.collections.properties.NestedProperties;
-import com.liveramp.commons.collections.properties.OverridableProperties;
-import com.liveramp.java_support.workflow.ActionId;
 import com.liveramp.workflow.backpressure.FlowSubmissionController;
 import com.liveramp.workflow2.workflow_hadoop.TmpDirFilter;
-import com.liveramp.workflow_core.OldResource;
 import com.liveramp.workflow_core.runner.BaseAction;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
@@ -369,10 +366,6 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
   //  we don't have to make these methods public.  there should be a cleaner way but I can't think of it.
   public class PreExecuteContext {
 
-    public <T> T get(OldResource<T> resource) throws IOException {
-      return Action.this.get(resource);
-    }
-
     public <T> T get(ReadResource<T> resource) {
       return Action.this.get(resource);
     }
@@ -392,10 +385,6 @@ public abstract class Action extends BaseAction<WorkflowRunner.ExecuteConfig> {
 
     public void creates(DataStore store) {
       Action.this.creates(store);
-    }
-
-    public <T> void uses(OldResource<T> resource) {
-      Action.this.uses(resource);
     }
 
     public <T> ReadResource<T> readsFrom(Resource<T> resource) {

@@ -40,7 +40,6 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
   private Integer stepPollInterval;
   private String sandboxDir;
   private String description;
-  private ContextStorage storage;
   private RollbackBehavior rollBackOnFailure = new RollbackBehavior.Unconditional(false);
   private AlertsHandlerFactory alertsHandlerFactory = new BufferingAlertsHandlerFactory();
   private Set<WorkflowTag> tags;
@@ -144,16 +143,6 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
 
   public T setStepPollInterval(int ms) {
     this.stepPollInterval = ms;
-    return (T)this;
-  }
-
-
-  public ContextStorage getStorage() {
-    return storage;
-  }
-
-  public T setStorage(ContextStorage storage) {
-    this.storage = storage;
     return (T)this;
   }
 
