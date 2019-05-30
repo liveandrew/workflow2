@@ -153,7 +153,6 @@ public abstract class BaseAction<Config> {
       Config context) {
     this.persistence = persistence;
     this.config = context;
-
     this.resourceManager = resourceManager;
 
     initialize(context);
