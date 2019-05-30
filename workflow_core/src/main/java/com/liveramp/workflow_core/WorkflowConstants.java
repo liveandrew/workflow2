@@ -5,9 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WorkflowConstants {
-  /**
-   * Specify this and the system will pick any free port.
-   */
+
   public static final String WORKFLOW_EMAIL_SUBJECT_TAG = "WORKFLOW";
   public static final String ERROR_EMAIL_SUBJECT_TAG = "ERROR";
 

@@ -673,7 +673,6 @@ public class BackgroundWorkflowExecutor {
           action.setOptionObjects(
               persistence,
               cache.getManager(workflowAttempt, backgroundInfo),
-              null, //  TODO realistically just sweep this (old resources)
               null // TODO flow submission controller + store locker.  important but only once we have the hadoopy version.
           );
 

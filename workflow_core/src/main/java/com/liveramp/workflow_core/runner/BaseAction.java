@@ -26,9 +26,6 @@ import com.liveramp.commons.collections.properties.OverridableProperties;
 import com.liveramp.commons.concurrent.NamedThreadFactory;
 import com.liveramp.java_support.concurrent.DaemonThreadFactory;
 import com.liveramp.java_support.workflow.ActionId;
-import com.liveramp.workflow_core.ContextStorage;
-import com.liveramp.workflow_core.OldResource;
-import com.liveramp.workflow_core.ResourceFactory;
 import com.liveramp.workflow_state.DSAction;
 import com.liveramp.workflow_state.DataStoreInfo;
 import com.liveramp.workflow_state.StepState;
@@ -63,15 +60,8 @@ public abstract class BaseAction<Config> {
 
   private final Map<Resource, ReadResourceContainer> readResources = Maps.newHashMap();
   private final Map<Resource, WriteResourceContainer> writeResources = Maps.newHashMap();
-  private final ResourceFactory resourceFactory;
 
-  private final Multimap<ResourceAction, OldResource> resources = HashMultimap.create();
-
-  private ContextStorage storage;
   private ResourceManager resourceManager;
-
-  //  TODO this doesn't really belong here
-  private boolean failOnCounterFetch = true;
 
   private transient WorkflowStatePersistence persistence;
   private Config config;
@@ -86,18 +76,6 @@ public abstract class BaseAction<Config> {
   public BaseAction(String checkpointToken, Map<Object, Object> properties) {
     this.actionId = new ActionId(checkpointToken);
     this.stepProperties = new NestedProperties(properties, false);
-    this.resourceFactory = new ResourceFactory(getActionId());
-  }
-
-  //  it's tempting to reuse DSAction for this, but I think some DSActions have no parallel for in-memory resources
-  //  which actually make sense...
-  public static enum ResourceAction {
-    CREATES,
-    USES
-  }
-
-  public void setFailOnCounterFetch(boolean value) {
-    this.failOnCounterFetch = value;
   }
 
   public ActionId getActionId() {
@@ -122,10 +100,6 @@ public abstract class BaseAction<Config> {
 
   protected Config getConfig() {
     return config;
-  }
-
-  protected boolean isFailOnCounterFetch() {
-    return failOnCounterFetch;
   }
 
   //  before workflow runs
@@ -165,33 +139,15 @@ public abstract class BaseAction<Config> {
   //  not really public : / make package private after cleanup
   public final void setOptionObjects(WorkflowStatePersistence persistence,
       ResourceManager resourceManager,
-      ContextStorage storage,
       Config context) {
     this.persistence = persistence;
     this.config = context;
-
     this.resourceManager = resourceManager;
-    this.storage = storage;
 
     initialize(context);
   }
 
   //  resource actions
-
-  @Deprecated
-  protected void creates(OldResource resource) {
-    mark(ResourceAction.CREATES, resource);
-  }
-
-  @Deprecated
-  protected void uses(OldResource resource) {
-    mark(ResourceAction.USES, resource);
-  }
-
-  @Deprecated
-  private void mark(ResourceAction action, OldResource resource) {
-    resources.put(action, resource);
-  }
 
   protected <T> ReadResource<T> readsFrom(Resource<T> resource) {
     ReadResourceContainer<T> container = new ReadResourceContainer<T>();
@@ -206,39 +162,12 @@ public abstract class BaseAction<Config> {
   }
 
 
-  @Deprecated
-  protected <T> T get(OldResource<T> resource) throws IOException {
-    if (!resources.get(ResourceAction.USES).contains(resource)) {
-      throw new RuntimeException("Cannot use resource without declaring it with uses()");
-    }
-
-    return storage.get(resource);
-  }
-
   protected <T> T get(ReadResource<T> resource) {
     return (T) resourceManager.read(resource);
   }
 
   protected <T, R extends WriteResource<T>> void set(R resource, T value) {
     resourceManager.write(resource, value);
-  }
-
-  @Deprecated
-  protected <T> void set(OldResource<T> resource, T value) throws IOException {
-    if (!resources.get(ResourceAction.CREATES).contains(resource)) {
-      throw new RuntimeException("Cannot set resource without declaring it with creates()");
-    }
-
-    storage.set(resource, value);
-  }
-
-
-  protected <T> OldResource<T> resource(String name) {
-    return resourceFactory().makeResource(name);
-  }
-
-  public ResourceFactory resourceFactory() {
-    return resourceFactory;
   }
 
   protected interface StatusCallback {

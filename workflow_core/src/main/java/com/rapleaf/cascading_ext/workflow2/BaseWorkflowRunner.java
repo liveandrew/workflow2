@@ -18,7 +18,6 @@ import com.liveramp.cascading_ext.resource.ResourceManager;
 import com.liveramp.commons.util.MultiShutdownHook;
 import com.liveramp.workflow.formatting.TimeFormatting;
 import com.liveramp.workflow_core.BaseWorkflowOptions;
-import com.liveramp.workflow_core.ContextStorage;
 import com.liveramp.workflow_core.WorkflowUtil;
 import com.liveramp.workflow_core.alerting.AlertsHandlerFactory;
 import com.liveramp.workflow_core.runner.BaseAction;
@@ -39,8 +38,6 @@ public class BaseWorkflowRunner<Config> {
   private final Config context;
 
   private final ResourceManager resourceManager;
-
-  private final ContextStorage storage;
 
   private final StepExecutor<Config> forwardExecutor;
 
@@ -97,7 +94,6 @@ public class BaseWorkflowRunner<Config> {
 
     this.context = config;
     this.onShutdown = shutdownHook;
-    this.storage = options.getStorage();
     this.resourceManager = initializedData.getManager();
     this.rollbackBehavior = options.getRollBackBehavior();
 
@@ -160,7 +156,6 @@ public class BaseWorkflowRunner<Config> {
       step.getAction().setOptionObjects(
           this.persistence,
           this.resourceManager,
-          this.storage,
           this.context
       );
     }
