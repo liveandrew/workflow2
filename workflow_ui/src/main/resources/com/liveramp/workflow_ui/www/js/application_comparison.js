@@ -150,13 +150,6 @@ function renderComparison(currentStats, targetServlet){
   trendsEnd1.datepicker("setDate", moment().subtract(30, 'days').toDate());
   trendsEnd2.datepicker("setDate", new Date());
 
-  ////  disable manual adjustment until we can figure out how to make it more efficient (caching per day or idk)
-  //absoluteEnd.hide();
-  //absoluteStart.hide();
-  //trendsEnd1.hide();
-  //trendsEnd2.hide();
-  //$trends.hide();
-
   function refreshTrendsTable() {
 
     var date1 = moment(trendsEnd1.datepicker('getDate'));

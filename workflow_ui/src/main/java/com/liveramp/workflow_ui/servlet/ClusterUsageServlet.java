@@ -15,7 +15,6 @@ import com.liveramp.workflow_ui.util.CostUtil;
 import com.liveramp.workflow_ui.util.QueryUtil;
 
 public class ClusterUsageServlet implements JSONServlet.Processor {
-  private static Logger LOG = LoggerFactory.getLogger(ClusterUsageServlet.class);
 
   private static final Multimap<String, String> COUNTERS_TO_RECORD = HashMultimap.create();
 

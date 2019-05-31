@@ -12,9 +12,6 @@ function renderCostTab(execution_data, $table, graphHolder){
 
     var row = $('<tr class="cost_row"></tr>');
 
-    var mapperTime = 0;
-    var reducerTime = 0;
-
     var executionId = e.execution_id;
     var cost = e.estimated_cost;
 

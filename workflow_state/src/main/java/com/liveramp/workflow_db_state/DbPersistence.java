@@ -821,11 +821,4 @@ public class DbPersistence implements WorkflowStatePersistence {
     }
   }
 
-  //  for testing
-
-//  public MailBuffer getTestMailBuffer() {
-//    return testMailBuffer;
-//  }
-
-
 }

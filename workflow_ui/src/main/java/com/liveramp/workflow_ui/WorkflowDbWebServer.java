@@ -71,6 +71,7 @@ import com.rapleaf.jack.DatabaseConnectionConfiguration;
 public class WorkflowDbWebServer implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDbWebServer.class);
   public static final String WORKFLOW_UI_PROPERTIES = "workflow.ui.properties";
+  public static final String WORKFLOW_UI_ENV = "WORKFLOW_UI_PROPERTIES";
 
   private final Semaphore shutdownLock = new Semaphore(0);
 
@@ -231,7 +232,7 @@ public class WorkflowDbWebServer implements Runnable {
 
   private static void start() throws InterruptedException, IOException {
     String configFile = Optional.ofNullable(System.getProperty(WORKFLOW_UI_PROPERTIES))
-        .orElseGet(() -> System.getenv(WORKFLOW_UI_PROPERTIES));
+        .orElseGet(() -> System.getenv(WORKFLOW_UI_ENV));
     if (configFile == null) {
       throw new IllegalArgumentException("Couldn't find workflow properties");
     }

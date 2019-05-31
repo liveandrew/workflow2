@@ -49,8 +49,7 @@ public class PipelineServlet implements JSONServlet.Processor {
       Collections.sort(attempts, new ReverseComparator());
       WorkflowAttempt lastAttempt = Accessors.first(attempts);
 
-      //  TODO super hack, figure out better way to collapse/expand teams in ui
-      if (lastAttempt.getPool() == null || !lastAttempt.getPool().startsWith("root.dev-tools")) {
+      if (lastAttempt.getPool() == null) {
         executionsByApp.put((long)execution.getApplicationId(), execution);
         executionToMostRecentAttempt.put(execution.getId(), lastAttempt);
       }

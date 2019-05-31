@@ -47,7 +47,7 @@ public class DbStorageIT extends ResourceDbManagerTestCase {
     factory = createStorage();
   }
 
-  protected static final Map<String, Integer> map = new MapBuilder<String, Integer>()
+  protected static final Map<String, Integer> map = MapBuilder
       .of("x", 1).put("y", 2).put("z", 3).get();
   protected static final Set<Long> set = Sets.newHashSet(Long.MAX_VALUE, Long.MIN_VALUE, -1L, 0L);
   protected static final String MAP_NAME = "MapResource";
@@ -62,6 +62,7 @@ public class DbStorageIT extends ResourceDbManagerTestCase {
     assertCollectionEquivalent(map.entrySet(), retrievedMap.entrySet());
   }
 
+  @SuppressWarnings("Duplicates")
   @Test
   public void testReinitialize() throws IOException {
     Storage storage = factory.forResourceRoot(createRoot());
@@ -81,6 +82,7 @@ public class DbStorageIT extends ResourceDbManagerTestCase {
     assertCollectionEquivalent(retrievedSet, set);
   }
 
+  @SuppressWarnings("Duplicates")
   @Test
   public void testPersistence() throws IOException {
     Storage storage = factory.forResourceRoot(createRoot());

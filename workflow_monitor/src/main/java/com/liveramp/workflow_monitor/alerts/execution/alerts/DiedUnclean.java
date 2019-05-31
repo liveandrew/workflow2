@@ -2,8 +2,7 @@ package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import java.io.IOException;
 import java.util.Collection;
-
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;

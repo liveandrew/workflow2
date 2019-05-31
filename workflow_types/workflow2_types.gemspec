@@ -2,8 +2,8 @@ Gem::Specification.new do |s|
   s.metadata['allowed_push_host'] = 'https://private-gems.liveramp.net'
   s.name        = 'workflow2_types'
   s.version     = '1.0.4'
-  s.authors     = ['Dev Tools']
-  s.email       = ['dev-tools@liveramp.com']
+  s.authors     = ['LiveRamp']
+  s.email       = ['dev-bdi@liveramp.com']
   s.has_rdoc    = false,
       s.summary     = 'Workflow2 Types'
   s.description = s.summary

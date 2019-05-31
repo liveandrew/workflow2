@@ -64,7 +64,7 @@ public class Summarizer {
     LocalDate yesterday = new LocalDate().minusDays(1);
 
     //  never summarize earlier than yesterday, or we record incomplete summaries
-    if(dateEnd.isAfter(yesterday)){
+    if (dateEnd.isAfter(yesterday)) {
       dateEnd = yesterday;
     }
 
@@ -153,26 +153,5 @@ public class Summarizer {
 
     LOG.info("Done recording summaries");
   }
-
-  public static final Multimap<String, String> COUNTERS_TO_SUMMARIZE = new MultimapBuilder<String, String>()
-      .put(ClusterConstants.MR2_GROUP, ClusterConstants.VCORE_MAP)
-      .put(ClusterConstants.MR2_GROUP, ClusterConstants.VCORE_RED)
-      .put(ClusterConstants.MR2_GROUP, ClusterConstants.MB_MAP)
-      .put(ClusterConstants.MR2_GROUP, ClusterConstants.MB_RED)
-
-      .put("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_READ_OPS")
-      .put("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_WRITE_OPS")
-      .put("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_LARGE_READ_OPS")
-      .put("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_BYTES_READ")
-      .put("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_BYTES_WRITTEN")
-
-      .put("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_MAPS")
-      .put("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_REDUCES")
-
-      .put(YarnConstants.YARN_GROUP, YarnConstants.YARN_MB_SECONDS)
-      .put(YarnConstants.YARN_GROUP, YarnConstants.YARN_VCORE_SECONDS)
-
-      .get();
-
 
 }

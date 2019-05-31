@@ -31,10 +31,12 @@ import com.liveramp.workflow_monitor.alerts.execution.recipient.TestRecipientGen
 
 public class WorkflowDbMonitorRunner {
   private static final String WORKFLOW_MONITOR_PROPERTIES = "workflow.monitor.properties";
+  private static final String WORKFLOW_MONITOR_ENV = "WORKFLOW_MONITOR_PROPERTIES";
+
 
   public static void main(String[] args) throws InterruptedException, IOException, URISyntaxException {
     String configFile = Optional.ofNullable(System.getProperty(WORKFLOW_MONITOR_PROPERTIES))
-        .orElseGet(() -> System.getenv(WORKFLOW_MONITOR_PROPERTIES));
+        .orElseGet(() -> System.getenv(WORKFLOW_MONITOR_ENV));
     Properties properties = new Properties();
     properties.load(new FileInputStream(configFile));
 

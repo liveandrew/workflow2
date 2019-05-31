@@ -1,12 +1,25 @@
 package com.liveramp.workflow_db_state;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang.SerializationUtils;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
-import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotification;
@@ -33,19 +46,6 @@ import com.liveramp.workflow_state.IStep;
 import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.state.InitializedWorkflow;
 import com.rapleaf.cascading_ext.workflow2.state.WorkflowPersistenceFactory;
-import org.apache.commons.lang.SerializationUtils;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Supplier;
 
 public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
     OPTS extends BaseWorkflowOptions<OPTS>,

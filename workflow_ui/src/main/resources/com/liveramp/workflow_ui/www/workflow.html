@@ -780,32 +780,7 @@
       datastoresTable.hide();
     }
 
-//    var oldDrawNodes = renderer.drawNodes();
-//
-//    renderer.drawNodes(function (graph, root) {
-//      var svgNodes = oldDrawNodes(graph, root);
-//      svgNodes.each(function (u) {
-//        d3.select(this).classed(graph.node(u).nodeclass, true);
-//      });
-//      return svgNodes;
-//    });
-//
-//    var oldDrawEdgePaths = renderer.drawEdgePaths();
-//    renderer.drawEdgePaths(function (graph, root) {
-//      var svgEdges = oldDrawEdgePaths(graph, root);
-//      svgEdges.each(function (e) {
-//        d3.select(this).classed(g.edge(e).edgeclass, true);
-//      });
-//      return svgEdges;
-//    });
-
-
-//    var layout = dagreD3.layout()
-//        .edgeSep(5)
-//        .rankDir("LR");
-
     var svgGroup = d3.select("svg g");
-//    renderer.layout(layout).run(g, svg);
 
     var svg = d3.select("#svg-canvas");
 

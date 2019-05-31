@@ -6,10 +6,10 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -73,7 +73,7 @@ public class WorkflowQueries {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowQueries.class);
 
   public static Optional<Application> getApplication(IWorkflowDb workflowDb, String name) throws IOException {
-    return Accessors.firstOrAbsent(workflowDb.applications().findByName(name));
+    return Accessors.firstOrEmpty(workflowDb.applications().findByName(name));
   }
 
   public static Set<WorkflowExecution.Attributes> getIncompleteExecutions(IWorkflowDb workflowDb, String name, String scopeId) throws IOException {
@@ -175,7 +175,7 @@ public class WorkflowQueries {
   }
 
   public static Optional<WorkflowAttempt> getLatestAttemptOptional(Collection<WorkflowAttempt> attempts) throws IOException {
-    return Accessors.firstOrAbsent(getAttemptsDescending(attempts));
+    return Accessors.firstOrEmpty(getAttemptsDescending(attempts));
   }
 
   public static WorkflowAttempt getLatestAttempt(WorkflowExecution execution) throws IOException {

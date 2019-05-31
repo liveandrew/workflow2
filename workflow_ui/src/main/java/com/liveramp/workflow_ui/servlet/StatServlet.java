@@ -32,8 +32,6 @@ import static com.liveramp.workflow_ui.util.QueryUtil.safeInt;
 
 public class StatServlet implements JSONServlet.Processor {
 
-  //  TODO database
-
   public interface DerivedCounter {
     public String getName();
 

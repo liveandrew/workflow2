@@ -133,9 +133,7 @@
               buttons: [
                 cancelButton(),
                 submitButton(function (dialog) {
-                    var dashboard = $("#dashboard-name").val();
                     dialog.close();
-
                     $.ajax({
                       type: 'DELETE',
                       dataType: 'html',
@@ -156,9 +154,6 @@
             .append($("<td></td>").append(button)));
 
         });
-
-        var applications = $("#applications");
-
 
       }
     });

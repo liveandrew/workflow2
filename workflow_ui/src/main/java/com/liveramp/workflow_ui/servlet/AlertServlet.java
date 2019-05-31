@@ -23,7 +23,7 @@ import static com.rapleaf.jack.queries.AggregatedColumn.COUNT;
 
 public class AlertServlet implements JSONServlet.Processor {
 
-  static int MAX_DURATION_IN_DAYS = 1;
+  private static int MAX_DURATION_IN_DAYS = 1;
 
   @Override
   public JSONObject getData(IDatabases workflowDb, Map<String, String> parameters) throws Exception {

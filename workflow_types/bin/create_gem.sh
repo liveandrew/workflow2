@@ -4,13 +4,13 @@ set -e
 
 DIR="/tmp/workflow2_types_gem/"
 
-rm -rf $DIR
+rm -rf ${DIR}
 
-mkdir -p $DIR/lib
-cp gen-rb/* $DIR/lib
-cp workflow2_types.gemspec $DIR
+mkdir -p ${DIR}/lib
+cp gen-rb/* ${DIR}/lib
+cp workflow2_types.gemspec ${DIR}
 
-cd $DIR
+cd ${DIR}
 
 for f in `ls lib/*`
 do
