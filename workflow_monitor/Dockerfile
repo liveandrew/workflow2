@@ -13,4 +13,6 @@ RUN ln -sf /apps/secrets/workflow_svc/database.yml /apps/workflow_monitor/config
 
 COPY container/entrypoint.sh /apps/
 
+WORKDIR /apps/workflow_monitor
+
 ENTRYPOINT /apps/entrypoint.sh

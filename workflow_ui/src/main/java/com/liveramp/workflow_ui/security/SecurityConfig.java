@@ -1,7 +1,5 @@
 package com.liveramp.workflow_ui.security;
 
-import javax.annotation.Resource;
-
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +17,14 @@ import org.springframework.session.SessionRepository;
 import org.springframework.session.config.annotation.web.http.EnableSpringHttpSession;
 import org.springframework.session.web.http.HeaderHttpSessionStrategy;
 
+
+/**
+ * Set configurations in {@link com.liveramp.workflow_ui.WorkflowDbWebServer#WORKFLOW_UI_PROPERTIES}
+ */
 @Configuration
 @EnableWebSecurity
 @EnableSpringHttpSession
-@PropertySource("classpath:/application.properties")
+@PropertySource("file:${workflow.ui.properties}")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Autowired
