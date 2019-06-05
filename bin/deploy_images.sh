@@ -12,9 +12,8 @@ docker_login() {
       restore_x=false
     fi
 
-    # Disable xtrace to hide password ($DOCKER_PASS).
     set +x
-    echo "${DOCKER_PASS}" | docker login -u ${DOCKER_USER} --password-stdin
+    echo "${DOCKER_PASSWORD}" | docker login -u ${DOCKER_USERNAME} --password-stdin
     if [[ ${restore_x} ]]; then
         set -x
     fi
