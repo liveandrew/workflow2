@@ -72,7 +72,7 @@ echo "Moving to build directory"
 cd ${BUILD_DIR};
 
 echo "Bundle installing"
-bundle install
+bundle install --verbose
 
 echo "Generating jack models"
 bundle exec ruby2.3 rb/jack.rb ${BASEDIR}/project.yml ${BASEDIR}/src/main/java
