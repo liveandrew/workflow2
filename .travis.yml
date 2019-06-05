@@ -16,6 +16,8 @@ addons:
     - ubuntu-toolchain-r-test
     packages:
     - gcc
+    - mysql-server
+    - mysql-client
 install: "/bin/true"
 script:
 - "./test"
