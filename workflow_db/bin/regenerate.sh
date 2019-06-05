@@ -11,6 +11,8 @@ echo "Using ruby version:"
 
 ruby --version
 
+which ruby
+
 echo "Basedir: $BASEDIR"
 
 cd ${BASEDIR}
@@ -75,6 +77,6 @@ echo "Bundle installing"
 bundle install --verbose
 
 echo "Generating jack models"
-bundle exec ruby2.3 rb/jack.rb ${BASEDIR}/project.yml ${BASEDIR}/src/main/java
+bundle exec ruby rb/jack.rb ${BASEDIR}/project.yml ${BASEDIR}/src/main/java
 
 echo "Done!"

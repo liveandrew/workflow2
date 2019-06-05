@@ -1,6 +1,8 @@
 language: java
 jdk:
 - openjdk10
+rvm:
+- 2.3.1
 dist: xenial
 services:
 - docker
@@ -18,7 +20,6 @@ addons:
     - gcc
     - mysql-server
     - mysql-client
-    - ruby2.3
 install: "/bin/true"
 script:
 - "./test"
