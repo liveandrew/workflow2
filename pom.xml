@@ -167,10 +167,9 @@
             <version>3.0.0</version>
             <executions>
               <execution>
-                <!-- Disable javadoc linting until CD is setup, then you
-                          can enable it if you'd like -->
                 <configuration>
                   <doclint>none</doclint>
+                  <source>8</source>
                 </configuration>
                 <id>attach-javadocs</id>
                 <goals>
