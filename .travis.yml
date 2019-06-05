@@ -18,6 +18,7 @@ addons:
     - gcc
     - mysql-server
     - mysql-client
+    - ruby-2.3.1
 install: "/bin/true"
 script:
 - "./test"
