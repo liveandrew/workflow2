@@ -18,7 +18,7 @@ docker_login() {
     fi
 }
 
-echo "Logging in with Docker username: $DOCKER_USERNAME"
+echo "Logging in with Docker username: $DOCKER_USERNAME" | base64
 
 docker_login
 
