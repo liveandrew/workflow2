@@ -7,6 +7,10 @@ export GEM_HOME=gems/
 
 BASEDIR=$1
 
+echo "Using ruby version:"
+
+ruby --version
+
 echo "Basedir: $BASEDIR"
 
 cd ${BASEDIR}
@@ -71,6 +75,6 @@ echo "Bundle installing"
 bundle install
 
 echo "Generating jack models"
-bundle exec ruby rb/jack.rb ${BASEDIR}/project.yml ${BASEDIR}/src/main/java
+bundle exec ruby2.3 rb/jack.rb ${BASEDIR}/project.yml ${BASEDIR}/src/main/java
 
 echo "Done!"
