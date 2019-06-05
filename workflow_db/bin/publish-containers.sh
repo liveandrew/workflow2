@@ -18,6 +18,8 @@ docker_login() {
     fi
 }
 
+echo "Logging in with Docker username: $DOCKER_USERNAME"
+
 docker_login
 
 MIGRATION_REPO=liveramp/workflow2_db_migrations
