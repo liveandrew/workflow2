@@ -3,6 +3,8 @@
 set -e
 set -o pipefail
 
+rvm use 2.3.1
+
 export GEM_HOME=gems/
 
 BASEDIR=$1
