@@ -3,6 +3,9 @@
 set -e
 set -o pipefail
 
+rvm install ruby-2.3.1
+rvm use 2.3.1
+
 export GEM_HOME=gems/
 
 BASEDIR=$1
