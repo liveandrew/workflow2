@@ -216,8 +216,10 @@ public class WorkflowDbWebServer implements Runnable {
       uiServer.setSessionIdManager(idMgr);
 
       SessionHandler sessionHandler = new SessionHandler();
+
       SessionCache sessionCache = new DefaultSessionCache(sessionHandler);
       sessionCache.setSessionDataStore(jdbcDataStore);
+      sessionHandler.setSessionCache(sessionCache);
 
       context.setSessionHandler(sessionHandler);
 
