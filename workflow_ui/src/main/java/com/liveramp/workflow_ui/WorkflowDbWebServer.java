@@ -12,7 +12,9 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.HashMultimap;
@@ -21,8 +23,12 @@ import com.google.common.collect.Sets;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.session.JDBCSessionIdManager;
-import org.eclipse.jetty.server.session.JDBCSessionManager;
+import org.eclipse.jetty.server.session.DatabaseAdaptor;
+import org.eclipse.jetty.server.session.DefaultSessionCache;
+import org.eclipse.jetty.server.session.DefaultSessionIdManager;
+import org.eclipse.jetty.server.session.HouseKeeper;
+import org.eclipse.jetty.server.session.JDBCSessionDataStore;
+import org.eclipse.jetty.server.session.SessionCache;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -138,9 +144,14 @@ public class WorkflowDbWebServer implements Runnable {
           searchWindow
       );
 
-      Server uiServer = new Server(new ExecutorThreadPool(50, 50, Integer.MAX_VALUE, TimeUnit.MINUTES));
+      ThreadPoolExecutor executor = new ThreadPoolExecutor(50, 50,
+          Integer.MAX_VALUE, TimeUnit.MINUTES,
+          new LinkedBlockingQueue<>()
+      );
 
-      ServerConnector http = new ServerConnector(uiServer, new HttpConnectionFactory());
+      Server uiServer = new Server(new ExecutorThreadPool(executor));
+
+      ServerConnector http = new ServerConnector(uiServer);
       http.setPort(ClusterConstants.DEFAULT_PORT);
       http.setIdleTimeout(30000);
       uiServer.addConnector(http);
@@ -185,21 +196,30 @@ public class WorkflowDbWebServer implements Runnable {
 
       DatabaseConnectionConfiguration connInfo = DatabaseConnectionConfiguration.loadFromEnvironment("workflow_ui_jetty_db");
 
-      JDBCSessionIdManager idMgr = new JDBCSessionIdManager(uiServer);
+      DefaultSessionIdManager idMgr = new DefaultSessionIdManager(uiServer);
       String hostname = InetAddress.getLocalHost().getHostName().split("\\.")[0];
       LOG.info("Using hostname: " + hostname);
 
       idMgr.setWorkerName(hostname);
-      idMgr.setDatasource(new DriverManagerDataSource(buildConnectURL(connInfo),
+      idMgr.setSessionHouseKeeper(new HouseKeeper());
+
+      JDBCSessionDataStore jdbcDataStore = new JDBCSessionDataStore();
+
+      DatabaseAdaptor dbAdaptor = new DatabaseAdaptor();
+      dbAdaptor.setDatasource(new DriverManagerDataSource(buildConnectURL(connInfo),
           connInfo.getUsername().get(),
           connInfo.getPassword().orNull()
       ));
 
+      jdbcDataStore.setDatabaseAdaptor(dbAdaptor);
+
       uiServer.setSessionIdManager(idMgr);
 
-      JDBCSessionManager jdbcMgr = new JDBCSessionManager();
-      jdbcMgr.setSessionIdManager(uiServer.getSessionIdManager());
-      context.setSessionHandler(new SessionHandler(jdbcMgr));
+      SessionHandler sessionHandler = new SessionHandler();
+      SessionCache sessionCache = new DefaultSessionCache(sessionHandler);
+      sessionCache.setSessionDataStore(jdbcDataStore);
+
+      context.setSessionHandler(sessionHandler);
 
       uiServer.setHandler(context);
 
