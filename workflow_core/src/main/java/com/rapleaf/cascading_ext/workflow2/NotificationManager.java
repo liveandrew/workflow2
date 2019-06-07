@@ -62,6 +62,11 @@ public class NotificationManager {
 
   }
 
+  public String buildStepSuccessMessage() throws IOException {
+    return "Workflow will continue running";
+  }
+
+
   public String buildStepFailureMessage(String step) throws IOException {
     return "Workflow will continue running non-blocked steps \n\n Step "
         + step + " failed with exception: "
@@ -130,8 +135,16 @@ public class NotificationManager {
     return "Step has failed in: " + getDisplayName();
   }
 
+  private String getStepSuccessSubject(String step) throws IOException {
+    return "Step "+step+" has succeeded in: " + getDisplayName();
+  }
+
   public void sendStepFailureEmail(String stepToken) throws IOException {
     mail(getStepFailureSubject(), buildStepFailureMessage(stepToken), WorkflowRunnerNotification.STEP_FAILURE);
+  }
+
+  public void sendStepSuccessEmail(String stepToken) throws IOException {
+    mail(getStepSuccessSubject(stepToken), buildStepSuccessMessage(), WorkflowRunnerNotification.STEP_SUCCESS);
   }
 
   public String getShutdownSubject(String reason) throws IOException {

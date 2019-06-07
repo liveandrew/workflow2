@@ -10,6 +10,7 @@ public enum WorkflowRunnerNotification {
   SHUTDOWN(AlertSeverity.INFO),
   INTERNAL_ERROR(AlertSeverity.ERROR),
   STEP_FAILURE(AlertSeverity.ERROR),
+  STEP_SUCCESS(AlertSeverity.INFO),
 
   DIED_UNCLEAN(AlertSeverity.ERROR),
   PERFORMANCE(AlertSeverity.ONCALL);

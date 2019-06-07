@@ -404,6 +404,9 @@ public class StepExecutor<Config> {
               strategy.run(step, buildInheritedProperties());
 
               strategy.markStepCompleted(persistence, stepToken);
+
+              notifications.sendStepSuccessEmail(stepToken);
+
             }
           } catch (Throwable e) {
 
