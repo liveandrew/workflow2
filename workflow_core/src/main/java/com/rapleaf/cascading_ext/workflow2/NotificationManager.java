@@ -136,7 +136,7 @@ public class NotificationManager {
   }
 
   private String getStepSuccessSubject(String step) throws IOException {
-    return "Step has "+step+"succeeded in: " + getDisplayName();
+    return "Step "+step+" has succeeded in: " + getDisplayName();
   }
 
   public void sendStepFailureEmail(String stepToken) throws IOException {
