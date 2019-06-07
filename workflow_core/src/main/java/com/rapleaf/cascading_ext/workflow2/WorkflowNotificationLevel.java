@@ -41,6 +41,7 @@ public class WorkflowNotificationLevel {
 
   public static final Set<WorkflowRunnerNotification> DEBUG = new SetBuilder<>(INFO)
       .add(WorkflowRunnerNotification.START)
+      .add(WorkflowRunnerNotification.STEP_SUCCESS)
       .get();
 
 }
