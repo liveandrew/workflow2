@@ -202,8 +202,9 @@ public class WorkflowDbWebServer implements Runnable {
       LOG.info("Using hostname: " + hostname);
 
       idMgr.setWorkerName(hostname);
-      HouseKeeper houseKeeper = new HouseKeeper();
-      idMgr.setSessionHouseKeeper(houseKeeper);
+      idMgr.setSessionHouseKeeper(new HouseKeeper());
+
+      JDBCSessionDataStore jdbcDataStore = new JDBCSessionDataStore();
 
       DatabaseAdaptor dbAdaptor = new DatabaseAdaptor();
       dbAdaptor.setDatasource(new DriverManagerDataSource(buildConnectURL(connInfo),
@@ -211,15 +212,17 @@ public class WorkflowDbWebServer implements Runnable {
           connInfo.getPassword().orNull()
       ));
 
-      JDBCSessionDataStoreFactory jdbcSessionDataStoreFactory = new JDBCSessionDataStoreFactory();
-      jdbcSessionDataStoreFactory.setDatabaseAdaptor(dbAdaptor);
+      jdbcDataStore.setDatabaseAdaptor(dbAdaptor);
+
+      uiServer.setSessionIdManager(idMgr);
 
       SessionHandler sessionHandler = new SessionHandler();
-      sessionHandler.setSessionIdManager(idMgr);
+
       SessionCache sessionCache = new DefaultSessionCache(sessionHandler);
-      sessionCache.setSessionDataStore(jdbcSessionDataStoreFactory.getSessionDataStore(sessionHandler));
+      sessionCache.setSessionDataStore(jdbcDataStore);
       sessionHandler.setSessionCache(sessionCache);
-      context.setHandler(sessionHandler);
+
+      context.setSessionHandler(sessionHandler);
 
       uiServer.setHandler(context);
 
