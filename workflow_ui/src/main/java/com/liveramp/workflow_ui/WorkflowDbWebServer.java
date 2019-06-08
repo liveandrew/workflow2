@@ -28,6 +28,7 @@ import org.eclipse.jetty.server.session.DefaultSessionCache;
 import org.eclipse.jetty.server.session.DefaultSessionIdManager;
 import org.eclipse.jetty.server.session.HouseKeeper;
 import org.eclipse.jetty.server.session.JDBCSessionDataStore;
+import org.eclipse.jetty.server.session.JDBCSessionDataStoreFactory;
 import org.eclipse.jetty.server.session.SessionCache;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -201,9 +202,8 @@ public class WorkflowDbWebServer implements Runnable {
       LOG.info("Using hostname: " + hostname);
 
       idMgr.setWorkerName(hostname);
-      idMgr.setSessionHouseKeeper(new HouseKeeper());
-
-      JDBCSessionDataStore jdbcDataStore = new JDBCSessionDataStore();
+      HouseKeeper houseKeeper = new HouseKeeper();
+      idMgr.setSessionHouseKeeper(houseKeeper);
 
       DatabaseAdaptor dbAdaptor = new DatabaseAdaptor();
       dbAdaptor.setDatasource(new DriverManagerDataSource(buildConnectURL(connInfo),
@@ -211,17 +211,15 @@ public class WorkflowDbWebServer implements Runnable {
           connInfo.getPassword().orNull()
       ));
 
-      jdbcDataStore.setDatabaseAdaptor(dbAdaptor);
-
-      uiServer.setSessionIdManager(idMgr);
+      JDBCSessionDataStoreFactory jdbcSessionDataStoreFactory = new JDBCSessionDataStoreFactory();
+      jdbcSessionDataStoreFactory.setDatabaseAdaptor(dbAdaptor);
 
       SessionHandler sessionHandler = new SessionHandler();
-
+      sessionHandler.setSessionIdManager(idMgr);
       SessionCache sessionCache = new DefaultSessionCache(sessionHandler);
-      sessionCache.setSessionDataStore(jdbcDataStore);
+      sessionCache.setSessionDataStore(jdbcSessionDataStoreFactory.getSessionDataStore(sessionHandler));
       sessionHandler.setSessionCache(sessionCache);
-
-      context.setSessionHandler(sessionHandler);
+      context.setHandler(sessionHandler);
 
       uiServer.setHandler(context);
 
