@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class MapreduceJob extends ModelWithId<MapreduceJob, IDatabases> implements Comparable<MapreduceJob>{
   
-  public static final long serialVersionUID = 318716303774856920L;
+  public static final long serialVersionUID = 4545472233193297048L;
 
   public static class Tbl extends AbstractTable<MapreduceJob.Attributes, MapreduceJob> {
     public final Column<Long> ID;
@@ -876,7 +876,7 @@ public class MapreduceJob extends ModelWithId<MapreduceJob, IDatabases> implemen
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = -8951452087436357286L;
+    public static final long serialVersionUID = 8568730431692073515L;
 
     // Fields
     private Long __step_attempt_id;

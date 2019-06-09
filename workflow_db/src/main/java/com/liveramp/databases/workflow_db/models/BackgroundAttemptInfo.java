@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class BackgroundAttemptInfo extends ModelWithId<BackgroundAttemptInfo, IDatabases> implements Comparable<BackgroundAttemptInfo>{
   
-  public static final long serialVersionUID = -5719518777407163969L;
+  public static final long serialVersionUID = -4770614581314068934L;
 
   public static class Tbl extends AbstractTable<BackgroundAttemptInfo.Attributes, BackgroundAttemptInfo> {
     public final Column<Long> ID;
@@ -365,7 +365,7 @@ public class BackgroundAttemptInfo extends ModelWithId<BackgroundAttemptInfo, ID
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 2851371612327310945L;
+    public static final long serialVersionUID = -6285696809193612682L;
 
     // Fields
     private long __workflow_attempt_id;

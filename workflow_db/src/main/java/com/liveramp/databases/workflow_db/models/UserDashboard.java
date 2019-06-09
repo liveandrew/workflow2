@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class UserDashboard extends ModelWithId<UserDashboard, IDatabases> implements Comparable<UserDashboard>{
   
-  public static final long serialVersionUID = 8872884355484834117L;
+  public static final long serialVersionUID = 8744867223230674293L;
 
   public static class Tbl extends AbstractTable<UserDashboard.Attributes, UserDashboard> {
     public final Column<Long> ID;
@@ -338,7 +338,7 @@ public class UserDashboard extends ModelWithId<UserDashboard, IDatabases> implem
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 6061301293352739971L;
+    public static final long serialVersionUID = -9073619004714864588L;
 
     // Fields
     private int __user_id;

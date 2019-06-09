@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class ExecutionTag extends ModelWithId<ExecutionTag, IDatabases> implements Comparable<ExecutionTag>{
   
-  public static final long serialVersionUID = 4882020992182674970L;
+  public static final long serialVersionUID = 8696016204042242944L;
 
   public static class Tbl extends AbstractTable<ExecutionTag.Attributes, ExecutionTag> {
     public final Column<Long> ID;
@@ -354,7 +354,7 @@ public class ExecutionTag extends ModelWithId<ExecutionTag, IDatabases> implemen
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 8368428344107186165L;
+    public static final long serialVersionUID = 6214216292790028403L;
 
     // Fields
     private long __workflow_execution_id;

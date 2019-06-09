@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class WorkflowAlert extends ModelWithId<WorkflowAlert, IDatabases> implements Comparable<WorkflowAlert>{
   
-  public static final long serialVersionUID = 2588162905656309836L;
+  public static final long serialVersionUID = 1396528280341360727L;
 
   public static class Tbl extends AbstractTable<WorkflowAlert.Attributes, WorkflowAlert> {
     public final Column<Long> ID;
@@ -308,7 +308,7 @@ public class WorkflowAlert extends ModelWithId<WorkflowAlert, IDatabases> implem
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = -3613220188290061858L;
+    public static final long serialVersionUID = -3694878996145825135L;
 
     // Fields
     private String __alert_class;

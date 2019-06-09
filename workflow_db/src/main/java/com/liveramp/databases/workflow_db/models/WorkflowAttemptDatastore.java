@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class WorkflowAttemptDatastore extends ModelWithId<WorkflowAttemptDatastore, IDatabases> implements Comparable<WorkflowAttemptDatastore>{
   
-  public static final long serialVersionUID = 5944730191327254960L;
+  public static final long serialVersionUID = 7305390057495532705L;
 
   public static class Tbl extends AbstractTable<WorkflowAttemptDatastore.Attributes, WorkflowAttemptDatastore> {
     public final Column<Long> ID;
@@ -400,7 +400,7 @@ public class WorkflowAttemptDatastore extends ModelWithId<WorkflowAttemptDatasto
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 7835332951821827243L;
+    public static final long serialVersionUID = 9140369847499437817L;
 
     // Fields
     private int __workflow_attempt_id;
