@@ -20,6 +20,7 @@ addons:
     - gcc
     - mysql-server
     - mysql-client
+    - git
 install: "/bin/true"
 script:
 - "./test"
