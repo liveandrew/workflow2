@@ -21,6 +21,7 @@ addons:
     - mysql-server
     - mysql-client
     - git
+    - patch
 install: "/bin/true"
 script:
 - "./test"
