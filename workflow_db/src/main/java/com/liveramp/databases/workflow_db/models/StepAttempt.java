@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class StepAttempt extends ModelWithId<StepAttempt, IDatabases> implements Comparable<StepAttempt>{
   
-  public static final long serialVersionUID = -2075875460696677910L;
+  public static final long serialVersionUID = 7227560279981387552L;
 
   public static class Tbl extends AbstractTable<StepAttempt.Attributes, StepAttempt> {
     public final Column<Long> ID;
@@ -647,7 +647,7 @@ public class StepAttempt extends ModelWithId<StepAttempt, IDatabases> implements
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 3265631533786845359L;
+    public static final long serialVersionUID = -2567201647257111537L;
 
     // Fields
     private int __workflow_attempt_id;

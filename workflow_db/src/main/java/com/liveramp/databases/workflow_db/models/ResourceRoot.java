@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class ResourceRoot extends ModelWithId<ResourceRoot, IDatabases> implements Comparable<ResourceRoot>{
   
-  public static final long serialVersionUID = 5313053867374161342L;
+  public static final long serialVersionUID = -1648774263051010369L;
 
   public static class Tbl extends AbstractTable<ResourceRoot.Attributes, ResourceRoot> {
     public final Column<Long> ID;
@@ -446,7 +446,7 @@ public class ResourceRoot extends ModelWithId<ResourceRoot, IDatabases> implemen
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 7635584231492430298L;
+    public static final long serialVersionUID = -2227891514620149012L;
 
     // Fields
     private String __name;

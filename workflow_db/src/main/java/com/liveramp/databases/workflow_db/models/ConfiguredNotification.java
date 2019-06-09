@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class ConfiguredNotification extends ModelWithId<ConfiguredNotification, IDatabases> implements Comparable<ConfiguredNotification>{
   
-  public static final long serialVersionUID = 1564619312964949477L;
+  public static final long serialVersionUID = -3758672803896315925L;
 
   public static class Tbl extends AbstractTable<ConfiguredNotification.Attributes, ConfiguredNotification> {
     public final Column<Long> ID;
@@ -355,7 +355,7 @@ public class ConfiguredNotification extends ModelWithId<ConfiguredNotification, 
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 3831683589222130563L;
+    public static final long serialVersionUID = -7428906408882407784L;
 
     // Fields
     private int __workflow_runner_notification;
