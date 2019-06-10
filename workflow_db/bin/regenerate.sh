@@ -83,8 +83,6 @@ echo "2.3.8" > ${BUILD_DIR}/.ruby-version
 echo "Moving to build directory"
 cd ${BUILD_DIR};
 
-bundle config build.nokogiri --use-system-libraries
-
 echo "Bundle installing"
 bundle install --verbose
 

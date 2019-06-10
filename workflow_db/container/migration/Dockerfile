@@ -2,7 +2,7 @@ FROM centos:centos7
 
 RUN yum -y install centos-release-scl
 
-RUN yum -y install rh-ruby23 rh-ruby23-ruby-devel
+RUN yum -y install rh-ruby23 rh-ruby23-ruby-devel patch
 
 SHELL [ "/usr/bin/scl", "enable", "rh-ruby23" ]
 
