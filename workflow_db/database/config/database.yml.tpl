@@ -10,8 +10,8 @@ login: &login
 
 workflow_docker_env:
   <<: *login
-  database: workflow_docker_env
+  database: ${DB_NAME}
 
 docker_env:
   <<: *login
-  database: workflow_docker_env
+  database: ${DB_NAME}

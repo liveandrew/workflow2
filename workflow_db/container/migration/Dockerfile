@@ -6,7 +6,7 @@ RUN yum -y install rh-ruby23 rh-ruby23-ruby-devel patch
 
 SHELL [ "/usr/bin/scl", "enable", "rh-ruby23" ]
 
-RUN yum -y install make gcc mysql-devel gcc-c++ mysql
+RUN yum -y install make gcc mysql-devel gcc-c++ mysql gettext
 
 RUN gem install bundler
 
