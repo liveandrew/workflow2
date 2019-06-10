@@ -47,7 +47,7 @@ public class WorkflowDbMonitorRunner {
 
     properties.load(new FileInputStream(configFile));
 
-    String alertSourceList = properties.getProperty("alert_source_domain");
+    String alertSourceList = properties.getProperty("alert_source_list");
     String alertSourceDomain = properties.getProperty("alert_source_domain");
     String mailHost = properties.getProperty("alert_mail_server");
     String uiServer = properties.getProperty("workflow_ui_server");
