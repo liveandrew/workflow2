@@ -1,6 +1,7 @@
 package com.liveramp.workflow_monitor;
 
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -38,6 +39,12 @@ public class WorkflowDbMonitorRunner {
     String configFile = Optional.ofNullable(System.getProperty(WORKFLOW_MONITOR_PROPERTIES))
         .orElseGet(() -> System.getenv(WORKFLOW_MONITOR_ENV));
     Properties properties = new Properties();
+
+    if(!new File(configFile).exists()){
+      throw new IllegalArgumentException("Please specify either "+WORKFLOW_MONITOR_PROPERTIES+" as a property or " +
+          WORKFLOW_MONITOR_ENV+" as an environment variable.");
+    }
+
     properties.load(new FileInputStream(configFile));
 
     String alertSourceList = properties.getProperty("alert_source_domain");
