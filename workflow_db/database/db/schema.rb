@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190204201620) do
+ActiveRecord::Schema.define(version: 20190610183430) do
 
   create_table "application_configured_notifications", force: :cascade do |t|
     t.integer "application_id",             limit: 8, null: false
@@ -136,6 +136,7 @@ ActiveRecord::Schema.define(version: 20190204201620) do
     t.integer "tasks_failed_in_sample", limit: 4
   end
 
+  add_index "mapreduce_jobs", ["job_identifier"], name: "index_mapreduce_jobs_on_job_identifier", using: :btree
   add_index "mapreduce_jobs", ["step_attempt_id"], name: "step_attempt_id_index", using: :btree
 
   create_table "resource_records", force: :cascade do |t|
