@@ -13,6 +13,7 @@ import com.liveramp.java_support.alerts_handler.configs.DefaultAlertMessageConfi
 import com.liveramp.java_support.alerts_handler.configs.GenericAlertsHandlerConfig;
 import com.liveramp.java_support.alerts_handler.recipients.AlertSeverity;
 import com.liveramp.java_support.alerts_handler.recipients.EngineeringAlertRecipient;
+import com.liveramp.java_support.alerts_handler.recipients.RecipientUtils;
 import com.liveramp.mail_utils.MailerHelperAlertsHandler;
 import com.liveramp.mail_utils.SmtpConfig;
 import com.liveramp.workflow_db_state.DbPersistence;
@@ -41,7 +42,7 @@ public class EmailFromPersistenceGenerator implements RecipientGenerator {
         (emails, buffer) -> new MailerHelperAlertsHandler(new GenericAlertsHandlerConfig(
             new DefaultAlertMessageConfig(true, Lists.newArrayList()),
             alertList, alertDomain,
-            new EngineeringAlertRecipient(AlertSeverity.ERROR)),
+            RecipientUtils.of(emails)),
             new SmtpConfig(smtpHost)));
   }
 }
