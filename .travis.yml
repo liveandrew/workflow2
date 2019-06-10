@@ -22,6 +22,7 @@ addons:
     - mysql-client
     - git
     - patch
+    - libxml2
 install: "/bin/true"
 script:
 - "./test"
