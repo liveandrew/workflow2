@@ -29,13 +29,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.hadoop.gplcompression</groupId>
-      <artifactId>hadoop-lzo</artifactId>
-      <version>0.4.15-gplextras5.0.0</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
       <groupId>com.liveramp</groupId>
       <artifactId>cascading_ext</artifactId>
       <version>1.7-SNAPSHOT</version>
@@ -84,7 +77,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>-Djava.library.path=${env.HADOOP_LZO} -Xmx1024m</argLine>
           <additionalClasspathElements>
             <!--suppress MavenModelInspection -->
             <additionalClasspathElement>${env.HADOOP_CONF_DIR}</additionalClasspathElement>
