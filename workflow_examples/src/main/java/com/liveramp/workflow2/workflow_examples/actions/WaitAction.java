@@ -5,6 +5,7 @@ import com.rapleaf.cascading_ext.workflow2.Action;
 public class WaitAction extends Action {
 
   private final long delay;
+
   public WaitAction(String checkpointToken, long delay) {
     super(checkpointToken);
     this.delay = delay;
