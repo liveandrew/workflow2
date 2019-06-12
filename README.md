@@ -78,6 +78,8 @@ This is an important point: neither the UI or monitor need to be running for exe
 
 ## Concepts
 
+####Simple DAGs
+
 _Actions_ run in a sequence defined by a DAG which is defined in user-code.  A very simple workflow looks like this:
 
 ```java
@@ -163,25 +165,73 @@ We see there is a single, running, Attempt associated with this Execution.  Last
 
 Here we see in detail the workflow we just launched.  We see it has 3 steps, and the first two have already executed; the last is still running.  
 
+#### Resuming
+
 This is great, but what happens if a workflow fails halfway through?  Let's say our workflow failed on the second step:
 
 ![alt text](images/failed.png)
 
-The next time we launch a workflow with the same name and scope (we'll talk about that later -- it default to null), the next _Attempt_ will pick up right where we left off:
+When we call `.run` on a Workflow, it either _resumes_ an incomplete Execution or creates a new Execution:
+
+- If the last Attempt did not complete the steps it defined, we create a new Attempt in the existing Execution
+
+- If the last Attempt _did_ complete, we create a new Execution and start from the beginning.
+
+In this case, the previous attempt failed, so the next Attempt will pick up right where we left off:
 
 ![alt text](images/succeeded.png)
 
-Notice that the first step was not re-executed -- it was skipped because it succeeded in a previous run.
+Notice that the first step was not re-executed -- it was skipped because it succeeded in the previous run.
 
 
-TODO
+#### Multi-Step Actions
 
-multi step 
+Atomic steps are OK for simple applications, but often we want to package our Actions into larger re-usable components.  Workflow2 supports this via `MultiStepAction`s.  A MSA contains a graph of one or more Steps internally (these steps themselves can contain MSAs).  Here's a simple example:
+
+```java
+public class SimpleMSA extends HadoopMultiStepAction {
+  
+  public SimpleMSA(String checkpointToken, String tmpRoot) {
+    super(checkpointToken, tmpRoot);
+
+    Step step1 = new Step(new NoOpAction("step1"));
+
+    Step step2 = new Step(new NoOpAction("step2"), step1);
+
+    setSubStepsFromTails(step2);
+  }
+
+}
+```
+
+You can think of a MSA as a simple workflow -- steps can depend on each other, and the MSA binds the tails of the Action.  We can then embed this MSA into a complete workflow:
+
+```java
+    Step multiStep = new Step(new SimpleMSA("simple-multistep", "/tmp/dir"));
+
+    Step tailStep = new Step(new NoOpAction("later-step"), multiStep);
+
+    WorkflowRunners.dbRun(
+        MultiStepWorkflow.class.getName(),
+        HadoopWorkflowOptions.test(),
+        dbHadoopWorkflow -> Sets.newHashSet(tailStep)
+    );
+
+```
+
+When we run this workflow, the default UI view shows the steps collapsed, just like we wrote:
 
 ![alt text](images/multistep_collapsed.png)
 
+If we want to dig in to find details about the sub-steps which executed, we can expand the graph in the UI to show all component Steps:
+
 ![alt text](images/multistep_expanded.png)
 
+Notice that the sub-component Step names are nested with the parent name -- this way, Step names within a MSA don't have to be globally unique, only unique within the MSA.
+
+#### Scopes
+
+Usually, we want to be able to run multiple concurrent Executions within the same Application.  For example, if my Application is `ImportDataFromCustomer`, we want to be able to import data from customer A and customer B concurrently.  
 
 scope 
 
