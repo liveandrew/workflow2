@@ -63,6 +63,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
           .contextSource(contextSource());
     }
 
+    //  TODO in-memory fixed creds
+
   }
 
   @Bean

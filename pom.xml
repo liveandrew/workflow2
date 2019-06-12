@@ -53,6 +53,7 @@
     <module>workflow_ui</module>
     <module>workflow_monitor</module>
     <module>workflow_hadoop</module>
+    <module>workflow_examples</module>
   </modules>
 
   <repositories>
