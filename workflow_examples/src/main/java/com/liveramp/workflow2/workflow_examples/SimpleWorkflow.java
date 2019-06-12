@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import com.google.common.collect.Sets;
 
-import com.liveramp.workflow2.workflow_hadoop.examples.actions.WaitAction;
+import com.liveramp.workflow2.workflow_examples.actions.WaitAction;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunners;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
