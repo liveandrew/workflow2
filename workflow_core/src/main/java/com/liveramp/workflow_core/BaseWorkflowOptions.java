@@ -189,12 +189,17 @@ public class BaseWorkflowOptions<T extends BaseWorkflowOptions<T>> {
     return uniqueIdentifier;
   }
 
-  public T setUniqueIdentifier(String uniqueIdentifier) {
-    if (uniqueIdentifier != null && uniqueIdentifier.equals("__NULL")) {
+  public T setScope(String scope){
+    if (scope != null && scope.equals("__NULL")) {
       throw new IllegalArgumentException("This is temporarily a reserved scope, while making scope not null");
     }
-    this.uniqueIdentifier = uniqueIdentifier;
+    this.uniqueIdentifier = scope;
     return (T)this;
+  }
+
+  @Deprecated //  use setScope
+  public T setUniqueIdentifier(String uniqueIdentifier) {
+    return setScope(uniqueIdentifier);
   }
 
   public String getAppName(){
