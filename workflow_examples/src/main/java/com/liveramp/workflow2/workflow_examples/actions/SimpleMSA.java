@@ -5,6 +5,7 @@ import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.action.NoOpAction;
 
 public class SimpleMSA extends HadoopMultiStepAction {
+
   public SimpleMSA(String checkpointToken, String tmpRoot) {
     super(checkpointToken, tmpRoot);
 
@@ -14,4 +15,5 @@ public class SimpleMSA extends HadoopMultiStepAction {
 
     setSubStepsFromTails(step2);
   }
+
 }
