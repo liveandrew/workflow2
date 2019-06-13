@@ -1,1 +1,1 @@
-Models Generated With Migration: 20190204201620
+Models Generated With Migration: 20190612183248

@@ -37,7 +37,7 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
   private final IDatabases databases;
 
   public BaseWorkflowAttemptPersistenceImpl(BaseDatabaseConnection conn, IDatabases databases) {
-    super(conn, "workflow_attempts", Arrays.<String>asList("workflow_execution_id", "system_user", "shutdown_reason", "priority", "pool", "host", "start_time", "end_time", "status", "last_heartbeat", "launch_dir", "launch_jar", "error_email", "info_email", "scm_remote", "commit_revision", "description"));
+    super(conn, "workflow_attempts", Arrays.<String>asList("workflow_execution_id", "system_user", "shutdown_reason", "priority", "pool", "host", "start_time", "end_time", "status", "last_heartbeat", "launch_dir", "launch_jar", "error_email", "info_email", "scm_remote", "commit_revision", "description", "last_heartbeat_epoch"));
     this.databases = databases;
   }
 
@@ -60,10 +60,11 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
     String scm_remote = (String) fieldsMap.get(WorkflowAttempt._Fields.scm_remote);
     String commit_revision = (String) fieldsMap.get(WorkflowAttempt._Fields.commit_revision);
     String description = (String) fieldsMap.get(WorkflowAttempt._Fields.description);
-    return create(workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description);
+    Long last_heartbeat_epoch = (Long) fieldsMap.get(WorkflowAttempt._Fields.last_heartbeat_epoch);
+    return create(workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description, last_heartbeat_epoch);
   }
 
-  public WorkflowAttempt create(final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description) throws IOException {
+  public WorkflowAttempt create(final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description, final Long last_heartbeat_epoch) throws IOException {
     StatementCreator statementCreator = new StatementCreator() {
       private final List<String> nonNullFields = new ArrayList<>();
       private final List<AttrSetter> statementSetters = new ArrayList<>();
@@ -162,6 +163,12 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
           int fieldIndex16 = index++;
           statementSetters.add(stmt -> stmt.setString(fieldIndex16, description));
         }
+
+        if (last_heartbeat_epoch != null) {
+          nonNullFields.add("last_heartbeat_epoch");
+          int fieldIndex17 = index++;
+          statementSetters.add(stmt -> stmt.setLong(fieldIndex17, last_heartbeat_epoch));
+        }
       }
 
       @Override
@@ -178,7 +185,7 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
     };
 
     long __id = realCreate(statementCreator);
-    WorkflowAttempt newInst = new WorkflowAttempt(__id, workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description, databases);
+    WorkflowAttempt newInst = new WorkflowAttempt(__id, workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description, last_heartbeat_epoch, databases);
     newInst.setCreated(true);
     cachedById.put(__id, newInst);
     clearForeignKeyCache();
@@ -228,7 +235,7 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
     };
 
     long __id = realCreate(statementCreator);
-    WorkflowAttempt newInst = new WorkflowAttempt(__id, workflow_execution_id, system_user, null, priority, pool, host, null, null, null, null, null, null, null, null, null, null, null, databases);
+    WorkflowAttempt newInst = new WorkflowAttempt(__id, workflow_execution_id, system_user, null, priority, pool, host, null, null, null, null, null, null, null, null, null, null, null, null, databases);
     newInst.setCreated(true);
     cachedById.put(__id, newInst);
     clearForeignKeyCache();
@@ -336,6 +343,9 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
             case description:
               preparedStatement.setString(i+1, (String) nonNullValues.get(i));
               break;
+            case last_heartbeat_epoch:
+              preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
+              break;
           }
         } catch (SQLException e) {
           throw new IOException(e);
@@ -419,6 +429,9 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
                 break;
               case description:
                 preparedStatement.setString(++index, (String) parameter);
+                break;
+              case last_heartbeat_epoch:
+                preparedStatement.setLong(++index, (Long) parameter);
                 break;
             }
           }
@@ -507,6 +520,11 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
     } else if (model.getDescription() != null) {
       stmt.setString(index++, model.getDescription());
     }
+    if (setNull && model.getLastHeartbeatEpoch() == null) {
+      stmt.setNull(index++, java.sql.Types.INTEGER);
+    } else if (model.getLastHeartbeatEpoch() != null) {
+      stmt.setLong(index++, model.getLastHeartbeatEpoch());
+    }
     stmt.setLong(index, model.getId());
   }
 
@@ -532,6 +550,7 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
       allFields || selectedFields.contains(WorkflowAttempt._Fields.scm_remote) ? rs.getString("scm_remote") : null,
       allFields || selectedFields.contains(WorkflowAttempt._Fields.commit_revision) ? rs.getString("commit_revision") : null,
       allFields || selectedFields.contains(WorkflowAttempt._Fields.description) ? rs.getString("description") : null,
+      allFields || selectedFields.contains(WorkflowAttempt._Fields.last_heartbeat_epoch) ? getLongOrNull(rs, "last_heartbeat_epoch") : null,
       databases
     );
   }
@@ -602,6 +621,10 @@ public class BaseWorkflowAttemptPersistenceImpl extends AbstractDatabaseModel<Wo
 
   public List<WorkflowAttempt> findByDescription(final String value) throws IOException {
     return find(Collections.<Enum, Object>singletonMap(WorkflowAttempt._Fields.description, value));
+  }
+
+  public List<WorkflowAttempt> findByLastHeartbeatEpoch(final Long value) throws IOException {
+    return find(Collections.<Enum, Object>singletonMap(WorkflowAttempt._Fields.last_heartbeat_epoch, value));
   }
 
   public WorkflowAttemptQueryBuilder query() {

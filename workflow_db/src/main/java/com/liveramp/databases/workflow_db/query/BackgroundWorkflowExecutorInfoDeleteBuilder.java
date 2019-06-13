@@ -60,4 +60,14 @@ public class BackgroundWorkflowExecutorInfoDeleteBuilder extends AbstractDeleteB
     addWhereConstraint(new WhereConstraint<Long>(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat, operator));
     return this;
   }
+
+  public BackgroundWorkflowExecutorInfoDeleteBuilder lastHeartbeatEpoch(Long value) {
+    addWhereConstraint(new WhereConstraint<Long>(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch, JackMatchers.equalTo(value)));
+    return this;
+  }
+
+  public BackgroundWorkflowExecutorInfoDeleteBuilder whereLastHeartbeatEpoch(IWhereOperator<Long> operator) {
+    addWhereConstraint(new WhereConstraint<Long>(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch, operator));
+    return this;
+  }
 }

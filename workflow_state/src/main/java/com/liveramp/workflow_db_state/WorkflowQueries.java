@@ -33,6 +33,7 @@ import com.liveramp.databases.workflow_db.models.Application;
 import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.ApplicationCounterSummary;
 import com.liveramp.databases.workflow_db.models.BackgroundStepAttemptInfo;
+import com.liveramp.databases.workflow_db.models.BackgroundWorkflowExecutorInfo;
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.Dashboard;
 import com.liveramp.databases.workflow_db.models.DashboardApplication;
@@ -211,7 +212,7 @@ public class WorkflowQueries {
 
   public static ProcessStatus getProcessStatus(long fetchTime, WorkflowAttempt attempt, WorkflowExecution execution, int missedHeartbeatsThreshold) {
 
-    Long lastHeartbeat = attempt.getLastHeartbeat();
+    Long lastHeartbeat = getLastHeartbeat(attempt);
 
     Integer status = attempt.getStatus();
 
@@ -220,13 +221,12 @@ public class WorkflowQueries {
     }
 
     //  background attempts never time out
-    if (attempt.getLastHeartbeat() == 0L) {
+    if (lastHeartbeat == 0L) {
       return ProcessStatus.ALIVE;
     }
 
     //  assume dead (OOME killed, etc) if no heartbeat for 4x interval
-    if (fetchTime - lastHeartbeat >
-        missedHeartbeatsThreshold * DbPersistence.HEARTBEAT_INTERVAL) {
+    if (fetchTime - lastHeartbeat > missedHeartbeatsThreshold * DbPersistence.HEARTBEAT_INTERVAL) {
 
       //  let manual cleanup get rid of the timeout status
       if (execution.getStatus() == WorkflowExecutionStatus.CANCELLED.ordinal()) {
@@ -239,6 +239,17 @@ public class WorkflowQueries {
     return ProcessStatus.ALIVE;
 
   }
+
+  public static Long getLastHeartbeat(WorkflowAttempt attempt) {
+    return Optional.ofNullable(attempt.getLastHeartbeatEpoch())
+        .orElse(attempt.getLastHeartbeat());
+  }
+
+  public static Long getLastHeartbeat(BackgroundWorkflowExecutorInfo info) {
+    return Optional.ofNullable(info.getLastHeartbeatEpoch())
+        .orElse(info.getLastHeartbeat());
+  }
+
 
   public static boolean workflowComplete(WorkflowExecution workflowExecution) throws IOException {
 

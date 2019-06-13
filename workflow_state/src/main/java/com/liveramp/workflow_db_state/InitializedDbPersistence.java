@@ -188,8 +188,10 @@ public class InitializedDbPersistence implements InitializedPersistence {
   private void heartbeat() {
     synchronized (lock) {
       try {
+        long hb = System.currentTimeMillis();
         save(getAttempt()
-            .setLastHeartbeat(System.currentTimeMillis())
+            .setLastHeartbeat(hb)
+            .setLastHeartbeatEpoch(hb)
         );
       } catch (IOException e) {
         LOG.error("Failed to record heartbeat: ", e);
