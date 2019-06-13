@@ -34,7 +34,7 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> implements Comparable<WorkflowAttempt>{
   
-  public static final long serialVersionUID = 667747487786598594L;
+  public static final long serialVersionUID = -8018805094218720443L;
 
   public static class Tbl extends AbstractTable<WorkflowAttempt.Attributes, WorkflowAttempt> {
     public final Column<Long> ID;
@@ -55,6 +55,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     public final Column<String> SCM_REMOTE;
     public final Column<String> COMMIT_REVISION;
     public final Column<String> DESCRIPTION;
+    public final Column<Long> LAST_HEARTBEAT_EPOCH;
 
     private Tbl(String alias) {
       super("workflow_attempts", alias, WorkflowAttempt.Attributes.class, WorkflowAttempt.class);
@@ -76,7 +77,8 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       this.SCM_REMOTE = Column.fromField(alias, _Fields.scm_remote, String.class);
       this.COMMIT_REVISION = Column.fromField(alias, _Fields.commit_revision, String.class);
       this.DESCRIPTION = Column.fromField(alias, _Fields.description, String.class);
-      Collections.addAll(this.allColumns, ID, WORKFLOW_EXECUTION_ID, SYSTEM_USER, SHUTDOWN_REASON, PRIORITY, POOL, HOST, START_TIME, END_TIME, STATUS, LAST_HEARTBEAT, LAUNCH_DIR, LAUNCH_JAR, ERROR_EMAIL, INFO_EMAIL, SCM_REMOTE, COMMIT_REVISION, DESCRIPTION);
+      this.LAST_HEARTBEAT_EPOCH = Column.fromField(alias, _Fields.last_heartbeat_epoch, Long.class);
+      Collections.addAll(this.allColumns, ID, WORKFLOW_EXECUTION_ID, SYSTEM_USER, SHUTDOWN_REASON, PRIORITY, POOL, HOST, START_TIME, END_TIME, STATUS, LAST_HEARTBEAT, LAUNCH_DIR, LAUNCH_JAR, ERROR_EMAIL, INFO_EMAIL, SCM_REMOTE, COMMIT_REVISION, DESCRIPTION, LAST_HEARTBEAT_EPOCH);
     }
 
     public static Tbl as(String alias) {
@@ -103,6 +105,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
   public static final Column<String> SCM_REMOTE = TBL.SCM_REMOTE;
   public static final Column<String> COMMIT_REVISION = TBL.COMMIT_REVISION;
   public static final Column<String> DESCRIPTION = TBL.DESCRIPTION;
+  public static final Column<Long> LAST_HEARTBEAT_EPOCH = TBL.LAST_HEARTBEAT_EPOCH;
 
   private final Attributes attributes;
 
@@ -133,6 +136,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     scm_remote,
     commit_revision,
     description,
+    last_heartbeat_epoch,
   }
 
   @Override
@@ -143,9 +147,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     return cachedTypedId;
   }
 
-  public WorkflowAttempt(long id, final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description, IDatabases databases) {
+  public WorkflowAttempt(long id, final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description, final Long last_heartbeat_epoch, IDatabases databases) {
     super(databases);
-    attributes = new Attributes(id, workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description);
+    attributes = new Attributes(id, workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description, last_heartbeat_epoch);
     this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), (long) getWorkflowExecutionId());
     this.__assoc_step_attempt = new HasManyAssociation<>(databases.getWorkflowDb().stepAttempts(), "workflow_attempt_id", getId());
     this.__assoc_workflow_attempt_datastore = new HasManyAssociation<>(databases.getWorkflowDb().workflowAttemptDatastores(), "workflow_attempt_id", getId());
@@ -153,9 +157,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     this.__assoc_background_attempt_info = new HasOneAssociation<>(databases.getWorkflowDb().backgroundAttemptInfos(), "workflow_attempt_id", getId());
   }
 
-  public WorkflowAttempt(long id, final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description) {
+  public WorkflowAttempt(long id, final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description, final Long last_heartbeat_epoch) {
     super(null);
-    attributes = new Attributes(id, workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description);
+    attributes = new Attributes(id, workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description, last_heartbeat_epoch);
   }
   
   public WorkflowAttempt(long id, final int workflow_execution_id, final String system_user, final String priority, final String pool, final String host, IDatabases databases) {
@@ -393,6 +397,16 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     return this;
   }
 
+  public Long getLastHeartbeatEpoch() {
+    return attributes.getLastHeartbeatEpoch();
+  }
+
+  public WorkflowAttempt setLastHeartbeatEpoch(Long newval) {
+    attributes.setLastHeartbeatEpoch(newval);
+    cachedHashCode = 0;
+    return this;
+  }
+
   public void setField(_Fields field, Object value) {
     switch (field) {
       case workflow_execution_id:
@@ -445,6 +459,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
         break;
       case description:
         setDescription((String)value);
+        break;
+      case last_heartbeat_epoch:
+        setLastHeartbeatEpoch((Long)value);
         break;
       default:
         throw new IllegalStateException("Invalid field: " + field);
@@ -520,6 +537,10 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       setDescription((String)  value);
       return;
     }
+    if (fieldName.equals("last_heartbeat_epoch")) {
+      setLastHeartbeatEpoch((Long)  value);
+      return;
+    }
     throw new IllegalStateException("Invalid field: " + fieldName);
   }
 
@@ -559,6 +580,8 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
         return String.class;
       case description:
         return String.class;
+      case last_heartbeat_epoch:
+        return Long.class;
       default:
         throw new IllegalStateException("Invalid field: " + field);
     }    
@@ -615,6 +638,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     }
     if (fieldName.equals("description")) {
       return String.class;
+    }
+    if (fieldName.equals("last_heartbeat_epoch")) {
+      return Long.class;
     }
     throw new IllegalStateException("Invalid field name: " + fieldName);
   }
@@ -695,6 +721,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     if (fieldName.equals("description")) {
       return getDescription();
     }
+    if (fieldName.equals("last_heartbeat_epoch")) {
+      return getLastHeartbeatEpoch();
+    }
     throw new IllegalStateException("Invalid field name: " + fieldName);
   }
 
@@ -734,6 +763,8 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
         return getCommitRevision();
       case description:
         return getDescription();
+      case last_heartbeat_epoch:
+        return getLastHeartbeatEpoch();
     }
     throw new IllegalStateException("Invalid field: " + field);
   }
@@ -793,6 +824,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     if (fieldName.equals("description")) {
       return true;
     }
+    if (fieldName.equals("last_heartbeat_epoch")) {
+      return true;
+    }
     return false;
   }
 
@@ -831,6 +865,8 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       case commit_revision:
         return null;
       case description:
+        return null;
+      case last_heartbeat_epoch:
         return null;
     }
     throw new IllegalStateException("Invalid field: " + field);
@@ -904,6 +940,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
         + " scm_remote: " + getScmRemote()
         + " commit_revision: " + getCommitRevision()
         + " description: " + getDescription()
+        + " last_heartbeat_epoch: " + getLastHeartbeatEpoch()
         + ">";
   }
 
@@ -923,7 +960,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = -2752728951613836000L;
+    public static final long serialVersionUID = 2383243373111032074L;
 
     // Fields
     private int __workflow_execution_id;
@@ -943,12 +980,13 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
     private String __scm_remote;
     private String __commit_revision;
     private String __description;
+    private Long __last_heartbeat_epoch;
 
     public Attributes(long id) {
       super(id);
     }
 
-    public Attributes(long id, final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description) {
+    public Attributes(long id, final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description, final Long last_heartbeat_epoch) {
       super(id);
       this.__workflow_execution_id = workflow_execution_id;
       this.__system_user = system_user;
@@ -967,6 +1005,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       this.__scm_remote = scm_remote;
       this.__commit_revision = commit_revision;
       this.__description = description;
+      this.__last_heartbeat_epoch = last_heartbeat_epoch;
     }
     
     public Attributes(long id, final int workflow_execution_id, final String system_user, final String priority, final String pool, final String host) {
@@ -1001,6 +1040,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       String scm_remote = (String)fieldsMap.get(WorkflowAttempt._Fields.scm_remote);
       String commit_revision = (String)fieldsMap.get(WorkflowAttempt._Fields.commit_revision);
       String description = (String)fieldsMap.get(WorkflowAttempt._Fields.description);
+      Long last_heartbeat_epoch = (Long)fieldsMap.get(WorkflowAttempt._Fields.last_heartbeat_epoch);
       this.__workflow_execution_id = workflow_execution_id;
       this.__system_user = system_user;
       this.__shutdown_reason = shutdown_reason;
@@ -1018,6 +1058,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       this.__scm_remote = scm_remote;
       this.__commit_revision = commit_revision;
       this.__description = description;
+      this.__last_heartbeat_epoch = last_heartbeat_epoch;
     }
 
     public Attributes(Attributes other) {
@@ -1039,6 +1080,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       this.__scm_remote = other.getScmRemote();
       this.__commit_revision = other.getCommitRevision();
       this.__description = other.getDescription();
+      this.__last_heartbeat_epoch = other.getLastHeartbeatEpoch();
     }
 
     public int getWorkflowExecutionId() {
@@ -1211,6 +1253,16 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       return this;
     }
 
+    public Long getLastHeartbeatEpoch() {
+      return __last_heartbeat_epoch;
+    }
+
+    public Attributes setLastHeartbeatEpoch(Long newval) {
+      this.__last_heartbeat_epoch = newval;
+      cachedHashCode = 0;
+      return this;
+    }
+
     public void setField(_Fields field, Object value) {
       switch (field) {
         case workflow_execution_id:
@@ -1263,6 +1315,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
           break;
         case description:
           setDescription((String)value);
+          break;
+        case last_heartbeat_epoch:
+          setLastHeartbeatEpoch((Long)value);
           break;
         default:
           throw new IllegalStateException("Invalid field: " + field);
@@ -1338,6 +1393,10 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
         setDescription((String)value);
         return;
       }
+      if (fieldName.equals("last_heartbeat_epoch")) {
+        setLastHeartbeatEpoch((Long)value);
+        return;
+      }
       throw new IllegalStateException("Invalid field: " + fieldName);
     }
 
@@ -1377,6 +1436,8 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
           return String.class;
         case description:
           return String.class;
+        case last_heartbeat_epoch:
+          return Long.class;
         default:
           throw new IllegalStateException("Invalid field: " + field);
       }    
@@ -1433,6 +1494,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       }
       if (fieldName.equals("description")) {
         return String.class;
+      }
+      if (fieldName.equals("last_heartbeat_epoch")) {
+        return Long.class;
       }
       throw new IllegalStateException("Invalid field name: " + fieldName);
     }
@@ -1493,6 +1557,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       if (fieldName.equals("description")) {
         return getDescription();
       }
+      if (fieldName.equals("last_heartbeat_epoch")) {
+        return getLastHeartbeatEpoch();
+      }
       throw new IllegalStateException("Invalid field name: " + fieldName);
     }
 
@@ -1532,6 +1599,8 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
           return getCommitRevision();
         case description:
           return getDescription();
+        case last_heartbeat_epoch:
+          return getLastHeartbeatEpoch();
       }
       throw new IllegalStateException("Invalid field: " + field);
     }
@@ -1591,6 +1660,9 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
       if (fieldName.equals("description")) {
         return true;
       }
+      if (fieldName.equals("last_heartbeat_epoch")) {
+        return true;
+      }
       return false;
     }
 
@@ -1630,6 +1702,8 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
           return null;
         case description:
           return null;
+        case last_heartbeat_epoch:
+          return null;
       }
       throw new IllegalStateException("Invalid field: " + field);
     }
@@ -1659,6 +1733,7 @@ public class WorkflowAttempt extends ModelWithId<WorkflowAttempt, IDatabases> im
           + " scm_remote: " + getScmRemote()
           + " commit_revision: " + getCommitRevision()
           + " description: " + getDescription()
+          + " last_heartbeat_epoch: " + getLastHeartbeatEpoch()
           + ">";
     }
   }

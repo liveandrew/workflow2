@@ -147,4 +147,24 @@ public class BackgroundWorkflowExecutorInfoQueryBuilder extends AbstractQueryBui
     this.addOrder(new OrderCriterion(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat, queryOrder));
     return this;
   }
+
+  public BackgroundWorkflowExecutorInfoQueryBuilder lastHeartbeatEpoch(Long value) {
+    addWhereConstraint(new WhereConstraint<>(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch, JackMatchers.equalTo(value)));
+    return this;
+  }
+
+  public BackgroundWorkflowExecutorInfoQueryBuilder whereLastHeartbeatEpoch(IWhereOperator<Long> operator) {
+    addWhereConstraint(new WhereConstraint<>(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch, operator));
+    return this;
+  }
+
+  public BackgroundWorkflowExecutorInfoQueryBuilder orderByLastHeartbeatEpoch() {
+    this.addOrder(new OrderCriterion(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch, QueryOrder.ASC));
+    return this;
+  }
+
+  public BackgroundWorkflowExecutorInfoQueryBuilder orderByLastHeartbeatEpoch(QueryOrder queryOrder) {
+    this.addOrder(new OrderCriterion(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch, queryOrder));
+    return this;
+  }
 }

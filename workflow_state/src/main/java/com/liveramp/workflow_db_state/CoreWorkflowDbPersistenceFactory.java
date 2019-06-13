@@ -301,9 +301,12 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
         .setCommitRevision(implementationBuild);
 
     if (manager.isLive()) {
-      attempt.setLastHeartbeat(System.currentTimeMillis());
+      long hb = System.currentTimeMillis();
+      attempt.setLastHeartbeat(hb)
+          .setLastHeartbeatEpoch(hb);
     }else{
-      attempt.setLastHeartbeat(0L);
+      attempt.setLastHeartbeat(0L)
+          .setLastHeartbeatEpoch(0L);
     }
 
     attempt.save();

@@ -427,4 +427,24 @@ public class WorkflowAttemptQueryBuilder extends AbstractQueryBuilder<WorkflowAt
     this.addOrder(new OrderCriterion(WorkflowAttempt._Fields.description, queryOrder));
     return this;
   }
+
+  public WorkflowAttemptQueryBuilder lastHeartbeatEpoch(Long value) {
+    addWhereConstraint(new WhereConstraint<>(WorkflowAttempt._Fields.last_heartbeat_epoch, JackMatchers.equalTo(value)));
+    return this;
+  }
+
+  public WorkflowAttemptQueryBuilder whereLastHeartbeatEpoch(IWhereOperator<Long> operator) {
+    addWhereConstraint(new WhereConstraint<>(WorkflowAttempt._Fields.last_heartbeat_epoch, operator));
+    return this;
+  }
+
+  public WorkflowAttemptQueryBuilder orderByLastHeartbeatEpoch() {
+    this.addOrder(new OrderCriterion(WorkflowAttempt._Fields.last_heartbeat_epoch, QueryOrder.ASC));
+    return this;
+  }
+
+  public WorkflowAttemptQueryBuilder orderByLastHeartbeatEpoch(QueryOrder queryOrder) {
+    this.addOrder(new OrderCriterion(WorkflowAttempt._Fields.last_heartbeat_epoch, queryOrder));
+    return this;
+  }
 }

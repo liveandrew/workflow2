@@ -359,9 +359,9 @@ public class WorkflowAttemptDatastore extends ModelWithId<WorkflowAttemptDatasto
     return newWorkflowAttempt;
   }
 
-  public WorkflowAttempt createWorkflowAttempt(final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description) throws IOException {
+  public WorkflowAttempt createWorkflowAttempt(final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description, final Long last_heartbeat_epoch) throws IOException {
  
-    WorkflowAttempt newWorkflowAttempt = databases.getWorkflowDb().workflowAttempts().create(workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description);
+    WorkflowAttempt newWorkflowAttempt = databases.getWorkflowDb().workflowAttempts().create(workflow_execution_id, system_user, shutdown_reason, priority, pool, host, start_time, end_time, status, last_heartbeat, launch_dir, launch_jar, error_email, info_email, scm_remote, commit_revision, description, last_heartbeat_epoch);
     setWorkflowAttemptId(JackUtility.safeLongToInt(newWorkflowAttempt.getId()));
     save();
     __assoc_workflow_attempt.clearCache();

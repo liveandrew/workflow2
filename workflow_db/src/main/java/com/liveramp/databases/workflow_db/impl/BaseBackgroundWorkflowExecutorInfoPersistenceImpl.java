@@ -37,7 +37,7 @@ public class BaseBackgroundWorkflowExecutorInfoPersistenceImpl extends AbstractD
   private final IDatabases databases;
 
   public BaseBackgroundWorkflowExecutorInfoPersistenceImpl(BaseDatabaseConnection conn, IDatabases databases) {
-    super(conn, "background_workflow_executor_infos", Arrays.<String>asList("host", "status", "last_heartbeat"));
+    super(conn, "background_workflow_executor_infos", Arrays.<String>asList("host", "status", "last_heartbeat", "last_heartbeat_epoch"));
     this.databases = databases;
   }
 
@@ -46,7 +46,56 @@ public class BaseBackgroundWorkflowExecutorInfoPersistenceImpl extends AbstractD
     String host = (String) fieldsMap.get(BackgroundWorkflowExecutorInfo._Fields.host);
     int status = (Integer) fieldsMap.get(BackgroundWorkflowExecutorInfo._Fields.status);
     long last_heartbeat = (Long) fieldsMap.get(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat);
-    return create(host, status, last_heartbeat);
+    Long last_heartbeat_epoch = (Long) fieldsMap.get(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch);
+    return create(host, status, last_heartbeat, last_heartbeat_epoch);
+  }
+
+  public BackgroundWorkflowExecutorInfo create(final String host, final int status, final long last_heartbeat, final Long last_heartbeat_epoch) throws IOException {
+    StatementCreator statementCreator = new StatementCreator() {
+      private final List<String> nonNullFields = new ArrayList<>();
+      private final List<AttrSetter> statementSetters = new ArrayList<>();
+
+      {
+        int index = 1;
+
+        nonNullFields.add("host");
+        int fieldIndex0 = index++;
+        statementSetters.add(stmt -> stmt.setString(fieldIndex0, host));
+
+        nonNullFields.add("status");
+        int fieldIndex1 = index++;
+        statementSetters.add(stmt -> stmt.setInt(fieldIndex1, status));
+
+        nonNullFields.add("last_heartbeat");
+        int fieldIndex2 = index++;
+        statementSetters.add(stmt -> stmt.setTimestamp(fieldIndex2, new Timestamp(last_heartbeat)));
+
+        if (last_heartbeat_epoch != null) {
+          nonNullFields.add("last_heartbeat_epoch");
+          int fieldIndex3 = index++;
+          statementSetters.add(stmt -> stmt.setLong(fieldIndex3, last_heartbeat_epoch));
+        }
+      }
+
+      @Override
+      public String getStatement() {
+        return getInsertStatement(nonNullFields);
+      }
+
+      @Override
+      public void setStatement(PreparedStatement statement) throws SQLException {
+        for (AttrSetter setter : statementSetters) {
+          setter.set(statement);
+        }
+      }
+    };
+
+    long __id = realCreate(statementCreator);
+    BackgroundWorkflowExecutorInfo newInst = new BackgroundWorkflowExecutorInfo(__id, host, status, last_heartbeat, last_heartbeat_epoch, databases);
+    newInst.setCreated(true);
+    cachedById.put(__id, newInst);
+    clearForeignKeyCache();
+    return newInst;
   }
 
   public BackgroundWorkflowExecutorInfo create(final String host, final int status, final long last_heartbeat) throws IOException {
@@ -84,7 +133,7 @@ public class BaseBackgroundWorkflowExecutorInfoPersistenceImpl extends AbstractD
     };
 
     long __id = realCreate(statementCreator);
-    BackgroundWorkflowExecutorInfo newInst = new BackgroundWorkflowExecutorInfo(__id, host, status, last_heartbeat, databases);
+    BackgroundWorkflowExecutorInfo newInst = new BackgroundWorkflowExecutorInfo(__id, host, status, last_heartbeat, null, databases);
     newInst.setCreated(true);
     cachedById.put(__id, newInst);
     clearForeignKeyCache();
@@ -150,6 +199,9 @@ public class BaseBackgroundWorkflowExecutorInfoPersistenceImpl extends AbstractD
             case last_heartbeat:
               preparedStatement.setTimestamp(i+1, new Timestamp((Long) nonNullValues.get(i)));
               break;
+            case last_heartbeat_epoch:
+              preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
+              break;
           }
         } catch (SQLException e) {
           throw new IOException(e);
@@ -192,6 +244,9 @@ public class BaseBackgroundWorkflowExecutorInfoPersistenceImpl extends AbstractD
               case last_heartbeat:
                 preparedStatement.setTimestamp(++index, new Timestamp((Long) parameter));
                 break;
+              case last_heartbeat_epoch:
+                preparedStatement.setLong(++index, (Long) parameter);
+                break;
             }
           }
         } catch (SQLException e) {
@@ -213,6 +268,11 @@ public class BaseBackgroundWorkflowExecutorInfoPersistenceImpl extends AbstractD
     {
       stmt.setTimestamp(index++, new Timestamp(model.getLastHeartbeat()));
     }
+    if (setNull && model.getLastHeartbeatEpoch() == null) {
+      stmt.setNull(index++, java.sql.Types.INTEGER);
+    } else if (model.getLastHeartbeatEpoch() != null) {
+      stmt.setLong(index++, model.getLastHeartbeatEpoch());
+    }
     stmt.setLong(index, model.getId());
   }
 
@@ -224,6 +284,7 @@ public class BaseBackgroundWorkflowExecutorInfoPersistenceImpl extends AbstractD
       allFields || selectedFields.contains(BackgroundWorkflowExecutorInfo._Fields.host) ? rs.getString("host") : "",
       allFields || selectedFields.contains(BackgroundWorkflowExecutorInfo._Fields.status) ? getIntOrNull(rs, "status") : 0,
       allFields || selectedFields.contains(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat) ? getDateAsLong(rs, "last_heartbeat") : 0L,
+      allFields || selectedFields.contains(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch) ? getLongOrNull(rs, "last_heartbeat_epoch") : null,
       databases
     );
   }
@@ -238,6 +299,10 @@ public class BaseBackgroundWorkflowExecutorInfoPersistenceImpl extends AbstractD
 
   public List<BackgroundWorkflowExecutorInfo> findByLastHeartbeat(final long value) throws IOException {
     return find(Collections.<Enum, Object>singletonMap(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat, value));
+  }
+
+  public List<BackgroundWorkflowExecutorInfo> findByLastHeartbeatEpoch(final Long value) throws IOException {
+    return find(Collections.<Enum, Object>singletonMap(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch, value));
   }
 
   public BackgroundWorkflowExecutorInfoQueryBuilder query() {

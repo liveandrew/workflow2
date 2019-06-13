@@ -200,4 +200,14 @@ public class WorkflowAttemptDeleteBuilder extends AbstractDeleteBuilder<Workflow
     addWhereConstraint(new WhereConstraint<String>(WorkflowAttempt._Fields.description, operator));
     return this;
   }
+
+  public WorkflowAttemptDeleteBuilder lastHeartbeatEpoch(Long value) {
+    addWhereConstraint(new WhereConstraint<Long>(WorkflowAttempt._Fields.last_heartbeat_epoch, JackMatchers.equalTo(value)));
+    return this;
+  }
+
+  public WorkflowAttemptDeleteBuilder whereLastHeartbeatEpoch(IWhereOperator<Long> operator) {
+    addWhereConstraint(new WhereConstraint<Long>(WorkflowAttempt._Fields.last_heartbeat_epoch, operator));
+    return this;
+  }
 }
