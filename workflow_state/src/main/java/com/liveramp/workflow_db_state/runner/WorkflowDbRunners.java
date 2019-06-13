@@ -14,11 +14,11 @@ import java.util.Set;
 public class WorkflowDbRunners {
 
   public static BaseWorkflowRunner<Void> baseWorkflowDbRunner(Class name, CoreOptions options, BaseStep step) throws IOException {
-    return new BaseWorkflowRunner<>(new BaseWorkflowDbPersistenceFactory().initialize(name.getName(), options), Sets.newHashSet(step), null);
+    return new BaseWorkflowRunner(new BaseWorkflowDbPersistenceFactory().initialize(name.getName(), options), Sets.newHashSet(step), null);
   }
 
   public static BaseWorkflowRunner<Void> baseWorkflowDbRunner(CoreOptions options, BaseStep step) throws IOException {
-    return new BaseWorkflowRunner<>(new BaseWorkflowDbPersistenceFactory().initialize(options), Sets.newHashSet(step), null);
+    return new BaseWorkflowRunner(new BaseWorkflowDbPersistenceFactory().initialize(options), Sets.newHashSet(step), null);
   }
 
   public static BaseWorkflowRunner<Void> baseWorkflowDbRunner(DbWorkflow workflow, Set<BaseStep<Void>> steps) throws IOException {
