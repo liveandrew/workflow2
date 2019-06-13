@@ -17,7 +17,7 @@ public class FailingWorkflow {
 
     Step step1 = new Step(new NoOpAction("step1"));
 
-    Step step2 = new Step(new FailingAction("step2", false), step1);
+    Step step2 = new Step(new FailingAction("step2", true), step1);
 
     WorkflowRunners.dbRun(
         FailingWorkflow.class.getName(),

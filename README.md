@@ -26,7 +26,7 @@ When a simple script turns into a multi-step application, it's probably time to 
 
 Workflow2 is the DAG processing framework LiveRamp uses to run all of its big data applications.
 
-Workflow2 began (many, many years ago) as a simple in-memory DAG processor, and evolved into [blah]
+Workflow2 began (many, many years ago) as a simple in-memory DAG processor, and evolved into a full-featured framework for instrumenting big-data pipelines at LiveRamp.
 
 ## What distinguishes workflow2 from other DAG processors?
 
@@ -62,7 +62,7 @@ This is an important point: neither the UI or monitor need to be running for exe
 
 ## Concepts
 
-####Simple DAGs
+#### Simple DAGs
 
 _Actions_ run in a sequence defined by a DAG which is defined in user-code.  A very simple workflow looks like this:
 
@@ -315,6 +315,14 @@ When we run the workflow, we can see the value is passed:
 Note that this would work _even if the second step had failed on its first Attempt_.
 
 
+#### Died Unclean
+
+Ideally, when a workflow dies, it is able to shut itself down gracefully and mark itself as FAILED.  In the real world, this doesn't always happen -- machines die, processes are OOM killed, people trip on network cables, so on and so forth.  In these cases, Attempts stop heartbeating and drop into a state called DIED_UNCLEAN on the UI:
+
+![alt text](images/died_unclean.png)
+
+This _does not mean that the process has necessarily died_ -- it just means it cannot connect to the database.  However, to avoid hanging forever, Workflow2 treats DIED_UNCLEAN workflows as FAILED.  The next Attempt will mark the timed-out attempt as FAILED and resume where it left off.  
+
 TODO data stores
 
 ## Hadoop integration
@@ -427,9 +435,25 @@ Of course, properties can be overridden at the Step or Job level, but this is a 
 
 #### Global Counter Views
 
-    - global views
-    - global warnings
-    - task exceptions
+Because we have global view of the counters, we can provide global dashboards about our Hadoop environment utilization over a given timeframe.  The most straightforward one is a cost breakdown:
+
+![alt text](images/workflow_costs.png)
+
+(these costs default to GCP on-demand instance costs for CPU and memory).  By aggregating CPU and RAM costs per application, we can show the aggreate cost per application across an environment.
+
+We can also track global data read and written:
+
+![alt text](images/cluster_io.png)
+
+HDFS metadata operations (eg, NameNode calls):
+
+![alt text](images/namenode_load.png)
+
+And task shuffle load:
+
+TODO
+
+These tools make it easy to identify which applications using a disproportionate fraction of global resources.
 
 ## Non Hadoop workflows
   
@@ -466,21 +490,116 @@ To run the workflow, use `WorkflowDbRunners.baseWorkflowDbRunner`:
 
 This workflow runs against the database, but does not support Hadoop-specific integrations.
 
-## UI features
+## Workflow UI
 
-The Workflow UI is built 
+The UI has many tracking and analytics features for analyzing application performance; this is not an exhaustive list, but a few of the more commonly used ones.
 
-dashboards
+#### Dashboards
 
-manual completion
+The Workflow UI is built to be useful even with a large number of users and applications -- we expect that not ever engineers cares about the health of every application.
+ 
+The first thing we can do is set up a Dashboard for the applications we care about.  This gives us a combined view of the Executions  of these applications on a single page.  We can create and configure a dashboard to include particular applictions:
 
-alerting
+![alt text](images/dashboard_configure.png)
 
-shutdown
+And then the dashboard will show all (time-bounded) running and complete executions for those apps:
 
-died unclean
+![alt text](images/dashboard.png)
 
-notifications
+Dashboards aren't specific to an individual.  To customize your default homepage, you can add links to specific dashboards:
+
+![alt text](images/user_dashboard_configure.png)
+
+Then on the homepage, your default view will be a summary of the applications configured in a given dashboard:
+
+![alt text](images/user_dashboards.png)
+
+(in this case, we can see that our new dashboard has 2 running and 1 complete application).
+
+#### Manual operations
+
+The UI has a few tools for manually manipulating workflows if necessary.  If we want to force a workflow to re-run a step on the next attempt, we can _revert_ a step:
+
+![alt text](images/revert.png)
+
+This step will be re-run when the workflow resumes.  If we want to for the workflow to _skip_ a step, we can manually _complete_ a step:
+
+![alt text](images/complete.png)
+
+The next time the workflow runs, it will not attempt to run this step.
+
+If we want to stop a workflow mid-execution (for example, to deploy a new version of the code halfway through, we can _request shutdown).  This will end the attempt gracefully -- pending steps will finish, but no new steps will complete:
+
+![alt text](images/request_shutdown.png)
+
+#### Notifications
+
+Workflow2 has configurable email notifications.  We can configure arbitrary email addresses to receive failure or success notifications for a given application:
+
+![alt text](images/application_notifications.png)
+
+(the full list of options are START, SUCCESS, FAILURE, SHUTDOWN, INTERNAL_ERROR, STEP_FAILURE, STEP_SUCCESS, DIED_UNCLEAN, and PERFORMANCE).
+
+Unfortunately (making this configuration less involved is a TODO), the executor needs to configure an AlertsHandlerFactory to send these emails.  We can define one like this:
+
+```java
+  public static class MailerHelperHandlerFactory implements AlertsHandlerFactory {
+    @Override
+    public AlertsHandler buildHandler(Set<String> emails, MailBuffer buffer) {
+      return new MailerHelperAlertsHandler(new GenericAlertsHandlerConfig(
+          new DefaultAlertMessageConfig(false, Lists.newArrayList()),
+          "noreply",
+          "example.com",
+          new StaticEmailRecipient("target@example.com")
+      ), new SmtpConfig("mailserver.example.com", Duration.ofMinutes(5l)));
+    }
+  }
+
+```
+
+and set it directly on the options:
+
+```java
+    WorkflowRunners.dbRun(
+        AlertsHandlerWorkflow.class.getName(),
+        HadoopWorkflowOptions.test()
+            .setAlertsHandlerFactory(new MailerHelperHandlerFactory())
+            .setScope(args[0]),
+        dbHadoopWorkflow -> Sets.newHashSet(step3)
+    );
+```
+
+## Workflow Monitor
+
+The Workflow Monitor is a tool built-into Workflow2 which identifies badly-performing Hadoop applications and alerts the relevant teams.  These alerts are all powered by MapReduce counters.  The thresholds are currently hard-coded, but making the limits configurable is a planned future improvement.  The default enabled alerts are:
+
+- [CPUUsage](workflow_monitor/src/main/java/com/liveramp/workflow_monitor/alerts/execution/alerts/CPUUsage.java).  If an application uses more than 2x the CPU it has requested from YARN, it probably indicates heavy Garbage Collection (and definitely indicates an abuse of shared resources)
+- [GCTime](workflow_monitor/src/main/java/com/liveramp/workflow_monitor/alerts/execution/alerts/GCTime.java) If an application is spending more than 25% of its CPU time on Garbage Collection, this indicates wasted CPU
+- [InputPerReduceTask](workflow_monitor/src/main/java/com/liveramp/workflow_monitor/alerts/execution/alerts/InputPerReduceTask.java) Excessively high input per reduce task can cause disk problems.
+- [KilledTasks](workflow_monitor/src/main/java/com/liveramp/workflow_monitor/alerts/execution/alerts/KilledTasks.java) If more than 50% of an application's tasks are killed, we probably need to adjust YARN queues to reduce preemption.
+- [OutputPerMapTask](workflow_monitor/src/main/java/com/liveramp/workflow_monitor/alerts/execution/alerts/OutputPerMapTask.java) If map tasks on average output over 8GB of data, this can cause problems when merging spill files.
+- [ShortMaps](workflow_monitor/src/main/java/com/liveramp/workflow_monitor/alerts/execution/alerts/ShortMaps.java) If map tasks average < 2 minutes, the application is spending an unreasonable amount of time just starting and stopping tasks, and not enough time actually doing computation.
+- [ShortReduces](workflow_monitor/src/main/java/com/liveramp/workflow_monitor/alerts/execution/alerts/ShortReduces.java) Likewise, if reduces average < 2 minutes, the application is spending too much time on task overhead.
+
+The last alert is not MapReduce specific:
+
+- [DiedUnclean](workflow_monitor/src/main/java/com/liveramp/workflow_monitor/alerts/execution/alerts/DiedUnclean.java) Because an OOM killed process cannot alert that  it has died (obviously), the WorkflowMonitor asynchronously notifies users that their applications have died unexpectedly.
+
+#### Officer Elephant
+
+Alerts per-job can work if applications run at low cadence (eg, once a day).  If applications run 10,000 times a day, getting alerts per application is overwhelming, and often not actionable (eg, if only .1% of an application's jobs have high GC, we don't want to increase heap size across the board).  So we built an interface on the Workflow UI (health -> Officer Elephant) to expose the alerts aggregated by application and type:
+
+![alt text](images/officer_elephant.png)
+
+This quickly identifies which applications can be fixed for the greatest immediate global impact.
+
+#### Task Exceptions
+
+Because MapReduce and Spark jobs are launched directly through the Action class, we're able to use the instrumentation there to sample all task failures on the cluster.  We can break this data down in a few ways; one of the most useful is a list of _where_ tasks failures have happened:
+
+![alt text](images/task_exceptions.png)
+
+This can help quickly identify whether bad hardware is responsible for application failures.
 
 ## Getting started
 
@@ -491,6 +610,7 @@ how to spin up
 
 
 ## Background Workflow
+
 
 
 ## Maven
