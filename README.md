@@ -1,8 +1,10 @@
 # Workflow2
 
+![alt text](images/simple_dag.png)
+
 ## Overview
 
-Workflow2 is a DAG processing engine LiveRamp uses to help engineers quickly build failure-resilient, high performance, complex batch data processing pipelines.  Workflow2 was built and is actively used at LiveRamp, and now is available as OSS.
+Workflow2 is a DAG processing engine LiveRamp uses to help engineers quickly build failure-resilient, high performance, complex data processing pipelines.  Workflow2 was built and is actively used at LiveRamp, and now is available as Open-Source Software.
 
 ## Why do I need a DAG processor?  Why can't I just write code?
 
@@ -24,21 +26,21 @@ When a simple script turns into a multi-step application, it's probably time to 
 
 ## So what is workflow2?
 
-Workflow2 is the DAG processing framework LiveRamp uses to run all of its big data applications.
+Workflow2 is the DAG processing framework LiveRamp uses to run almost all of its big data applications.
 
-Workflow2 began (many, many years ago) as a simple in-memory DAG processor, and evolved into a full-featured framework for instrumenting big-data pipelines at LiveRamp.
+Workflow2 began (many, many years ago) as a simple in-memory DAG processor, and evolved into a full-featured framework for instrumenting big-data pipelines.
 
 ## What distinguishes workflow2 from other DAG processors?
 
 - Workflow2's DAGs -- both the structure and the actual operations -- are defined in Java
 
-- Workflow2 was built with tight Hadoop integration (with an emphasis on MapReduce, and custom bindings for Cascading and Soark) (much more on this later).  These integrations provide tools for both application developers and provide global views into shared resource (eg Hadoop cluster) utilization for operations teams.
+- Workflow2 was built with tight Hadoop integration (with an emphasis on MapReduce, and custom bindings for Cascading and Spark) (much more on this later).  These integrations provide tools for both application developers and provide global views into shared resource (eg Hadoop cluster) utilization for operations teams.
 
 - Workflow2 is built to support very high numbers of concurrent applications and very high parallelism
 
-  - LiveRamp runs > 100,000 DAG workflows per day
+  - LiveRamp runs > 100,000 workflows per day
 
-  - Individual DAGs may have hundreds of steps, hundreds of which may be running concurrently
+  - Individual workflows may have hundreds of steps, hundreds of which may be running concurrently
 
   - At any given time, LiveRamp is running 500-1000 concurrent, independent workflows against the same deployment.
 
@@ -64,7 +66,7 @@ This is an important point: neither the UI or monitor need to be running for exe
 
 #### Simple DAGs
 
-_Actions_ run in a sequence defined by a DAG which is defined in user-code.  A very simple workflow looks like this:
+_Actions_ run in a sequence defined by a DAG which is defined in user-code.  A very [simple workflow](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/SimpleWorkflow.java) looks like this:
 
 ```java
     Step step1 = new Step(new NoOpAction("step1"));
@@ -80,40 +82,41 @@ _Actions_ run in a sequence defined by a DAG which is defined in user-code.  A v
     );
 ```
 
-Our (very simple) Actions are defined in Java:
+Our (very simple) Actions are [defined](workflow_hadoop/src/main/java/com/rapleaf/cascading_ext/workflow2/action/NoOpAction.java) in Java:
 
 ```java
-public class NoOpAction extends Action {
-
-  public NoOpAction(String checkpointToken) {
-    super(checkpointToken);
-  }
-
-  @Override
-  protected void execute() {
-    // Deliberately do nothing.
-  }
-}
+    public class NoOpAction extends Action {
+    
+      public NoOpAction(String checkpointToken) {
+        super(checkpointToken);
+      }
+    
+      @Override
+      protected void execute() {
+        // Deliberately do nothing.
+      }
+    }
 
 ```
 
 ```java
-public class WaitAction extends Action {
-
-  private final long delay;
-  
-  public WaitAction(String checkpointToken, long delay) {
-    super(checkpointToken);
-    this.delay = delay;
-  }
-
-  @Override
-  protected void execute() throws Exception {
-    setStatusMessage("Sleeping for "+delay+" ms");
-    Thread.sleep(delay);
-  }
-}
+    public class WaitAction extends Action {
+    
+      private final long delay;
+      
+      public WaitAction(String checkpointToken, long delay) {
+        super(checkpointToken);
+        this.delay = delay;
+      }
+    
+      @Override
+      protected void execute() throws Exception {
+        setStatusMessage("Sleeping for "+delay+" ms");
+        Thread.sleep(delay);
+      }
+    }
 ```
+([source](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/actions/WaitAction.java))
 
 In this graph definition, Steps 1 and 2 can execute immediately.  Step 3 waits until both Steps 1 and 2 are complete, and then executes.  If we visualize this as a DAG, it looks like this:
 
@@ -133,7 +136,7 @@ When we initialize the workflow structure by invoking _WorkflowRunners.dbRun_, w
 
 - We either create or re-use a __Workflow Execution__.  If this is the first attempt at a workflow, create a new one.  If a previous attempt _failed_, we will re-use the previous execution.  More on this later.
 
-- We either create or re-use an __Application__.  If this is the first time `com.liveramp.workflow2.workflow_examples.SimpleWorkflow` has ever run, we create a corresponding Application.
+- We either create or re-use an __Application__.  If this is the first time `com.liveramp.workflow2.workflow_examples.SimpleWorkflow` has ever run, we create a new Application.
 
 Because we told Workflow2 to execute against the database (dbRun), our state is entirely backed by the database, and we can track this state in the UI.  If we navigate to the Application's page, we can see all launched Executions:
 
@@ -170,7 +173,7 @@ Notice that the first step was not re-executed -- it was skipped because it succ
 
 #### Multi-Step Actions
 
-Atomic steps are OK for simple applications, but often we want to package our Actions into larger re-usable components.  Workflow2 supports this via `MultiStepAction`s.  A MSA contains a graph of one or more Steps internally (these steps themselves can contain MSAs).  Here's a simple example:
+Atomic steps are OK for simple applications, but often we want to package our Actions into larger re-usable components.  Workflow2 supports this via `MultiStepAction`s.  A MSA contains a graph of one or more Steps internally (these steps themselves can contain MSAs).  Here's a [simple example](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/actions/SimpleMSA.java):
 
 ```java
 public class SimpleMSA extends HadoopMultiStepAction {
@@ -188,7 +191,7 @@ public class SimpleMSA extends HadoopMultiStepAction {
 }
 ```
 
-You can think of a MSA as a simple workflow -- steps can depend on each other, and the MSA binds the tails of the Action.  We can then embed this MSA into a complete workflow:
+You can think of a MSA as a simple workflow -- steps can depend on each other, and the MSA binds the tails of the Action.  We can then embed this MSA into a [complete workflow](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/MultiStepWorkflow.java):
 
 ```java
     Step multiStep = new Step(new SimpleMSA("simple-multistep", "/tmp/dir"));
@@ -215,7 +218,7 @@ Notice that the sub-component Step names are nested with the parent name -- this
 
 #### Scopes
 
-Usually, we want to be able to run multiple concurrent Executions within the same Application.  For example, if my Application is `ImportDataFromCustomer`, we want to be able to import data from customer A and customer B concurrently.  We can enable this by adding a `scope` to the options:
+Usually, we want to be able to run multiple concurrent Executions within the same Application.  For example, if my Application is `ImportDataFromCustomer`, we want to be able to import data from customer A and customer B concurrently.  We can enable this [by adding](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/SimpleScopedWorkflow.java) a `scope` to the options:
 
 ```java
     Step step1 = new Step(new NoOpAction("step1"));
@@ -259,7 +262,7 @@ public class ResourceWriteAction extends Action {
 
 }
 ```
-and
+([source](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/actions/ResourceWriteAction.java))and
 ```java
 public class ResourceReadAction extends Action {
 
@@ -277,7 +280,7 @@ public class ResourceReadAction extends Action {
 }
 
 ```
-In the workflow definition, we use a `ResourceDeclarer` to declare the shared resource, and then pass the Resource to the Actions:
+([source](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/actions/ResourceReadAction.java)) In the workflow definition, we use a `ResourceDeclarer` to declare the shared resource, and then pass the Resource [to the Actions](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/ResourcesWorkflow.java):
 
 ```java
     WorkflowRunners.dbRun(
@@ -332,7 +335,7 @@ By integrating our workflow orchestration with our Hadoop orchestration we are a
 
 #### Job Submission
 
-Launching a Cascading workflow via an Action is very simple.  Provide the Pipes and Taps, and the Action handles the rest:
+Launching a Cascading workflow via an Action is very simple.  Provide the Pipes and Taps, and the Action [handles the rest](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/actions/SimpleCascadingAction.java):
 
 ```java
 public class SimpleCascadingAction extends Action {
@@ -427,7 +430,7 @@ This is a very useful feature -- it means we don't have to clear temporary direc
 
 #### Properties
 
-The `HadoopWorkflowOptions` object gives us many useful hooks to configure workflow performance.  One of the most commonly used ones is `addWorkflowProperties`, which we can use to attach arbitrary Hadoop properties to _every_ job launched within the workflow:
+The `HadoopWorkflowOptions` object gives us many useful hooks to configure workflow performance.  One of the most commonly used ones is `addWorkflowProperties`, which we can use to attach arbitrary Hadoop properties to _every_ job launched [within the workflow](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/CascadingFlowWithProperties.java):
 
 ```java
     TupleDataStore store = new TupleDataStoreImpl("Temp Store",
@@ -467,13 +470,13 @@ We can also track global data read and written:
 
 ![alt text](images/cluster_io.png)
 
-HDFS metadata operations (eg, NameNode calls):
+and HDFS metadata operations (eg, NameNode calls):
 
 ![alt text](images/namenode_load.png)
 
 And task shuffle load:
 
-TODO
+![alt text](images/shuffle_io.png)
 
 These tools make it easy to identify which applications using a disproportionate fraction of global resources.
 
@@ -494,6 +497,7 @@ public class NoOpBaseAction extends BaseAction<Void> {
   }
 }
 ```
+([source](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/actions/NoOpBaseAction.java))
 
 To run the workflow, use `WorkflowDbRunners.baseWorkflowDbRunner`:
 
@@ -509,6 +513,7 @@ To run the workflow, use `WorkflowDbRunners.baseWorkflowDbRunner`:
     );
 
 ```
+([source](workflow_examples/src/main/java/com/liveramp/workflow2/workflow_examples/SimpleNonHadoopWorkflow.java))
 
 This workflow runs against the database, but does not support Hadoop-specific integrations.
 
