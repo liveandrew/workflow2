@@ -19,9 +19,9 @@ public class SimpleScopedWorkflow {
     Step step3 = new Step(new WaitAction("step3", 180_000), step1, step2);
 
     WorkflowRunners.dbRun(
-        SimpleWorkflow.class.getName(),
+        SimpleScopedWorkflow.class.getName(),
         HadoopWorkflowOptions.test()
-        .setScope(args[0]),
+            .setScope(args[0]),
         dbHadoopWorkflow -> Sets.newHashSet(step3)
     );
 
