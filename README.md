@@ -638,7 +638,7 @@ TODO Kube manifest which spins up
 
 ## Background Workflow
 
-Workflow2 works well for LiveRamp, but because workflows are launched as persistent JVMs, there are a number of use-cases where workflow does _not_ perform well: 
+Workflow2 works well for most of LiveRamp's big data applications, but because workflows are launched as persistent JVMs, there are a number of use-cases where workflow does _not_ perform well: 
 
 - As a service coordinator, where Actions wait for long-lived external requests to complete
 
@@ -654,7 +654,7 @@ The Background Workflow implementation here works, _but_:
 
 - Does not yet support Hadoop integration (this is still in progress)
 
-Background Workflow fully integrates with the Workflow UI, but the job submission and execution model is very different; for full documentation, please see [BackgroundWorkflow.md](BackgroundWorkflow.md).
+Background Workflow fully integrates with the Workflow UI, but the job submission and execution model is very different; for more details, please see [BackgroundWorkflow.md](BackgroundWorkflow.md).
 
 ## Maven
 
@@ -686,7 +686,7 @@ Versioned releases will be available in Maven Central soon.
 
 #### Is this README comprehensive?
 
-Not even close.  Workflow2 has a _lot_ of hooks and knobs for tuning, visibility, and custom behavior.  It's well tested, but not well documented (yet!).  If you think there's a feature workflow2 should have, please put up an issue and ask!
+Not even close.  Workflow2 has a _lot_ of hooks and knobs for tuning, visibility, and custom behavior.  It's well tested, but not well documented (yet).  If you think there's a feature workflow2 should have, please put up an issue and ask!
 
 #### Why is it called workflow2?
 

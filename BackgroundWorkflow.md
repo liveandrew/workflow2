@@ -54,6 +54,7 @@ The same time-graph of the coordinator workflow above would look like this with 
 ![alt text](images/background_coordinator.png)
 
 (not shown -- executors will run steps from multiple workflows concurrently)
+
 (not shown -- multiple executors can make progress on the same workflow)
 
 An example background workflow submitter looks like this:
