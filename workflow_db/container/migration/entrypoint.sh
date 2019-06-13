@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 DIR="${0%/*}"
 
 # wait for mysql
 source "$DIR/block-on-db.sh"
 
 # set up the database files from environment vars
-sed -e "s/\${DB_USERNAME}/$DB_USERNAME/" \
-  -e "s/\${DB_PASSWORD}/$DB_PASSWORD/" \
-  -e "s/\${DB_HOSTNAME}/$DB_HOSTNAME/" \
-  -e "s/\${DB_PORT}/$DB_PORT/" \
-  /apps/workflow_db/config/database.yml.tpl \
-  > /apps/workflow_db/config/database.yml
-
+cat /apps/workflow_db/config/database.yml.tpl | envsubst > /apps/workflow_db/config/database.yml
 
 # set up the rails db
 export RAILS_ENV=docker_env
