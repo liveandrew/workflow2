@@ -20,7 +20,7 @@ You can!  But if your code is launching a series of remote big-data jobs (like a
 
 - **Alerting**:  Get automatically alerted if the application fails or succeeds.
 
-When a simple script turns into a multi-step application, it's probably time to start looking into a DAG processors to run it.
+When a simple script turns into a multi-step application, it's probably time to start looking into DAG processors.
 
 ## So what is workflow2?
 
@@ -119,11 +119,11 @@ In this graph definition, Steps 1 and 2 can execute immediately.  Step 3 waits u
 
 ![alt text](images/simple_dag.png)
 
-When we call _WorkflowRunners.dbRun_, we tell the framework to do [asdf]
+When we call _WorkflowRunners.dbRun_, we tell the framework to:
 
 - Persist the workflow _structure_ to the database.  
 
-- Begin executing steps, _in the local process_.  [To see how to execute code on remote workers, see BackgroundWorkflow]
+- Begin executing steps, in the local process.  (To see how to execute code on remote workers, see "Background Workflow" later in this README)
 
 When we initialize the workflow structure by invoking _WorkflowRunners.dbRun_, we create or re-use each of the following:
 
@@ -323,7 +323,6 @@ Ideally, when a workflow dies, it is able to shut itself down gracefully and mar
 
 This _does not mean that the process has necessarily died_ -- it just means it cannot connect to the database.  However, to avoid hanging forever, Workflow2 treats DIED_UNCLEAN workflows as FAILED.  The next Attempt will mark the timed-out attempt as FAILED and resume where it left off.  
 
-TODO data stores
 
 ## Hadoop integration
 
@@ -404,6 +403,29 @@ This lets us quickly answer questions like "Is this application reading or writi
 ![alt text](images/application_yarn_counters.png)
 
 (YarnStats are a bonus added by our Cascading integration -- these track the total resources allocated to a YARN container, which includes setup time _not_ captured in MapReduce counters).
+
+#### DataStores
+
+Notice that in the above workflow, Steps "write-data" and "read-data" pass data via a TupleDataStore.  Because these steps mark their input and output using `readsFrom` and `creates`, we can track the dataflow on our workflow graph in the UI:
+
+![alt text](images/datastore.png)
+
+(by selecting "Show Datastores")
+
+__Important__: because the Action `SimpleWriteFile` marked `output` as `creates`, it means this DataStore will be __deleted__ before the step runs:
+
+
+```java
+  public SimpleWriteFile(String checkpointToken, TupleDataStore output) {
+    super(checkpointToken);
+    this.output = output;
+    creates(output);
+  }
+```
+
+This is a very useful feature -- it means we don't have to clear temporary directories every time the workflow runs -- but can be dangerous if mis-used.
+
+#### Properties
 
 The `HadoopWorkflowOptions` object gives us many useful hooks to configure workflow performance.  One of the most commonly used ones is `addWorkflowProperties`, which we can use to attach arbitrary Hadoop properties to _every_ job launched within the workflow:
 
@@ -603,19 +625,63 @@ This can help quickly identify whether bad hardware is responsible for applicati
 
 ## Getting started
 
-how to spin up
-- sql db
-- simple manifest
-- example workflow
+TODO Kube manifest which spins up
 
+- MySQL server
+- Deployment with workflow_ui, monitor, and db_migration containers
+- K8s cronjob which runs SimpleWorkflow
 
 ## Background Workflow
 
+Workflow2 works well for LiveRamp, but because workflows are launched as persistent JVMs, there are a number of use-cases where workflow does _not_ perform well: 
 
+- As a service coordinator, where Actions wait for long-lived external requests to complete
+
+- As a work queue; once an Execution is running, it is consuming resources
+
+- If a workflow has enough large in-memory concurrent steps that the work needs to be distributed.
+
+BackgroundWorkflow is a redesign of Workflow2 which avoids these limitations by using persistent workers processes and workflo1`dfsew submission is "fire and forget".
+
+The Background Workflow implementation here works, _but_:
+
+- Is still alpha; the API is not set in stone
+
+- Does not yet support Hadoop integration (this is still in progress)
+
+Background Workflow fully integrates with the Workflow UI, but the job submission and execution model is very different; for full documentation, please see [BackgroundWorkflow.md](BackgroundWorkflow.md).
 
 ## Maven
 
+Maven snapshots are published to sonatype:
+
+```xml
+    <repository>
+      <id>oss.sonatype.org-snapshot</id>
+      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  
+  <dependency>
+    <groupId>com.liveramp.workflow2</groupId>
+    <artifactId>workflow_hadoop</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </dependency>
+```
+
+Versioned releases will be available in Maven Central soon.
+
 ## FAQ
+
+#### Is this README comprehensive?
+
+Not even close.  Workflow2 has a _lot_ of hooks and knobs for tuning, visibility, and custom behavior.  It's well tested, but not well documented (yet!).  If you think there's a feature workflow2 should have, please put up an issue and ask!
 
 #### Why is it called workflow2?
 
