@@ -63,15 +63,26 @@
         <groupId>org.codehaus.mojo</groupId>
         <executions>
           <execution>
-            <id>publish-containers</id>
+            <id>build-containers</id>
+            <phase>install</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>${project.basedir}/bin/build-containers.sh</executable>
+            </configuration>
+          </execution>
+          <execution>
+            <id>push-containers</id>
             <phase>deploy</phase>
             <goals>
               <goal>exec</goal>
             </goals>
             <configuration>
-              <executable>${project.basedir}/bin/publish-containers.sh</executable>
+              <executable>${project.basedir}/bin/push-containers.sh</executable>
             </configuration>
           </execution>
+
         </executions>
       </plugin>
 
