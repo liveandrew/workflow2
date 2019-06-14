@@ -433,7 +433,10 @@ public class BackgroundWorkflowExecutorIT extends WorkflowDbStateTestCase {
       try {
 
         //  fake heartbeat out by setting executor heartbeat in the past
-        Accessors.only(db.backgroundWorkflowExecutorInfos().findAll()).setLastHeartbeat(0L).setLastHeartbeat(0L);
+        Accessors.only(db.backgroundWorkflowExecutorInfos().findAll())
+            .setLastHeartbeat(0L)
+            .setLastHeartbeatEpoch(0L)
+            .save();
 
         Thread.sleep(1500);
 
