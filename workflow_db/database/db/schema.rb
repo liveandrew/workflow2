@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190610183430) do
+ActiveRecord::Schema.define(version: 20190612183248) do
 
   create_table "application_configured_notifications", force: :cascade do |t|
     t.integer "application_id",             limit: 8, null: false
@@ -61,9 +61,10 @@ ActiveRecord::Schema.define(version: 20190610183430) do
   add_index "background_step_attempt_infos", ["step_attempt_id"], name: "index_background_step_attempt_infos_on_step_attempt_id", unique: true, using: :btree
 
   create_table "background_workflow_executor_infos", force: :cascade do |t|
-    t.string   "host",           limit: 255, null: false
-    t.integer  "status",         limit: 4,   null: false
-    t.datetime "last_heartbeat",             null: false
+    t.string   "host",                 limit: 255, null: false
+    t.integer  "status",               limit: 4,   null: false
+    t.datetime "last_heartbeat",                   null: false
+    t.integer  "last_heartbeat_epoch", limit: 8
   end
 
   add_index "background_workflow_executor_infos", ["host"], name: "index_background_workflow_executor_infos_on_host", using: :btree
@@ -273,6 +274,7 @@ ActiveRecord::Schema.define(version: 20190610183430) do
     t.string   "scm_remote",            limit: 255
     t.string   "commit_revision",       limit: 255
     t.string   "description",           limit: 255
+    t.integer  "last_heartbeat_epoch",  limit: 8
   end
 
   add_index "workflow_attempts", ["end_time"], name: "index_workflow_attempts_on_end_time", using: :btree

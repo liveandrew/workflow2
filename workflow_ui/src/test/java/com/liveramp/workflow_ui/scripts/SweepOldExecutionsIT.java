@@ -109,6 +109,7 @@ public class SweepOldExecutionsIT extends WorkflowUITestCase {
         null,
         null,
         null,
+        null,
         null
     );
 

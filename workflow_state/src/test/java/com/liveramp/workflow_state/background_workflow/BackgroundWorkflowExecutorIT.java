@@ -37,15 +37,18 @@ import com.liveramp.workflow_core.background_workflow.BackgroundStep;
 import com.liveramp.workflow_core.background_workflow.BackgroundWorkflowPreparer;
 import com.liveramp.workflow_core.background_workflow.BackgroundWorkflowSubmitter;
 import com.liveramp.workflow_db_state.WorkflowDbStateTestCase;
+import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_db_state.background_workflow.BackgroundPersistenceFactory;
 import com.liveramp.workflow_db_state.background_workflow.BackgroundWorkflow;
 import com.liveramp.workflow_db_state.background_workflow.BackgroundWorkflowIT;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
-
 import com.rapleaf.jack.MysqlDatabaseConnection;
 
 import static com.liveramp.workflow_state.background_workflow.BackgroundWorkflowExecutor.workflowDbNonCaching;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 
 public class BackgroundWorkflowExecutorIT extends WorkflowDbStateTestCase {
@@ -119,7 +122,7 @@ public class BackgroundWorkflowExecutorIT extends WorkflowDbStateTestCase {
 
     WaitUntil.orDie(() -> {
       try {
-        return Accessors.only(db.backgroundWorkflowExecutorInfos().findAll()).getLastHeartbeat() > startTime;
+        return WorkflowQueries.getLastHeartbeat(Accessors.only(db.backgroundWorkflowExecutorInfos().findAll())) > startTime;
       } catch (Exception e) {
         e.printStackTrace();
         return false;
@@ -161,7 +164,8 @@ public class BackgroundWorkflowExecutorIT extends WorkflowDbStateTestCase {
     WorkflowExecution execution = db.workflowExecutions().create(1, "test", null, WorkflowExecutionStatus.INCOMPLETE.ordinal(), 0L, null, app.getIntId(), null);
 
     //  workflow attempt
-    WorkflowAttempt attempt = db.workflowAttempts().create(execution.getIntId(), "a", null, "default", "root", "localhost", 0L, null, WorkflowAttemptStatus.RUNNING.ordinal(), 0L, null, null, null, null, null, null, null);
+    long hb = 0L;
+    WorkflowAttempt attempt = db.workflowAttempts().create(execution.getIntId(), "a", null, "default", "root", "localhost", 0L, null, WorkflowAttemptStatus.RUNNING.ordinal(), hb, null, null, null, null, null, null, null, hb);
     db.backgroundAttemptInfos().create(attempt.getId(), null, null);
 
     //  step attempt
@@ -429,7 +433,7 @@ public class BackgroundWorkflowExecutorIT extends WorkflowDbStateTestCase {
       try {
 
         //  fake heartbeat out by setting executor heartbeat in the past
-        Accessors.only(db.backgroundWorkflowExecutorInfos().findAll()).setLastHeartbeat(0L).save();
+        Accessors.only(db.backgroundWorkflowExecutorInfos().findAll()).setLastHeartbeat(0L).setLastHeartbeat(0L);
 
         Thread.sleep(1500);
 

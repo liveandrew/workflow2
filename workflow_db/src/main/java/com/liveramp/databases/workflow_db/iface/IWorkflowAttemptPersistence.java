@@ -17,7 +17,7 @@ import java.util.List;
 import com.rapleaf.jack.IModelPersistence;
 
 public interface IWorkflowAttemptPersistence extends IModelPersistence<WorkflowAttempt> {
-  WorkflowAttempt create(final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description) throws IOException;
+  WorkflowAttempt create(final int workflow_execution_id, final String system_user, final String shutdown_reason, final String priority, final String pool, final String host, final Long start_time, final Long end_time, final Integer status, final Long last_heartbeat, final String launch_dir, final String launch_jar, final String error_email, final String info_email, final String scm_remote, final String commit_revision, final String description, final Long last_heartbeat_epoch) throws IOException;
   WorkflowAttempt create(final int workflow_execution_id, final String system_user, final String priority, final String pool, final String host) throws IOException;
 
   WorkflowAttempt createDefaultInstance() throws IOException;
@@ -38,6 +38,7 @@ public interface IWorkflowAttemptPersistence extends IModelPersistence<WorkflowA
   List<WorkflowAttempt> findByScmRemote(String value)  throws IOException;
   List<WorkflowAttempt> findByCommitRevision(String value)  throws IOException;
   List<WorkflowAttempt> findByDescription(String value)  throws IOException;
+  List<WorkflowAttempt> findByLastHeartbeatEpoch(Long value)  throws IOException;
 
   WorkflowAttemptQueryBuilder query();
 

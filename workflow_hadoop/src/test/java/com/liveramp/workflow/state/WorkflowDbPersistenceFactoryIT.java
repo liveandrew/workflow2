@@ -4,19 +4,21 @@ import java.io.IOException;
 import java.util.List;
 
 import com.google.common.collect.Sets;
-import com.liveramp.databases.workflow_db.DatabasesImpl;
-import com.liveramp.databases.workflow_db.IWorkflowDb;
-import com.liveramp.databases.workflow_db.models.*;
 import org.apache.hadoop.util.Time;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.liveramp.commons.Accessors;
+import com.liveramp.databases.workflow_db.DatabasesImpl;
+import com.liveramp.databases.workflow_db.IWorkflowDb;
+import com.liveramp.databases.workflow_db.models.Application;
+import com.liveramp.databases.workflow_db.models.StepAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
+import com.liveramp.databases.workflow_db.models.WorkflowExecution;
 import com.liveramp.workflow.types.StepStatus;
 import com.liveramp.workflow.types.WorkflowAttemptStatus;
 import com.liveramp.workflow.types.WorkflowExecutionStatus;
 import com.liveramp.workflow_db_state.DbPersistence;
-import com.liveramp.workflow_state.WorkflowRunnerNotification;
 import com.rapleaf.cascading_ext.workflow2.Step;
 import com.rapleaf.cascading_ext.workflow2.WorkflowRunner;
 import com.rapleaf.cascading_ext.workflow2.WorkflowTestCase;
@@ -58,9 +60,11 @@ public class WorkflowDbPersistenceFactoryIT extends WorkflowTestCase {
 
     long currentTime = System.currentTimeMillis();
 
+    long hb = currentTime - (DbPersistence.HEARTBEAT_INTERVAL * DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 2);
     WorkflowAttempt workflowAttempt = workflow_db.workflowAttempts().create(ex.getIntId(), "bpodgursky", "default", "default", "localhost")
         .setStatus(dead.ordinal())
-        .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 2));
+        .setLastHeartbeat(hb)
+        .setLastHeartbeatEpoch(hb);
     workflowAttempt.save();
 
     StepAttempt stepAttempt = workflow_db.stepAttempts().create(workflowAttempt.getIntId(), "step1", StepStatus.RUNNING.ordinal(), Object.class.getName());
@@ -126,9 +130,11 @@ public class WorkflowDbPersistenceFactoryIT extends WorkflowTestCase {
 
     long currentTime = System.currentTimeMillis();
 
+    long hb = currentTime - (DbPersistence.HEARTBEAT_INTERVAL * 2);
     WorkflowAttempt workflowAttempt = workflow_db.workflowAttempts().create((int)ex.getId(), "bpodgursky", "default", "default", "localhost")
         .setStatus(WorkflowAttemptStatus.RUNNING.ordinal())
-        .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * 2));
+        .setLastHeartbeat(hb)
+        .setLastHeartbeatEpoch(hb);
     workflowAttempt.save();
 
     workflow_db.stepAttempts().create((int)workflowAttempt.getId(), "step1", StepStatus.RUNNING.ordinal(), Object.class.getName());
@@ -163,8 +169,10 @@ public class WorkflowDbPersistenceFactoryIT extends WorkflowTestCase {
 
     long currentTime = System.currentTimeMillis();
 
+    long hb = currentTime - (DbPersistence.HEARTBEAT_INTERVAL * 2);
     WorkflowAttempt workflowAttempt = workflow_db.workflowAttempts().create((int)ex.getId(), "bpodgursky", "default", "default", "localhost")
-        .setLastHeartbeat(currentTime - (DbPersistence.HEARTBEAT_INTERVAL * 2));
+        .setLastHeartbeat(hb)
+        .setLastHeartbeatEpoch(hb);
     workflowAttempt.save();
 
     workflow_db.stepAttempts().create((int)workflowAttempt.getId(), "step1", StepStatus.RUNNING.ordinal(), Object.class.getName());

@@ -473,6 +473,15 @@ public class BackgroundStepAttemptInfo extends ModelWithId<BackgroundStepAttempt
     return newBackgroundWorkflowExecutorInfo;
   }
 
+  public BackgroundWorkflowExecutorInfo createBackgroundWorkflowExecutorInfo(final String host, final int status, final long last_heartbeat, final Long last_heartbeat_epoch) throws IOException {
+ 
+    BackgroundWorkflowExecutorInfo newBackgroundWorkflowExecutorInfo = databases.getWorkflowDb().backgroundWorkflowExecutorInfos().create(host, status, last_heartbeat, last_heartbeat_epoch);
+    setBackgroundWorkflowExecutorInfoId(JackUtility.safeLongToInt(newBackgroundWorkflowExecutorInfo.getId()));
+    save();
+    __assoc_background_workflow_executor_info.clearCache();
+    return newBackgroundWorkflowExecutorInfo;
+  }
+
   public BackgroundWorkflowExecutorInfo createBackgroundWorkflowExecutorInfo() throws IOException {
  
     BackgroundWorkflowExecutorInfo newBackgroundWorkflowExecutorInfo = databases.getWorkflowDb().backgroundWorkflowExecutorInfos().create("", 0, 0L);
