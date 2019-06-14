@@ -36,3 +36,11 @@ docker build -t workflow2_monitor:latest -f Dockerfile .
 docker tag workflow2_monitor ${WORKFLOW_MONITOR_REPO}
 docker push ${WORKFLOW_MONITOR_REPO}
 popd
+
+# Workflow examples container
+WORKFLOW_EXAMPLES_REPO="liveramp/workflow2_examples"
+pushd workflow_examples
+docker build -t workflow2_examples:latest -f Dockerfile .
+docker tag workflow2_examples ${WORKFLOW_EXAMPLES_REPO}
+docker push ${WORKFLOW_EXAMPLES_REPO}
+popd

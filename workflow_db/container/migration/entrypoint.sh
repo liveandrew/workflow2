@@ -11,7 +11,7 @@ source "$DIR/block-on-db.sh"
 cat /apps/workflow_db/config/database.yml.tpl | envsubst > /apps/workflow_db/config/database.yml
 
 # set up the rails db
-export RAILS_ENV=docker_env
+export RAILS_ENV=workflow_docker_env
 cd /apps/workflow_db/
 
 echo "Creating database..."
