@@ -10,5 +10,3 @@ RUN mkdir -p /apps/workflow_examples/config/
 
 RUN ln -sf /apps/secrets/workflow_examples/database.yml /apps/workflow_examples/config/database.yml && \
     ln -sf /apps/secrets/workflow_examples/environment.yml /apps/workflow_examples/config/environment.yml
-
-COPY container/entrypoint.sh /apps/
