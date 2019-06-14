@@ -35,7 +35,7 @@ fi
 gpg --fast-import .travis/gpg.asc
 
 # Run the maven deploy steps
-mvn deploy -P generate,publish -DskipTests=true --settings "${TRAVIS_BUILD_DIR}/.travis/mvn-settings.xml"
+mvn deploy -P generate,publish,travis -DskipTests=true --settings "${TRAVIS_BUILD_DIR}/.travis/mvn-settings.xml"
 
 # Deploy the workflow_ui and workflow_monitor containers
 ./bin/deploy_images.sh
