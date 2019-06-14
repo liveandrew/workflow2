@@ -42,7 +42,9 @@ Workflow2 began (many, many years ago) as a simple in-memory DAG processor, and 
 
   - Individual workflows may have hundreds of steps, hundreds of which may be running concurrently
 
-  - At any given time, LiveRamp is running 500-1000 concurrent, independent workflows against the same deployment.
+  - At any given time, LiveRamp is running 500-1000 concurrent, independent workflows against the same deployment
+
+  - Workflow2 makes it easy to run multiple _copies_ of a workflow concurrently (for example, running separate workflows for each customer)
 
 ## Parts
 
@@ -695,10 +697,6 @@ Not even close.  Workflow2 has a _lot_ of hooks and knobs for tuning, visibility
 #### Why doesn't the packaging line up with the maven artifacts?
 
 Workflow2 is very widely used within LiveRamp, and repackaging would be a massive undertaking across our codebase; we prioritized OSSing the project over a 100% cleanup effort.  In a future major release we plan on aligning the packaging with the maven artifacts.
-
-#### I like AirFlow better.
-
-It's a free country, you can use AirFlow.
 
 #### Did this project really start on June 4, 2019?
 
