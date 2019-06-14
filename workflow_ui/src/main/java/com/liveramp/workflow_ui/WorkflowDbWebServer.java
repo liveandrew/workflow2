@@ -279,6 +279,7 @@ public class WorkflowDbWebServer implements Runnable {
     try {
       start();
     } catch (Exception e) {
+      e.printStackTrace();
       LOG.error("error", e);
     }
   }
