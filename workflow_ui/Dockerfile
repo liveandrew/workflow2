@@ -1,6 +1,6 @@
 FROM centos:centos7
 
-RUN yum -y install java-1.8.0-openjdk
+RUN yum -y install java-1.8.0-openjdk mysql-client
 
 RUN mkdir -p /apps/workflow_ui/
 
