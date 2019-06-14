@@ -42,7 +42,7 @@
 
   <properties>
     <skip.db>true</skip.db>
-    <sqldump.repo>workflow2_sqldump:latest</sqldump.repo>
+    <sqldump.repo>liveramp/workflow2_sqldump:latest</sqldump.repo>
   </properties>
 
   <modules>
@@ -168,7 +168,7 @@
     <profile>
       <id>travis</id>
       <properties>
-        <sqldump.repo>liveramp/workflow2_sqldump:latest</sqldump.repo>
+        <sqldump.repo>workflow2_sqldump:latest</sqldump.repo>
       </properties>
     </profile>
 
