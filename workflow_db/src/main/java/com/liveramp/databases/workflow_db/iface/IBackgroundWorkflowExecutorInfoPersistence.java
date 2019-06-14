@@ -17,12 +17,14 @@ import java.util.List;
 import com.rapleaf.jack.IModelPersistence;
 
 public interface IBackgroundWorkflowExecutorInfoPersistence extends IModelPersistence<BackgroundWorkflowExecutorInfo> {
+  BackgroundWorkflowExecutorInfo create(final String host, final int status, final long last_heartbeat, final Long last_heartbeat_epoch) throws IOException;
   BackgroundWorkflowExecutorInfo create(final String host, final int status, final long last_heartbeat) throws IOException;
 
   BackgroundWorkflowExecutorInfo createDefaultInstance() throws IOException;
   List<BackgroundWorkflowExecutorInfo> findByHost(String value)  throws IOException;
   List<BackgroundWorkflowExecutorInfo> findByStatus(int value)  throws IOException;
   List<BackgroundWorkflowExecutorInfo> findByLastHeartbeat(long value)  throws IOException;
+  List<BackgroundWorkflowExecutorInfo> findByLastHeartbeatEpoch(Long value)  throws IOException;
 
   BackgroundWorkflowExecutorInfoQueryBuilder query();
 

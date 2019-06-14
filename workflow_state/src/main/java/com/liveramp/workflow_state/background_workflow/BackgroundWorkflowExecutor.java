@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,6 +55,7 @@ import com.liveramp.workflow_core.background_workflow.BackgroundAction;
 import com.liveramp.workflow_core.background_workflow.PreconditionFunction;
 import com.liveramp.workflow_db_state.DbPersistence;
 import com.liveramp.workflow_db_state.InitializedDbPersistence;
+import com.liveramp.workflow_db_state.WorkflowQueries;
 import com.liveramp.workflow_state.WorkflowStatePersistence;
 import com.rapleaf.jack.AttributesWithId;
 import com.rapleaf.jack.queries.Column;
@@ -180,7 +182,7 @@ public class BackgroundWorkflowExecutor {
               .find(workerID);
 
           long currentTime = System.currentTimeMillis();
-          long lastHeartbeat = workerInfo.getLastHeartbeat();
+          long lastHeartbeat = WorkflowQueries.getLastHeartbeat(workerInfo);
 
           long timeElapsed = currentTime - lastHeartbeat;
           if (timeElapsed > heartbeatTimeoutMs) {
@@ -189,6 +191,7 @@ public class BackgroundWorkflowExecutor {
 
           workerInfo
               .setLastHeartbeat(currentTime)
+              .setLastHeartbeatEpoch(currentTime)
               .save();
 
         }

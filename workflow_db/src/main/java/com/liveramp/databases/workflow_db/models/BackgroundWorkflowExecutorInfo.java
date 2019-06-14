@@ -34,13 +34,14 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkflowExecutorInfo, IDatabases> implements Comparable<BackgroundWorkflowExecutorInfo>{
   
-  public static final long serialVersionUID = -5307964431083157522L;
+  public static final long serialVersionUID = 6214690017522203866L;
 
   public static class Tbl extends AbstractTable<BackgroundWorkflowExecutorInfo.Attributes, BackgroundWorkflowExecutorInfo> {
     public final Column<Long> ID;
     public final Column<String> HOST;
     public final Column<Integer> STATUS;
     public final Column<Long> LAST_HEARTBEAT;
+    public final Column<Long> LAST_HEARTBEAT_EPOCH;
 
     private Tbl(String alias) {
       super("background_workflow_executor_infos", alias, BackgroundWorkflowExecutorInfo.Attributes.class, BackgroundWorkflowExecutorInfo.class);
@@ -48,7 +49,8 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       this.HOST = Column.fromField(alias, _Fields.host, String.class);
       this.STATUS = Column.fromField(alias, _Fields.status, Integer.class);
       this.LAST_HEARTBEAT = Column.fromTimestamp(alias, _Fields.last_heartbeat);
-      Collections.addAll(this.allColumns, ID, HOST, STATUS, LAST_HEARTBEAT);
+      this.LAST_HEARTBEAT_EPOCH = Column.fromField(alias, _Fields.last_heartbeat_epoch, Long.class);
+      Collections.addAll(this.allColumns, ID, HOST, STATUS, LAST_HEARTBEAT, LAST_HEARTBEAT_EPOCH);
     }
 
     public static Tbl as(String alias) {
@@ -61,6 +63,7 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
   public static final Column<String> HOST = TBL.HOST;
   public static final Column<Integer> STATUS = TBL.STATUS;
   public static final Column<Long> LAST_HEARTBEAT = TBL.LAST_HEARTBEAT;
+  public static final Column<Long> LAST_HEARTBEAT_EPOCH = TBL.LAST_HEARTBEAT_EPOCH;
 
   private final Attributes attributes;
 
@@ -73,6 +76,7 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
     host,
     status,
     last_heartbeat,
+    last_heartbeat_epoch,
   }
 
   @Override
@@ -83,6 +87,17 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
     return cachedTypedId;
   }
 
+  public BackgroundWorkflowExecutorInfo(long id, final String host, final int status, final long last_heartbeat, final Long last_heartbeat_epoch, IDatabases databases) {
+    super(databases);
+    attributes = new Attributes(id, host, status, last_heartbeat, last_heartbeat_epoch);
+    this.__assoc_background_step_attempt_info = new HasManyAssociation<>(databases.getWorkflowDb().backgroundStepAttemptInfos(), "background_workflow_executor_info_id", getId());
+  }
+
+  public BackgroundWorkflowExecutorInfo(long id, final String host, final int status, final long last_heartbeat, final Long last_heartbeat_epoch) {
+    super(null);
+    attributes = new Attributes(id, host, status, last_heartbeat, last_heartbeat_epoch);
+  }
+  
   public BackgroundWorkflowExecutorInfo(long id, final String host, final int status, final long last_heartbeat, IDatabases databases) {
     super(databases);
     attributes = new Attributes(id, host, status, last_heartbeat);
@@ -163,6 +178,16 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
     return this;
   }
 
+  public Long getLastHeartbeatEpoch() {
+    return attributes.getLastHeartbeatEpoch();
+  }
+
+  public BackgroundWorkflowExecutorInfo setLastHeartbeatEpoch(Long newval) {
+    attributes.setLastHeartbeatEpoch(newval);
+    cachedHashCode = 0;
+    return this;
+  }
+
   public void setField(_Fields field, Object value) {
     switch (field) {
       case host:
@@ -173,6 +198,9 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
         break;
       case last_heartbeat:
         setLastHeartbeat((Long)value);
+        break;
+      case last_heartbeat_epoch:
+        setLastHeartbeatEpoch((Long)value);
         break;
       default:
         throw new IllegalStateException("Invalid field: " + field);
@@ -192,6 +220,10 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       setLastHeartbeat((Long)  value);
       return;
     }
+    if (fieldName.equals("last_heartbeat_epoch")) {
+      setLastHeartbeatEpoch((Long)  value);
+      return;
+    }
     throw new IllegalStateException("Invalid field: " + fieldName);
   }
 
@@ -203,6 +235,8 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
         return int.class;
       case last_heartbeat:
         return long.class;
+      case last_heartbeat_epoch:
+        return Long.class;
       default:
         throw new IllegalStateException("Invalid field: " + field);
     }    
@@ -217,6 +251,9 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
     }
     if (fieldName.equals("last_heartbeat")) {
       return long.class;
+    }
+    if (fieldName.equals("last_heartbeat_epoch")) {
+      return Long.class;
     }
     throw new IllegalStateException("Invalid field name: " + fieldName);
   }
@@ -239,6 +276,9 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
     if (fieldName.equals("last_heartbeat")) {
       return getLastHeartbeat();
     }
+    if (fieldName.equals("last_heartbeat_epoch")) {
+      return getLastHeartbeatEpoch();
+    }
     throw new IllegalStateException("Invalid field name: " + fieldName);
   }
 
@@ -250,6 +290,8 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
         return getStatus();
       case last_heartbeat:
         return getLastHeartbeat();
+      case last_heartbeat_epoch:
+        return getLastHeartbeatEpoch();
     }
     throw new IllegalStateException("Invalid field: " + field);
   }
@@ -267,6 +309,9 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
     if (fieldName.equals("last_heartbeat")) {
       return true;
     }
+    if (fieldName.equals("last_heartbeat_epoch")) {
+      return true;
+    }
     return false;
   }
 
@@ -277,6 +322,8 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       case status:
         return null;
       case last_heartbeat:
+        return null;
+      case last_heartbeat_epoch:
         return null;
     }
     throw new IllegalStateException("Invalid field: " + field);
@@ -309,6 +356,7 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
         + " host: " + getHost()
         + " status: " + getStatus()
         + " last_heartbeat: " + getLastHeartbeat()
+        + " last_heartbeat_epoch: " + getLastHeartbeatEpoch()
         + ">";
   }
 
@@ -324,17 +372,26 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 923501707333523410L;
+    public static final long serialVersionUID = -6062746735172100773L;
 
     // Fields
     private String __host;
     private int __status;
     private long __last_heartbeat;
+    private Long __last_heartbeat_epoch;
 
     public Attributes(long id) {
       super(id);
     }
 
+    public Attributes(long id, final String host, final int status, final long last_heartbeat, final Long last_heartbeat_epoch) {
+      super(id);
+      this.__host = host;
+      this.__status = status;
+      this.__last_heartbeat = last_heartbeat;
+      this.__last_heartbeat_epoch = last_heartbeat_epoch;
+    }
+    
     public Attributes(long id, final String host, final int status, final long last_heartbeat) {
       super(id);
       this.__host = host;
@@ -351,9 +408,11 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       String host = (String)fieldsMap.get(BackgroundWorkflowExecutorInfo._Fields.host);
       int status = (Integer)fieldsMap.get(BackgroundWorkflowExecutorInfo._Fields.status);
       long last_heartbeat = (Long)fieldsMap.get(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat);
+      Long last_heartbeat_epoch = (Long)fieldsMap.get(BackgroundWorkflowExecutorInfo._Fields.last_heartbeat_epoch);
       this.__host = host;
       this.__status = status;
       this.__last_heartbeat = last_heartbeat;
+      this.__last_heartbeat_epoch = last_heartbeat_epoch;
     }
 
     public Attributes(Attributes other) {
@@ -361,6 +420,7 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       this.__host = other.getHost();
       this.__status = other.getStatus();
       this.__last_heartbeat = other.getLastHeartbeat();
+      this.__last_heartbeat_epoch = other.getLastHeartbeatEpoch();
     }
 
     public String getHost() {
@@ -393,6 +453,16 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       return this;
     }
 
+    public Long getLastHeartbeatEpoch() {
+      return __last_heartbeat_epoch;
+    }
+
+    public Attributes setLastHeartbeatEpoch(Long newval) {
+      this.__last_heartbeat_epoch = newval;
+      cachedHashCode = 0;
+      return this;
+    }
+
     public void setField(_Fields field, Object value) {
       switch (field) {
         case host:
@@ -403,6 +473,9 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
           break;
         case last_heartbeat:
           setLastHeartbeat((Long)value);
+          break;
+        case last_heartbeat_epoch:
+          setLastHeartbeatEpoch((Long)value);
           break;
         default:
           throw new IllegalStateException("Invalid field: " + field);
@@ -422,6 +495,10 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
         setLastHeartbeat((Long)value);
         return;
       }
+      if (fieldName.equals("last_heartbeat_epoch")) {
+        setLastHeartbeatEpoch((Long)value);
+        return;
+      }
       throw new IllegalStateException("Invalid field: " + fieldName);
     }
 
@@ -433,6 +510,8 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
           return int.class;
         case last_heartbeat:
           return long.class;
+        case last_heartbeat_epoch:
+          return Long.class;
         default:
           throw new IllegalStateException("Invalid field: " + field);
       }    
@@ -447,6 +526,9 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       }
       if (fieldName.equals("last_heartbeat")) {
         return long.class;
+      }
+      if (fieldName.equals("last_heartbeat_epoch")) {
+        return Long.class;
       }
       throw new IllegalStateException("Invalid field name: " + fieldName);
     }
@@ -465,6 +547,9 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       if (fieldName.equals("last_heartbeat")) {
         return getLastHeartbeat();
       }
+      if (fieldName.equals("last_heartbeat_epoch")) {
+        return getLastHeartbeatEpoch();
+      }
       throw new IllegalStateException("Invalid field name: " + fieldName);
     }
 
@@ -476,6 +561,8 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
           return getStatus();
         case last_heartbeat:
           return getLastHeartbeat();
+        case last_heartbeat_epoch:
+          return getLastHeartbeatEpoch();
       }
       throw new IllegalStateException("Invalid field: " + field);
     }
@@ -493,6 +580,9 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
       if (fieldName.equals("last_heartbeat")) {
         return true;
       }
+      if (fieldName.equals("last_heartbeat_epoch")) {
+        return true;
+      }
       return false;
     }
 
@@ -503,6 +593,8 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
         case status:
           return null;
         case last_heartbeat:
+          return null;
+        case last_heartbeat_epoch:
           return null;
       }
       throw new IllegalStateException("Invalid field: " + field);
@@ -519,6 +611,7 @@ public class BackgroundWorkflowExecutorInfo extends ModelWithId<BackgroundWorkfl
           + " host: " + getHost()
           + " status: " + getStatus()
           + " last_heartbeat: " + getLastHeartbeat()
+          + " last_heartbeat_epoch: " + getLastHeartbeatEpoch()
           + ">";
     }
   }

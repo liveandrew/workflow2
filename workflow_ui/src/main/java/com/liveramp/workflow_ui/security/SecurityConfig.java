@@ -1,6 +1,7 @@
 package com.liveramp.workflow_ui.security;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -10,7 +11,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.*;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.session.MapSessionRepository;
 import org.springframework.session.SessionRepository;
@@ -61,9 +64,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
           .groupSearchBase(environment.getProperty("ui.auth.ldap.groupSearchBase"))
           .groupSearchFilter(environment.getProperty("ui.auth.ldap.groupSearchFilter"))
           .contextSource(contextSource());
+    }else if(authMethod.equals("fixed")){
+
+      String userList = environment.getProperty("ui.auth.method.fixed.users");
+      String[] users = userList.split(",");
+
+      InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+
+      for (String user : users) {
+        String[] usernamePassword = user.split(":");
+        manager.createUser(new User(usernamePassword[0], usernamePassword[1], Collections.emptySet()));
+      }
+
+      auth.userDetailsService(manager);
+
     }
 
-    //  TODO in-memory fixed creds
+    //  TODO add OAuth2
+
+    else{
+      throw new RuntimeException("No authentication configured: found "+authMethod);
+    }
 
   }
 
@@ -80,7 +101,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
       );
     }
 
-    throw new RuntimeException("No authentication configured: found "+authMethod);
+    return null;
+
   }
 
   @Bean
