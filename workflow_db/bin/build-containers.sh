@@ -8,4 +8,4 @@ docker build -t workflow2_db_migrations:latest -f container/migration/Dockerfile
 docker tag workflow2_db_migrations:latest ${MIGRATION_REPO}
 
 docker build -t workflow2_sqldump:latest -f container/sqldump/Dockerfile .
-docker tag workflow2BackgroundWorkflowExecutorIT_sqldump:latest ${SQLDUMP_REPO}
+docker tag workflow2_sqldump:latest ${SQLDUMP_REPO}
