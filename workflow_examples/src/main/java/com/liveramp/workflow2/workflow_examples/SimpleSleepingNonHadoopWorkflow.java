@@ -19,7 +19,7 @@ public class SimpleSleepingNonHadoopWorkflow {
     BaseStep<Void> step3 = new BaseStep<>(new WaitBaseAction("step3", 60_000), step1, step2);
 
     WorkflowDbRunners.baseWorkflowDbRunner(
-        SimpleNonHadoopWorkflow.class,
+        SimpleSleepingNonHadoopWorkflow.class,
         CoreOptions.test(),
         step3
     );
