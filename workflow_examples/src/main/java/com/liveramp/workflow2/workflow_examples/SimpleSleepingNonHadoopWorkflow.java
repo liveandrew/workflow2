@@ -22,7 +22,7 @@ public class SimpleSleepingNonHadoopWorkflow {
         SimpleSleepingNonHadoopWorkflow.class,
         CoreOptions.test(),
         step3
-    );
+    ).run();
 
   }
 

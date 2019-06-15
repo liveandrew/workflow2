@@ -21,7 +21,7 @@ public class SimpleNonHadoopWorkflow {
         SimpleNonHadoopWorkflow.class,
         CoreOptions.test(),
         step2
-    );
+    ).run();
 
   }
 
