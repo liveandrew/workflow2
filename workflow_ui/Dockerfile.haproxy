@@ -1,0 +1,8 @@
+FROM gcr.io/liveramp-eng/hadoop-java-alpine:latest
+
+WORKDIR /app
+
+COPY entrypoint.sh .
+COPY target/workflow_ui.job.jar .
+RUN chmod +x entrypoint.sh && mkdir config
+ENTRYPOINT /app/entrypoint.sh

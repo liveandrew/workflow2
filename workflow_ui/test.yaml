@@ -1,0 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: workflow2-load-test
+  name: workflow2-load-test
+spec:
+  replicas: 40
+  selector:
+    matchLabels:
+      run: workflow2-load-test
+  template:
+    metadata:
+      labels:
+        run: workflow2-load-test
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - image: gcr.io/liveramp-eng/workflow2/load-test
+          name: workflow2-load-test
+          imagePullPolicy: "Always"
+          volumeMounts:
+            - mountPath: /app/config
+              name: creds
+      volumes:
+        - name: creds
+          secret:
+            secretName: workflow-loadtest-creds
