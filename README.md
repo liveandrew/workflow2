@@ -2,6 +2,9 @@
 
 ![alt text](images/simple_dag.png)
 
+[![Build Status](https://api.travis-ci.com/LiveRamp/workflow2.svg?branch=master)](https://travis-ci.com/LiveRamp/workflow2)
+
+
 ## Overview
 
 Workflow2 is a DAG processing engine LiveRamp uses to help engineers quickly build failure-resilient, high performance, complex data processing pipelines.  Workflow2 was built and is actively used at LiveRamp, and now is available as Open-Source Software.
@@ -331,7 +334,7 @@ This _does not mean that the process has necessarily died_ -- it just means it c
 
 ## Hadoop integration
 
-[Cascading](https://www.cascading.org/) is LiveRamp's weapon of choice for orchestrating MapReduce jobs, so this README will focus on Cascading integration; however, integrations also exist for raw MapReduce jobs, and are easy to write for other frameworks.
+[Cascading](https://www.cascading.org/) is LiveRamp's weapon of choice for orchestrating MapReduce jobs, so this README will focus on Cascading integration; however, integrations also exist for raw [MapReduce jobs](https://github.com/LiveRamp/cascading_ext/blob/master/src/main/java/com/liveramp/cascading_tools/jobs/TrackedJob.java) and [Spark](workflow_hadoop/src/main/java/com/liveramp/spark_lib/workflow/SparkTrackedOperation.java), and are easy to write for other frameworks.
 
 By integrating our workflow orchestration with our Hadoop orchestration we are able to make job submission easy, provide visibility into running jobs, and gather statistics to monitor both job and cluster health.
 
