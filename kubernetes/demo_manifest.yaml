@@ -1,0 +1,335 @@
+#
+#  This is a demo manifest which creates enough moving parts for an example workflow2 deployment:
+#    - A MySQL server
+#    - The Workflow UI, with an init container (workflow2_db_migrations) which runs database migrations
+#    - The Workfow Monitor
+#    - A simple example workflow which runs on a one-minute cron
+#
+#  This manifest is not production-ready!  A stable production deployment will want:
+#    - A high-availability database (you'll likely want to use a managed solution like RDS or CloudSQL
+#      instead of the simple containerized database here)
+#    - Real database credentials!  For simplicity, the root password is used here for all applications.
+#      In a real deployment, only the workflow2_db_migrations container needs ALTER privileges.  Other services
+#      (clients, ui, and monitor) only need INSERT,SELECT,UPDATE, and DELETE.
+#    - Secrets (eg, yml files with passwords) stored as actual K8s secrets, not as ConfigMps.  The config
+#      files are ConfigMaps only for visibility.
+#    - SSL in front of the UI.
+#
+---
+#
+# Spin up a simple MySQL deployment, service, and data volumes.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: wdb-mysql
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: wdb-mysql
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wdb-mysql
+spec:
+  selector:
+    matchLabels:
+      app: wdb-mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: wdb-mysql
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        env:
+        # Use a real password in production
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        ports:
+        - containerPort: 3306
+          name: wdb-mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
+---
+#### This may be necessary if not running on GKE, see: https://discuss.kubernetes.io/t/running-tutorial-mysql-example-gives-me-read-only-file-system-error/3197
+#kind: PersistentVolume
+#apiVersion: v1
+#metadata:
+#  name: mysql-pv-volume
+#  labels:
+#    type: local
+#spec:
+#  storageClassName: manual
+#  capacity:
+#    storage: 2Gi
+#  accessModes:
+#  - ReadWriteOnce
+#  hostPath:
+#    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+#### This also may be necessary if not running on GKE (see link above)
+#  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+# Create the Workflow2 UI and a container which prepares the database beforehand
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: workflow2-ui
+  name: workflow2-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: workflow2-ui
+  template:
+    metadata:
+      labels:
+        run: workflow2-ui
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      # The actual UI container
+      - image: liveramp/workflow2_ui
+        name: workflow2-ui
+        imagePullPolicy: "Always"
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        volumeMounts:
+        # Database secrets
+        - name: workflowui-creds
+          mountPath: /apps/secrets/workflow_svc
+          readOnly: true
+        # Configuration files (authentication methods, etc)
+        - name: workflowui-properties
+          mountPath: /apps/config/application.properties
+          subPath: application.properties
+          readOnly: true
+        env:
+        - name: WORKFLOW_UI_PROPERTIES
+          value: /apps/config/application.properties
+      # Run database migrations before starting the UI
+      initContainers:
+      - image: liveramp/workflow2_db_migrations
+        name: workflow2-db
+        env:
+        # In production, use real credentials!
+        - name: DB_USERNAME
+          value: "root"
+        - name: DB_PASSWORD
+          value: "password"
+        - name: DB_HOSTNAME
+          value: wdb-mysql
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          value: "workflow_db"
+      volumes:
+      - name: workflowui-properties
+        configMap:
+          name: workflowui-properties
+      # In production, this should be a secret!
+      - name: workflowui-creds
+        configMap:
+          name: workflowui-creds
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: workflowui-creds
+data:
+  environment.yml: |
+    workflow_db: workflow_db_production
+    workflow_ui_jetty_db: workflow_ui_jetty_db_production
+  database.yml: |
+    workflow_db_production:
+      # In production, use real credentials!
+      username: root
+      adapter: mysql2
+      database: workflow_db
+      password: password
+      host: wdb-mysql
+      retries: 2
+    workflow_ui_jetty_db_production:
+      database: workflow_ui_jetty_db
+      adapter: mysql2
+      host: wdb-mysql
+      # In production, use real credentials!
+      username: root
+      password: password
+      retries: 2
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: workflowui-properties
+data:
+  # Use dummy credentials for the demo -- admin/admin
+  application.properties: |
+    ui.email_domain=example.com
+    ui.allowed_domains=
+    ui.auth.method=fixed
+    ui.auth.method.fixed.users=admin:admin
+---
+# For this demo we'll just expose the UI as a simple service.  If you run on a private network with a VPN,
+# you may want to expose the UI as a NodePort or a LoadBalancer service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: workflow2-ui
+spec:
+  ports:
+  - port: 8080
+  selector:
+    run: workflow2-ui
+  clusterIP: None
+---
+# Spin up the Workflow2 Monitor process
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: workflow2-monitor
+  name: workflow2-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: workflow2-monitor
+  template:
+    metadata:
+      labels:
+        run: workflow2-monitor
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - image: liveramp/workflow2_monitor
+        name: workflow2-monitor
+        imagePullPolicy: "Always"
+        volumeMounts:
+        # Database secrets
+        - name: workflowmonitor-creds
+          mountPath: /apps/secrets/workflow_svc
+          readOnly: true
+        # Configuration properties
+        - name: workflowmonitor-properties
+          mountPath: /apps/config/monitor.properties
+          subPath: monitor.properties
+          readOnly: true
+        env:
+        - name: WORKFLOW_MONITOR_PROPERTIES
+          value: /apps/config/monitor.properties
+      volumes:
+      - name: workflowmonitor-properties
+        configMap:
+          name: workflowmonitor-properties
+      # In production, this should be a secret!
+      - name: workflowmonitor-creds
+        configMap:
+          name: workflowmonitor-creds
+---
+# Database connections are managed using LiveRamp's ORM tool, Jack: https://github.com/liveramp/jack.
+# Jack uses two configuration files to connect to the database.  For a production deployment, these can be
+# basically the same, but with real usernames and passwords.
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: workflowmonitor-creds
+data:
+  environment.yml: |
+    workflow_db: workflow_db_production
+  database.yml: |
+    workflow_db_production:
+      # In production, use real credentials!
+      username: root
+      adapter: mysql2
+      database: workflow_db
+      password: password
+      host: wdb-mysql
+      retries: 2
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: workflowmonitor-properties
+data:
+  monitor.properties: |
+    alert_source_list=dev-null
+    alert_source_domain=example.com
+    alert_mail_server=example.com
+    workflow_ui_server=workflow2-ui:8080
+---
+# Here we'll spin up a simple cronjob which runs every minute, so the UI has something interesting.
+# Since creating a Hadoop cluster is outside the scope of this demo, we'll just run a simple non-Hadoop
+# workflow instead.
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: example-workflow
+  namespace: default
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: example-workflow
+            image: liveramp/workflow2_examples
+            resources:
+              requests:
+                memory: "1Gi"
+            command: ["/bin/sh","-c"]
+            args: ["cd /apps/workflow_examples; java -cp /apps/workflow_examples/workflow_examples.job.jar
+                    com.liveramp.workflow2.workflow_examples.SimpleSleepingNonHadoopWorkflow"]
+            volumeMounts:
+            - name: workflowexample-creds
+              mountPath: /apps/secrets/workflow_examples
+              readOnly: true
+          restartPolicy: OnFailure
+          volumes:
+          # In production, this should be a secret!
+          - name: workflowexample-creds
+            configMap:
+              name: workflowexample-creds
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: workflowexample-creds
+data:
+  environment.yml: |
+    workflow_db: workflow_db_production
+  database.yml: |
+    workflow_db_production:
+      # In production, use real credentials!
+      username: root
+      adapter: mysql2
+      database: workflow_db
+      password: password
+      host: wdb-mysql
+      retries: 2

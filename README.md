@@ -632,11 +632,38 @@ This can help quickly identify whether bad hardware is responsible for applicati
 
 ## Getting started
 
-TODO Kube manifest which spins up
+The UI, Monitor and database setup are all published as [Docker](https://www.docker.com/) containers, available via Dockerhub (See the [UI](https://hub.docker.com/r/liveramp/workflow2_ui), [Monitor](https://hub.docker.com/r/liveramp/workflow2_monitor), and database [setup](https://hub.docker.com/r/liveramp/workflow2_db_migrations)).
 
-- MySQL server
-- Deployment with workflow_ui, monitor, and db_migration containers
-- K8s cronjob which runs SimpleWorkflow
+To make things easy, we've set up an example [Kubernetes manifest](kubernetes/demo_manifest.yaml) which spins up a demonstration Workflow2 deployment:
+ - A MySQL server for the system state
+ - The Workflow UI, with an init container (workflow2_db_migrations) which runs database migrations
+ - The Workfow Monitor
+ - A simple example workflow which runs on a one-minute cron
+ 
+To run this demo, you'll need `kubectl` wired into a Kubernetes cluster (if you don't have a remote Kubernetes cluster available, you can use [minikube](https://kubernetes.io/docs/setup/learning-environment/minikube/)).  Apply the demonstration manifest:
+
+```bash
+kubectl apply -f kubernetes/demo_manifest.yaml
+```
+
+This creates all the resources described above.  We'll want to set up port-forwarding so we can view the UI locally:
+
+```bash
+kubectl port-forward svc/workflow2-ui 8080:8080
+```
+
+Now you can reach the UI locally by navigating to `http://127.0.0.1:8080/global.html`.  Log in with the dummy credentials from the manifest (admin/admin), and you can see the example workflow running:
+
+![alt text](images/demo_workflow.png)
+
+That's it!  To see more details on how the example workflow runs, check out the comments in the manifest and the workflow_examples [Dockerfile](workflow_examples/Dockerfile).
+
+__Important__: This manifest is not production-ready!  A stable production deployment will want:
+ - A high-availability database (you'll likely want to use a managed solution like RDS or CloudSQL instead of the simple containerized database here)
+ - Real database credentials!  For simplicity, the root password is used here for all applications.
+ - In a real deployment, only the workflow2_db_migrations container needs ALTER privileges.  Other services (clients, ui, and monitor) only need INSERT,SELECT,UPDATE, and DELETE.
+ - Secrets (eg, yml files with passwords) stored as actual K8s secrets, not as ConfigMps.  The config files are ConfigMaps only for visibility.
+ - SSL in front of the UI.
 
 ## Background Workflow
 
