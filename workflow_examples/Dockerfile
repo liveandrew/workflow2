@@ -4,7 +4,7 @@ RUN yum -y install java-1.8.0-openjdk
 
 RUN mkdir -p /apps/workflow_examples/
 
-COPY target/workflow_examples.job.jar /apps/workflow_ui/
+COPY target/workflow_examples.job.jar /apps/workflow_examples/
 
 RUN mkdir -p /apps/workflow_examples/config/
 
