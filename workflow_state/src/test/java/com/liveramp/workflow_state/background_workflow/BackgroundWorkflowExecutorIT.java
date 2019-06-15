@@ -366,7 +366,7 @@ public class BackgroundWorkflowExecutorIT extends WorkflowDbStateTestCase {
       }
     });
 
-    assertTrue(Accessors.only(testClient.getSentEvents()).getMessage().contains("java.io.IOException: java.sql.SQLNonTransientException: Percona is on fire"));
+    assertTrue(Accessors.first(testClient.getSentEvents()).getMessage().contains("java.io.IOException: java.sql.SQLNonTransientException: Percona is on fire"));
 
     executor.shutdown();
 

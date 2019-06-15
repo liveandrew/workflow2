@@ -29,4 +29,15 @@ public class Message {
   public String getTag() {
     return tag;
   }
+
+
+  @Override
+  public String toString() {
+    return "Message{" +
+        "title='" + title + '\'' +
+        ", message='" + message + '\'' +
+        ", hostname='" + hostname + '\'' +
+        ", tag='" + tag + '\'' +
+        '}';
+  }
 }
