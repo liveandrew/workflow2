@@ -1,6 +1,8 @@
 FROM centos:centos7
 
-RUN yum -y install java-1.8.0-openjdk mysql-client
+RUN yum -y install epel-release
+
+RUN yum -y install java-1.8.0-openjdk mysql
 
 RUN mkdir -p /apps/workflow_ui/
 
