@@ -1,17 +1,34 @@
 # Workflow2
 
-![alt text](images/simple_dag.png)
+![alt text](images/workflow_attempt.png)
 
 [![Build Status](https://api.travis-ci.com/LiveRamp/workflow2.svg?branch=master)](https://travis-ci.com/LiveRamp/workflow2)
 
+Workflow2 is a DAG processing engine LiveRamp uses to help engineers quickly build failure-resilient, high performance, complex data processing pipelines.  Workflow2 was built and is actively used at LiveRamp, and now is available as Open-Source Software.
+
+## Quick Links
+
+[Overview](#overview)
+
+[Concepts](#concepts)
+
+[Hadoop integration](#hadoop-integration)
+
+[Non-Hadoop workflows](#non-hadoop-workflows)
+
+[Workflow UI](#workflow-ui)
+
+[Workflow Monitor](#workflow-ui)
+
+[Quickstart guide](#getting-started)
+
+[FAQ](https://github.com/liveramp/workflow2#faq)
 
 ## Overview
 
-Workflow2 is a DAG processing engine LiveRamp uses to help engineers quickly build failure-resilient, high performance, complex data processing pipelines.  Workflow2 was built and is actively used at LiveRamp, and now is available as Open-Source Software.
+### Why do I need a DAG processor?  Why can't I just write code?
 
-## Why do I need a DAG processor?  Why can't I just write code?
-
-You can!  But if your code is launching a series of remote big-data jobs (like a Spark or MapReduce job), stringing together those applications in a main method has drawbacks.  Running your code with a DAG processor provides a lot of features out of the box:
+You can!  But if your code is launching a series of long running tasks (for LiveRamp, this usually means big-data jobs like Spark or MapReduce), stringing together those applications in a main method has drawbacks.  Running your code with a DAG processor provides a lot of features out of the box:
 
 - **System visibility**: Humans can look at a UI to quickly see the status of the application.
 
@@ -25,15 +42,15 @@ You can!  But if your code is launching a series of remote big-data jobs (like a
 
 - **Alerting**:  Get automatically alerted if the application fails or succeeds.
 
-When a simple script turns into a multi-step application, it's probably time to start looking into DAG processors.
+When a simple script turns into a long-running, multi-step application, it's probably time to start looking into DAG processors.
 
-## So what is workflow2?
+### So what is workflow2?
 
 Workflow2 is the DAG processing framework LiveRamp uses to run almost all of its big data applications.
 
 Workflow2 began (many, many years ago) as a simple in-memory DAG processor, and evolved into a full-featured framework for instrumenting big-data pipelines.
 
-## What distinguishes workflow2 from other DAG processors?
+### What distinguishes workflow2 from other DAG processors?
 
 - Workflow2's DAGs -- both the structure and the actual operations -- are defined in Java
 
@@ -49,7 +66,7 @@ Workflow2 began (many, many years ago) as a simple in-memory DAG processor, and 
 
   - Workflow2 makes it easy to run multiple _copies_ of a workflow concurrently (for example, running separate workflows for each customer)
 
-## Parts
+### Parts
 
 A production deployment of workflow2 has a few moving parts:
 
@@ -633,7 +650,30 @@ Because MapReduce and Spark jobs are launched directly through the Action class,
 
 This can help quickly identify whether bad hardware is responsible for application failures.
 
+
+## Background Workflow
+
+Workflow2 works well for most of LiveRamp's big data applications, but because workflows are launched as persistent JVMs, there are a number of use-cases where workflow does _not_ perform well: 
+
+- As a service coordinator, where Actions wait for long-lived external requests to complete
+
+- As a work queue; once an Execution is running, it is consuming resources
+
+- If a workflow has enough large in-memory concurrent steps that the work needs to be distributed.
+
+BackgroundWorkflow is a redesign of Workflow2 which avoids these limitations by using persistent workers processes and workflo1`dfsew submission is "fire and forget".
+
+The Background Workflow implementation here works, _but_:
+
+- Is still alpha; the API is not set in stone
+
+- Does not yet support Hadoop integration (this is still in progress)
+
+Background Workflow fully integrates with the Workflow UI, but the job submission and execution model is very different; for more details, please see [BackgroundWorkflow.md](BackgroundWorkflow.md).
+
 ## Getting started
+
+### Simple Kubernetes deployment
 
 The UI, Monitor and database setup are all published as [Docker](https://www.docker.com/) containers, available via Dockerhub (See the [UI](https://hub.docker.com/r/liveramp/workflow2_ui), [Monitor](https://hub.docker.com/r/liveramp/workflow2_monitor), and database [setup](https://hub.docker.com/r/liveramp/workflow2_db_migrations)).
 
@@ -667,27 +707,7 @@ __Important__: This manifest is not production-ready!  A stable production deplo
  - Secrets (eg, yml files with passwords) stored as actual K8s secrets, not as ConfigMps.  The config files are ConfigMaps only for visibility.
  - SSL in front of the UI.
 
-## Background Workflow
-
-Workflow2 works well for most of LiveRamp's big data applications, but because workflows are launched as persistent JVMs, there are a number of use-cases where workflow does _not_ perform well: 
-
-- As a service coordinator, where Actions wait for long-lived external requests to complete
-
-- As a work queue; once an Execution is running, it is consuming resources
-
-- If a workflow has enough large in-memory concurrent steps that the work needs to be distributed.
-
-BackgroundWorkflow is a redesign of Workflow2 which avoids these limitations by using persistent workers processes and workflo1`dfsew submission is "fire and forget".
-
-The Background Workflow implementation here works, _but_:
-
-- Is still alpha; the API is not set in stone
-
-- Does not yet support Hadoop integration (this is still in progress)
-
-Background Workflow fully integrates with the Workflow UI, but the job submission and execution model is very different; for more details, please see [BackgroundWorkflow.md](BackgroundWorkflow.md).
-
-## Maven
+### Maven artifacts
 
 Maven snapshots are published to sonatype:
 
