@@ -60,7 +60,7 @@
     <dependency>
       <groupId>com.liveramp</groupId>
       <artifactId>cascading_ext</artifactId>
-      <version>1.7-SNAPSHOT</version>
+      <version>1.7</version>
     </dependency>
 
     <dependency>
