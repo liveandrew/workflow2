@@ -234,7 +234,7 @@ public class BackgroundWorkflowExecutor {
 
   private BackgroundWorkflowExecutorInfo createInfo(IWorkflowDb workflowDb, String hostname) throws IOException {
     return workflowDb.backgroundWorkflowExecutorInfos().create(
-        hostname, ExecutorStatus.RUNNING.ordinal(), System.currentTimeMillis()
+        hostname, ExecutorStatus.RUNNING.ordinal(), System.currentTimeMillis(), System.currentTimeMillis()
     );
   }
 
