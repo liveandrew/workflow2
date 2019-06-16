@@ -18,7 +18,7 @@ Workflow2 is a DAG processing engine LiveRamp uses to help engineers quickly bui
 
 [Workflow UI](#workflow-ui)
 
-[Workflow Monitor](#workflow-ui)
+[Workflow Monitor](#workflow-monitor)
 
 [Quickstart guide](#getting-started)
 
@@ -502,7 +502,7 @@ And task shuffle load:
 
 These tools make it easy to identify which applications using a disproportionate fraction of global resources.
 
-## Non Hadoop workflows
+## Non-Hadoop workflows
   
 Workflow2 was built primarily to support Hadoop jobs, but it is also sometimes valuable to be able to run workflows which do not reference Hadoop, and do not have Hadoop on the classpath.  This is possible using using `BaseStep`, `BaseAction`, and `BaseWorkflowRunner`, which are available via the `workflow_core` and `workflow_state` Maven artifacts (which, unlike `workflow_hadoop`, have no Hadoop dependencies):
   
