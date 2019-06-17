@@ -704,7 +704,7 @@ That's it!  To see more details on how the example workflow runs, check out the 
 __Important__: This manifest is not production-ready!  A stable production deployment will want:
  - A high-availability database (you'll likely want to use a managed solution like RDS or CloudSQL instead of the simple containerized database here)
  - Real database credentials!  For simplicity, the root password is used here for all applications.  In a real deployment, only the workflow2_db_migrations container needs ALTER privileges.  Other services (clients, ui, and monitor) only need INSERT,SELECT,UPDATE, and DELETE.
- - Secrets (eg, yml files with passwords) stored as actual K8s secrets, not as ConfigMps.  The config files are ConfigMaps only for visibility.
+ - Secrets (eg, yml files with passwords) stored as actual K8s secrets, not as ConfigMaps.  The config files are ConfigMaps only for visibility.
  - SSL in front of the UI.
 
 ### Maven artifacts
