@@ -21,6 +21,8 @@ docker_login() {
 
 docker_login
 
+echo "Building images for version: $VERSION"
+
 # Workflow UI container
 WORKFLOW_UI_REPO="liveramp/workflow2_ui:${VERSION}"
 pushd workflow_ui
