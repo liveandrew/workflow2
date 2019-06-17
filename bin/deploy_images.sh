@@ -27,7 +27,7 @@ echo "Building images for version: $VERSION"
 WORKFLOW_UI_REPO="liveramp/workflow2_ui:${VERSION}"
 pushd workflow_ui
 docker build -t workflow2_ui:${VERSION} -f Dockerfile .
-docker tag workflow2_ui ${WORKFLOW_UI_REPO}
+docker tag workflow2_ui:${VERSION} ${WORKFLOW_UI_REPO}
 docker push ${WORKFLOW_UI_REPO}
 popd
 
@@ -35,7 +35,7 @@ popd
 WORKFLOW_MONITOR_REPO="liveramp/workflow2_monitor:${VERSION}"
 pushd workflow_monitor
 docker build -t workflow2_monitor:${VERSION} -f Dockerfile .
-docker tag workflow2_monitor ${WORKFLOW_MONITOR_REPO}
+docker tag workflow2_monitor:${VERSION} ${WORKFLOW_MONITOR_REPO}
 docker push ${WORKFLOW_MONITOR_REPO}
 popd
 
@@ -43,6 +43,6 @@ popd
 WORKFLOW_EXAMPLES_REPO="liveramp/workflow2_examples:${VERSION}"
 pushd workflow_examples
 docker build -t workflow2_examples:${VERSION} -f Dockerfile .
-docker tag workflow2_examples ${WORKFLOW_EXAMPLES_REPO}
+docker tag workflow2_examples:${VERSION} ${WORKFLOW_EXAMPLES_REPO}
 docker push ${WORKFLOW_EXAMPLES_REPO}
 popd
