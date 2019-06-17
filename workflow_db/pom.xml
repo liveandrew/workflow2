@@ -14,7 +14,7 @@
     <dependency>
       <groupId>com.liveramp</groupId>
       <artifactId>jack-mysql</artifactId>
-      <version>1.2-SNAPSHOT</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -45,6 +45,9 @@
             </goals>
             <configuration>
               <executable>${project.basedir}/bin/build-containers.sh</executable>
+              <environmentVariables>
+                <VERSION>${project.version}</VERSION>
+              </environmentVariables>
             </configuration>
           </execution>
           <execution>
@@ -55,6 +58,9 @@
             </goals>
             <configuration>
               <executable>${project.basedir}/bin/push-containers.sh</executable>
+              <environmentVariables>
+                <VERSION>${project.version}</VERSION>
+              </environmentVariables>
             </configuration>
           </execution>
 

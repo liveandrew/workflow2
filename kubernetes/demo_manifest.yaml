@@ -112,7 +112,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
       # The actual UI container
-      - image: liveramp/workflow2_ui
+      - image: liveramp/workflow2_ui:1.0-SNAPSHOT
         name: workflow2-ui
         imagePullPolicy: "Always"
         ports:
@@ -133,7 +133,7 @@ spec:
           value: /apps/config/application.properties
       # Run database migrations before starting the UI
       initContainers:
-      - image: liveramp/workflow2_db_migrations
+      - image: liveramp/workflow2_db_migrations:1.0-SNAPSHOT
         name: workflow2-db
         env:
         # In production, use real credentials!
@@ -226,7 +226,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 60
       containers:
-      - image: liveramp/workflow2_monitor
+      - image: liveramp/workflow2_monitor:1.0-SNAPSHOT
         name: workflow2-monitor
         imagePullPolicy: "Always"
         volumeMounts:
@@ -299,7 +299,7 @@ spec:
         spec:
           containers:
           - name: example-workflow
-            image: liveramp/workflow2_examples
+            image: liveramp/workflow2_examples:1.0-SNAPSHOT
             resources:
               requests:
                 memory: "1Gi"
