@@ -70,7 +70,7 @@ Workflow2 began (many, many years ago) as a simple in-memory DAG processor, and 
 
 A production deployment of workflow2 has a few moving parts:
 
-- the __Workflow DB__ is a database which holds all system state
+- The __Workflow DB__ is a database which holds all system state
 
 - The __Workflow UI__ is a web interface to allow users to view and modify system state
 
@@ -180,7 +180,7 @@ This is great, but what happens if a workflow fails halfway through?  Let's say 
 
 ![alt text](images/failed.png)
 
-When we call `.run` on a Workflow, it either _resumes_ an incomplete Execution or creates a new Execution:
+When we call `.run` on a Workflow, it either _resumes_ an incomplete Execution or creates a _new_ Execution:
 
 - If the last Attempt did not complete the steps it defined, we create a new Attempt in the existing Execution
 

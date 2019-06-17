@@ -18,5 +18,5 @@ docker_login() {
 
 docker_login
 
-export MIGRATION_REPO=liveramp/workflow2_db_migrations
-export SQLDUMP_REPO=liveramp/workflow2_sqldump
+export MIGRATION_REPO=liveramp/workflow2_db_migrations:${VERSION}
+export SQLDUMP_REPO=liveramp/workflow2_sqldump:${VERSION}

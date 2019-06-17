@@ -42,7 +42,7 @@
 
   <properties>
     <skip.db>true</skip.db>
-    <sqldump.repo>liveramp/workflow2_sqldump:latest</sqldump.repo>
+    <sqldump.repo>liveramp/workflow2_sqldump</sqldump.repo>
   </properties>
 
   <modules>
@@ -133,7 +133,7 @@
               <executable>${project.basedir}/../test_docker/start-db.sh</executable>
               <environmentVariables>
                 <SQLDUMP_REPO>
-                  ${sqldump.repo}
+                  ${sqldump.repo}:${project.version}
                 </SQLDUMP_REPO>
               </environmentVariables>
             </configuration>
@@ -168,7 +168,7 @@
     <profile>
       <id>travis</id>
       <properties>
-        <sqldump.repo>workflow2_sqldump:latest</sqldump.repo>
+        <sqldump.repo>workflow2_sqldump</sqldump.repo>
       </properties>
     </profile>
 
