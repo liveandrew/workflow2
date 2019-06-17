@@ -661,7 +661,7 @@ Workflow2 works well for most of LiveRamp's big data applications, but because w
 
 - If a workflow has enough large in-memory concurrent steps that the work needs to be distributed.
 
-BackgroundWorkflow is a redesign of Workflow2 which avoids these limitations by using persistent workers processes and workflo1`dfsew submission is "fire and forget".
+BackgroundWorkflow is a redesign of Workflow2 which avoids these limitations by using persistent workers processes - workflow submission is "fire and forget".
 
 The Background Workflow implementation here works, _but_:
 
