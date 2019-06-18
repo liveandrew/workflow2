@@ -1,6 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import java.time.Duration;
+import java.util.Properties;
 
 import com.google.common.collect.Multimap;
 
@@ -15,15 +16,23 @@ import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_RECOMM
 
 public class ShortReduces extends JobThresholdAlert {
 
+  private static final String PROPERTIES_PREFIX = "alert." + ShortReduces.class.getSimpleName();
+
+  private static final String REDUCE_TIME_LIMIT_PROP = PROPERTIES_PREFIX+".reduce_time_limit";
+  private static final String REDUCE_TIME_LIMIT_DEFAULT = "120000";
+
   protected static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
       .put(JOB_COUNTER_GROUP, LAUNCHED_REDUCES)
       .get();
 
-  protected static final double TASK_TIME_THRESHOLD = Duration.ofSeconds(120).toMillis();
   protected static final double MIN_NUM_THRESHOLD = 1;
 
-  public ShortReduces() {
-    super(TASK_TIME_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new LessThan());
+  public static ShortReduces create(Properties properties){
+    return new ShortReduces(Double.parseDouble(properties.getProperty(REDUCE_TIME_LIMIT_PROP, REDUCE_TIME_LIMIT_DEFAULT)));
+  }
+
+  public ShortReduces(double threshold) {
+    super(threshold, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new LessThan());
   }
 
   @Override

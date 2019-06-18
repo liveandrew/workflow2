@@ -1,5 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
+import java.util.Properties;
+
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;
@@ -14,15 +16,24 @@ import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_RECOMM
 
 public class InputPerReduceTask extends JobThresholdAlert {
 
-  private static final long BYTES_PER_REDUCE = ByteUnit.GIBIBYTES.toBytes(20);
+  private static final String PROPERTIES_PREFIX = "alert." + InputPerReduceTask.class.getSimpleName();
+
+  private static final String BYTES_PER_REDUCE_LIMIT_PROP = PROPERTIES_PREFIX+".bytes_per_reduce_limit";
+  private static final String BYTES_PER_REDUCE_LIMIT_DEFAULT = Long.toString(ByteUnit.GIBIBYTES.toBytes(20));
 
   protected static final Multimap<String, String> REQUIRED_COUNTERS = new MultimapBuilder<String, String>()
       .put(TASK_COUNTER_GROUP, MAP_OUTPUT_MATERIALIZED_BYTES)
       .put(JOB_COUNTER_GROUP, LAUNCHED_REDUCES)
       .get();
 
-  public InputPerReduceTask() {
-    super(BYTES_PER_REDUCE, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new GreaterThan());
+  public static InputPerReduceTask create(Properties properties){
+    return new InputPerReduceTask(
+        Long.parseLong(properties.getProperty(BYTES_PER_REDUCE_LIMIT_PROP, BYTES_PER_REDUCE_LIMIT_DEFAULT))
+    );
+  }
+
+  private InputPerReduceTask(long bytesPerReduce) {
+    super(bytesPerReduce, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new GreaterThan());
   }
 
   @Override

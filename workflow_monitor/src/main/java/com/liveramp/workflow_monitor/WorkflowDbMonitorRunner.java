@@ -3,7 +3,6 @@ package com.liveramp.workflow_monitor;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -58,7 +57,7 @@ public class WorkflowDbMonitorRunner {
     ExecutionAlerter spammyProduction = new ExecutionAlerter(
         new EmailFromPersistenceGenerator(db.get(), alertSourceList, alertSourceDomain, mailHost),
         Lists.newArrayList(
-            new DiedUnclean()
+            DiedUnclean.create(properties)
         ),
         Lists.newArrayList(),
         db.get(),
@@ -71,10 +70,10 @@ public class WorkflowDbMonitorRunner {
         new EmailFromPersistenceGenerator(db.get(), alertSourceList, alertSourceDomain, mailHost),
         Lists.newArrayList(),
         Lists.newArrayList(
-            new KilledTasks(),
-            new GCTime(),
-            new CPUUsage(),
-            new OutputPerMapTask()
+            KilledTasks.create(properties),
+            GCTime.create(properties),
+            CPUUsage.create(properties),
+            OutputPerMapTask.create(properties)
         ),
         db.get(),
         uiServer,
@@ -88,9 +87,9 @@ public class WorkflowDbMonitorRunner {
         Lists.newArrayList(
         ),
         Lists.newArrayList(
-            new ShortMaps(),
-            new ShortReduces(),
-            new InputPerReduceTask()
+            ShortMaps.create(properties),
+            ShortReduces.create(properties),
+            InputPerReduceTask.create(properties)
         ),
         db.get(),
         uiServer,

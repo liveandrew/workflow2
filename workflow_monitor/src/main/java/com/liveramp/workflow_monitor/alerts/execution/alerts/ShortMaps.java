@@ -1,6 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import java.time.Duration;
+import java.util.Properties;
 
 import com.google.common.collect.Multimap;
 
@@ -18,11 +19,19 @@ public class ShortMaps extends JobThresholdAlert {
       .put(JOB_COUNTER_GROUP, LAUNCHED_MAPS)
       .get();
 
-  protected static final double TASK_TIME_THRESHOLD = Duration.ofSeconds(120).toMillis();
+  private static final String PROPERTIES_PREFIX = "alert." + ShortMaps.class.getSimpleName();
+
+  private static final String MAP_TIME_LIMIT_PROP = PROPERTIES_PREFIX+".map_time_limit";
+  private static final String MAP_TIME_LIMIT_DEFAULT = "120000";
+
   protected static final double MIN_NUM_THRESHOLD = 1;
 
-  public ShortMaps() {
-    super(TASK_TIME_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new LessThan());
+  public static ShortMaps create(Properties properties){
+    return new ShortMaps(Double.parseDouble(properties.getProperty(MAP_TIME_LIMIT_PROP, MAP_TIME_LIMIT_DEFAULT)));
+  }
+
+  private ShortMaps(double threshold) {
+    super(threshold, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new LessThan());
   }
 
   @Override

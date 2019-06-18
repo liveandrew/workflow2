@@ -1,5 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
+import java.util.Properties;
+
 import com.google.common.collect.Multimap;
 
 import com.liveramp.commons.collections.map.MultimapBuilder;
@@ -20,10 +22,17 @@ public class OutputPerMapTask extends JobThresholdAlert {
       .put(JOB_COUNTER_GROUP, LAUNCHED_REDUCES)
       .get();
 
-  private static final long MAX_OUTPUT_THRESHOLD = ByteUnit.GIGABYTES.toBytes(8);
+  private static final String PROPERTIES_PREFIX = "alert." + OutputPerMapTask.class.getSimpleName();
 
-  public OutputPerMapTask() {
-    super(MAX_OUTPUT_THRESHOLD, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new GreaterThan());
+  private static final String OUTPUT_PER_MAP_LIMIT_PROP = PROPERTIES_PREFIX+".output_per_map_limit";
+  private static final String OUTPUT_PER_MAP_LIMIT_DEFAULT =  "8000000000";
+
+  public static OutputPerMapTask create(Properties properties){
+    return new OutputPerMapTask(Long.parseLong(properties.getProperty(OUTPUT_PER_MAP_LIMIT_PROP, OUTPUT_PER_MAP_LIMIT_DEFAULT)));
+  }
+
+  private OutputPerMapTask(long bytesThreshold) {
+    super(bytesThreshold, WorkflowRunnerNotification.PERFORMANCE, REQUIRED_COUNTERS, new GreaterThan());
   }
 
   @Override

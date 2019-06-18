@@ -3,6 +3,7 @@ package com.liveramp.workflow_monitor.alerts.execution.alerts;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Properties;
 
 import com.liveramp.databases.workflow_db.IDatabases;
 import com.liveramp.databases.workflow_db.models.WorkflowAttempt;
@@ -16,7 +17,20 @@ import com.liveramp.workflow_state.WorkflowRunnerNotification;
 
 public class DiedUnclean implements ExecutionAlertGenerator {
 
-  private static final int MISSED_HEARTBEATS_THRESHOLD = DbPersistence.NUM_HEARTBEAT_TIMEOUTS * 5; // 5 min, to reduce false alarms
+  private static final String PROPERTIES_PREFIX = "alert." + DiedUnclean.class.getSimpleName();
+
+  private static final String MISSED_HEARTBEATS_LIMIT_PROP = PROPERTIES_PREFIX+".missed_heartbeats_limit";
+  private static final String MISSED_HEARTBEATS_LIMIT_DEFAULT = "20";
+
+  public static DiedUnclean create(Properties properties){
+    return new DiedUnclean(Integer.parseInt(properties.getProperty(MISSED_HEARTBEATS_LIMIT_PROP, MISSED_HEARTBEATS_LIMIT_DEFAULT)));
+  }
+
+  private final int missedHeartbeatsLimit;
+
+  public DiedUnclean(int missedHeartbeatsLimit){
+    this.missedHeartbeatsLimit = missedHeartbeatsLimit;
+  }
 
   @Override
   public AlertMessage generateAlert(long fetchTime, WorkflowExecution execution, Collection<WorkflowAttempt> attempts, IDatabases db) throws IOException {
@@ -24,7 +38,7 @@ public class DiedUnclean implements ExecutionAlertGenerator {
     Optional<WorkflowAttempt> lastAttempt = WorkflowQueries.getLatestAttemptOptional(attempts);
 
     if (lastAttempt.isPresent()) {
-      ProcessStatus process = WorkflowQueries.getProcessStatus(fetchTime, lastAttempt.get(), execution, MISSED_HEARTBEATS_THRESHOLD);
+      ProcessStatus process = WorkflowQueries.getProcessStatus(fetchTime, lastAttempt.get(), execution, missedHeartbeatsLimit);
       if (process == ProcessStatus.TIMED_OUT) {
         return AlertMessage.createAlertMessage(
             this.getClass().getName(),

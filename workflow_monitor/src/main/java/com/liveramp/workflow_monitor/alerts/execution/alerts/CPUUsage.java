@@ -1,6 +1,7 @@
 package com.liveramp.workflow_monitor.alerts.execution.alerts;
 
 import java.time.Duration;
+import java.util.Properties;
 
 import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
@@ -18,12 +19,22 @@ import static com.liveramp.workflow_core.WorkflowConstants.WORKFLOW_ALERT_RECOMM
 public class CPUUsage extends JobThresholdAlert {
   private static final Logger LOG = LoggerFactory.getLogger(CPUUsage.class);
 
-  private static final double CPU_USED_RATIO = 2.0;
+  private static final String PROPERTIES_PREFIX = "alert." + CPUUsage.class.getSimpleName();
 
-  private static final long MIN_TIME_ALERT_THRESHOLD = Duration.ofHours(3).toMillis();
-  private static final long TASK_FORGIVENESS = 5 * 1000;
+  private static final String CPU_USED_RATIO_PROP = PROPERTIES_PREFIX + ".cpu_used_ratio";
+  private static final String DEFAULT_CPU_USED_RATIO = "2.0";
 
-  static final String PREAMBLE = " of allocated CPU time was used. ";
+  private static final String MIN_TIME_THRESHOLD_PROP = PROPERTIES_PREFIX + ".min_time_threshold_ms";
+  private static final String DEFAULT_MIN_TIME_THRESHOLD = Long.toString(Duration.ofHours(3).toMillis());
+
+  private static final String TASK_FORGIVENESS_PROP = PROPERTIES_PREFIX + ".task_forgiveness_ms";
+  private static final String DEFAULT_TASK_FORGIVENESS = Long.toString(5 * 1000);
+
+  private static final String PREAMBLE = " of allocated CPU time was used. ";
+
+
+  private final long minTimeThreshold;
+  private final long taskForgiveness;
 
   private static final Multimap<String, String> COUNTERS = new MultimapBuilder<String, String>()
       .put(JOB_COUNTER_GROUP, VCORES_MAPS)
@@ -31,8 +42,19 @@ public class CPUUsage extends JobThresholdAlert {
       .put(TASK_COUNTER_GROUP, CPU_MILLISECONDS)
       .get();
 
-  public CPUUsage() {
-    super(CPU_USED_RATIO, WorkflowRunnerNotification.PERFORMANCE, COUNTERS, new GreaterThan());
+  public static CPUUsage create(Properties properties) {
+    return new CPUUsage(
+        Double.parseDouble(properties.getProperty(CPU_USED_RATIO_PROP, DEFAULT_CPU_USED_RATIO)),
+        Long.parseLong(properties.getProperty(MIN_TIME_THRESHOLD_PROP, DEFAULT_MIN_TIME_THRESHOLD)),
+        Long.parseLong(properties.getProperty(TASK_FORGIVENESS_PROP, DEFAULT_TASK_FORGIVENESS))
+    );
+  }
+
+  private CPUUsage(double cpuRatio, long minTimeThreshold, long taskForgiveness) {
+    super(cpuRatio, WorkflowRunnerNotification.PERFORMANCE, COUNTERS, new GreaterThan());
+
+    this.minTimeThreshold = minTimeThreshold;
+    this.taskForgiveness = taskForgiveness;
   }
 
   @Override
@@ -51,12 +73,12 @@ public class CPUUsage extends JobThresholdAlert {
     }
 
     //  ignore small startup time CPU factors so we don't alert on tiny jobs
-    if (cpuMillis < MIN_TIME_ALERT_THRESHOLD) {
-      LOG.debug("Skipping alert for < " + MIN_TIME_ALERT_THRESHOLD + " ms: " + job.getJobIdentifier());
+    if (cpuMillis < minTimeThreshold) {
+      LOG.debug("Skipping alert for < " + minTimeThreshold + " ms: " + job.getJobIdentifier());
       return null;
     }
 
-    Long forgivenCPU = (launchedMaps + launchedReduces) * TASK_FORGIVENESS;
+    Long forgivenCPU = (launchedMaps + launchedReduces) * taskForgiveness;
 
     return (cpuMillis.doubleValue() - forgivenCPU) / ((double)allocatedMillis);
 
