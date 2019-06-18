@@ -5,11 +5,11 @@
   <parent>
     <groupId>com.liveramp.workflow2</groupId>
     <artifactId>workflow</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>workflow_ui</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.1-SNAPSHOT</version>
 
   <properties>
     <skip.db>false</skip.db>
@@ -22,7 +22,7 @@
     <dependency>
       <groupId>com.liveramp.workflow2</groupId>
       <artifactId>workflow_state</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.1-SNAPSHOT</version>
     </dependency>
 
     <!--other-->
@@ -203,7 +203,7 @@
           <dependency>
             <groupId>com.liveramp.workflow2</groupId>
             <artifactId>workflow_assemblies</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
           </dependency>
         </dependencies>
       </plugin>
