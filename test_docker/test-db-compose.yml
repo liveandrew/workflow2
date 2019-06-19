@@ -9,6 +9,6 @@ services:
     - 31313:3306
     networks:
     - shared
-networks
+networks:
   shared:
     driver: bridge
