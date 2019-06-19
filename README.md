@@ -709,7 +709,17 @@ __Important__: This manifest is not production-ready!  A stable production deplo
 
 ### Maven artifacts
 
-Maven snapshots are published to sonatype:
+Workflow2 artifacts are published to Maven Central:
+
+```xml
+  <dependency>
+    <groupId>com.liveramp.workflow2</groupId>
+    <artifactId>workflow_hadoop</artifactId>
+    <version>1.0</version>
+  </dependency>
+```
+
+Snapshots builds are also are published to Sonatype:
 
 ```xml
     <repository>
@@ -731,7 +741,7 @@ Maven snapshots are published to sonatype:
   </dependency>
 ```
 
-Versioned releases will be available in Maven Central soon.
+Snapshot builds will be based on the latest master commits, but have no promise of API stability.
 
 ## FAQ
 
