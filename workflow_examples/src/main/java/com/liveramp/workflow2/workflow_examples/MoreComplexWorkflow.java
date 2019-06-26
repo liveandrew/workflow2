@@ -33,10 +33,13 @@ public class MoreComplexWorkflow {
 
     Step step9 = new Step(new NoOpAction("step9"), step7);
 
+    Step step10 = new Step(new NoOpAction("step10"), step9);
+
+
     WorkflowRunners.dbRun(
         com.liveramp.workflow2.workflow_examples.SimpleWorkflow.class.getName(),
-        HadoopWorkflowOptions.test(),
-        dbHadoopWorkflow -> Sets.newHashSet(step8, step9)
+        HadoopWorkflowOptions.test().setMaxConcurrentSteps(5),
+        dbHadoopWorkflow -> Sets.newHashSet(step8, step10)
     );
 
   }

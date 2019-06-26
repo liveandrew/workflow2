@@ -1,6 +1,6 @@
 # Workflow2
 
-![alt text](images/workflow_attempt.png)
+![alt text](images/more_complex_ui.png)
 
 [![Build Status](https://api.travis-ci.com/LiveRamp/workflow2.svg?branch=master)](https://travis-ci.com/LiveRamp/workflow2)
 
