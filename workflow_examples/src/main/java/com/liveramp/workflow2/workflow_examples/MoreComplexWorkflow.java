@@ -29,9 +29,9 @@ public class MoreComplexWorkflow {
 
     Step step7 = new Step(new NoOpAction("step7"), step5, step6);
 
-    Step step8 = new Step(new NoOpAction("step7"), step7);
+    Step step8 = new Step(new NoOpAction("step8"), step7);
 
-    Step step9 = new Step(new NoOpAction("step7"), step7);
+    Step step9 = new Step(new NoOpAction("step9"), step7);
 
     WorkflowRunners.dbRun(
         com.liveramp.workflow2.workflow_examples.SimpleWorkflow.class.getName(),
