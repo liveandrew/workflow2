@@ -136,8 +136,8 @@ function truncateTo(string, length) {
 function commitLink(attempt) {
   if (attempt.scm_remote) {
 
-    //attempt.scm_remote assumed to be of the form git@X:Y/../Z/git or a http link
-    var re = /(git@(\S+?):(\S+?\/\S+?)\.git)|(https?:\/\/\S+)/;
+    //attempt.scm_remote assumed to be of the form git@X:Y/../Z/git or a https link.git
+    var re = /(git@(\S+?):(\S+?\/\S+?)\.git)|(https?:\/\/\S+)\.git/;
     var found = attempt.scm_remote.match(re);
     if (!found) {
       return "";
