@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190612183248) do
+ActiveRecord::Schema.define(version: 20191009005857) do
 
   create_table "application_configured_notifications", force: :cascade do |t|
     t.integer "application_id",             limit: 8, null: false
@@ -91,7 +91,7 @@ ActiveRecord::Schema.define(version: 20190612183248) do
   add_index "dashboards", ["name"], name: "index_dashboards_on_name", unique: true, using: :btree
 
   create_table "execution_tags", force: :cascade do |t|
-    t.integer "workflow_execution_id", limit: 8,     null: false
+    t.integer "workflow_execution_id", limit: 4,     null: false
     t.text    "tag",                   limit: 65535, null: false
     t.text    "value",                 limit: 65535, null: false
   end
@@ -228,7 +228,7 @@ ActiveRecord::Schema.define(version: 20190612183248) do
 
   create_table "workflow_alert_workflow_executions", force: :cascade do |t|
     t.integer "workflow_alert_id",     limit: 8, null: false
-    t.integer "workflow_execution_id", limit: 8, null: false
+    t.integer "workflow_execution_id", limit: 4, null: false
   end
 
   add_index "workflow_alert_workflow_executions", ["workflow_alert_id", "workflow_execution_id"], name: "index_wf_alerts_and_executions", using: :btree
@@ -282,7 +282,7 @@ ActiveRecord::Schema.define(version: 20190612183248) do
   add_index "workflow_attempts", ["workflow_execution_id"], name: "workflow_execution_id_index", using: :btree
 
   create_table "workflow_execution_configured_notifications", force: :cascade do |t|
-    t.integer "workflow_execution_id",      limit: 8, null: false
+    t.integer "workflow_execution_id",      limit: 4, null: false
     t.integer "configured_notification_id", limit: 8, null: false
   end
 
@@ -308,4 +308,8 @@ ActiveRecord::Schema.define(version: 20190612183248) do
   add_index "workflow_executions", ["name", "scope_identifier", "status"], name: "name_scope_status", using: :btree
   add_index "workflow_executions", ["start_time"], name: "start_time_idx", using: :btree
 
+  add_foreign_key "execution_tags", "workflow_executions", on_delete: :cascade
+  add_foreign_key "workflow_alert_workflow_executions", "workflow_executions", on_delete: :cascade
+  add_foreign_key "workflow_attempts", "workflow_executions", on_delete: :cascade
+  add_foreign_key "workflow_execution_configured_notifications", "workflow_executions", on_delete: :cascade
 end
