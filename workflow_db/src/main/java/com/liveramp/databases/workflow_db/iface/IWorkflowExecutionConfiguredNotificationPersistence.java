@@ -17,10 +17,10 @@ import java.util.List;
 import com.rapleaf.jack.IModelPersistence;
 
 public interface IWorkflowExecutionConfiguredNotificationPersistence extends IModelPersistence<WorkflowExecutionConfiguredNotification> {
-  WorkflowExecutionConfiguredNotification create(final long workflow_execution_id, final long configured_notification_id) throws IOException;
+  WorkflowExecutionConfiguredNotification create(final int workflow_execution_id, final long configured_notification_id) throws IOException;
 
   WorkflowExecutionConfiguredNotification createDefaultInstance() throws IOException;
-  List<WorkflowExecutionConfiguredNotification> findByWorkflowExecutionId(long value)  throws IOException;
+  List<WorkflowExecutionConfiguredNotification> findByWorkflowExecutionId(int value)  throws IOException;
   List<WorkflowExecutionConfiguredNotification> findByConfiguredNotificationId(long value)  throws IOException;
 
   WorkflowExecutionConfiguredNotificationQueryBuilder query();

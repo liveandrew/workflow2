@@ -34,18 +34,18 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWorkflowExecution, IDatabases> implements Comparable<WorkflowAlertWorkflowExecution>{
   
-  public static final long serialVersionUID = 9039359899511813425L;
+  public static final long serialVersionUID = 6520835359122253121L;
 
   public static class Tbl extends AbstractTable<WorkflowAlertWorkflowExecution.Attributes, WorkflowAlertWorkflowExecution> {
     public final Column<Long> ID;
     public final Column<Long> WORKFLOW_ALERT_ID;
-    public final Column<Long> WORKFLOW_EXECUTION_ID;
+    public final Column<Integer> WORKFLOW_EXECUTION_ID;
 
     private Tbl(String alias) {
       super("workflow_alert_workflow_executions", alias, WorkflowAlertWorkflowExecution.Attributes.class, WorkflowAlertWorkflowExecution.class);
       this.ID = Column.fromId(alias);
       this.WORKFLOW_ALERT_ID = Column.fromField(alias, _Fields.workflow_alert_id, Long.class);
-      this.WORKFLOW_EXECUTION_ID = Column.fromField(alias, _Fields.workflow_execution_id, Long.class);
+      this.WORKFLOW_EXECUTION_ID = Column.fromField(alias, _Fields.workflow_execution_id, Integer.class);
       Collections.addAll(this.allColumns, ID, WORKFLOW_ALERT_ID, WORKFLOW_EXECUTION_ID);
     }
 
@@ -57,7 +57,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
   public static final Tbl TBL = new Tbl("workflow_alert_workflow_executions");
   public static final Column<Long> ID = TBL.ID;
   public static final Column<Long> WORKFLOW_ALERT_ID = TBL.WORKFLOW_ALERT_ID;
-  public static final Column<Long> WORKFLOW_EXECUTION_ID = TBL.WORKFLOW_EXECUTION_ID;
+  public static final Column<Integer> WORKFLOW_EXECUTION_ID = TBL.WORKFLOW_EXECUTION_ID;
 
   private final Attributes attributes;
 
@@ -80,20 +80,20 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
     return cachedTypedId;
   }
 
-  public WorkflowAlertWorkflowExecution(long id, final long workflow_alert_id, final long workflow_execution_id, IDatabases databases) {
+  public WorkflowAlertWorkflowExecution(long id, final long workflow_alert_id, final int workflow_execution_id, IDatabases databases) {
     super(databases);
     attributes = new Attributes(id, workflow_alert_id, workflow_execution_id);
-    this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), getWorkflowExecutionId());
+    this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), (long) getWorkflowExecutionId());
     this.__assoc_workflow_alert = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAlerts(), getWorkflowAlertId());
   }
 
-  public WorkflowAlertWorkflowExecution(long id, final long workflow_alert_id, final long workflow_execution_id) {
+  public WorkflowAlertWorkflowExecution(long id, final long workflow_alert_id, final int workflow_execution_id) {
     super(null);
     attributes = new Attributes(id, workflow_alert_id, workflow_execution_id);
   }
 
   public static WorkflowAlertWorkflowExecution newDefaultInstance(long id) {
-    return new WorkflowAlertWorkflowExecution(id, 0L, 0L);
+    return new WorkflowAlertWorkflowExecution(id, 0L, 0);
   }
 
   public WorkflowAlertWorkflowExecution(Attributes attributes, IDatabases databases) {
@@ -101,7 +101,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
     this.attributes = attributes;
 
     if (databases != null) {
-      this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), getWorkflowExecutionId());
+      this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), (long) getWorkflowExecutionId());
       this.__assoc_workflow_alert = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAlerts(), getWorkflowAlertId());
     }
   }
@@ -124,7 +124,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
     attributes = new Attributes(other.getAttributes());
 
     if (databases != null) {
-      this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), getWorkflowExecutionId());
+      this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), (long) getWorkflowExecutionId());
       this.__assoc_workflow_alert = new BelongsToAssociation<>(databases.getWorkflowDb().workflowAlerts(), getWorkflowAlertId());
     }
   }
@@ -146,11 +146,11 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
     return this;
   }
 
-  public long getWorkflowExecutionId() {
+  public int getWorkflowExecutionId() {
     return attributes.getWorkflowExecutionId();
   }
 
-  public WorkflowAlertWorkflowExecution setWorkflowExecutionId(long newval) {
+  public WorkflowAlertWorkflowExecution setWorkflowExecutionId(int newval) {
     attributes.setWorkflowExecutionId(newval);
     if(__assoc_workflow_execution != null){
       this.__assoc_workflow_execution.setOwnerId(newval);
@@ -165,7 +165,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
         setWorkflowAlertId((Long)value);
         break;
       case workflow_execution_id:
-        setWorkflowExecutionId((Long)value);
+        setWorkflowExecutionId((Integer)value);
         break;
       default:
         throw new IllegalStateException("Invalid field: " + field);
@@ -178,7 +178,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
       return;
     }
     if (fieldName.equals("workflow_execution_id")) {
-      setWorkflowExecutionId((Long)  value);
+      setWorkflowExecutionId((Integer)  value);
       return;
     }
     throw new IllegalStateException("Invalid field: " + fieldName);
@@ -189,7 +189,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
       case workflow_alert_id:
         return long.class;
       case workflow_execution_id:
-        return long.class;
+        return int.class;
       default:
         throw new IllegalStateException("Invalid field: " + field);
     }    
@@ -200,7 +200,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
       return long.class;
     }
     if (fieldName.equals("workflow_execution_id")) {
-      return long.class;
+      return int.class;
     }
     throw new IllegalStateException("Invalid field name: " + fieldName);
   }
@@ -284,7 +284,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
   public WorkflowExecution createWorkflowExecution(final String name, final int status) throws IOException {
  
     WorkflowExecution newWorkflowExecution = databases.getWorkflowDb().workflowExecutions().create(name, status);
-    setWorkflowExecutionId(newWorkflowExecution.getId());
+    setWorkflowExecutionId(JackUtility.safeLongToInt(newWorkflowExecution.getId()));
     save();
     __assoc_workflow_execution.clearCache();
     return newWorkflowExecution;
@@ -293,7 +293,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
   public WorkflowExecution createWorkflowExecution(final Integer app_type, final String name, final String scope_identifier, final int status, final Long start_time, final Long end_time, final Integer application_id, final String pool_override) throws IOException {
  
     WorkflowExecution newWorkflowExecution = databases.getWorkflowDb().workflowExecutions().create(app_type, name, scope_identifier, status, start_time, end_time, application_id, pool_override);
-    setWorkflowExecutionId(newWorkflowExecution.getId());
+    setWorkflowExecutionId(JackUtility.safeLongToInt(newWorkflowExecution.getId()));
     save();
     __assoc_workflow_execution.clearCache();
     return newWorkflowExecution;
@@ -302,7 +302,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
   public WorkflowExecution createWorkflowExecution() throws IOException {
  
     WorkflowExecution newWorkflowExecution = databases.getWorkflowDb().workflowExecutions().create("", 0);
-    setWorkflowExecutionId(newWorkflowExecution.getId());
+    setWorkflowExecutionId(JackUtility.safeLongToInt(newWorkflowExecution.getId()));
     save();
     __assoc_workflow_execution.clearCache();
     return newWorkflowExecution;
@@ -347,30 +347,30 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 5840558989709925536L;
+    public static final long serialVersionUID = 628989512918719487L;
 
     // Fields
     private long __workflow_alert_id;
-    private long __workflow_execution_id;
+    private int __workflow_execution_id;
 
     public Attributes(long id) {
       super(id);
     }
 
-    public Attributes(long id, final long workflow_alert_id, final long workflow_execution_id) {
+    public Attributes(long id, final long workflow_alert_id, final int workflow_execution_id) {
       super(id);
       this.__workflow_alert_id = workflow_alert_id;
       this.__workflow_execution_id = workflow_execution_id;
     }
 
     public static Attributes newDefaultInstance(long id) {
-      return new Attributes(id, 0L, 0L);
+      return new Attributes(id, 0L, 0);
     }
 
     public Attributes(long id, Map<Enum, Object> fieldsMap) {
       super(id);
       long workflow_alert_id = (Long)fieldsMap.get(WorkflowAlertWorkflowExecution._Fields.workflow_alert_id);
-      long workflow_execution_id = (Long)fieldsMap.get(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id);
+      int workflow_execution_id = (Integer)fieldsMap.get(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id);
       this.__workflow_alert_id = workflow_alert_id;
       this.__workflow_execution_id = workflow_execution_id;
     }
@@ -391,11 +391,11 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
       return this;
     }
 
-    public long getWorkflowExecutionId() {
+    public int getWorkflowExecutionId() {
       return __workflow_execution_id;
     }
 
-    public Attributes setWorkflowExecutionId(long newval) {
+    public Attributes setWorkflowExecutionId(int newval) {
       this.__workflow_execution_id = newval;
       cachedHashCode = 0;
       return this;
@@ -407,7 +407,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
           setWorkflowAlertId((Long)value);
           break;
         case workflow_execution_id:
-          setWorkflowExecutionId((Long)value);
+          setWorkflowExecutionId((Integer)value);
           break;
         default:
           throw new IllegalStateException("Invalid field: " + field);
@@ -420,7 +420,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
         return;
       }
       if (fieldName.equals("workflow_execution_id")) {
-        setWorkflowExecutionId((Long)value);
+        setWorkflowExecutionId((Integer)value);
         return;
       }
       throw new IllegalStateException("Invalid field: " + fieldName);
@@ -431,7 +431,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
         case workflow_alert_id:
           return long.class;
         case workflow_execution_id:
-          return long.class;
+          return int.class;
         default:
           throw new IllegalStateException("Invalid field: " + field);
       }    
@@ -442,7 +442,7 @@ public class WorkflowAlertWorkflowExecution extends ModelWithId<WorkflowAlertWor
         return long.class;
       }
       if (fieldName.equals("workflow_execution_id")) {
-        return long.class;
+        return int.class;
       }
       throw new IllegalStateException("Invalid field name: " + fieldName);
     }

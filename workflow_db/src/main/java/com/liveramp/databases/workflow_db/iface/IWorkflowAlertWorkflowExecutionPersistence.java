@@ -17,11 +17,11 @@ import java.util.List;
 import com.rapleaf.jack.IModelPersistence;
 
 public interface IWorkflowAlertWorkflowExecutionPersistence extends IModelPersistence<WorkflowAlertWorkflowExecution> {
-  WorkflowAlertWorkflowExecution create(final long workflow_alert_id, final long workflow_execution_id) throws IOException;
+  WorkflowAlertWorkflowExecution create(final long workflow_alert_id, final int workflow_execution_id) throws IOException;
 
   WorkflowAlertWorkflowExecution createDefaultInstance() throws IOException;
   List<WorkflowAlertWorkflowExecution> findByWorkflowAlertId(long value)  throws IOException;
-  List<WorkflowAlertWorkflowExecution> findByWorkflowExecutionId(long value)  throws IOException;
+  List<WorkflowAlertWorkflowExecution> findByWorkflowExecutionId(int value)  throws IOException;
 
   WorkflowAlertWorkflowExecutionQueryBuilder query();
 

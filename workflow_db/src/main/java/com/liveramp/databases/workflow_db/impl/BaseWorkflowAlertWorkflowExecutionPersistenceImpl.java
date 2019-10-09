@@ -44,11 +44,11 @@ public class BaseWorkflowAlertWorkflowExecutionPersistenceImpl extends AbstractD
   @Override
   public WorkflowAlertWorkflowExecution create(Map<Enum, Object> fieldsMap) throws IOException {
     long workflow_alert_id = (Long) fieldsMap.get(WorkflowAlertWorkflowExecution._Fields.workflow_alert_id);
-    long workflow_execution_id = (Long) fieldsMap.get(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id);
+    int workflow_execution_id = (Integer) fieldsMap.get(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id);
     return create(workflow_alert_id, workflow_execution_id);
   }
 
-  public WorkflowAlertWorkflowExecution create(final long workflow_alert_id, final long workflow_execution_id) throws IOException {
+  public WorkflowAlertWorkflowExecution create(final long workflow_alert_id, final int workflow_execution_id) throws IOException {
     StatementCreator statementCreator = new StatementCreator() {
       private final List<String> nonNullFields = new ArrayList<>();
       private final List<AttrSetter> statementSetters = new ArrayList<>();
@@ -62,7 +62,7 @@ public class BaseWorkflowAlertWorkflowExecutionPersistenceImpl extends AbstractD
 
         nonNullFields.add("workflow_execution_id");
         int fieldIndex1 = index++;
-        statementSetters.add(stmt -> stmt.setLong(fieldIndex1, workflow_execution_id));
+        statementSetters.add(stmt -> stmt.setInt(fieldIndex1, workflow_execution_id));
       }
 
       @Override
@@ -87,7 +87,7 @@ public class BaseWorkflowAlertWorkflowExecutionPersistenceImpl extends AbstractD
   }
 
   public WorkflowAlertWorkflowExecution createDefaultInstance() throws IOException {
-    return create(0L, 0L);
+    return create(0L, 0);
   }
 
   public List<WorkflowAlertWorkflowExecution> find(Map<Enum, Object> fieldsMap) throws IOException {
@@ -140,7 +140,7 @@ public class BaseWorkflowAlertWorkflowExecutionPersistenceImpl extends AbstractD
               preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
               break;
             case workflow_execution_id:
-              preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
+              preparedStatement.setInt(i+1, (Integer) nonNullValues.get(i));
               break;
           }
         } catch (SQLException e) {
@@ -179,7 +179,7 @@ public class BaseWorkflowAlertWorkflowExecutionPersistenceImpl extends AbstractD
                 preparedStatement.setLong(++index, (Long) parameter);
                 break;
               case workflow_execution_id:
-                preparedStatement.setLong(++index, (Long) parameter);
+                preparedStatement.setInt(++index, (Integer) parameter);
                 break;
             }
           }
@@ -197,7 +197,7 @@ public class BaseWorkflowAlertWorkflowExecutionPersistenceImpl extends AbstractD
       stmt.setLong(index++, model.getWorkflowAlertId());
     }
     {
-      stmt.setLong(index++, model.getWorkflowExecutionId());
+      stmt.setInt(index++, model.getWorkflowExecutionId());
     }
     stmt.setLong(index, model.getId());
   }
@@ -208,7 +208,7 @@ public class BaseWorkflowAlertWorkflowExecutionPersistenceImpl extends AbstractD
     long id = rs.getLong("id");
     return new WorkflowAlertWorkflowExecution(id,
       allFields || selectedFields.contains(WorkflowAlertWorkflowExecution._Fields.workflow_alert_id) ? getLongOrNull(rs, "workflow_alert_id") : 0L,
-      allFields || selectedFields.contains(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id) ? getLongOrNull(rs, "workflow_execution_id") : 0L,
+      allFields || selectedFields.contains(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id) ? getIntOrNull(rs, "workflow_execution_id") : 0,
       databases
     );
   }
@@ -217,7 +217,7 @@ public class BaseWorkflowAlertWorkflowExecutionPersistenceImpl extends AbstractD
     return find(Collections.<Enum, Object>singletonMap(WorkflowAlertWorkflowExecution._Fields.workflow_alert_id, value));
   }
 
-  public List<WorkflowAlertWorkflowExecution> findByWorkflowExecutionId(final long value) throws IOException {
+  public List<WorkflowAlertWorkflowExecution> findByWorkflowExecutionId(final int value) throws IOException {
     return find(Collections.<Enum, Object>singletonMap(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id, value));
   }
 

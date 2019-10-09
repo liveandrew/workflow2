@@ -41,13 +41,13 @@ public class WorkflowAlertWorkflowExecutionDeleteBuilder extends AbstractDeleteB
     return this;
   }
 
-  public WorkflowAlertWorkflowExecutionDeleteBuilder workflowExecutionId(Long value) {
-    addWhereConstraint(new WhereConstraint<Long>(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
+  public WorkflowAlertWorkflowExecutionDeleteBuilder workflowExecutionId(Integer value) {
+    addWhereConstraint(new WhereConstraint<Integer>(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
     return this;
   }
 
-  public WorkflowAlertWorkflowExecutionDeleteBuilder whereWorkflowExecutionId(IWhereOperator<Long> operator) {
-    addWhereConstraint(new WhereConstraint<Long>(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id, operator));
+  public WorkflowAlertWorkflowExecutionDeleteBuilder whereWorkflowExecutionId(IWhereOperator<Integer> operator) {
+    addWhereConstraint(new WhereConstraint<Integer>(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id, operator));
     return this;
   }
 }

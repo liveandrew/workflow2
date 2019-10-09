@@ -88,12 +88,12 @@ public class WorkflowExecutionConfiguredNotificationQueryBuilder extends Abstrac
     return this;
   }
 
-  public WorkflowExecutionConfiguredNotificationQueryBuilder workflowExecutionId(Long value) {
+  public WorkflowExecutionConfiguredNotificationQueryBuilder workflowExecutionId(Integer value) {
     addWhereConstraint(new WhereConstraint<>(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
     return this;
   }
 
-  public WorkflowExecutionConfiguredNotificationQueryBuilder whereWorkflowExecutionId(IWhereOperator<Long> operator) {
+  public WorkflowExecutionConfiguredNotificationQueryBuilder whereWorkflowExecutionId(IWhereOperator<Integer> operator) {
     addWhereConstraint(new WhereConstraint<>(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id, operator));
     return this;
   }

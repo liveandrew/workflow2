@@ -31,13 +31,13 @@ public class ExecutionTagDeleteBuilder extends AbstractDeleteBuilder<ExecutionTa
     return this;
   }
 
-  public ExecutionTagDeleteBuilder workflowExecutionId(Long value) {
-    addWhereConstraint(new WhereConstraint<Long>(ExecutionTag._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
+  public ExecutionTagDeleteBuilder workflowExecutionId(Integer value) {
+    addWhereConstraint(new WhereConstraint<Integer>(ExecutionTag._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
     return this;
   }
 
-  public ExecutionTagDeleteBuilder whereWorkflowExecutionId(IWhereOperator<Long> operator) {
-    addWhereConstraint(new WhereConstraint<Long>(ExecutionTag._Fields.workflow_execution_id, operator));
+  public ExecutionTagDeleteBuilder whereWorkflowExecutionId(IWhereOperator<Integer> operator) {
+    addWhereConstraint(new WhereConstraint<Integer>(ExecutionTag._Fields.workflow_execution_id, operator));
     return this;
   }
 

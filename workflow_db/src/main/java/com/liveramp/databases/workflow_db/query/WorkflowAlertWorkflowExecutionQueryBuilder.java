@@ -108,12 +108,12 @@ public class WorkflowAlertWorkflowExecutionQueryBuilder extends AbstractQueryBui
     return this;
   }
 
-  public WorkflowAlertWorkflowExecutionQueryBuilder workflowExecutionId(Long value) {
+  public WorkflowAlertWorkflowExecutionQueryBuilder workflowExecutionId(Integer value) {
     addWhereConstraint(new WhereConstraint<>(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
     return this;
   }
 
-  public WorkflowAlertWorkflowExecutionQueryBuilder whereWorkflowExecutionId(IWhereOperator<Long> operator) {
+  public WorkflowAlertWorkflowExecutionQueryBuilder whereWorkflowExecutionId(IWhereOperator<Integer> operator) {
     addWhereConstraint(new WhereConstraint<>(WorkflowAlertWorkflowExecution._Fields.workflow_execution_id, operator));
     return this;
   }

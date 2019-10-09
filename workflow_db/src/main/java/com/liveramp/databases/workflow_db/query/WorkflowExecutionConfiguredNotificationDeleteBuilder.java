@@ -31,13 +31,13 @@ public class WorkflowExecutionConfiguredNotificationDeleteBuilder extends Abstra
     return this;
   }
 
-  public WorkflowExecutionConfiguredNotificationDeleteBuilder workflowExecutionId(Long value) {
-    addWhereConstraint(new WhereConstraint<Long>(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
+  public WorkflowExecutionConfiguredNotificationDeleteBuilder workflowExecutionId(Integer value) {
+    addWhereConstraint(new WhereConstraint<Integer>(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
     return this;
   }
 
-  public WorkflowExecutionConfiguredNotificationDeleteBuilder whereWorkflowExecutionId(IWhereOperator<Long> operator) {
-    addWhereConstraint(new WhereConstraint<Long>(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id, operator));
+  public WorkflowExecutionConfiguredNotificationDeleteBuilder whereWorkflowExecutionId(IWhereOperator<Integer> operator) {
+    addWhereConstraint(new WhereConstraint<Integer>(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id, operator));
     return this;
   }
 

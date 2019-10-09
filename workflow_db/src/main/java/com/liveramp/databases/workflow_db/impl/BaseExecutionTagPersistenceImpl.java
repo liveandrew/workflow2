@@ -43,13 +43,13 @@ public class BaseExecutionTagPersistenceImpl extends AbstractDatabaseModel<Execu
 
   @Override
   public ExecutionTag create(Map<Enum, Object> fieldsMap) throws IOException {
-    long workflow_execution_id = (Long) fieldsMap.get(ExecutionTag._Fields.workflow_execution_id);
+    int workflow_execution_id = (Integer) fieldsMap.get(ExecutionTag._Fields.workflow_execution_id);
     String tag = (String) fieldsMap.get(ExecutionTag._Fields.tag);
     String value = (String) fieldsMap.get(ExecutionTag._Fields.value);
     return create(workflow_execution_id, tag, value);
   }
 
-  public ExecutionTag create(final long workflow_execution_id, final String tag, final String value) throws IOException {
+  public ExecutionTag create(final int workflow_execution_id, final String tag, final String value) throws IOException {
     StatementCreator statementCreator = new StatementCreator() {
       private final List<String> nonNullFields = new ArrayList<>();
       private final List<AttrSetter> statementSetters = new ArrayList<>();
@@ -59,7 +59,7 @@ public class BaseExecutionTagPersistenceImpl extends AbstractDatabaseModel<Execu
 
         nonNullFields.add("workflow_execution_id");
         int fieldIndex0 = index++;
-        statementSetters.add(stmt -> stmt.setLong(fieldIndex0, workflow_execution_id));
+        statementSetters.add(stmt -> stmt.setInt(fieldIndex0, workflow_execution_id));
 
         nonNullFields.add("tag");
         int fieldIndex1 = index++;
@@ -92,7 +92,7 @@ public class BaseExecutionTagPersistenceImpl extends AbstractDatabaseModel<Execu
   }
 
   public ExecutionTag createDefaultInstance() throws IOException {
-    return create(0L, "", "");
+    return create(0, "", "");
   }
 
   public List<ExecutionTag> find(Map<Enum, Object> fieldsMap) throws IOException {
@@ -142,7 +142,7 @@ public class BaseExecutionTagPersistenceImpl extends AbstractDatabaseModel<Execu
         try {
           switch (field) {
             case workflow_execution_id:
-              preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
+              preparedStatement.setInt(i+1, (Integer) nonNullValues.get(i));
               break;
             case tag:
               preparedStatement.setString(i+1, (String) nonNullValues.get(i));
@@ -184,7 +184,7 @@ public class BaseExecutionTagPersistenceImpl extends AbstractDatabaseModel<Execu
             ExecutionTag._Fields field = (ExecutionTag._Fields)constraint.getField();
             switch (field) {
               case workflow_execution_id:
-                preparedStatement.setLong(++index, (Long) parameter);
+                preparedStatement.setInt(++index, (Integer) parameter);
                 break;
               case tag:
                 preparedStatement.setString(++index, (String) parameter);
@@ -205,7 +205,7 @@ public class BaseExecutionTagPersistenceImpl extends AbstractDatabaseModel<Execu
   protected void setAttrs(ExecutionTag model, PreparedStatement stmt, boolean setNull) throws SQLException {
     int index = 1;
     {
-      stmt.setLong(index++, model.getWorkflowExecutionId());
+      stmt.setInt(index++, model.getWorkflowExecutionId());
     }
     {
       stmt.setString(index++, model.getTag());
@@ -221,14 +221,14 @@ public class BaseExecutionTagPersistenceImpl extends AbstractDatabaseModel<Execu
     boolean allFields = selectedFields == null || selectedFields.isEmpty();
     long id = rs.getLong("id");
     return new ExecutionTag(id,
-      allFields || selectedFields.contains(ExecutionTag._Fields.workflow_execution_id) ? getLongOrNull(rs, "workflow_execution_id") : 0L,
+      allFields || selectedFields.contains(ExecutionTag._Fields.workflow_execution_id) ? getIntOrNull(rs, "workflow_execution_id") : 0,
       allFields || selectedFields.contains(ExecutionTag._Fields.tag) ? rs.getString("tag") : "",
       allFields || selectedFields.contains(ExecutionTag._Fields.value) ? rs.getString("value") : "",
       databases
     );
   }
 
-  public List<ExecutionTag> findByWorkflowExecutionId(final long value) throws IOException {
+  public List<ExecutionTag> findByWorkflowExecutionId(final int value) throws IOException {
     return find(Collections.<Enum, Object>singletonMap(ExecutionTag._Fields.workflow_execution_id, value));
   }
 

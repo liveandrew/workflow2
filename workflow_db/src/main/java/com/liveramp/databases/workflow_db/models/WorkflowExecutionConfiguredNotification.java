@@ -34,17 +34,17 @@ import com.rapleaf.jack.util.JackUtility;
 
 public class WorkflowExecutionConfiguredNotification extends ModelWithId<WorkflowExecutionConfiguredNotification, IDatabases> implements Comparable<WorkflowExecutionConfiguredNotification>{
   
-  public static final long serialVersionUID = 2403628880853412806L;
+  public static final long serialVersionUID = -5286097310555889919L;
 
   public static class Tbl extends AbstractTable<WorkflowExecutionConfiguredNotification.Attributes, WorkflowExecutionConfiguredNotification> {
     public final Column<Long> ID;
-    public final Column<Long> WORKFLOW_EXECUTION_ID;
+    public final Column<Integer> WORKFLOW_EXECUTION_ID;
     public final Column<Long> CONFIGURED_NOTIFICATION_ID;
 
     private Tbl(String alias) {
       super("workflow_execution_configured_notifications", alias, WorkflowExecutionConfiguredNotification.Attributes.class, WorkflowExecutionConfiguredNotification.class);
       this.ID = Column.fromId(alias);
-      this.WORKFLOW_EXECUTION_ID = Column.fromField(alias, _Fields.workflow_execution_id, Long.class);
+      this.WORKFLOW_EXECUTION_ID = Column.fromField(alias, _Fields.workflow_execution_id, Integer.class);
       this.CONFIGURED_NOTIFICATION_ID = Column.fromField(alias, _Fields.configured_notification_id, Long.class);
       Collections.addAll(this.allColumns, ID, WORKFLOW_EXECUTION_ID, CONFIGURED_NOTIFICATION_ID);
     }
@@ -56,7 +56,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
 
   public static final Tbl TBL = new Tbl("workflow_execution_configured_notifications");
   public static final Column<Long> ID = TBL.ID;
-  public static final Column<Long> WORKFLOW_EXECUTION_ID = TBL.WORKFLOW_EXECUTION_ID;
+  public static final Column<Integer> WORKFLOW_EXECUTION_ID = TBL.WORKFLOW_EXECUTION_ID;
   public static final Column<Long> CONFIGURED_NOTIFICATION_ID = TBL.CONFIGURED_NOTIFICATION_ID;
 
   private final Attributes attributes;
@@ -80,20 +80,20 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
     return cachedTypedId;
   }
 
-  public WorkflowExecutionConfiguredNotification(long id, final long workflow_execution_id, final long configured_notification_id, IDatabases databases) {
+  public WorkflowExecutionConfiguredNotification(long id, final int workflow_execution_id, final long configured_notification_id, IDatabases databases) {
     super(databases);
     attributes = new Attributes(id, workflow_execution_id, configured_notification_id);
     this.__assoc_configured_notification = new BelongsToAssociation<>(databases.getWorkflowDb().configuredNotifications(), getConfiguredNotificationId());
-    this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), getWorkflowExecutionId());
+    this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), (long) getWorkflowExecutionId());
   }
 
-  public WorkflowExecutionConfiguredNotification(long id, final long workflow_execution_id, final long configured_notification_id) {
+  public WorkflowExecutionConfiguredNotification(long id, final int workflow_execution_id, final long configured_notification_id) {
     super(null);
     attributes = new Attributes(id, workflow_execution_id, configured_notification_id);
   }
 
   public static WorkflowExecutionConfiguredNotification newDefaultInstance(long id) {
-    return new WorkflowExecutionConfiguredNotification(id, 0L, 0L);
+    return new WorkflowExecutionConfiguredNotification(id, 0, 0L);
   }
 
   public WorkflowExecutionConfiguredNotification(Attributes attributes, IDatabases databases) {
@@ -102,7 +102,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
 
     if (databases != null) {
       this.__assoc_configured_notification = new BelongsToAssociation<>(databases.getWorkflowDb().configuredNotifications(), getConfiguredNotificationId());
-      this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), getWorkflowExecutionId());
+      this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), (long) getWorkflowExecutionId());
     }
   }
 
@@ -125,7 +125,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
 
     if (databases != null) {
       this.__assoc_configured_notification = new BelongsToAssociation<>(databases.getWorkflowDb().configuredNotifications(), getConfiguredNotificationId());
-      this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), getWorkflowExecutionId());
+      this.__assoc_workflow_execution = new BelongsToAssociation<>(databases.getWorkflowDb().workflowExecutions(), (long) getWorkflowExecutionId());
     }
   }
 
@@ -133,11 +133,11 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
     return attributes;
   }
 
-  public long getWorkflowExecutionId() {
+  public int getWorkflowExecutionId() {
     return attributes.getWorkflowExecutionId();
   }
 
-  public WorkflowExecutionConfiguredNotification setWorkflowExecutionId(long newval) {
+  public WorkflowExecutionConfiguredNotification setWorkflowExecutionId(int newval) {
     attributes.setWorkflowExecutionId(newval);
     if(__assoc_workflow_execution != null){
       this.__assoc_workflow_execution.setOwnerId(newval);
@@ -162,7 +162,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
   public void setField(_Fields field, Object value) {
     switch (field) {
       case workflow_execution_id:
-        setWorkflowExecutionId((Long)value);
+        setWorkflowExecutionId((Integer)value);
         break;
       case configured_notification_id:
         setConfiguredNotificationId((Long)value);
@@ -174,7 +174,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
   
   public void setField(String fieldName, Object value) {
     if (fieldName.equals("workflow_execution_id")) {
-      setWorkflowExecutionId((Long)  value);
+      setWorkflowExecutionId((Integer)  value);
       return;
     }
     if (fieldName.equals("configured_notification_id")) {
@@ -187,7 +187,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
   public static Class getFieldType(_Fields field) {
     switch (field) {
       case workflow_execution_id:
-        return long.class;
+        return int.class;
       case configured_notification_id:
         return long.class;
       default:
@@ -197,7 +197,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
 
   public static Class getFieldType(String fieldName) {    
     if (fieldName.equals("workflow_execution_id")) {
-      return long.class;
+      return int.class;
     }
     if (fieldName.equals("configured_notification_id")) {
       return long.class;
@@ -311,7 +311,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
   public WorkflowExecution createWorkflowExecution(final String name, final int status) throws IOException {
  
     WorkflowExecution newWorkflowExecution = databases.getWorkflowDb().workflowExecutions().create(name, status);
-    setWorkflowExecutionId(newWorkflowExecution.getId());
+    setWorkflowExecutionId(JackUtility.safeLongToInt(newWorkflowExecution.getId()));
     save();
     __assoc_workflow_execution.clearCache();
     return newWorkflowExecution;
@@ -320,7 +320,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
   public WorkflowExecution createWorkflowExecution(final Integer app_type, final String name, final String scope_identifier, final int status, final Long start_time, final Long end_time, final Integer application_id, final String pool_override) throws IOException {
  
     WorkflowExecution newWorkflowExecution = databases.getWorkflowDb().workflowExecutions().create(app_type, name, scope_identifier, status, start_time, end_time, application_id, pool_override);
-    setWorkflowExecutionId(newWorkflowExecution.getId());
+    setWorkflowExecutionId(JackUtility.safeLongToInt(newWorkflowExecution.getId()));
     save();
     __assoc_workflow_execution.clearCache();
     return newWorkflowExecution;
@@ -329,7 +329,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
   public WorkflowExecution createWorkflowExecution() throws IOException {
  
     WorkflowExecution newWorkflowExecution = databases.getWorkflowDb().workflowExecutions().create("", 0);
-    setWorkflowExecutionId(newWorkflowExecution.getId());
+    setWorkflowExecutionId(JackUtility.safeLongToInt(newWorkflowExecution.getId()));
     save();
     __assoc_workflow_execution.clearCache();
     return newWorkflowExecution;
@@ -356,29 +356,29 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
   
   public static class Attributes extends AttributesWithId {
     
-    public static final long serialVersionUID = 5526705265741082250L;
+    public static final long serialVersionUID = -5746196685832151069L;
 
     // Fields
-    private long __workflow_execution_id;
+    private int __workflow_execution_id;
     private long __configured_notification_id;
 
     public Attributes(long id) {
       super(id);
     }
 
-    public Attributes(long id, final long workflow_execution_id, final long configured_notification_id) {
+    public Attributes(long id, final int workflow_execution_id, final long configured_notification_id) {
       super(id);
       this.__workflow_execution_id = workflow_execution_id;
       this.__configured_notification_id = configured_notification_id;
     }
 
     public static Attributes newDefaultInstance(long id) {
-      return new Attributes(id, 0L, 0L);
+      return new Attributes(id, 0, 0L);
     }
 
     public Attributes(long id, Map<Enum, Object> fieldsMap) {
       super(id);
-      long workflow_execution_id = (Long)fieldsMap.get(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id);
+      int workflow_execution_id = (Integer)fieldsMap.get(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id);
       long configured_notification_id = (Long)fieldsMap.get(WorkflowExecutionConfiguredNotification._Fields.configured_notification_id);
       this.__workflow_execution_id = workflow_execution_id;
       this.__configured_notification_id = configured_notification_id;
@@ -390,11 +390,11 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
       this.__configured_notification_id = other.getConfiguredNotificationId();
     }
 
-    public long getWorkflowExecutionId() {
+    public int getWorkflowExecutionId() {
       return __workflow_execution_id;
     }
 
-    public Attributes setWorkflowExecutionId(long newval) {
+    public Attributes setWorkflowExecutionId(int newval) {
       this.__workflow_execution_id = newval;
       cachedHashCode = 0;
       return this;
@@ -413,7 +413,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
     public void setField(_Fields field, Object value) {
       switch (field) {
         case workflow_execution_id:
-          setWorkflowExecutionId((Long)value);
+          setWorkflowExecutionId((Integer)value);
           break;
         case configured_notification_id:
           setConfiguredNotificationId((Long)value);
@@ -425,7 +425,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
 
     public void setField(String fieldName, Object value) {
       if (fieldName.equals("workflow_execution_id")) {
-        setWorkflowExecutionId((Long)value);
+        setWorkflowExecutionId((Integer)value);
         return;
       }
       if (fieldName.equals("configured_notification_id")) {
@@ -438,7 +438,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
     public static Class getFieldType(_Fields field) {
       switch (field) {
         case workflow_execution_id:
-          return long.class;
+          return int.class;
         case configured_notification_id:
           return long.class;
         default:
@@ -448,7 +448,7 @@ public class WorkflowExecutionConfiguredNotification extends ModelWithId<Workflo
 
     public static Class getFieldType(String fieldName) {    
       if (fieldName.equals("workflow_execution_id")) {
-        return long.class;
+        return int.class;
       }
       if (fieldName.equals("configured_notification_id")) {
         return long.class;

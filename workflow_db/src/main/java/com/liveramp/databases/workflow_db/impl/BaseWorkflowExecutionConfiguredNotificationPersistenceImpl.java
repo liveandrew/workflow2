@@ -43,12 +43,12 @@ public class BaseWorkflowExecutionConfiguredNotificationPersistenceImpl extends 
 
   @Override
   public WorkflowExecutionConfiguredNotification create(Map<Enum, Object> fieldsMap) throws IOException {
-    long workflow_execution_id = (Long) fieldsMap.get(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id);
+    int workflow_execution_id = (Integer) fieldsMap.get(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id);
     long configured_notification_id = (Long) fieldsMap.get(WorkflowExecutionConfiguredNotification._Fields.configured_notification_id);
     return create(workflow_execution_id, configured_notification_id);
   }
 
-  public WorkflowExecutionConfiguredNotification create(final long workflow_execution_id, final long configured_notification_id) throws IOException {
+  public WorkflowExecutionConfiguredNotification create(final int workflow_execution_id, final long configured_notification_id) throws IOException {
     StatementCreator statementCreator = new StatementCreator() {
       private final List<String> nonNullFields = new ArrayList<>();
       private final List<AttrSetter> statementSetters = new ArrayList<>();
@@ -58,7 +58,7 @@ public class BaseWorkflowExecutionConfiguredNotificationPersistenceImpl extends 
 
         nonNullFields.add("workflow_execution_id");
         int fieldIndex0 = index++;
-        statementSetters.add(stmt -> stmt.setLong(fieldIndex0, workflow_execution_id));
+        statementSetters.add(stmt -> stmt.setInt(fieldIndex0, workflow_execution_id));
 
         nonNullFields.add("configured_notification_id");
         int fieldIndex1 = index++;
@@ -87,7 +87,7 @@ public class BaseWorkflowExecutionConfiguredNotificationPersistenceImpl extends 
   }
 
   public WorkflowExecutionConfiguredNotification createDefaultInstance() throws IOException {
-    return create(0L, 0L);
+    return create(0, 0L);
   }
 
   public List<WorkflowExecutionConfiguredNotification> find(Map<Enum, Object> fieldsMap) throws IOException {
@@ -137,7 +137,7 @@ public class BaseWorkflowExecutionConfiguredNotificationPersistenceImpl extends 
         try {
           switch (field) {
             case workflow_execution_id:
-              preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
+              preparedStatement.setInt(i+1, (Integer) nonNullValues.get(i));
               break;
             case configured_notification_id:
               preparedStatement.setLong(i+1, (Long) nonNullValues.get(i));
@@ -176,7 +176,7 @@ public class BaseWorkflowExecutionConfiguredNotificationPersistenceImpl extends 
             WorkflowExecutionConfiguredNotification._Fields field = (WorkflowExecutionConfiguredNotification._Fields)constraint.getField();
             switch (field) {
               case workflow_execution_id:
-                preparedStatement.setLong(++index, (Long) parameter);
+                preparedStatement.setInt(++index, (Integer) parameter);
                 break;
               case configured_notification_id:
                 preparedStatement.setLong(++index, (Long) parameter);
@@ -194,7 +194,7 @@ public class BaseWorkflowExecutionConfiguredNotificationPersistenceImpl extends 
   protected void setAttrs(WorkflowExecutionConfiguredNotification model, PreparedStatement stmt, boolean setNull) throws SQLException {
     int index = 1;
     {
-      stmt.setLong(index++, model.getWorkflowExecutionId());
+      stmt.setInt(index++, model.getWorkflowExecutionId());
     }
     {
       stmt.setLong(index++, model.getConfiguredNotificationId());
@@ -207,13 +207,13 @@ public class BaseWorkflowExecutionConfiguredNotificationPersistenceImpl extends 
     boolean allFields = selectedFields == null || selectedFields.isEmpty();
     long id = rs.getLong("id");
     return new WorkflowExecutionConfiguredNotification(id,
-      allFields || selectedFields.contains(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id) ? getLongOrNull(rs, "workflow_execution_id") : 0L,
+      allFields || selectedFields.contains(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id) ? getIntOrNull(rs, "workflow_execution_id") : 0,
       allFields || selectedFields.contains(WorkflowExecutionConfiguredNotification._Fields.configured_notification_id) ? getLongOrNull(rs, "configured_notification_id") : 0L,
       databases
     );
   }
 
-  public List<WorkflowExecutionConfiguredNotification> findByWorkflowExecutionId(final long value) throws IOException {
+  public List<WorkflowExecutionConfiguredNotification> findByWorkflowExecutionId(final int value) throws IOException {
     return find(Collections.<Enum, Object>singletonMap(WorkflowExecutionConfiguredNotification._Fields.workflow_execution_id, value));
   }
 

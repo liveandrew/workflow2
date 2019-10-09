@@ -88,12 +88,12 @@ public class ExecutionTagQueryBuilder extends AbstractQueryBuilder<ExecutionTag>
     return this;
   }
 
-  public ExecutionTagQueryBuilder workflowExecutionId(Long value) {
+  public ExecutionTagQueryBuilder workflowExecutionId(Integer value) {
     addWhereConstraint(new WhereConstraint<>(ExecutionTag._Fields.workflow_execution_id, JackMatchers.equalTo(value)));
     return this;
   }
 
-  public ExecutionTagQueryBuilder whereWorkflowExecutionId(IWhereOperator<Long> operator) {
+  public ExecutionTagQueryBuilder whereWorkflowExecutionId(IWhereOperator<Integer> operator) {
     addWhereConstraint(new WhereConstraint<>(ExecutionTag._Fields.workflow_execution_id, operator));
     return this;
   }

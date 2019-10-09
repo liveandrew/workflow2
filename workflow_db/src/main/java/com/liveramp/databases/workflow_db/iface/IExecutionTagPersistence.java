@@ -17,10 +17,10 @@ import java.util.List;
 import com.rapleaf.jack.IModelPersistence;
 
 public interface IExecutionTagPersistence extends IModelPersistence<ExecutionTag> {
-  ExecutionTag create(final long workflow_execution_id, final String tag, final String value) throws IOException;
+  ExecutionTag create(final int workflow_execution_id, final String tag, final String value) throws IOException;
 
   ExecutionTag createDefaultInstance() throws IOException;
-  List<ExecutionTag> findByWorkflowExecutionId(long value)  throws IOException;
+  List<ExecutionTag> findByWorkflowExecutionId(int value)  throws IOException;
   List<ExecutionTag> findByTag(String value)  throws IOException;
   List<ExecutionTag> findByValue(String value)  throws IOException;
 
