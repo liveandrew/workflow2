@@ -56,7 +56,7 @@ public class NotificationConfigurationServlet extends HttpServlet {
         if (contains(APP_NAME, req)) {
           ApplicationController.addConfiguredNotifications(worflowDb, get(APP_NAME, req), email, notifications);
         } else if (contains(EX_ID, req)) {
-          ExecutionController.addConfiguredNotifications(worflowDb, Long.parseLong(get(EX_ID, req)), email, notifications);
+          ExecutionController.addConfiguredNotifications(worflowDb, Integer.parseInt(get(EX_ID, req)), email, notifications);
         } else {
           throw new IllegalArgumentException();
         }
@@ -65,7 +65,7 @@ public class NotificationConfigurationServlet extends HttpServlet {
         if (contains(APP_NAME, req)) {
           ApplicationController.removeConfiguredNotifications(worflowDb, get(APP_NAME, req), email);
         } else if (contains(EX_ID, req)) {
-          ExecutionController.removeConfiguredNotifications(worflowDb, Long.parseLong(get(EX_ID, req)), email);
+          ExecutionController.removeConfiguredNotifications(worflowDb, Integer.parseInt(get(EX_ID, req)), email);
         } else {
           throw new IllegalArgumentException();
         }

@@ -606,19 +606,19 @@ public class WorkflowQueries {
     );
   }
 
-  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Long executionId) throws IOException {
+  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Integer executionId) throws IOException {
     return getExecutionNotifications(db, executionId, null, null);
   }
 
-  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Long executionId, String email) throws IOException {
+  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Integer executionId, String email) throws IOException {
     return getExecutionNotifications(db, executionId, null, email);
   }
 
-  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Long executionId, WorkflowRunnerNotification type) throws IOException {
+  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Integer executionId, WorkflowRunnerNotification type) throws IOException {
     return getExecutionNotifications(db, executionId, type, null);
   }
 
-  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Long executionId, WorkflowRunnerNotification type, String email) throws IOException {
+  public static List<ConfiguredNotification.Attributes> getExecutionNotifications(IWorkflowDb db, Integer executionId, WorkflowRunnerNotification type, String email) throws IOException {
     return getNotifications(db.createQuery().from(WorkflowExecutionConfiguredNotification.TBL)
             .where(WorkflowExecutionConfiguredNotification.WORKFLOW_EXECUTION_ID.equalTo(executionId))
             .innerJoin(ConfiguredNotification.TBL)

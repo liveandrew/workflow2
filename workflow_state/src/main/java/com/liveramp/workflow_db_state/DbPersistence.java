@@ -748,7 +748,7 @@ public class DbPersistence implements WorkflowStatePersistence {
       ));
 
       allNotifications.addAll(WorkflowQueries.getExecutionNotifications(conn,
-          getExecutionId(),
+          Math.toIntExact(getExecutionId()),
           notification
       ));
 

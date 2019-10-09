@@ -36,30 +36,30 @@ public class ExecutionController {
 
   }
 
-  public static void addConfiguredNotifications(IWorkflowDb workflowDb, Long workflowId, String email, Set<WorkflowRunnerNotification> notifications) throws IOException {
+  public static void addConfiguredNotifications(IWorkflowDb workflowDb, Integer workflowId, String email, Set<WorkflowRunnerNotification> notifications) throws IOException {
     WorkflowExecution execution = workflowDb.workflowExecutions().find(workflowId);
 
     Set<WorkflowRunnerNotification> existing = Sets.newHashSet();
-    for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(workflowDb, execution.getId(), email)) {
+    for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(workflowDb, execution.getIntId(), email)) {
       existing.add(WorkflowRunnerNotification.findByValue(attributes.getWorkflowRunnerNotification()));
     }
 
     for (WorkflowRunnerNotification notification : notifications) {
       if (!existing.contains(notification)) {
         ConfiguredNotification configured = workflowDb.configuredNotifications().create(notification.ordinal(), email, false);
-        workflowDb.workflowExecutionConfiguredNotifications().create(execution.getId(), configured.getId());
+        workflowDb.workflowExecutionConfiguredNotifications().create(execution.getIntId(), configured.getId());
       }
     }
 
   }
 
-  public static void removeConfiguredNotifications(IWorkflowDb workflowDb, Long workflowId, String email) throws IOException {
+  public static void removeConfiguredNotifications(IWorkflowDb workflowDb, Integer workflowId, String email) throws IOException {
     removeConfiguredNotifications(workflowDb, workflowId, email, EnumSet.allOf(WorkflowRunnerNotification.class));
   }
 
-  public static void removeConfiguredNotifications(IWorkflowDb workflowDb, Long workflowId, String email, Set<WorkflowRunnerNotification> notificaions) throws IOException {
+  public static void removeConfiguredNotifications(IWorkflowDb workflowDb, Integer workflowId, String email, Set<WorkflowRunnerNotification> notificaions) throws IOException {
     WorkflowExecution execution = workflowDb.workflowExecutions().find(workflowId);
-    long id = execution.getId();
+    int id = execution.getIntId();
 
     for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(workflowDb, id, email)) {
       if (notificaions.contains(WorkflowRunnerNotification.findByValue(attributes.getWorkflowRunnerNotification()))) {

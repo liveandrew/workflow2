@@ -259,7 +259,7 @@ public class WorkflowJSON {
         if (details) {
 
           JSONArray notifications = new JSONArray();
-          for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(workflowDb, execution.getId())) {
+          for (ConfiguredNotification.Attributes attributes : WorkflowQueries.getExecutionNotifications(workflowDb, execution.getIntId())) {
             notifications.put(toJSON(attributes));
           }
 

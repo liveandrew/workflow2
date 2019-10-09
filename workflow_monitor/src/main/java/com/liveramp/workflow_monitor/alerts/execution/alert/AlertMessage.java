@@ -48,7 +48,7 @@ public class AlertMessage {
         alertClass);
   }
 
-  private static boolean hasAlertedExecution(IWorkflowDb wfDb, long executionId, String alertClass) throws IOException {
+  private static boolean hasAlertedExecution(IWorkflowDb wfDb, int executionId, String alertClass) throws IOException {
     return existAlerts(wfDb.createQuery()
             .from(WorkflowAlertWorkflowExecution.TBL)
             .where(WorkflowAlertWorkflowExecution.WORKFLOW_EXECUTION_ID.equalTo(executionId))
@@ -66,9 +66,9 @@ public class AlertMessage {
   public static AlertMessage createAlertMessage(String classname, String message, WorkflowRunnerNotification notification,
                                                 WorkflowExecution execution, IDatabases db) throws IOException {
     IWorkflowDb wfDb = db.getWorkflowDb();
-    if (!hasAlertedExecution(wfDb, execution.getId(), classname)) {
+    if (!hasAlertedExecution(wfDb, execution.getIntId(), classname)) {
       WorkflowAlert wa = wfDb.workflowAlerts().create(classname, message);
-      wfDb.workflowAlertWorkflowExecutions().create(wa.getId(), execution.getId());
+      wfDb.workflowAlertWorkflowExecutions().create(wa.getId(), execution.getIntId());
       return new AlertMessage(classname, message, notification);
     } else {
       LOG.debug("Not re-notifying about execution " + execution.getId() + " alert gen " + classname);

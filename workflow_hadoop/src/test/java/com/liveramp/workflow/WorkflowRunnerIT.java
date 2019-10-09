@@ -265,7 +265,7 @@ public class WorkflowRunnerIT extends WorkflowTestCase {
     );
 
     ExecutionController.addConfiguredNotifications(workflowDb,
-        wr.getPersistence().getExecutionId(),
+        Math.toIntExact(wr.getPersistence().getExecutionId()),
         "ben@gmail.com",
         WorkflowNotificationLevel.ERROR
     );

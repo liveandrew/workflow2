@@ -26,7 +26,7 @@ public class ExecutionControllerIT extends WorkflowDbStateTestCase {
 
     IWorkflowDb workflowDb = new DatabasesImpl().getWorkflowDb();
     WorkflowExecution test = workflowDb.workflowExecutions().create("test", WorkflowExecutionStatus.INCOMPLETE.ordinal());
-    long exId = test.getId();
+    int exId = test.getIntId();
 
     addConfiguredNotifications(workflowDb, exId, "ben@gmail.com",
         Sets.newHashSet(WorkflowRunnerNotification.DIED_UNCLEAN, WorkflowRunnerNotification.FAILURE)

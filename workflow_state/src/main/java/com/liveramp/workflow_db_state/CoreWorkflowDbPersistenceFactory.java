@@ -22,7 +22,6 @@ import com.liveramp.cascading_ext.resource.ResourceDeclarerFactory;
 import com.liveramp.databases.workflow_db.DatabasesImpl;
 import com.liveramp.databases.workflow_db.IWorkflowDb;
 import com.liveramp.databases.workflow_db.models.Application;
-import com.liveramp.databases.workflow_db.models.ApplicationConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.BackgroundAttemptInfo;
 import com.liveramp.databases.workflow_db.models.ConfiguredNotification;
 import com.liveramp.databases.workflow_db.models.StepAttempt;
@@ -304,17 +303,17 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
       long hb = System.currentTimeMillis();
       attempt.setLastHeartbeat(hb)
           .setLastHeartbeatEpoch(hb);
-    }else{
+    } else {
       attempt.setLastHeartbeat(0L)
           .setLastHeartbeatEpoch(0L);
     }
 
     attempt.save();
 
-    if(!manager.isLive()) {
+    if (!manager.isLive()) {
       BackgroundAttemptInfo backgroundInfo = workflowDb.backgroundAttemptInfos().create(attempt.getId());
 
-      if(resourceFactory != null){
+      if (resourceFactory != null) {
         backgroundInfo.setResourceManagerFactory(resourceFactory.getName());
         //  this is dumb, but I don't want to clean up Resource right now to fix it.
         backgroundInfo.setResourceManagerVersionClass(InitializedDbPersistence.class.getName());
@@ -415,7 +414,7 @@ public abstract class CoreWorkflowDbPersistenceFactory<S extends IStep,
       }
 
       for (WorkflowTag tag : tags) {
-        workflowDb.executionTags().create(ex.getId(), tag.getKey(), tag.getVal());
+        workflowDb.executionTags().create(ex.getIntId(), tag.getKey(), tag.getVal());
       }
 
       ex.save();
