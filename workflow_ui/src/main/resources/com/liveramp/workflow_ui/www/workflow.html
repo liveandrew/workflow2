@@ -671,20 +671,6 @@
                         '</tbody>'
                     ));
 
-            var counterTbody = $('<tbody></tbody>');
-
-            _.sortBy(job.counters, function (e) {
-              return e.group + e.name
-            }).forEach(function (e) {
-              counterTbody.append($(
-                  '<tr>' +
-                  '<td>' + e.group + '</td>' +
-                  '<td>' + e.name + '</td>' +
-                  '<td>' + e.value + '</td>' +
-                  '</tr>'
-              ));
-            });
-
             var failureTbody = $('<tbody></tbody>');
 
             job.task_exceptions.forEach(function (e) {
@@ -700,12 +686,7 @@
                 .addClass(e.status)
                 .append(failureTbody);
 
-            var counterTable = $('<table class="table workflow_step_row"></table>')
-                .addClass(e.status)
-                .append(counterTbody);
-
             div.append(tableDetails)
-                .append(counterTable)
                 .append(exceptionTable);
           }
         }
