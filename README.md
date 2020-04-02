@@ -1,6 +1,7 @@
 # Workflow2
 
 ![alt text](images/more_complex_ui.png)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fliveandrew%2Fworkflow2.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fliveandrew%2Fworkflow2?ref=badge_shield)
 
 [![Build Status](https://api.travis-ci.com/LiveRamp/workflow2.svg?branch=master)](https://travis-ci.com/LiveRamp/workflow2)
 
@@ -764,3 +765,7 @@ No.  Unfortunately, Workflow2 was entangled with our internal codebase, so we co
 #### How can I contribute / get help / report bugs / learn more?
 
 We love contributions!  The best way to get in touch is to create a ticket or a pull request.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fliveandrew%2Fworkflow2.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fliveandrew%2Fworkflow2?ref=badge_large)
